@@ -1,0 +1,164 @@
+2026-01-09 00:25:15,813 - __main__ - INFO - Nowscore竞彩爬虫 v2.0
+2026-01-09 00:25:40,346 - __main__ - INFO - ============================================================
+2026-01-09 00:25:40,346 - __main__ - INFO - Nowscore竞彩爬虫启动
+2026-01-09 00:25:40,346 - __main__ - INFO - ============================================================
+2026-01-09 00:25:40,346 - __main__ - INFO - 初始化浏览器驱动...
+2026-01-09 00:25:41,748 - __main__ - INFO - 浏览器驱动初始化成功
+2026-01-09 00:25:41,748 - __main__ - INFO - 访问: https://cp.nowscore.com/
+2026-01-09 00:25:47,173 - __main__ - INFO - 页面标题: 竞彩让球胜平负－竞彩足球数据-竞彩分析推荐-竞彩足球专家推荐-竞彩足球资讯_捷报比分网
+2026-01-09 00:25:47,179 - __main__ - INFO - 当前URL: https://cp.nowscore.com/
+2026-01-09 00:25:47,193 - __main__ - INFO - 页面源码已保存: output/debug/page_20260109_002547.html
+2026-01-09 00:25:47,214 - __main__ - INFO - 检测到验证页面，请手动完成验证...
+2026-01-09 00:25:47,214 - __main__ - INFO - 请在浏览器中完成验证后，回到控制台按回车键继续
+2026-01-09 00:26:30,147 - __main__ - WARNING - 仍然检测到验证页面，请重新完成验证
+2026-01-09 00:26:30,147 - __main__ - INFO - 检测到验证页面，请手动完成验证...
+2026-01-09 00:26:30,147 - __main__ - INFO - 请在浏览器中完成验证后，回到控制台按回车键继续
+2026-01-09 00:26:44,373 - __main__ - WARNING - 仍然检测到验证页面，请重新完成验证
+2026-01-09 00:26:44,373 - __main__ - INFO - 检测到验证页面，请手动完成验证...
+2026-01-09 00:26:44,374 - __main__ - INFO - 请在浏览器中完成验证后，回到控制台按回车键继续
+2026-01-09 00:27:51,905 - __main__ - WARNING - 程序被用户中断
+2026-01-09 00:27:55,988 - urllib3.connectionpool - WARNING - Retrying (Retry(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError("HTTPConnection(host='localhost', port=61190): Failed to establish a new connection: [WinError 10061] 由于目标计算机积极拒绝，无法连接。")': /session/dec16986380c311eedf650f3e1c2ace9
+2026-01-09 00:28:00,055 - urllib3.connectionpool - WARNING - Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError("HTTPConnection(host='localhost', port=61190): Failed to establish a new connection: [WinError 10061] 由于目标计算机积极拒绝，无法连接。")': /session/dec16986380c311eedf650f3e1c2ace9
+2026-01-09 00:28:04,128 - urllib3.connectionpool - WARNING - Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError("HTTPConnection(host='localhost', port=61190): Failed to establish a new connection: [WinError 10061] 由于目标计算机积极拒绝，无法连接。")': /session/dec16986380c311eedf650f3e1c2ace9
+2026-01-09 00:28:08,170 - __main__ - INFO - 浏览器已关闭
+2026-01-09 01:11:34,493 - __main__ - WARNING - 缺少以下依赖包:
+2026-01-09 01:11:34,493 - __main__ - WARNING -   - beautifulsoup4: pip install beautifulsoup4
+2026-01-09 01:11:47,556 - __main__ - INFO - 安装 beautifulsoup4...
+2026-01-09 01:16:26,620 - __main__ - WARNING - 缺少以下依赖包:
+2026-01-09 01:16:26,621 - __main__ - WARNING -   - beautifulsoup4: pip install beautifulsoup4
+2026-01-09 01:16:36,727 - __main__ - INFO - 安装 beautifulsoup4...
+2026-01-09 01:19:05,748 - __main__ - WARNING - 缺少以下依赖包:
+2026-01-09 01:19:05,748 - __main__ - WARNING -   - beautifulsoup4: pip install beautifulsoup4
+2026-01-09 01:19:14,177 - __main__ - INFO - 安装 beautifulsoup4...
+2026-01-09 01:27:57,687 - __main__ - INFO - 初始化完成，可用策略: ['direct_request', 'selenium', 'alternative_api']
+2026-01-09 01:28:22,422 - __main__ - INFO - ============================================================
+2026-01-09 01:28:22,422 - __main__ - INFO - 智能竞彩爬虫启动
+2026-01-09 01:28:22,423 - __main__ - INFO - 目标: 获取未来 3 天的比赛信息
+2026-01-09 01:28:22,423 - __main__ - INFO - ============================================================
+2026-01-09 01:28:22,423 - __main__ - INFO - 
+尝试策略: direct_request (优先级: 1)
+2026-01-09 01:28:22,423 - __main__ - INFO - 执行策略: direct_request - 伪装浏览器直接请求
+2026-01-09 01:28:22,423 - __main__ - INFO - 尝试获取 2026-01-09 的比赛信息
+2026-01-09 01:28:22,538 - __main__ - WARNING - 请求失败，状态码: 404
+2026-01-09 01:28:22,563 - __main__ - WARNING - 请求失败，状态码: 404
+2026-01-09 01:28:22,590 - __main__ - WARNING - 请求失败，状态码: 404
+2026-01-09 01:28:24,003 - __main__ - INFO - 尝试获取 2026-01-10 的比赛信息
+2026-01-09 01:28:24,024 - __main__ - WARNING - 请求失败，状态码: 404
+2026-01-09 01:28:24,049 - __main__ - WARNING - 请求失败，状态码: 404
+2026-01-09 01:28:24,076 - __main__ - WARNING - 请求失败，状态码: 404
+2026-01-09 01:28:25,634 - __main__ - INFO - 尝试获取 2026-01-11 的比赛信息
+2026-01-09 01:28:25,653 - __main__ - WARNING - 请求失败，状态码: 404
+2026-01-09 01:28:25,677 - __main__ - WARNING - 请求失败，状态码: 404
+2026-01-09 01:28:25,702 - __main__ - WARNING - 请求失败，状态码: 404
+2026-01-09 01:28:27,418 - __main__ - WARNING - ✗ 策略 direct_request 失败: 
+2026-01-09 01:28:27,418 - __main__ - INFO - 尝试下一个策略...
+2026-01-09 01:28:27,418 - __main__ - INFO - 
+尝试策略: selenium (优先级: 2)
+2026-01-09 01:28:27,419 - __main__ - INFO - 执行策略: selenium - Selenium模拟浏览器
+2026-01-09 01:28:39,141 - sources - INFO - 浏览器驱动创建成功
+2026-01-09 01:28:39,141 - __main__ - INFO - 访问: https://cp.nowscore.com/
+2026-01-09 01:28:44,532 - __main__ - INFO - 页面标题: 竞彩让球胜平负－竞彩足球数据-竞彩分析推荐-竞彩足球专家推荐-竞彩足球资讯_捷报比分网
+2026-01-09 01:28:44,536 - __main__ - INFO - 当前URL: https://cp.nowscore.com/
+2026-01-09 01:28:44,545 - __main__ - INFO - 页面源码已保存: output/debug/selenium_page_20260109_012844.html
+2026-01-09 01:28:44,560 - __main__ - WARNING - 检测到验证页面，转为手动验证
+2026-01-09 01:28:44,560 - __main__ - INFO - 检测到验证页面，请手动完成验证...
+2026-01-09 01:28:44,560 - __main__ - INFO - 请在浏览器中完成验证后，回到控制台按回车键继续
+2026-01-09 01:30:11,452 - __main__ - WARNING - 仍然检测到验证页面，请重新完成验证
+2026-01-09 01:30:11,452 - __main__ - INFO - 检测到验证页面，请手动完成验证...
+2026-01-09 01:30:11,452 - __main__ - INFO - 请在浏览器中完成验证后，回到控制台按回车键继续
+2026-01-09 01:30:21,981 - __main__ - WARNING - 仍然检测到验证页面，请重新完成验证
+2026-01-09 01:30:21,982 - __main__ - INFO - 检测到验证页面，请手动完成验证...
+2026-01-09 01:30:21,982 - __main__ - INFO - 请在浏览器中完成验证后，回到控制台按回车键继续
+2026-01-09 01:37:07,722 - __main__ - INFO - 初始化完成，可用策略: ['direct_request', 'selenium', 'alternative_api']
+2026-01-09 01:37:22,213 - __main__ - INFO - ============================================================
+2026-01-09 01:37:22,213 - __main__ - INFO - 智能竞彩爬虫启动 (现为 Okooo API 爬虫)
+2026-01-09 01:37:22,213 - __main__ - INFO - 目标: 获取未来 3 天的比赛信息
+2026-01-09 01:37:22,213 - __main__ - INFO - ============================================================
+2026-01-09 01:37:22,214 - __main__ - INFO - 
+尝试策略: direct_request (优先级: 1)
+2026-01-09 01:37:22,214 - __main__ - INFO - 执行策略: direct_request - 请求 Okooo API
+2026-01-09 01:37:22,214 - sources - INFO - 正在从 Okooo API 获取未来 3 天的比赛信息...
+2026-01-09 01:37:22,813 - sources - ERROR - 请求 Okooo API 失败: Expecting value: line 1 column 1 (char 0)
+2026-01-09 01:37:22,814 - __main__ - WARNING - ✗ 策略 direct_request 失败: 
+2026-01-09 01:37:22,814 - __main__ - INFO - 尝试下一个策略...
+2026-01-09 01:37:22,814 - __main__ - INFO - 
+尝试策略: selenium (优先级: 2)
+2026-01-09 01:37:22,814 - __main__ - INFO - 执行策略: selenium - Selenium模拟浏览器 (for nowscore.com)
+2026-01-09 01:37:24,185 - sources - INFO - 浏览器驱动创建成功
+2026-01-09 01:37:24,186 - __main__ - INFO - 访问: https://cp.nowscore.com/
+2026-01-09 01:37:29,652 - __main__ - INFO - 页面标题: 竞彩让球胜平负－竞彩足球数据-竞彩分析推荐-竞彩足球专家推荐-竞彩足球资讯_捷报比分网
+2026-01-09 01:37:29,658 - __main__ - INFO - 当前URL: https://cp.nowscore.com/
+2026-01-09 01:37:29,674 - __main__ - INFO - 页面源码已保存: output/debug/selenium_page_20260109_013729.html
+2026-01-09 01:37:29,690 - __main__ - WARNING - 检测到验证页面，转为手动验证
+2026-01-09 01:37:29,690 - __main__ - INFO - 检测到验证页面，请手动完成验证...
+2026-01-09 01:37:29,690 - __main__ - INFO - 请在浏览器中完成验证后，回到控制台按回车键继续
+2026-01-09 01:37:54,553 - __main__ - WARNING - 仍然检测到验证页面，请重新完成验证
+2026-01-09 01:37:54,553 - __main__ - INFO - 检测到验证页面，请手动完成验证...
+2026-01-09 01:37:54,553 - __main__ - INFO - 请在浏览器中完成验证后，回到控制台按回车键继续
+2026-01-09 01:38:10,432 - __main__ - WARNING - 仍然检测到验证页面，请重新完成验证
+2026-01-09 01:38:10,432 - __main__ - INFO - 检测到验证页面，请手动完成验证...
+2026-01-09 01:38:10,432 - __main__ - INFO - 请在浏览器中完成验证后，回到控制台按回车键继续
+2026-01-09 01:38:22,614 - __main__ - WARNING - 仍然检测到验证页面，请重新完成验证
+2026-01-09 01:38:22,614 - __main__ - INFO - 检测到验证页面，请手动完成验证...
+2026-01-09 01:38:22,614 - __main__ - INFO - 请在浏览器中完成验证后，回到控制台按回车键继续
+2026-01-09 01:38:31,121 - __main__ - WARNING - 仍然检测到验证页面，请重新完成验证
+2026-01-09 01:38:31,121 - __main__ - INFO - 检测到验证页面，请手动完成验证...
+2026-01-09 01:38:31,121 - __main__ - INFO - 请在浏览器中完成验证后，回到控制台按回车键继续
+2026-01-09 01:38:36,306 - urllib3.connectionpool - WARNING - Retrying (Retry(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ConnectionResetError(10054, '远程主机强迫关闭了一个现有的连接。', None, 10054, None)': /session/1bedec788334a37ef9a2ff7e694e7965
+2026-01-09 01:38:40,378 - urllib3.connectionpool - WARNING - Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError("HTTPConnection(host='localhost', port=65432): Failed to establish a new connection: [WinError 10061] 由于目标计算机积极拒绝，无法连接。")': /session/1bedec788334a37ef9a2ff7e694e7965
+2026-01-09 01:38:44,449 - urllib3.connectionpool - WARNING - Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError("HTTPConnection(host='localhost', port=65432): Failed to establish a new connection: [WinError 10061] 由于目标计算机积极拒绝，无法连接。")': /session/1bedec788334a37ef9a2ff7e694e7965
+2026-01-09 01:38:48,554 - __main__ - INFO - 浏览器已关闭
+2026-01-09 10:43:31,709 - __main__ - INFO - 初始化完成，可用策略: ['direct_request', 'selenium', 'alternative_api']
+2026-01-09 10:43:51,130 - __main__ - INFO - ============================================================
+2026-01-09 10:43:51,131 - __main__ - INFO - 智能竞彩爬虫启动 (现为 Okooo API 爬虫)
+2026-01-09 10:43:51,131 - __main__ - INFO - 目标: 获取未来 3 天的比赛信息
+2026-01-09 10:43:51,131 - __main__ - INFO - ============================================================
+2026-01-09 10:43:51,131 - __main__ - INFO - 使用指定策略: direct_request
+2026-01-09 10:43:51,131 - __main__ - INFO - 执行策略: direct_request - 请求 Okooo API
+2026-01-09 10:43:51,132 - sources - INFO - 正在从 Okooo API 获取未来 3 天的比赛信息...
+2026-01-09 10:43:51,948 - sources - ERROR - 请求 Okooo API 失败: Expecting value: line 1 column 1 (char 0)
+2026-01-09 10:43:51,948 - __main__ - WARNING - 没有获取到比赛数据
+2026-01-09 10:44:05,290 - __main__ - INFO - ============================================================
+2026-01-09 10:44:05,290 - __main__ - INFO - 智能竞彩爬虫启动 (现为 Okooo API 爬虫)
+2026-01-09 10:44:05,290 - __main__ - INFO - 目标: 获取未来 3 天的比赛信息
+2026-01-09 10:44:05,290 - __main__ - INFO - ============================================================
+2026-01-09 10:44:05,290 - __main__ - INFO - 使用指定策略: alternative_api
+2026-01-09 10:44:05,290 - __main__ - INFO - 执行策略: alternative_api - 请求 Okooo Mobile API
+2026-01-09 10:44:05,290 - sources - INFO - 正在从 Okooo API 获取未来 3 天的比赛信息...
+2026-01-09 10:44:06,517 - sources - ERROR - 请求 Okooo API 失败: Expecting value: line 2 column 1 (char 1)
+2026-01-09 10:44:06,518 - __main__ - WARNING - 没有获取到比赛数据
+2026-01-09 10:44:22,499 - __main__ - INFO - ============================================================
+2026-01-09 10:44:22,499 - __main__ - INFO - 智能竞彩爬虫启动 (现为 Okooo API 爬虫)
+2026-01-09 10:44:22,499 - __main__ - INFO - 目标: 获取未来 3 天的比赛信息
+2026-01-09 10:44:22,499 - __main__ - INFO - ============================================================
+2026-01-09 10:44:22,500 - __main__ - INFO - 
+尝试策略: direct_request (优先级: 1)
+2026-01-09 10:44:22,500 - __main__ - INFO - 执行策略: direct_request - 请求 Okooo API
+2026-01-09 10:44:22,500 - sources - INFO - 正在从 Okooo API 获取未来 3 天的比赛信息...
+2026-01-09 10:44:22,604 - sources - ERROR - 请求 Okooo API 失败: Expecting value: line 1 column 1 (char 0)
+2026-01-09 10:44:22,605 - __main__ - WARNING - ✗ 策略 direct_request 失败: 
+2026-01-09 10:44:22,605 - __main__ - INFO - 尝试下一个策略...
+2026-01-09 10:44:22,605 - __main__ - INFO - 
+尝试策略: selenium (优先级: 2)
+2026-01-09 10:44:22,605 - __main__ - INFO - 执行策略: selenium - Selenium模拟浏览器 (for nowscore.com)
+2026-01-09 10:44:25,450 - sources - INFO - 浏览器驱动创建成功
+2026-01-09 10:44:25,450 - __main__ - INFO - 访问: https://cp.nowscore.com/
+2026-01-09 10:44:30,862 - __main__ - INFO - 页面标题: 竞彩让球胜平负－竞彩足球数据-竞彩分析推荐-竞彩足球专家推荐-竞彩足球资讯_捷报比分网
+2026-01-09 10:44:30,865 - __main__ - INFO - 当前URL: https://cp.nowscore.com/
+2026-01-09 10:44:30,875 - __main__ - INFO - 页面源码已保存: output/debug/selenium_page_20260109_104430.html
+2026-01-09 10:44:30,905 - __main__ - WARNING - 检测到验证页面，转为手动验证
+2026-01-09 10:44:30,905 - __main__ - INFO - 检测到验证页面，请手动完成验证...
+2026-01-09 10:44:30,905 - __main__ - INFO - 请在浏览器中完成验证后，回到控制台按回车键继续
+2026-01-09 10:44:39,929 - __main__ - WARNING - 仍然检测到验证页面，请重新完成验证
+2026-01-09 10:44:39,929 - __main__ - WARNING - 验证未通过，尝试第 1 次...
+2026-01-09 10:44:44,946 - __main__ - WARNING - 检测到验证页面，转为手动验证
+2026-01-09 10:44:44,947 - __main__ - INFO - 检测到验证页面，请手动完成验证...
+2026-01-09 10:44:44,947 - __main__ - INFO - 请在浏览器中完成验证后，回到控制台按回车键继续
+2026-01-09 10:44:59,012 - __main__ - WARNING - 仍然检测到验证页面，请重新完成验证
+2026-01-09 10:44:59,012 - __main__ - WARNING - 验证未通过，尝试第 2 次...
+2026-01-09 10:45:04,028 - __main__ - WARNING - 检测到验证页面，转为手动验证
+2026-01-09 10:45:04,029 - __main__ - INFO - 检测到验证页面，请手动完成验证...
+2026-01-09 10:45:04,029 - __main__ - INFO - 请在浏览器中完成验证后，回到控制台按回车键继续
+2026-01-09 10:45:30,700 - __main__ - INFO - 手动验证被用户中断
+2026-01-09 10:45:30,701 - __main__ - WARNING - 验证未通过，尝试第 3 次...
+2026-01-09 10:45:30,701 - __main__ - ERROR - 达到最大验证尝试次数，放弃。

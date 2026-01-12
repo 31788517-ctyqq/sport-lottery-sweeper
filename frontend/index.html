@@ -1,0 +1,3886 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>竞彩扫盘工具 - 2026 赛季 (移动演示版)</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            /* 移动端优化配色 */
+            --bg-body: #0d1117;
+            --bg-card: #161b22;
+            --bg-header: #1a1d24;
+            --border-color: #30363d;
+            --primary: #58a6ff;
+            --primary-hover: #79c0ff;
+            --success: #238636;
+            --danger: #f85149;
+            --warning: #f0883e;
+            --info: #8b949e;
+            --text-main: #f0f6fc;
+            --text-sub: #8b949e;
+            --text-light: #c9d1d9;
+            
+            /* 情报类型标签颜色 */
+            --tag-sp: #f0883e;
+            --tag-injury: #f85149;
+            --tag-weather: #58a6ff;
+            --tag-referee: #a371f7;
+            --tag-motive: #f0883e;
+            --tag-schedule: #58a6ff;
+            --tag-tactics: #7ee787;
+            --tag-coach: #7ee787;
+            --tag-history: #8b949e;
+            --tag-other: #8b949e;
+            --tag-prediction: #58a6ff;
+            --tag-atmosphere: #f0883e;
+            
+            /* 权重指示色 */
+            --weight-high: #f85149;
+            --weight-medium: #f0883e;
+            --weight-low: #8b949e;
+            
+            /* 来源指示色 */
+            --source-official: #7ee787;
+            --source-media: #58a6ff;
+            --source-social: #a371f7;
+            --source-bookmaker: #f0883e;
+            
+            /* 安全区域 */
+            --safe-area-top: env(safe-area-inset-top, 0px);
+            --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+            
+            /* 联赛颜色 */
+            --league-premier: #ff6b6b;
+            --league-laliga: #4ecdc4;
+            --league-seriea: #45b7d1;
+            --league-bundesliga: #96ceb4;
+            --league-ligue1: #feca57;
+            --league-champions: #ff9ff3;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            line-height: 1.5;
+            font-size: 14px;
+            overflow-x: hidden;
+            padding-top: var(--safe-area-top);
+            padding-bottom: var(--safe-area-bottom);
+        }
+
+        /* 移动端容器 */
+        .mobile-container {
+            max-width: 100%;
+            margin: 0 auto;
+        }
+
+        /* 顶部导航栏 */
+        .mobile-header {
+            position: fixed;
+            top: var(--safe-area-top);
+            left: 0;
+            right: 0;
+            height: 56px;
+            background: rgba(13, 17, 23, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-color);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+        }
+
+        .header-logo {
+            font-weight: 700;
+            font-size: 18px;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-logo-icon {
+            color: var(--primary);
+            font-size: 24px;
+        }
+
+        .header-subtitle {
+            font-size: 11px;
+            color: var(--text-sub);
+            font-weight: normal;
+            margin-left: 4px;
+        }
+
+        .header-right {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .refresh-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .refresh-btn:active {
+            transform: scale(0.95);
+            background: var(--primary-hover);
+        }
+
+        .refresh-btn.spinning i {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .status-indicator {
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 16px;
+            background: rgba(35, 134, 54, 0.2);
+            color: #7ee787;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #7ee787;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* 主内容区 */
+        .main-content {
+            margin-top: 56px;
+            padding-bottom: 70px;
+        }
+
+        /* 筛选工具栏 */
+        .filter-toolbar {
+            background: var(--bg-header);
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 56px;
+            z-index: 900;
+        }
+
+        .filter-section {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .filter-section::-webkit-scrollbar {
+            display: none;
+        }
+
+        .filter-chip {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-sub);
+            padding: 8px 16px;
+            border-radius: 20px;
+            white-space: nowrap;
+            font-size: 13px;
+            transition: all 0.2s;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .filter-chip.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .filter-chip i {
+            font-size: 12px;
+        }
+
+        .filter-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 12px;
+        }
+
+        .last-update {
+            font-size: 12px;
+            color: var(--text-sub);
+        }
+
+        .sort-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: var(--text-sub);
+        }
+
+        .sort-btn {
+            padding: 4px 12px;
+            border-radius: 12px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-sub);
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .sort-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* 改进的筛选面板样式 */
+        .filter-panels {
+            padding: 16px;
+        }
+
+        .filter-panel {
+            background: var(--bg-card);
+            border-radius: 16px;
+            margin-bottom: 16px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .filter-panel:hover {
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .filter-panel.expanded {
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            border-color: rgba(88, 166, 255, 0.3);
+        }
+
+        .filter-header {
+            padding: 18px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.2s;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01));
+        }
+
+        .filter-header:hover {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+        }
+
+        .filter-header:active {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.03));
+        }
+
+        .filter-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .filter-title i {
+            color: var(--primary);
+            font-size: 18px;
+            width: 24px;
+            text-align: center;
+        }
+
+        .filter-count {
+            font-size: 12px;
+            min-width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-sub);
+            margin-left: 8px;
+            transition: all 0.2s;
+            padding: 0 8px;
+        }
+
+        .selected-count {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(88, 166, 255, 0.3);
+        }
+
+        .filter-toggle {
+            color: var(--text-sub);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .filter-panel.expanded .filter-toggle {
+            transform: rotate(180deg);
+            background: rgba(88, 166, 255, 0.1);
+            color: var(--primary);
+        }
+
+        .filter-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .filter-panel.expanded .filter-content {
+            max-height: 1000px;
+        }
+
+        .filter-options {
+            padding: 20px;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            background: rgba(255, 255, 255, 0.01);
+        }
+
+        .filter-option {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 16px 12px;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .filter-option:active {
+            transform: scale(0.98);
+        }
+
+        .filter-option:hover {
+            border-color: rgba(88, 166, 255, 0.5);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .filter-option.selected {
+            background: rgba(88, 166, 255, 0.15);
+            border-color: var(--primary);
+            box-shadow: 0 4px 16px rgba(88, 166, 255, 0.2);
+        }
+
+        .filter-option.selected::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--primary);
+            border-radius: 14px 14px 0 0;
+        }
+
+        .option-icon {
+            font-size: 24px;
+            color: var(--text-sub);
+            transition: all 0.2s;
+        }
+
+        .filter-option.selected .option-icon {
+            color: var(--primary);
+            transform: scale(1.1);
+        }
+
+        .option-label {
+            font-size: 13px;
+            color: var(--text-main);
+            font-weight: 500;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .filter-option.selected .option-label {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .option-badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--primary);
+            opacity: 0;
+            transform: scale(0);
+            transition: all 0.2s;
+        }
+
+        .filter-option.selected .option-badge {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        /* 联赛分类特殊样式 */
+        .filter-option.league-premier {
+            border-left: 3px solid var(--league-premier);
+        }
+        
+        .filter-option.league-laliga {
+            border-left: 3px solid var(--league-laliga);
+        }
+        
+        .filter-option.league-seriea {
+            border-left: 3px solid var(--league-seriea);
+        }
+        
+        .filter-option.league-bundesliga {
+            border-left: 3px solid var(--league-bundesliga);
+        }
+        
+        .filter-option.league-ligue1 {
+            border-left: 3px solid var(--league-ligue1);
+        }
+        
+        .filter-option.league-champions {
+            border-left: 3px solid var(--league-champions);
+        }
+
+        .filter-actions-bar {
+            padding: 16px 20px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .filter-action-btn {
+            flex: 1;
+            padding: 14px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-main);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .filter-action-btn:active {
+            transform: scale(0.98);
+        }
+
+        .filter-action-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .filter-action-btn.apply {
+            background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+            color: white;
+            border-color: var(--primary);
+            box-shadow: 0 4px 12px rgba(88, 166, 255, 0.3);
+        }
+
+        .filter-action-btn.apply:hover {
+            box-shadow: 0 6px 20px rgba(88, 166, 255, 0.4);
+        }
+
+        .filter-action-btn.clear {
+            background: rgba(248, 81, 73, 0.1);
+            color: var(--danger);
+            border-color: rgba(248, 81, 73, 0.3);
+        }
+
+        .filter-action-btn.clear:hover {
+            background: rgba(248, 81, 73, 0.15);
+        }
+
+        /* 筛选摘要标签 */
+        .filter-summary {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.02);
+            border-bottom: 1px solid var(--border-color);
+            min-height: 60px;
+            align-items: center;
+        }
+
+        .summary-tag {
+            background: rgba(88, 166, 255, 0.15);
+            border: 1px solid rgba(88, 166, 255, 0.3);
+            color: var(--primary);
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .summary-tag i {
+            font-size: 10px;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+
+        .summary-tag i:hover {
+            opacity: 1;
+        }
+
+        .summary-tag.injury {
+            background: rgba(248, 81, 73, 0.15);
+            border-color: rgba(248, 81, 73, 0.3);
+            color: var(--tag-injury);
+        }
+
+        .summary-tag.weather {
+            background: rgba(88, 166, 255, 0.15);
+            border-color: rgba(88, 166, 255, 0.3);
+            color: var(--tag-weather);
+        }
+
+        .summary-tag.referee {
+            background: rgba(163, 113, 247, 0.15);
+            border-color: rgba(163, 113, 247, 0.3);
+            color: var(--tag-referee);
+        }
+
+        .summary-tag.sp {
+            background: rgba(240, 136, 62, 0.15);
+            border-color: rgba(240, 136, 62, 0.3);
+            color: var(--tag-sp);
+        }
+
+        .summary-tag.official {
+            background: rgba(126, 231, 135, 0.15);
+            border-color: rgba(126, 231, 135, 0.3);
+            color: var(--source-official);
+        }
+
+        .summary-tag.media {
+            background: rgba(88, 166, 255, 0.15);
+            border-color: rgba(88, 166, 255, 0.3);
+            color: var(--source-media);
+        }
+
+        .summary-empty {
+            font-size: 13px;
+            color: var(--text-sub);
+            font-style: italic;
+        }
+
+        /* 比赛列表 */
+        .match-list {
+            padding: 16px;
+        }
+
+        .date-section {
+            margin-bottom: 24px;
+        }
+
+        .date-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 16px;
+            padding-left: 12px;
+            border-left: 4px solid var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .match-count {
+            font-size: 12px;
+            color: var(--text-sub);
+            background: rgba(255, 255, 255, 0.05);
+            padding: 2px 8px;
+            border-radius: 12px;
+        }
+
+        /* 比赛卡片 */
+        .match-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            margin-bottom: 16px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .match-card.expanded {
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+        }
+
+        .match-card-header {
+            padding: 16px;
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+        }
+
+        .match-card-header:active {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .match-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .match-id {
+            font-size: 11px;
+            color: var(--text-sub);
+            background: rgba(255, 255, 255, 0.05);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .match-league {
+            font-size: 12px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        .league-premier { background: rgba(255, 107, 107, 0.1); color: var(--league-premier); }
+        .league-laliga { background: rgba(78, 205, 196, 0.1); color: var(--league-laliga); }
+        .league-seriea { background: rgba(69, 183, 209, 0.1); color: var(--league-seriea); }
+        .league-bundesliga { background: rgba(150, 206, 180, 0.1); color: var(--league-bundesliga); }
+        .league-ligue1 { background: rgba(254, 202, 87, 0.1); color: var(--league-ligue1); }
+        .league-champions { background: rgba(255, 159, 243, 0.1); color: var(--league-champions); }
+
+        .match-time {
+            font-size: 13px;
+            color: var(--text-light);
+            font-weight: 500;
+        }
+
+        .match-teams {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 16px 0;
+            padding: 0 8px;
+        }
+
+        .team {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+        }
+
+        .team-logo {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: var(--text-light);
+        }
+
+        .team-name {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            text-align: center;
+        }
+
+        .team-form {
+            font-size: 11px;
+            color: var(--text-sub);
+            display: flex;
+            gap: 2px;
+        }
+
+        .form-win { color: #7ee787; }
+        .form-draw { color: var(--warning); }
+        .form-loss { color: var(--danger); }
+
+        .vs-separator {
+            font-size: 13px;
+            color: var(--text-sub);
+            padding: 0 16px;
+            font-weight: 600;
+        }
+
+        .match-stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: var(--text-sub);
+        }
+
+        .stat-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-light);
+        }
+
+        .match-toggle {
+            position: absolute;
+            right: 16px;
+            top: 16px;
+            color: var(--text-sub);
+            transition: transform 0.3s;
+        }
+
+        .match-card.expanded .match-toggle {
+            transform: rotate(180deg);
+        }
+
+        /* 情报内容区域 */
+        .intelligence-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            border-top: 1px solid var(--border-color);
+        }
+
+        .match-card.expanded .intelligence-content {
+            max-height: 2000px;
+        }
+
+        /* 预测模块 */
+        .prediction-module {
+            padding: 16px;
+            background: linear-gradient(135deg, rgba(88, 166, 255, 0.15), rgba(88, 166, 255, 0.05));
+            border-bottom: 1px solid rgba(88, 166, 255, 0.3);
+        }
+
+        .prediction-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .prediction-icon {
+            color: var(--primary);
+            font-size: 18px;
+        }
+
+        .prediction-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .prediction-content {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+
+        .prediction-text {
+            font-size: 14px;
+            color: var(--text-main);
+            line-height: 1.6;
+            margin-bottom: 8px;
+        }
+
+        .prediction-stats {
+            display: flex;
+            gap: 16px;
+        }
+
+        .prediction-stat {
+            flex: 1;
+        }
+
+        .prediction-stat-label {
+            font-size: 11px;
+            color: var(--text-sub);
+            margin-bottom: 2px;
+        }
+
+        .prediction-stat-value {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .prediction-source {
+            font-size: 12px;
+            color: var(--text-sub);
+            font-style: italic;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* 情报项目 */
+        .intel-item {
+            padding: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            position: relative;
+        }
+
+        .intel-item:last-child {
+            border-bottom: none;
+        }
+
+        .intel-item.new {
+            background: rgba(35, 134, 54, 0.05);
+            border-left: 4px solid var(--success);
+        }
+
+        .new-badge {
+            position: absolute;
+            top: 12px;
+            right: 16px;
+            background: var(--success);
+            color: white;
+            font-size: 10px;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-weight: 700;
+            box-shadow: 0 2px 8px rgba(35, 134, 54, 0.3);
+        }
+
+        .intel-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .intel-time {
+            font-size: 12px;
+            color: var(--text-sub);
+            font-family: 'Courier New', monospace;
+        }
+
+        .intel-tags {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+
+        .intel-tag {
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .tag-sp { background: rgba(240, 136, 62, 0.15); color: var(--tag-sp); }
+        .tag-injury { background: rgba(248, 81, 73, 0.15); color: var(--tag-injury); }
+        .tag-weather { background: rgba(88, 166, 255, 0.15); color: var(--tag-weather); }
+        .tag-referee { background: rgba(163, 113, 247, 0.15); color: var(--tag-referee); }
+        .tag-motive { background: rgba(240, 136, 62, 0.15); color: var(--tag-motive); }
+        .tag-tactics { background: rgba(126, 231, 135, 0.15); color: var(--tag-tactics); }
+        .tag-coach { background: rgba(126, 231, 135, 0.15); color: var(--tag-coach); }
+        .tag-history { background: rgba(139, 148, 158, 0.15); color: var(--tag-history); }
+        .tag-prediction { background: rgba(88, 166, 255, 0.15); color: var(--tag-prediction); }
+        .tag-atmosphere { background: rgba(240, 136, 62, 0.15); color: var(--tag-atmosphere); }
+
+        .source-badge {
+            font-size: 10px;
+            padding: 3px 8px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-sub);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .source-official { background: rgba(126, 231, 135, 0.15); color: var(--source-official); }
+        .source-media { background: rgba(88, 166, 255, 0.15); color: var(--source-media); }
+        .source-social { background: rgba(163, 113, 247, 0.15); color: var(--source-social); }
+        .source-bookmaker { background: rgba(240, 136, 62, 0.15); color: var(--source-bookmaker); }
+
+        .intel-content {
+            font-size: 14px;
+            color: var(--text-light);
+            line-height: 1.6;
+            margin-bottom: 12px;
+        }
+
+        .intel-summary {
+            font-size: 13px;
+            color: var(--text-main);
+            font-weight: 500;
+            margin-bottom: 12px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            border-left: 3px solid var(--primary);
+        }
+
+        .intel-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 16px;
+        }
+
+        .intel-source {
+            font-size: 12px;
+            color: var(--text-sub);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .intel-weight {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .weight-label {
+            font-size: 12px;
+            color: var(--text-sub);
+        }
+
+        .weight-badge {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 700;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .weight-high { background: rgba(248, 81, 73, 0.2); color: var(--weight-high); border: 2px solid rgba(248, 81, 73, 0.4); }
+        .weight-medium { background: rgba(240, 136, 62, 0.2); color: var(--weight-medium); border: 2px solid rgba(240, 136, 62, 0.4); }
+        .weight-low { background: rgba(139, 148, 158, 0.2); color: var(--weight-low); border: 2px solid rgba(139, 148, 158, 0.4); }
+
+        /* SP数据表格 */
+        .sp-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0;
+            font-size: 12px;
+        }
+
+        .sp-table th, .sp-table td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .sp-table th {
+            color: var(--text-sub);
+            font-weight: 600;
+        }
+
+        .sp-table td {
+            color: var(--text-light);
+        }
+
+        .sp-change {
+            font-weight: 600;
+        }
+
+        .sp-change.up {
+            color: #7ee787;
+        }
+
+        .sp-change.down {
+            color: var(--danger);
+        }
+
+        /* 底部导航栏 */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: rgba(13, 17, 23, 0.95);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding-bottom: var(--safe-area-bottom);
+            z-index: 1000;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-sub);
+            font-size: 11px;
+            gap: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            padding: 8px 0;
+            flex: 1;
+        }
+
+        .nav-item:active {
+            color: var(--primary);
+        }
+
+        .nav-item.active {
+            color: var(--primary);
+        }
+
+        .nav-icon {
+            font-size: 20px;
+        }
+
+        /* 加载状态 */
+        .loading-spinner {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 3000;
+        }
+
+        .loading-spinner.active {
+            display: block;
+        }
+
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid rgba(88, 166, 255, 0.3);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 80px 24px;
+            color: var(--text-sub);
+        }
+
+        .empty-icon {
+            font-size: 64px;
+            margin-bottom: 24px;
+            color: var(--text-sub);
+            opacity: 0.5;
+        }
+
+        .empty-title {
+            font-size: 18px;
+            margin-bottom: 12px;
+            color: var(--text-main);
+        }
+
+        .empty-description {
+            font-size: 14px;
+            color: var(--text-sub);
+            line-height: 1.5;
+        }
+
+        /* 统计面板 */
+        .stats-panel {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 16px;
+            margin: 16px;
+            border: 1px solid var(--border-color);
+        }
+
+        .stats-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .stats-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 12px;
+        }
+
+        .stat-card-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 4px;
+        }
+
+        .stat-card-label {
+            font-size: 12px;
+            color: var(--text-sub);
+        }
+
+        /* 用户面板样式 */
+        .profile-panel {
+            padding: 16px;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        .profile-header {
+            display: flex;
+            align-items: center;
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            border: 1px solid var(--border-color);
+        }
+
+        .profile-avatar {
+            position: relative;
+            margin-right: 20px;
+        }
+
+        .profile-avatar img {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 3px solid var(--primary);
+            background: var(--bg-body);
+        }
+
+        .avatar-edit {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--primary);
+            border: none;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .avatar-edit:active {
+            transform: scale(0.9);
+        }
+
+        .profile-info {
+            flex: 1;
+        }
+
+        .profile-info h3 {
+            font-size: 20px;
+            margin-bottom: 8px;
+            color: var(--text-main);
+        }
+
+        .user-level {
+            font-size: 14px;
+            color: var(--warning);
+            background: rgba(240, 136, 62, 0.1);
+            padding: 4px 12px;
+            border-radius: 12px;
+            display: inline-block;
+            margin-bottom: 12px;
+        }
+
+        .user-stats {
+            display: flex;
+            gap: 16px;
+        }
+
+        .stat-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: var(--text-sub);
+        }
+
+        .stat-badge i {
+            color: var(--primary);
+        }
+
+        .stat-badge strong {
+            color: var(--text-main);
+            margin-left: 4px;
+        }
+
+        .profile-section {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+            border: 1px solid var(--border-color);
+        }
+
+        .section-title {
+            font-size: 16px;
+            color: var(--text-main);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title i {
+            color: var(--primary);
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .info-label {
+            font-size: 12px;
+            color: var(--text-sub);
+            margin-bottom: 4px;
+        }
+
+        .info-value {
+            font-size: 14px;
+            color: var(--text-main);
+            font-weight: 500;
+        }
+
+        .status-active {
+            color: var(--success) !important;
+        }
+
+        .stats-grid-mini {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+
+        .stat-card-mini {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .stat-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .stat-content {
+            flex: 1;
+        }
+
+        .stat-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 2px;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: var(--text-sub);
+        }
+
+        .settings-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .setting-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 0;
+            cursor: pointer;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .setting-item:last-child {
+            border-bottom: none;
+        }
+
+        .setting-item:active {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .setting-content {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .setting-icon {
+            width: 24px;
+            color: var(--text-sub);
+            text-align: center;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 48px;
+            height: 24px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--border-color);
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--primary);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(24px);
+        }
+
+        /* 模态框样式 */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .modal-content {
+            background: var(--bg-card);
+            border-radius: 20px;
+            width: 90%;
+            max-width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            font-size: 18px;
+            color: var(--text-main);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-sub);
+            font-size: 24px;
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-close:active {
+            color: var(--text-main);
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .login-tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 24px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 4px;
+        }
+
+        .login-tab {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: transparent;
+            color: var(--text-sub);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .login-tab.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .login-form {
+            display: none;
+        }
+
+        .login-form.active {
+            display: block;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            color: var(--text-main);
+            margin-bottom: 8px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 14px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-main);
+            font-size: 15px;
+            transition: all 0.2s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 16px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary:active {
+            background: var(--primary-hover);
+            transform: scale(0.98);
+        }
+
+        .form-note {
+            text-align: center;
+            margin-top: 16px;
+            font-size: 13px;
+            color: var(--text-sub);
+        }
+
+        /* 动画效果 */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(-20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .slide-in {
+            animation: slideIn 0.3s ease-out;
+        }
+
+        /* 实用类 */
+        .hidden {
+            display: none !important;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        .mb-1 { margin-bottom: 4px; }
+        .mb-2 { margin-bottom: 8px; }
+        .mb-3 { margin-bottom: 12px; }
+        .mb-4 { margin-bottom: 16px; }
+        .mb-5 { margin-bottom: 24px; }
+
+        /* 响应式调整 */
+        @media (min-width: 768px) {
+            .mobile-container {
+                max-width: 600px;
+                margin: 0 auto;
+            }
+            
+            .filter-options {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航栏 -->
+    <header class="mobile-header">
+        <div class="header-logo">
+            <i class="fas fa-chart-line header-logo-icon"></i>
+            <span>竞彩扫盘<small class="header-subtitle">2026移动演示版</small></span>
+        </div>
+        <div class="header-right">
+            <div class="status-indicator">
+                <span class="status-dot"></span>
+                <span>数据引擎运行中</span>
+            </div>
+            <button class="refresh-btn" id="refreshBtn">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- 主内容区 -->
+    <main class="main-content">
+        <!-- 筛选工具栏 -->
+        <div class="filter-toolbar">
+            <div class="filter-section" id="quickFilters">
+                <!-- 快速筛选标签将通过JS动态生成 -->
+            </div>
+            <div class="filter-actions">
+                <div class="last-update" id="lastUpdate">最后更新: --</div>
+                <div class="sort-toggle">
+                    <span>排序:</span>
+                    <button class="sort-btn active" id="sortTime" data-sort="time">时间</button>
+                    <button class="sort-btn" id="sortWeight" data-sort="weight">权重</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 筛选摘要 -->
+        <div class="filter-summary hidden" id="filterSummary">
+            <div class="summary-empty">未选择任何筛选条件</div>
+            <!-- 筛选标签将通过JS动态生成 -->
+        </div>
+
+        <!-- 筛选面板 -->
+        <div class="filter-panels" id="filterPanels">
+            <!-- 情报分类筛选 -->
+            <div class="filter-panel expanded" id="intelTypePanel">
+                <div class="filter-header" onclick="toggleFilterPanel('intelType')">
+                    <div class="filter-title">
+                        <i class="fas fa-tags"></i>
+                        情报分类
+                        <span class="filter-count" id="intelTypeCount">0</span>
+                    </div>
+                    <div class="filter-toggle">
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                </div>
+                <div class="filter-content">
+                    <div class="filter-options" id="intelTypeOptions">
+                        <!-- 选项将通过JS动态生成 -->
+                    </div>
+                    <div class="filter-actions-bar">
+                        <button class="filter-action-btn clear" onclick="clearFilter('intelType')">
+                            <i class="fas fa-times"></i> 清除
+                        </button>
+                        <button class="filter-action-btn apply" onclick="applyFilters()">
+                            <i class="fas fa-check"></i> 应用筛选
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 联赛分类筛选 -->
+            <div class="filter-panel" id="leaguePanel">
+                <div class="filter-header" onclick="toggleFilterPanel('league')">
+                    <div class="filter-title">
+                        <i class="fas fa-trophy"></i>
+                        联赛分类
+                        <span class="filter-count" id="leagueCount">0</span>
+                    </div>
+                    <div class="filter-toggle">
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                </div>
+                <div class="filter-content">
+                    <div class="filter-options" id="leagueOptions">
+                        <!-- 选项将通过JS动态生成 -->
+                    </div>
+                    <div class="filter-actions-bar">
+                        <button class="filter-action-btn clear" onclick="clearFilter('league')">
+                            <i class="fas fa-times"></i> 清除
+                        </button>
+                        <button class="filter-action-btn apply" onclick="applyFilters()">
+                            <i class="fas fa-check"></i> 应用筛选
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 信息来源筛选 -->
+            <div class="filter-panel" id="sourcePanel">
+                <div class="filter-header" onclick="toggleFilterPanel('source')">
+                    <div class="filter-title">
+                        <i class="fas fa-newspaper"></i>
+                        信息来源
+                        <span class="filter-count" id="sourceCount">0</span>
+                    </div>
+                    <div class="filter-toggle">
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                </div>
+                <div class="filter-content">
+                    <div class="filter-options" id="sourceOptions">
+                        <!-- 选项将通过JS动态生成 -->
+                    </div>
+                    <div class="filter-actions-bar">
+                        <button class="filter-action-btn clear" onclick="clearFilter('source')">
+                            <i class="fas fa-times"></i> 清除
+                        </button>
+                        <button class="filter-action-btn apply" onclick="applyFilters()">
+                            <i class="fas fa-check"></i> 应用筛选
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 统计面板 -->
+        <div class="stats-panel" id="statsPanel">
+            <div class="stats-header">
+                <div class="stats-title">数据概览</div>
+                <div class="stats-refresh" style="font-size: 12px; color: var(--text-sub); cursor: pointer;" onclick="refreshStats()">
+                    <i class="fas fa-redo"></i> 刷新
+                </div>
+            </div>
+            <div class="stats-grid" id="statsGrid">
+                <!-- 统计数据将通过JS动态生成 -->
+            </div>
+        </div>
+
+        <!-- 用户面板 -->
+        <div class="profile-panel hidden" id="profilePanel">
+            <div class="profile-header">
+                <div class="profile-avatar">
+                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=default" alt="用户头像" id="userAvatar">
+                    <button class="avatar-edit" onclick="changeAvatar()">
+                        <i class="fas fa-camera"></i>
+                    </button>
+                </div>
+                <div class="profile-info">
+                    <h3 id="userName">竞彩玩家</h3>
+                    <p class="user-level" id="userLevel">VIP 3级会员</p>
+                    <div class="user-stats">
+                        <span class="stat-badge">
+                            <i class="fas fa-eye"></i>
+                            <span>关注: <strong id="followCount">12</strong></span>
+                        </span>
+                        <span class="stat-badge">
+                            <i class="fas fa-star"></i>
+                            <span>收藏: <strong id="favoriteCount">24</strong></span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="profile-section">
+                <h4 class="section-title">
+                    <i class="fas fa-user-circle"></i>
+                    账户信息
+                </h4>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">会员ID</span>
+                        <span class="info-value" id="userId">JC2026001</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">注册时间</span>
+                        <span class="info-value" id="registerDate">2026-01-01</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">使用时长</span>
+                        <span class="info-value" id="usageDuration">128天</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">账户状态</span>
+                        <span class="info-value status-active" id="accountStatus">正常</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="profile-section">
+                <h4 class="section-title">
+                    <i class="fas fa-chart-line"></i>
+                    数据统计
+                </h4>
+                <div class="stats-grid-mini">
+                    <div class="stat-card-mini">
+                        <div class="stat-icon" style="background: rgba(88, 166, 255, 0.2); color: var(--primary);">
+                            <i class="fas fa-eye"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="totalViews">1,248</div>
+                            <div class="stat-label">总浏览量</div>
+                        </div>
+                    </div>
+                    <div class="stat-card-mini">
+                        <div class="stat-icon" style="background: rgba(126, 231, 135, 0.2); color: var(--success);">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="correctPredictions">68%</div>
+                            <div class="stat-label">预测准确率</div>
+                        </div>
+                    </div>
+                    <div class="stat-card-mini">
+                        <div class="stat-icon" style="background: rgba(240, 136, 62, 0.2); color: var(--warning);">
+                            <i class="fas fa-fire"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="streakDays">7</div>
+                            <div class="stat-label">连续登录</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="profile-section">
+                <h4 class="section-title">
+                    <i class="fas fa-cog"></i>
+                    设置
+                </h4>
+                <div class="settings-list">
+                    <div class="setting-item" onclick="toggleSetting('notifications')">
+                        <div class="setting-content">
+                            <i class="fas fa-bell setting-icon"></i>
+                            <span>消息通知</span>
+                        </div>
+                        <div class="setting-toggle">
+                            <label class="switch">
+                                <input type="checkbox" id="notificationsToggle" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="setting-item" onclick="toggleSetting('darkMode')">
+                        <div class="setting-content">
+                            <i class="fas fa-moon setting-icon"></i>
+                            <span>深色模式</span>
+                        </div>
+                        <div class="setting-toggle">
+                            <label class="switch">
+                                <input type="checkbox" id="darkModeToggle" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="setting-item" onclick="showLoginModal()">
+                        <div class="setting-content">
+                            <i class="fas fa-sign-in-alt setting-icon"></i>
+                            <span>登录/注册</span>
+                        </div>
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                    <div class="setting-item" onclick="clearCache()">
+                        <div class="setting-content">
+                            <i class="fas fa-trash setting-icon"></i>
+                            <span style="color: var(--danger);">清除缓存</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 比赛列表 -->
+        <div class="match-list" id="matchList">
+            <!-- 比赛卡片将通过JS动态生成 -->
+        </div>
+
+        <!-- 加载状态 -->
+        <div class="loading-spinner" id="loadingSpinner">
+            <div class="spinner"></div>
+        </div>
+
+        <!-- 空状态 -->
+        <div class="empty-state hidden" id="emptyState">
+            <div class="empty-icon">
+                <i class="far fa-futbol"></i>
+            </div>
+            <h3 class="empty-title">暂无比赛数据</h3>
+            <p class="empty-description">请尝试调整筛选条件或刷新数据</p>
+            <button class="filter-chip" onclick="refreshData()" style="margin-top: 20px;">
+                <i class="fas fa-sync-alt"></i>
+                <span>刷新数据</span>
+            </button>
+        </div>
+    </main>
+
+    <!-- 底部导航栏 -->
+    <nav class="bottom-nav">
+        <div class="nav-item active" id="navHome">
+            <i class="fas fa-home nav-icon"></i>
+            <span>首页</span>
+        </div>
+        <div class="nav-item" id="navFilter">
+            <i class="fas fa-filter nav-icon"></i>
+            <span>筛选</span>
+        </div>
+        <div class="nav-item" id="navFavorites">
+            <i class="far fa-star nav-icon"></i>
+            <span>收藏</span>
+        </div>
+        <div class="nav-item" id="navProfile">
+            <i class="fas fa-user nav-icon"></i>
+            <span>我的</span>
+        </div>
+    </nav>
+
+    <!-- 登录/注册模态框 -->
+    <div class="modal hidden" id="loginModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>登录 / 注册</h3>
+                <button class="modal-close" onclick="closeLoginModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="login-tabs">
+                    <button class="login-tab active" id="loginTab">登录</button>
+                    <button class="login-tab" id="registerTab">注册</button>
+                </div>
+                
+                <div class="login-form active" id="loginForm">
+                    <div class="form-group">
+                        <label for="loginUsername">用户名</label>
+                        <input type="text" id="loginUsername" placeholder="请输入用户名">
+                    </div>
+                    <div class="form-group">
+                        <label for="loginPassword">密码</label>
+                        <input type="password" id="loginPassword" placeholder="请输入密码">
+                    </div>
+                    <button class="btn-primary" onclick="login()">登录</button>
+                    <p class="form-note">演示账号: demo / demo123</p>
+                </div>
+                
+                <div class="login-form" id="registerForm">
+                    <div class="form-group">
+                        <label for="registerUsername">用户名</label>
+                        <input type="text" id="registerUsername" placeholder="请输入用户名">
+                    </div>
+                    <div class="form-group">
+                        <label for="registerPassword">密码</label>
+                        <input type="password" id="registerPassword" placeholder="请输入密码">
+                    </div>
+                    <div class="form-group">
+                        <label for="confirmPassword">确认密码</label>
+                        <input type="password" id="confirmPassword" placeholder="请再次输入密码">
+                    </div>
+                    <div class="form-group">
+                        <label for="email">邮箱</label>
+                        <input type="email" id="email" placeholder="请输入邮箱">
+                    </div>
+                    <button class="btn-primary" onclick="register()">注册</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // 模拟数据生成系统
+        // ============================================
+
+        // 模拟数据配置
+        const MockConfig = {
+            // 联赛列表
+            leagues: [
+                { id: 'premier', name: '英超', color: 'league-premier', icon: 'fas fa-futbol' },
+                { id: 'laliga', name: '西甲', color: 'league-laliga', icon: 'fas fa-futbol' },
+                { id: 'seriea', name: '意甲', color: 'league-seriea', icon: 'fas fa-futbol' },
+                { id: 'bundesliga', name: '德甲', color: 'league-bundesliga', icon: 'fas fa-futbol' },
+                { id: 'ligue1', name: '法甲', color: 'league-ligue1', icon: 'fas fa-futbol' },
+                { id: 'champions', name: '欧冠', color: 'league-champions', icon: 'fas fa-trophy' }
+            ],
+            
+            // 球队列表（按联赛分组）
+            teams: {
+                premier: [
+                    { id: 'MCI', name: '曼城', shortName: 'MCI' },
+                    { id: 'LIV', name: '利物浦', shortName: 'LIV' },
+                    { id: 'CHE', name: '切尔西', shortName: 'CHE' },
+                    { id: 'MUN', name: '曼联', shortName: 'MUN' },
+                    { id: 'TOT', name: '热刺', shortName: 'TOT' },
+                    { id: 'ARS', name: '阿森纳', shortName: 'ARS' }
+                ],
+                laliga: [
+                    { id: 'RMA', name: '皇家马德里', shortName: 'RMA' },
+                    { id: 'BAR', name: '巴塞罗那', shortName: 'BAR' },
+                    { id: 'ATM', name: '马德里竞技', shortName: 'ATM' },
+                    { id: 'SEV', name: '塞维利亚', shortName: 'SEV' },
+                    { id: 'VIL', name: '比利亚雷亚尔', shortName: 'VIL' },
+                    { id: 'BET', name: '皇家贝蒂斯', shortName: 'BET' }
+                ],
+                seriea: [
+                    { id: 'JUV', name: '尤文图斯', shortName: 'JUV' },
+                    { id: 'MIL', name: 'AC米兰', shortName: 'MIL' },
+                    { id: 'INT', name: '国际米兰', shortName: 'INT' },
+                    { id: 'NAP', name: '那不勒斯', shortName: 'NAP' },
+                    { id: 'ROM', name: '罗马', shortName: 'ROM' },
+                    { id: 'LAZ', name: '拉齐奥', shortName: 'LAZ' }
+                ],
+                bundesliga: [
+                    { id: 'BAY', name: '拜仁慕尼黑', shortName: 'BAY' },
+                    { id: 'DOR', name: '多特蒙德', shortName: 'DOR' },
+                    { id: 'LEI', name: '莱比锡', shortName: 'LEI' },
+                    { id: 'LEV', name: '勒沃库森', shortName: 'LEV' },
+                    { id: 'MGL', name: '门兴', shortName: 'MGL' },
+                    { id: 'WOL', name: '沃尔夫斯堡', shortName: 'WOL' }
+                ],
+                ligue1: [
+                    { id: 'PSG', name: '巴黎圣日耳曼', shortName: 'PSG' },
+                    { id: 'LYO', name: '里昂', shortName: 'LYO' },
+                    { id: 'MAR', name: '马赛', shortName: 'MAR' },
+                    { id: 'MON', name: '摩纳哥', shortName: 'MON' },
+                    { id: 'LIL', name: '里尔', shortName: 'LIL' },
+                    { id: 'NIC', name: '尼斯', shortName: 'NIC' }
+                ],
+                champions: [
+                    { id: 'MCI', name: '曼城', shortName: 'MCI' },
+                    { id: 'RMA', name: '皇家马德里', shortName: 'RMA' },
+                    { id: 'BAY', name: '拜仁慕尼黑', shortName: 'BAY' },
+                    { id: 'PSG', name: '巴黎圣日耳曼', shortName: 'PSG' },
+                    { id: 'LIV', name: '利物浦', shortName: 'LIV' },
+                    { id: 'BAR', name: '巴塞罗那', shortName: 'BAR' }
+                ]
+            },
+            
+            // 场馆列表
+            venues: [
+                '伊蒂哈德球场', '安菲尔德球场', '斯坦福桥球场', '老特拉福德球场',
+                '诺坎普球场', '伯纳乌球场', '安联球场', '王子公园球场',
+                '圣西罗球场', '阿尔瓦拉德球场', '威斯特法伦球场', '梅阿查球场'
+            ],
+            
+            // 情报类型
+            intelligenceTypes: [
+                { id: 'injury', name: '伤病', icon: 'fas fa-user-injured', color: 'tag-injury' },
+                { id: 'weather', name: '天气', icon: 'fas fa-cloud-sun', color: 'tag-weather' },
+                { id: 'referee', name: '裁判', icon: 'fas fa-whistle', color: 'tag-referee' },
+                { id: 'sp', name: '赔率', icon: 'fas fa-chart-line', color: 'tag-sp' },
+                { id: 'motive', name: '战意', icon: 'fas fa-fire', color: 'tag-motive' },
+                { id: 'tactics', name: '战术', icon: 'fas fa-chess-board', color: 'tag-tactics' },
+                { id: 'coach', name: '主帅', icon: 'fas fa-user-tie', color: 'tag-coach' },
+                { id: 'history', name: '历史', icon: 'fas fa-history', color: 'tag-history' },
+                { id: 'atmosphere', name: '氛围', icon: 'fas fa-users', color: 'tag-atmosphere' },
+                { id: 'prediction', name: '预测', icon: 'fas fa-crystal-ball', color: 'tag-prediction' }
+            ],
+            
+            // 信息来源
+            sources: [
+                { id: 'official', name: '官方', icon: 'fas fa-check-circle', color: 'source-official' },
+                { id: 'media', name: '媒体', icon: 'fas fa-newspaper', color: 'source-media' },
+                { id: 'social', name: '社交', icon: 'fas fa-share-alt', color: 'source-social' },
+                { id: 'bookmaker', name: '博彩', icon: 'fas fa-chart-line', color: 'source-bookmaker' }
+            ],
+            
+            // 模拟数据生成配置
+            generation: {
+                totalMatches: 15,
+                intelPerMatch: { min: 3, max: 8 },
+                newIntelRatio: 0.3,
+                highWeightRatio: 0.2,
+                mediumWeightRatio: 0.5
+            }
+        };
+
+        // 模拟数据生成函数
+        class MockDataGenerator {
+            constructor() {
+                this.matches = [];
+                this.intelligence = {};
+                this.stats = {
+                    totalMatches: 0,
+                    totalIntel: 0,
+                    newIntel: 0,
+                    highWeightIntel: 0,
+                    matchesByLeague: {}
+                };
+            }
+            
+            // 生成随机数
+            random(min, max) {
+                return Math.floor(Math.random() * (max - min + 1)) + min;
+            }
+            
+            // 随机选择数组元素
+            randomChoice(array) {
+                return array[Math.floor(Math.random() * array.length)];
+            }
+            
+            // 随机布尔值
+            randomBool(probability = 0.5) {
+                return Math.random() < probability;
+            }
+            
+            // 生成比赛ID
+            generateMatchId() {
+                return `MAT${String(this.matches.length + 1).padStart(3, '0')}`;
+            }
+            
+            // 生成情报ID
+            generateIntelId(matchId, index) {
+                return `${matchId}-INT${String(index).padStart(2, '0')}`;
+            }
+            
+            // 生成模拟比赛
+            generateMatches() {
+                this.matches = [];
+                const today = new Date();
+                
+                for (let i = 0; i < MockConfig.generation.totalMatches; i++) {
+                    const league = this.randomChoice(MockConfig.leagues);
+                    const leagueTeams = MockConfig.teams[league.id];
+                    
+                    // 随机选择两队，确保不重复
+                    let homeTeam, awayTeam;
+                    do {
+                        homeTeam = this.randomChoice(leagueTeams);
+                        awayTeam = this.randomChoice(leagueTeams);
+                    } while (homeTeam.id === awayTeam.id);
+                    
+                    // 随机时间（未来1-7天）
+                    const matchDate = new Date(today);
+                    matchDate.setDate(matchDate.getDate() + this.random(1, 7));
+                    matchDate.setHours(this.random(14, 22), this.random(0, 59), 0, 0);
+                    
+                    // 生成比赛数据
+                    const match = {
+                        id: this.generateMatchId(),
+                        league: league.name,
+                        leagueId: league.id,
+                        leagueColor: league.color,
+                        homeTeam: homeTeam.name,
+                        homeTeamShort: homeTeam.shortName,
+                        awayTeam: awayTeam.name,
+                        awayTeamShort: awayTeam.shortName,
+                        time: matchDate.toISOString(),
+                        venue: this.randomChoice(MockConfig.venues),
+                        status: '未开始',
+                        // 模拟近期战绩
+                        homeForm: this.generateFormRecord(),
+                        awayForm: this.generateFormRecord(),
+                        // 模拟SP数据
+                        spData: this.generateSPData(),
+                        // 模拟预测
+                        predictions: this.generatePredictions()
+                    };
+                    
+                    this.matches.push(match);
+                    
+                    // 为该比赛生成情报
+                    this.generateIntelligenceForMatch(match.id);
+                }
+                
+                // 按时间排序
+                this.matches.sort((a, b) => new Date(a.time) - new Date(b.time));
+                
+                return this.matches;
+            }
+            
+            // 生成战绩记录
+            generateFormRecord() {
+                const form = [];
+                for (let i = 0; i < 5; i++) {
+                    const rand = Math.random();
+                    if (rand < 0.4) form.push('W');
+                    else if (rand < 0.7) form.push('D');
+                    else form.push('L');
+                }
+                return form;
+            }
+            
+            // 生成SP数据
+            generateSPData() {
+                return {
+                    '竞彩官方': {
+                        win: { initial: (Math.random() * 0.5 + 1.5).toFixed(2), latest: (Math.random() * 0.5 + 1.5).toFixed(2) },
+                        draw: { initial: (Math.random() * 0.5 + 3.0).toFixed(2), latest: (Math.random() * 0.5 + 3.0).toFixed(2) },
+                        loss: { initial: (Math.random() * 0.5 + 4.0).toFixed(2), latest: (Math.random() * 0.5 + 4.0).toFixed(2) }
+                    },
+                    '威廉希尔': {
+                        win: { initial: (Math.random() * 0.5 + 1.5).toFixed(2), latest: (Math.random() * 0.5 + 1.5).toFixed(2) },
+                        draw: { initial: (Math.random() * 0.5 + 3.0).toFixed(2), latest: (Math.random() * 0.5 + 3.0).toFixed(2) },
+                        loss: { initial: (Math.random() * 0.5 + 4.0).toFixed(2), latest: (Math.random() * 0.5 + 4.0).toFixed(2) }
+                    },
+                    '立博': {
+                        win: { initial: (Math.random() * 0.5 + 1.5).toFixed(2), latest: (Math.random() * 0.5 + 1.5).toFixed(2) },
+                        draw: { initial: (Math.random() * 0.5 + 3.0).toFixed(2), latest: (Math.random() * 0.5 + 3.0).toFixed(2) },
+                        loss: { initial: (Math.random() * 0.5 + 4.0).toFixed(2), latest: (Math.random() * 0.5 + 4.0).toFixed(2) }
+                    }
+                };
+            }
+            
+            // 生成预测
+            generatePredictions() {
+                const predictions = [];
+                const predictionTypes = [
+                    { type: '胜负平', icon: 'fas fa-trophy' },
+                    { type: '比分', icon: 'fas fa-futbol' },
+                    { type: '大小球', icon: 'fas fa-bullseye' }
+                ];
+                
+                predictionTypes.forEach(predType => {
+                    predictions.push({
+                        id: `PRED${this.random(1, 1000)}`,
+                        type: predType.type,
+                        icon: predType.icon,
+                        prediction: this.generatePredictionText(predType.type),
+                        confidence: this.random(60, 95),
+                        source: this.randomChoice(['AI模型', '专家分析', '历史数据']),
+                        timestamp: new Date(Date.now() - this.random(0, 24 * 60 * 60 * 1000)).toISOString()
+                    });
+                });
+                
+                return predictions;
+            }
+            
+            // 生成预测文本
+            generatePredictionText(type) {
+                const texts = {
+                    '胜负平': ['主队不败', '客队有望取分', '双方分胜负', '平局可能性大'],
+                    '比分': ['2-1', '1-1', '3-2', '2-0', '0-0'],
+                    '大小球': ['大球(>2.5)', '小球(<2.5)', '走盘(2.5)']
+                };
+                
+                return this.randomChoice(texts[type] || ['数据不足，无法预测']);
+            }
+            
+            // 为比赛生成情报
+            generateIntelligenceForMatch(matchId) {
+                const intelCount = this.random(
+                    MockConfig.generation.intelPerMatch.min,
+                    MockConfig.generation.intelPerMatch.max
+                );
+                
+                const intelList = [];
+                const match = this.matches.find(m => m.id === matchId);
+                
+                for (let i = 0; i < intelCount; i++) {
+                    const intelType = this.randomChoice(MockConfig.intelligenceTypes);
+                    const source = this.randomChoice(MockConfig.sources);
+                    
+                    // 生成权重
+                    let weight;
+                    const rand = Math.random();
+                    if (rand < MockConfig.generation.highWeightRatio) {
+                        weight = this.random(80, 95) / 10;
+                    } else if (rand < MockConfig.generation.highWeightRatio + MockConfig.generation.mediumWeightRatio) {
+                        weight = this.random(60, 79) / 10;
+                    } else {
+                        weight = this.random(30, 59) / 10;
+                    }
+                    
+                    // 是否标记为new
+                    const isNew = this.randomBool(MockConfig.generation.newIntelRatio);
+                    
+                    // 生成时间（最近1-48小时）
+                    const intelTime = new Date(Date.now() - this.random(1 * 60 * 60 * 1000, 48 * 60 * 60 * 1000));
+                    
+                    // 生成情报内容
+                    const content = this.generateIntelContent(intelType.id, match, source.id);
+                    
+                    const intelligence = {
+                        id: this.generateIntelId(matchId, i),
+                        matchId: matchId,
+                        type: intelType.id,
+                        typeName: intelType.name,
+                        typeIcon: intelType.icon,
+                        typeColor: intelType.color,
+                        source: source.id,
+                        sourceName: source.name,
+                        sourceColor: source.color,
+                        content: content.text,
+                        summary: content.summary,
+                        weight: weight,
+                        isNew: isNew,
+                        timestamp: intelTime.toISOString(),
+                        extraData: this.generateExtraData(intelType.id, match)
+                    };
+                    
+                    intelList.push(intelligence);
+                    
+                    // 更新统计
+                    this.stats.totalIntel++;
+                    if (isNew) this.stats.newIntel++;
+                    if (weight >= 8) this.stats.highWeightIntel++;
+                }
+                
+                // 按时间排序（最新的在前面）
+                intelList.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                
+                this.intelligence[matchId] = intelList;
+                
+                // 更新比赛统计
+                this.stats.totalMatches++;
+                if (!this.stats.matchesByLeague[match.league]) {
+                    this.stats.matchesByLeague[match.league] = 0;
+                }
+                this.stats.matchesByLeague[match.league]++;
+                
+                return intelList;
+            }
+            
+            // 生成情报内容
+            generateIntelContent(type, match, source) {
+                const templates = {
+                    injury: {
+                        official: [
+                            { text: `${match.homeTeam}主力前锋确认因大腿肌肉拉伤将缺席本场比赛，预计休战2-3周。`, summary: '主力前锋伤缺' },
+                            { text: `${match.awayTeam}后防核心在训练中受伤，经检查为脚踝扭伤，本场比赛出战成疑。`, summary: '后防核心出战成疑' }
+                        ],
+                        media: [
+                            { text: `据队医透露，${match.homeTeam}中场核心恢复情况良好，有望在本场比赛中复出。`, summary: '中场核心有望复出' },
+                            { text: `${match.awayTeam}两名主力球员因累积黄牌停赛，对球队实力影响较大。`, summary: '两主力停赛' }
+                        ]
+                    },
+                    weather: {
+                        official: [
+                            { text: '比赛日当地天气预报显示将有中雨，气温15-18度，湿度85%，可能影响比赛节奏。', summary: '比赛日有雨' },
+                            { text: '晴朗天气，气温适宜，湿度60%，非常适合足球比赛。', summary: '天气良好' }
+                        ]
+                    },
+                    referee: {
+                        official: [
+                            { text: '本场比赛主裁判为安东尼·泰勒，其执法尺度较严，本赛季共出示黄牌45张，红牌3张。', summary: '主裁判执法严格' },
+                            { text: 'VAR裁判为迈克尔·奥利弗，本赛季参与判罚准确率高达98%。', summary: 'VAR裁判准确率高' }
+                        ]
+                    },
+                    sp: {
+                        bookmaker: [
+                            { text: '竞彩官方胜赔从1.85下调至1.75，平赔从3.40上调至3.60，负赔从4.20上调至4.50。', summary: '主胜赔率下调' },
+                            { text: '威廉希尔大幅下调客胜赔率，从4.50降至3.80，显示对客队信心增强。', summary: '客胜赔率下调' }
+                        ]
+                    },
+                    motive: {
+                        media: [
+                            { text: `${match.homeTeam}本场比赛若获胜将提前锁定联赛冠军，战意十足。`, summary: '主队争冠战意强' },
+                            { text: `${match.awayTeam}已确定降级，球员心态可能受到影响。`, summary: '客队已降级' }
+                        ],
+                        social: [
+                            { text: '社交媒体显示，主队球迷热情高涨，门票已售罄，主场氛围极佳。', summary: '主场氛围热烈' }
+                        ]
+                    },
+                    tactics: {
+                        media: [
+                            { text: `${match.homeTeam}主帅确认将变阵4-3-3，强调高位逼抢和快速反击。`, summary: '主队变阵4-3-3' },
+                            { text: `${match.awayTeam}预计采用防守反击战术，重点盯防对方核心球员。`, summary: '客队防守反击' }
+                        ]
+                    },
+                    coach: {
+                        official: [
+                            { text: `${match.homeTeam}主帅在赛前发布会表示："我们已经做好充分准备，目标全取三分。"`, summary: '主帅信心十足' },
+                            { text: `${match.awayTeam}主帅因个人原因可能缺席本场比赛，由助教临时指挥。`, summary: '主帅可能缺席' }
+                        ]
+                    },
+                    history: {
+                        media: [
+                            { text: `双方近10次交锋，${match.homeTeam}取得6胜3平1负，占据绝对优势。`, summary: '历史交锋主队占优' },
+                            { text: '上赛季同一对决中，主队曾5-0大胜客队，心理优势明显。', summary: '上季主队大胜' }
+                        ]
+                    },
+                    atmosphere: {
+                        social: [
+                            { text: '球迷论坛热议本场比赛，普遍看好主队获胜，支持率超过70%。', summary: '球迷看好主队' },
+                            { text: '社交媒体上客队球迷组织表示将组织3000人远征助威。', summary: '客队球迷远征' }
+                        ]
+                    },
+                    prediction: {
+                        media: [
+                            { text: '权威媒体预测本场比赛主队不败概率高达75%，推荐比分2-1、1-1。', summary: '媒体预测主队不败' },
+                            { text: '数据分析模型显示，本场比赛出现大球(>2.5)的概率为68%。', summary: '模型预测大球' }
+                        ]
+                    }
+                };
+                
+                const typeTemplates = templates[type];
+                if (!typeTemplates) {
+                    return {
+                        text: '暂无详细信息',
+                        summary: '信息更新中'
+                    };
+                }
+                
+                const sourceTemplates = typeTemplates[source] || typeTemplates[Object.keys(typeTemplates)[0]];
+                
+                if (sourceTemplates && sourceTemplates.length > 0) {
+                    return this.randomChoice(sourceTemplates);
+                }
+                
+                return {
+                    text: `关于${match.homeTeam} vs ${match.awayTeam}的${type}情报`,
+                    summary: `${type}情报更新`
+                };
+            }
+            
+            // 生成额外数据
+            generateExtraData(type, match) {
+                switch(type) {
+                    case 'sp':
+                        return {
+                            companies: ['竞彩官方', '威廉希尔', '立博'],
+                            changes: [
+                                { company: '竞彩官方', direction: this.randomBool() ? 'up' : 'down', amount: (Math.random() * 0.3).toFixed(2) },
+                                { company: '威廉希尔', direction: this.randomBool() ? 'up' : 'down', amount: (Math.random() * 0.3).toFixed(2) }
+                            ]
+                        };
+                    case 'injury':
+                        return {
+                            players: [
+                                { name: '主力前锋', team: match.homeTeam, status: '缺席', duration: '2-3周' },
+                                { name: '后防核心', team: match.awayTeam, status: '出战成疑', probability: '50%' }
+                            ]
+                        };
+                    case 'weather':
+                        return {
+                            temperature: `${this.random(10, 25)}°C`,
+                            condition: this.randomChoice(['晴朗', '多云', '小雨', '中雨']),
+                            humidity: `${this.random(50, 90)}%`,
+                            wind: `${this.random(5, 25)} km/h`
+                        };
+                    default:
+                        return {};
+                }
+            }
+            
+            // 获取统计信息
+            getStats() {
+                return {
+                    ...this.stats,
+                    avgIntelPerMatch: this.stats.totalMatches > 0 ? (this.stats.totalIntel / this.stats.totalMatches).toFixed(1) : 0,
+                    newIntelRatio: this.stats.totalIntel > 0 ? ((this.stats.newIntel / this.stats.totalIntel) * 100).toFixed(1) : 0,
+                    highWeightRatio: this.stats.totalIntel > 0 ? ((this.stats.highWeightIntel / this.stats.totalIntel) * 100).toFixed(1) : 0
+                };
+            }
+            
+            // 重置统计
+            resetStats() {
+                this.stats = {
+                    totalMatches: 0,
+                    totalIntel: 0,
+                    newIntel: 0,
+                    highWeightIntel: 0,
+                    matchesByLeague: {}
+                };
+            }
+        }
+
+        // ============================================
+        // 应用主逻辑
+        // ============================================
+
+        // 全局状态
+        const AppState = {
+            currentLeague: 'all',
+            currentType: 'all',
+            currentSource: 'all',
+            currentSort: 'time',
+            matches: [],
+            intelligence: {},
+            generator: new MockDataGenerator(),
+            favorites: JSON.parse(localStorage.getItem('favorites')) || [],
+            viewMode: 'list',
+            autoRefresh: true,
+            // 新增：筛选状态（支持多选）
+            filterState: {
+                intelTypes: [],      // 选中的情报类型
+                leagues: [],         // 选中的联赛
+                sources: []          // 选中的信息来源
+            },
+            // 筛选面板状态
+            panelState: {
+                intelTypeExpanded: true,
+                leagueExpanded: false,
+                sourceExpanded: false
+            }
+        };
+
+        // 用户数据
+        const UserData = {
+            isLoggedIn: false,
+            username: '竞彩玩家',
+            userId: 'JC2026001',
+            level: 'VIP 3级会员',
+            avatarSeed: 'default',
+            registerDate: '2026-01-01',
+            totalViews: 1248,
+            correctPredictions: 68,
+            streakDays: 7,
+            followCount: 12,
+            favoriteCount: 24,
+            settings: {
+                notifications: true,
+                darkMode: true
+            }
+        };
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeApp();
+            setupEventListeners();
+            loadInitialData();
+        });
+
+        // 应用初始化
+        function initializeApp() {
+            // 初始化筛选器
+            initializeFilters();
+            
+            // 初始化筛选面板
+            initializeFilterPanels();
+            
+            // 更新最后更新时间
+            updateLastUpdateTime();
+            
+            // 设置自动刷新
+            if (AppState.autoRefresh) {
+                setInterval(refreshData, 300000);
+            }
+            
+            // 默认展开第一个筛选面板
+            toggleFilterPanel('intelType');
+        }
+
+        // 初始化筛选器
+        function initializeFilters() {
+            // 快速筛选标签
+            const quickFilters = [
+                { id: 'all', label: '全部', icon: 'fas fa-list', type: 'all' },
+                { id: 'injury', label: '伤病', icon: 'fas fa-user-injured', type: 'injury' },
+                { id: 'sp', label: '赔率', icon: 'fas fa-chart-line', type: 'sp' },
+                { id: 'prediction', label: '预测', icon: 'fas fa-crystal-ball', type: 'prediction' },
+                { id: 'weather', label: '天气', icon: 'fas fa-cloud-sun', type: 'weather' },
+                { id: 'tactics', label: '战术', icon: 'fas fa-chess-board', type: 'tactics' },
+                { id: 'mockData', label: '生成新数据', icon: 'fas fa-database', type: 'mock' }
+            ];
+            
+            const quickFiltersContainer = document.getElementById('quickFilters');
+            quickFilters.forEach(filter => {
+                const chip = document.createElement('div');
+                chip.className = `filter-chip ${filter.id === 'all' ? 'active' : ''}`;
+                chip.dataset.filter = filter.id;
+                chip.innerHTML = `<i class="${filter.icon}"></i><span>${filter.label}</span>`;
+                chip.addEventListener('click', () => handleQuickFilter(filter.id, chip));
+                quickFiltersContainer.appendChild(chip);
+            });
+        }
+
+        // 初始化筛选面板
+        function initializeFilterPanels() {
+            // 初始化情报分类选项
+            const intelTypeOptions = document.getElementById('intelTypeOptions');
+            MockConfig.intelligenceTypes.forEach(type => {
+                const option = createFilterOption(type.id, type.name, type.icon, 'intelType');
+                option.dataset.color = type.color;
+                intelTypeOptions.appendChild(option);
+            });
+            
+            // 初始化联赛分类选项
+            const leagueOptions = document.getElementById('leagueOptions');
+            MockConfig.leagues.forEach(league => {
+                const option = createFilterOption(league.id, league.name, league.icon, 'league');
+                option.classList.add(league.color);
+                leagueOptions.appendChild(option);
+            });
+            
+            // 初始化信息来源选项
+            const sourceOptions = document.getElementById('sourceOptions');
+            MockConfig.sources.forEach(source => {
+                const option = createFilterOption(source.id, source.name, source.icon, 'source');
+                option.dataset.color = source.color;
+                sourceOptions.appendChild(option);
+            });
+            
+            // 更新筛选计数
+            updateFilterCounts();
+        }
+
+        // 创建筛选选项
+        function createFilterOption(id, label, icon, filterType) {
+            const option = document.createElement('div');
+            option.className = 'filter-option';
+            option.dataset.id = id;
+            option.dataset.filterType = filterType;
+            option.dataset.label = label;
+            option.innerHTML = `
+                <div class="option-badge"></div>
+                <i class="${icon} option-icon"></i>
+                <span class="option-label">${label}</span>
+            `;
+            
+            option.addEventListener('click', function() {
+                toggleFilterOption(this);
+            });
+            
+            return option;
+        }
+
+        // 切换筛选选项
+        function toggleFilterOption(optionElement) {
+            const filterType = optionElement.dataset.filterType;
+            const id = optionElement.dataset.id;
+            
+            // 获取对应的筛选数组
+            let filterArray;
+            switch(filterType) {
+                case 'intelType':
+                    filterArray = AppState.filterState.intelTypes;
+                    break;
+                case 'league':
+                    filterArray = AppState.filterState.leagues;
+                    break;
+                case 'source':
+                    filterArray = AppState.filterState.sources;
+                    break;
+                default:
+                    return;
+            }
+            
+            // 切换选中状态
+            const index = filterArray.indexOf(id);
+            if (index === -1) {
+                // 添加
+                filterArray.push(id);
+                optionElement.classList.add('selected');
+            } else {
+                // 移除
+                filterArray.splice(index, 1);
+                optionElement.classList.remove('selected');
+            }
+            
+            // 更新筛选计数和摘要
+            updateFilterCounts();
+            updateFilterSummary();
+        }
+
+        // 更新筛选计数
+        function updateFilterCounts() {
+            document.getElementById('intelTypeCount').textContent = 
+                AppState.filterState.intelTypes.length;
+            document.getElementById('leagueCount').textContent = 
+                AppState.filterState.leagues.length;
+            document.getElementById('sourceCount').textContent = 
+                AppState.filterState.sources.length;
+            
+            // 更新计数样式
+            [document.getElementById('intelTypeCount'), 
+             document.getElementById('leagueCount'), 
+             document.getElementById('sourceCount')].forEach(el => {
+                if (parseInt(el.textContent) > 0) {
+                    el.classList.add('selected-count');
+                } else {
+                    el.classList.remove('selected-count');
+                }
+            });
+        }
+
+        // 更新筛选摘要
+        function updateFilterSummary() {
+            const summaryContainer = document.getElementById('filterSummary');
+            summaryContainer.innerHTML = '';
+            
+            const selectedCount = 
+                AppState.filterState.intelTypes.length + 
+                AppState.filterState.leagues.length + 
+                AppState.filterState.sources.length;
+            
+            if (selectedCount === 0) {
+                summaryContainer.classList.add('hidden');
+                return;
+            }
+            
+            summaryContainer.classList.remove('hidden');
+            
+            // 添加情报类型标签
+            AppState.filterState.intelTypes.forEach(typeId => {
+                const type = MockConfig.intelligenceTypes.find(t => t.id === typeId);
+                if (type) {
+                    const tag = document.createElement('div');
+                    tag.className = `summary-tag ${type.id}`;
+                    tag.innerHTML = `
+                        <i class="${type.icon}"></i>
+                        <span>${type.name}</span>
+                        <i class="fas fa-times" onclick="removeFilterTag('intelType', '${typeId}')"></i>
+                    `;
+                    summaryContainer.appendChild(tag);
+                }
+            });
+            
+            // 添加联赛标签
+            AppState.filterState.leagues.forEach(leagueId => {
+                const league = MockConfig.leagues.find(l => l.id === leagueId);
+                if (league) {
+                    const tag = document.createElement('div');
+                    tag.className = 'summary-tag';
+                    tag.innerHTML = `
+                        <i class="${league.icon}"></i>
+                        <span>${league.name}</span>
+                        <i class="fas fa-times" onclick="removeFilterTag('league', '${leagueId}')"></i>
+                    `;
+                    summaryContainer.appendChild(tag);
+                }
+            });
+            
+            // 添加信息来源标签
+            AppState.filterState.sources.forEach(sourceId => {
+                const source = MockConfig.sources.find(s => s.id === sourceId);
+                if (source) {
+                    const tag = document.createElement('div');
+                    tag.className = `summary-tag ${source.id}`;
+                    tag.innerHTML = `
+                        <i class="${source.icon}"></i>
+                        <span>${source.name}</span>
+                        <i class="fas fa-times" onclick="removeFilterTag('source', '${sourceId}')"></i>
+                    `;
+                    summaryContainer.appendChild(tag);
+                }
+            });
+        }
+
+        // 移除筛选标签
+        function removeFilterTag(filterType, id) {
+            const filterArray = AppState.filterState[filterType + 's'];
+            const index = filterArray.indexOf(id);
+            if (index !== -1) {
+                filterArray.splice(index, 1);
+                
+                // 更新UI
+                const option = document.querySelector(`.filter-option[data-id="${id}"][data-filter-type="${filterType}"]`);
+                if (option) {
+                    option.classList.remove('selected');
+                }
+                
+                updateFilterCounts();
+                updateFilterSummary();
+                applyFilters();
+            }
+        }
+
+        // 清除筛选
+        function clearFilter(filterType) {
+            switch(filterType) {
+                case 'intelType':
+                    AppState.filterState.intelTypes = [];
+                    // 清除所有情报分类选项的选中状态
+                    document.querySelectorAll('#intelTypeOptions .filter-option').forEach(option => {
+                        option.classList.remove('selected');
+                    });
+                    break;
+                case 'league':
+                    AppState.filterState.leagues = [];
+                    // 清除所有联赛选项的选中状态
+                    document.querySelectorAll('#leagueOptions .filter-option').forEach(option => {
+                        option.classList.remove('selected');
+                    });
+                    break;
+                case 'source':
+                    AppState.filterState.sources = [];
+                    // 清除所有信息来源选项的选中状态
+                    document.querySelectorAll('#sourceOptions .filter-option').forEach(option => {
+                        option.classList.remove('selected');
+                    });
+                    break;
+            }
+            
+            updateFilterCounts();
+            updateFilterSummary();
+            showToast(`已清除${getFilterTypeLabel(filterType)}筛选`);
+        }
+
+        // 应用筛选
+        function applyFilters() {
+            // 收起所有筛选面板
+            closeAllFilterPanels();
+            
+            // 重新渲染比赛列表
+            renderMatches();
+            
+            // 显示筛选结果
+            const selectedCount = 
+                AppState.filterState.intelTypes.length + 
+                AppState.filterState.leagues.length + 
+                AppState.filterState.sources.length;
+            
+            if (selectedCount > 0) {
+                let filterText = '当前筛选: ';
+                const filters = [];
+                
+                if (AppState.filterState.intelTypes.length > 0) {
+                    filters.push(`${AppState.filterState.intelTypes.length}种情报类型`);
+                }
+                if (AppState.filterState.leagues.length > 0) {
+                    filters.push(`${AppState.filterState.leagues.length}个联赛`);
+                }
+                if (AppState.filterState.sources.length > 0) {
+                    filters.push(`${AppState.filterState.sources.length}种来源`);
+                }
+                
+                filterText += filters.join('，');
+                showToast(filterText);
+            } else {
+                showToast('已显示所有比赛');
+            }
+        }
+
+        // 获取筛选类型标签
+        function getFilterTypeLabel(filterType) {
+            switch(filterType) {
+                case 'intelType': return '情报分类';
+                case 'league': return '联赛分类';
+                case 'source': return '信息来源';
+                default: return '筛选';
+            }
+        }
+
+        // 切换筛选面板展开/收起
+        function toggleFilterPanel(panelType) {
+            const panel = document.getElementById(`${panelType}Panel`);
+            const isExpanded = panel.classList.contains('expanded');
+            
+            // 收起所有面板
+            closeAllFilterPanels();
+            
+            // 如果当前是收起的，则展开
+            if (!isExpanded) {
+                panel.classList.add('expanded');
+                AppState.panelState[`${panelType}Expanded`] = true;
+            }
+        }
+
+        // 收起所有筛选面板
+        function closeAllFilterPanels() {
+            document.querySelectorAll('.filter-panel').forEach(panel => {
+                panel.classList.remove('expanded');
+            });
+            
+            // 更新面板状态
+            Object.keys(AppState.panelState).forEach(key => {
+                AppState.panelState[key] = false;
+            });
+        }
+
+        // 设置事件监听器
+        function setupEventListeners() {
+            // 刷新按钮
+            document.getElementById('refreshBtn').addEventListener('click', refreshData);
+            
+            // 排序按钮
+            document.getElementById('sortTime').addEventListener('click', () => setSort('time'));
+            document.getElementById('sortWeight').addEventListener('click', () => setSort('weight'));
+            
+            // 导航项
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    const navId = this.id;
+                    handleNavigation(navId);
+                });
+            });
+
+            // 登录/注册标签切换
+            document.getElementById('loginTab')?.addEventListener('click', () => {
+                switchLoginTab('login');
+            });
+            document.getElementById('registerTab')?.addEventListener('click', () => {
+                switchLoginTab('register');
+            });
+
+            // 点击页面其他地方收起筛选面板
+            document.addEventListener('click', function(event) {
+                if (!event.target.closest('.filter-panel') && !event.target.closest('#navFilter')) {
+                    closeAllFilterPanels();
+                }
+            });
+        }
+
+        // 加载初始数据
+        function loadInitialData() {
+            showLoading();
+            
+            setTimeout(() => {
+                generateMockData();
+                renderStats();
+                renderMatches();
+                hideLoading();
+                
+                showToast('模拟数据加载完成！');
+            }, 800);
+        }
+
+        // 生成模拟数据
+        function generateMockData() {
+            AppState.generator.resetStats();
+            AppState.matches = AppState.generator.generateMatches();
+            AppState.intelligence = AppState.generator.intelligence;
+        }
+
+        // 渲染统计信息
+        function renderStats() {
+            const stats = AppState.generator.getStats();
+            const statsGrid = document.getElementById('statsGrid');
+            
+            statsGrid.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-card-value">${stats.totalMatches}</div>
+                    <div class="stat-card-label">比赛总数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-value">${stats.totalIntel}</div>
+                    <div class="stat-card-label">情报总数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-value">${stats.newIntel}</div>
+                    <div class="stat-card-label">新情报</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-value">${stats.avgIntelPerMatch}</div>
+                    <div class="stat-card-label">场均情报</div>
+                </div>
+            `;
+        }
+
+        // 刷新统计
+        function refreshStats() {
+            renderStats();
+            showToast('统计数据已刷新');
+        }
+
+        // 渲染比赛列表
+        function renderMatches() {
+            const container = document.getElementById('matchList');
+            const emptyState = document.getElementById('emptyState');
+            
+            // 筛选比赛
+            const filteredMatches = AppState.matches.filter(match => shouldShowMatch(match));
+            
+            if (filteredMatches.length === 0) {
+                container.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            
+            container.classList.remove('hidden');
+            emptyState.classList.add('hidden');
+            container.innerHTML = '';
+            
+            // 按日期分组
+            const groupedMatches = groupMatchesByDate(filteredMatches);
+            
+            // 渲染每个日期组
+            Object.entries(groupedMatches).forEach(([dateLabel, matches]) => {
+                if (matches.length === 0) return;
+                
+                const dateSection = document.createElement('div');
+                dateSection.className = 'date-section fade-in';
+                
+                const dateTitle = document.createElement('div');
+                dateTitle.className = 'date-title';
+                dateTitle.innerHTML = `
+                    <span>${dateLabel}</span>
+                    <span class="match-count">${matches.length}场比赛</span>
+                `;
+                dateSection.appendChild(dateTitle);
+                
+                matches.forEach(match => {
+                    const matchCard = createMatchCard(match);
+                    dateSection.appendChild(matchCard);
+                });
+                
+                container.appendChild(dateSection);
+            });
+        }
+
+        // 按日期分组比赛
+        function groupMatchesByDate(matches) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            
+            const afterTomorrow = new Date(tomorrow);
+            afterTomorrow.setDate(afterTomorrow.getDate() + 1);
+            
+            const thisWeek = new Date(today);
+            thisWeek.setDate(thisWeek.getDate() + 7);
+            
+            const groups = {
+                '今日比赛': [],
+                '明日比赛': [],
+                '本周比赛': [],
+                '未来比赛': []
+            };
+            
+            matches.forEach(match => {
+                const matchDate = new Date(match.time);
+                const matchTime = matchDate.getTime();
+                
+                if (matchTime >= today.getTime() && matchTime < tomorrow.getTime()) {
+                    groups['今日比赛'].push(match);
+                } else if (matchTime >= tomorrow.getTime() && matchTime < afterTomorrow.getTime()) {
+                    groups['明日比赛'].push(match);
+                } else if (matchTime >= afterTomorrow.getTime() && matchTime < thisWeek.getTime()) {
+                    groups['本周比赛'].push(match);
+                } else {
+                    groups['未来比赛'].push(match);
+                }
+            });
+            
+            // 移除空的分组
+            Object.keys(groups).forEach(key => {
+                if (groups[key].length === 0) {
+                    delete groups[key];
+                }
+            });
+            
+            return groups;
+        }
+
+        // 检查是否显示该比赛
+        function shouldShowMatch(match) {
+            // 联赛筛选（支持多选）
+            if (AppState.filterState.leagues.length > 0) {
+                if (!AppState.filterState.leagues.includes(match.leagueId)) {
+                    return false;
+                }
+            }
+            
+            // 获取比赛的所有情报
+            const matchIntelligence = AppState.intelligence[match.id] || [];
+            
+            // 情报类型筛选（支持多选）
+            if (AppState.filterState.intelTypes.length > 0) {
+                const hasMatchingIntel = matchIntelligence.some(intel => 
+                    AppState.filterState.intelTypes.includes(intel.type)
+                );
+                if (!hasMatchingIntel) return false;
+            }
+            
+            // 信息来源筛选（支持多选）
+            if (AppState.filterState.sources.length > 0) {
+                const hasMatchingSource = matchIntelligence.some(intel => 
+                    AppState.filterState.sources.includes(intel.source)
+                );
+                if (!hasMatchingSource) return false;
+            }
+            
+            return true;
+        }
+
+        // 创建比赛卡片
+        function createMatchCard(match) {
+            const matchIntelligence = AppState.intelligence[match.id] || [];
+            const matchTime = new Date(match.time);
+            const timeString = matchTime.toLocaleTimeString('zh-CN', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+            const dateString = matchTime.toLocaleDateString('zh-CN', {
+                month: '2-digit',
+                day: '2-digit'
+            });
+            
+            // 计算统计信息
+            const totalWeight = matchIntelligence.reduce((sum, intel) => sum + intel.weight, 0);
+            const avgWeight = matchIntelligence.length > 0 ? totalWeight / matchIntelligence.length : 0;
+            const newIntelCount = matchIntelligence.filter(intel => intel.isNew).length;
+            
+            // 统计不同类型的情报数量
+            const intelTypeCounts = {};
+            matchIntelligence.forEach(intel => {
+                intelTypeCounts[intel.type] = (intelTypeCounts[intel.type] || 0) + 1;
+            });
+            
+            // 统计不同来源的情报数量
+            const sourceCounts = {};
+            matchIntelligence.forEach(intel => {
+                sourceCounts[intel.source] = (sourceCounts[intel.source] || 0) + 1;
+            });
+            
+            const card = document.createElement('div');
+            card.className = 'match-card';
+            card.dataset.matchId = match.id;
+            card.dataset.league = match.leagueId;
+            
+            card.innerHTML = `
+                <div class="match-card-header" onclick="toggleMatchCard(this)">
+                    <div class="match-meta">
+                        <div class="match-id">${match.id}</div>
+                        <div class="match-league ${match.leagueColor}">${match.league}</div>
+                        <div class="match-time">${dateString} ${timeString}</div>
+                    </div>
+                    
+                    <div class="match-teams">
+                        <div class="team">
+                            <div class="team-logo">${match.homeTeamShort}</div>
+                            <div class="team-name">${match.homeTeam}</div>
+                            <div class="team-form">
+                                ${match.homeForm.map(result => `<span class="form-${result.toLowerCase()}">${result}</span>`).join('')}
+                            </div>
+                        </div>
+                        
+                        <div class="vs-separator">VS</div>
+                        
+                        <div class="team">
+                            <div class="team-logo">${match.awayTeamShort}</div>
+                            <div class="team-name">${match.awayTeam}</div>
+                            <div class="team-form">
+                                ${match.awayForm.map(result => `<span class="form-${result.toLowerCase()}">${result}</span>`).join('')}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="match-stats">
+                        <div class="stat-item">
+                            <div class="stat-label">情报</div>
+                            <div class="stat-value">${matchIntelligence.length}</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">权重</div>
+                            <div class="stat-value">${avgWeight.toFixed(1)}</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">新</div>
+                            <div class="stat-value">${newIntelCount}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="match-toggle">
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                </div>
+                
+                <div class="intelligence-content">
+                    ${renderMatchIntelligence(match.id)}
+                </div>
+            `;
+            
+            return card;
+        }
+
+        // 渲染比赛情报
+        function renderMatchIntelligence(matchId) {
+            const intelligence = AppState.intelligence[matchId] || [];
+            const match = AppState.matches.find(m => m.id === matchId);
+            
+            if (intelligence.length === 0) {
+                return `
+                    <div class="empty-state" style="padding: 40px 20px;">
+                        <div class="empty-icon">
+                            <i class="far fa-newspaper"></i>
+                        </div>
+                        <p class="empty-description">暂无相关情报</p>
+                    </div>
+                `;
+            }
+            
+            // 根据当前筛选条件筛选情报
+            const filteredIntelligence = intelligence.filter(intel => {
+                // 情报类型筛选
+                if (AppState.filterState.intelTypes.length > 0) {
+                    if (!AppState.filterState.intelTypes.includes(intel.type)) {
+                        return false;
+                    }
+                }
+                
+                // 信息来源筛选
+                if (AppState.filterState.sources.length > 0) {
+                    if (!AppState.filterState.sources.includes(intel.source)) {
+                        return false;
+                    }
+                }
+                
+                return true;
+            });
+            
+            // 根据当前排序排序情报
+            const sortedIntelligence = [...filteredIntelligence].sort((a, b) => {
+                if (AppState.currentSort === 'weight') {
+                    return b.weight - a.weight;
+                } else {
+                    return new Date(b.timestamp) - new Date(a.timestamp);
+                }
+            });
+            
+            if (sortedIntelligence.length === 0) {
+                return `
+                    <div class="empty-state" style="padding: 40px 20px;">
+                        <div class="empty-icon">
+                            <i class="fas fa-filter"></i>
+                        </div>
+                        <p class="empty-description">当前筛选条件下无情报</p>
+                    </div>
+                `;
+            }
+            
+            let html = '';
+            
+            // 添加预测模块
+            if (match.predictions && match.predictions.length > 0) {
+                match.predictions.forEach(pred => {
+                    html += `
+                        <div class="prediction-module">
+                            <div class="prediction-header">
+                                <i class="${pred.icon} prediction-icon"></i>
+                                <h4 class="prediction-title">${pred.type}预测</h4>
+                            </div>
+                            <div class="prediction-content">
+                                <div class="prediction-text">${pred.prediction}</div>
+                                <div class="prediction-stats">
+                                    <div class="prediction-stat">
+                                        <div class="prediction-stat-label">置信度</div>
+                                        <div class="prediction-stat-value">${pred.confidence}%</div>
+                                    </div>
+                                    <div class="prediction-stat">
+                                        <div class="prediction-stat-label">来源</div>
+                                        <div class="prediction-stat-value">${pred.source}</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="prediction-source">
+                                <i class="far fa-clock"></i>
+                                <span>${formatTimeAgo(pred.timestamp)}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+            
+            // 添加SP数据表格（如果有SP情报）
+            const spIntel = sortedIntelligence.find(intel => intel.type === 'sp');
+            if (spIntel && match.spData) {
+                html += `
+                    <div class="intel-item">
+                        <div class="intel-header">
+                            <span class="intel-time">${formatTime(new Date(spIntel.timestamp))}</span>
+                        </div>
+                        <div class="intel-tags">
+                            <span class="intel-tag tag-sp">
+                                <i class="fas fa-chart-line"></i>
+                                <span>赔率变化</span>
+                            </span>
+                            <span class="source-badge source-${spIntel.source}">${getSourceLabel(spIntel.source)}</span>
+                        </div>
+                        <div class="intel-summary">${spIntel.summary}</div>
+                        <table class="sp-table">
+                            <thead>
+                                <tr>
+                                    <th>公司</th>
+                                    <th>胜</th>
+                                    <th>平</th>
+                                    <th>负</th>
+                                    <th>变化</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${Object.entries(match.spData).map(([company, odds]) => `
+                                    <tr>
+                                        <td>${company}</td>
+                                        <td>
+                                            ${odds.win.latest}
+                                            ${getSPChangeHTML(odds.win.initial, odds.win.latest)}
+                                        </td>
+                                        <td>
+                                            ${odds.draw.latest}
+                                            ${getSPChangeHTML(odds.draw.initial, odds.draw.latest)}
+                                        </td>
+                                        <td>
+                                            ${odds.loss.latest}
+                                            ${getSPChangeHTML(odds.loss.initial, odds.loss.latest)}
+                                        </td>
+                                        <td>${getSPTrend(odds)}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                        <div class="intel-footer">
+                            <div class="intel-source">
+                                <i class="far fa-clock"></i>
+                                <span>${formatTimeAgo(spIntel.timestamp)}</span>
+                            </div>
+                            <div class="intel-weight">
+                                <span class="weight-label">权重</span>
+                                <div class="weight-badge ${getWeightClass(spIntel.weight)}">${spIntel.weight.toFixed(1)}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // 添加其他情报
+            sortedIntelligence
+                .filter(intel => intel.type !== 'sp')
+                .forEach(intel => {
+                    const intelTime = new Date(intel.timestamp);
+                    const timeString = formatTime(intelTime);
+                    
+                    const weightClass = getWeightClass(intel.weight);
+                    const tagClass = `tag-${intel.type}`;
+                    const sourceClass = `source-${intel.source}`;
+                    
+                    html += `
+                        <div class="intel-item ${intel.isNew ? 'new' : ''}">
+                            ${intel.isNew ? '<span class="new-badge">NEW</span>' : ''}
+                            <div class="intel-header">
+                                <span class="intel-time">${timeString}</span>
+                            </div>
+                            <div class="intel-tags">
+                                <span class="intel-tag ${tagClass}">
+                                    <i class="${intel.typeIcon}"></i>
+                                    <span>${intel.typeName}</span>
+                                </span>
+                                <span class="source-badge ${sourceClass}">${intel.sourceName}</span>
+                            </div>
+                            <div class="intel-summary">${intel.summary}</div>
+                            <div class="intel-content">${intel.content}</div>
+                            <div class="intel-footer">
+                                <div class="intel-source">
+                                    <i class="far fa-clock"></i>
+                                    <span>${formatTimeAgo(intel.timestamp)}</span>
+                                </div>
+                                <div class="intel-weight">
+                                    <span class="weight-label">权重</span>
+                                    <div class="weight-badge ${weightClass}">${intel.weight.toFixed(1)}</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            
+            return html;
+        }
+
+        // 辅助函数：获取SP变化HTML
+        function getSPChangeHTML(initial, latest) {
+            const initialNum = parseFloat(initial);
+            const latestNum = parseFloat(latest);
+            const change = latestNum - initialNum;
+            
+            if (change === 0) return '';
+            
+            const direction = change < 0 ? 'down' : 'up';
+            const symbol = direction === 'down' ? '↓' : '↑';
+            const absChange = Math.abs(change).toFixed(2);
+            
+            return `<span class="sp-change ${direction}">${symbol}${absChange}</span>`;
+        }
+
+        // 辅助函数：获取SP趋势
+        function getSPTrend(odds) {
+            const winChange = parseFloat(odds.win.latest) - parseFloat(odds.win.initial);
+            const drawChange = parseFloat(odds.draw.latest) - parseFloat(odds.draw.initial);
+            const lossChange = parseFloat(odds.loss.latest) - parseFloat(odds.loss.initial);
+            
+            if (winChange < 0 && lossChange > 0) return '倾向主胜';
+            if (lossChange < 0 && winChange > 0) return '倾向客胜';
+            if (drawChange < 0) return '倾向平局';
+            
+            return '趋势不明';
+        }
+
+        // 切换比赛卡片展开/收起
+        function toggleMatchCard(header) {
+            const card = header.closest('.match-card');
+            card.classList.toggle('expanded');
+            
+            if (card.classList.contains('expanded')) {
+                setTimeout(() => {
+                    card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }, 300);
+            }
+        }
+
+        // 处理快速筛选
+        function handleQuickFilter(filterId, element) {
+            if (filterId === 'mockData') {
+                generateNewMockData();
+                return;
+            }
+            
+            // 更新快速筛选标签状态
+            document.querySelectorAll('#quickFilters .filter-chip').forEach(chip => {
+                chip.classList.remove('active');
+            });
+            element.classList.add('active');
+            
+            // 更新筛选状态
+            AppState.currentType = filterId;
+            
+            // 重新渲染比赛列表
+            renderMatches();
+        }
+
+        // 设置排序方式
+        function setSort(sortType) {
+            AppState.currentSort = sortType;
+            
+            // 更新排序按钮状态
+            document.getElementById('sortTime').classList.toggle('active', sortType === 'time');
+            document.getElementById('sortWeight').classList.toggle('active', sortType === 'weight');
+            
+            // 重新渲染比赛列表
+            renderMatches();
+        }
+
+        // 刷新数据
+        function refreshData() {
+            const refreshBtn = document.getElementById('refreshBtn');
+            refreshBtn.classList.add('spinning');
+            
+            showLoading();
+            
+            setTimeout(() => {
+                // 生成新的模拟数据
+                generateMockData();
+                renderStats();
+                renderMatches();
+                updateLastUpdateTime();
+                
+                // 显示刷新成功提示
+                showToast('数据已刷新！');
+                
+                hideLoading();
+                refreshBtn.classList.remove('spinning');
+            }, 1200);
+        }
+
+        // 生成新的模拟数据
+        function generateNewMockData() {
+            showLoading();
+            
+            const options = {
+                totalMatches: parseInt(prompt('请输入比赛数量 (默认: 15):', '15') || '15'),
+                intelPerMatch: parseInt(prompt('每场比赛平均情报数 (默认: 5):', '5') || '5'),
+                newIntelRatio: parseFloat(prompt('新情报比例 (0-1, 默认: 0.3):', '0.3') || '0.3'),
+                highWeightRatio: parseFloat(prompt('高权重比例 (0-1, 默认: 0.2):', '0.2') || '0.2')
+            };
+            
+            // 更新配置
+            MockConfig.generation = {
+                totalMatches: options.totalMatches || 15,
+                intelPerMatch: { 
+                    min: Math.max(1, Math.floor(options.intelPerMatch * 0.6)),
+                    max: Math.max(3, Math.floor(options.intelPerMatch * 1.4))
+                },
+                newIntelRatio: Math.min(1, Math.max(0, options.newIntelRatio || 0.3)),
+                highWeightRatio: Math.min(1, Math.max(0, options.highWeightRatio || 0.2)),
+                mediumWeightRatio: 0.5
+            };
+            
+            setTimeout(() => {
+                // 生成新数据
+                generateMockData();
+                renderStats();
+                renderMatches();
+                hideLoading();
+                
+                showToast(`已生成${MockConfig.generation.totalMatches}场比赛数据`);
+            }, 1000);
+        }
+
+        // 处理导航
+        function handleNavigation(navId) {
+            switch (navId) {
+                case 'navHome':
+                    // 显示比赛列表
+                    document.getElementById('statsPanel').classList.remove('hidden');
+                    document.getElementById('matchList').classList.remove('hidden');
+                    document.getElementById('profilePanel').classList.add('hidden');
+                    document.getElementById('emptyState').classList.add('hidden');
+                    document.getElementById('filterPanels').classList.remove('hidden');
+                    document.getElementById('filterSummary').classList.remove('hidden');
+                    break;
+                    
+                case 'navFilter':
+                    // 显示筛选面板
+                    document.getElementById('statsPanel').classList.add('hidden');
+                    document.getElementById('matchList').classList.add('hidden');
+                    document.getElementById('profilePanel').classList.add('hidden');
+                    document.getElementById('emptyState').classList.add('hidden');
+                    document.getElementById('filterPanels').classList.remove('hidden');
+                    document.getElementById('filterSummary').classList.remove('hidden');
+                    // 默认展开第一个面板
+                    toggleFilterPanel('intelType');
+                    break;
+                    
+                case 'navProfile':
+                    // 显示用户面板
+                    document.getElementById('statsPanel').classList.add('hidden');
+                    document.getElementById('matchList').classList.add('hidden');
+                    document.getElementById('profilePanel').classList.remove('hidden');
+                    document.getElementById('emptyState').classList.add('hidden');
+                    document.getElementById('filterPanels').classList.add('hidden');
+                    document.getElementById('filterSummary').classList.add('hidden');
+                    updateProfileData();
+                    break;
+                    
+                case 'navFavorites':
+                    showToast('收藏功能开发中');
+                    break;
+            }
+        }
+
+        // ============================================
+        // 用户相关函数 (从1.txt补充)
+        // ============================================
+
+        // 更新用户资料数据
+        function updateProfileData() {
+            document.getElementById('userName').textContent = UserData.username;
+            document.getElementById('userId').textContent = UserData.userId;
+            document.getElementById('userLevel').textContent = UserData.level;
+            document.getElementById('registerDate').textContent = UserData.registerDate;
+            document.getElementById('usageDuration').textContent = UserData.usageDuration || '128天';
+            document.getElementById('totalViews').textContent = UserData.totalViews.toLocaleString();
+            document.getElementById('correctPredictions').textContent = UserData.correctPredictions + '%';
+            document.getElementById('streakDays').textContent = UserData.streakDays;
+            document.getElementById('followCount').textContent = UserData.followCount;
+            document.getElementById('favoriteCount').textContent = UserData.favoriteCount;
+            document.getElementById('accountStatus').textContent = UserData.isLoggedIn ? '正常' : '未登录';
+            
+            // 更新头像
+            const avatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${UserData.avatarSeed}`;
+            document.getElementById('userAvatar').src = avatarUrl;
+            
+            // 更新设置开关
+            document.getElementById('notificationsToggle').checked = UserData.settings.notifications;
+            document.getElementById('darkModeToggle').checked = UserData.settings.darkMode;
+        }
+
+        // 切换登录/注册标签
+        function switchLoginTab(tab) {
+            document.getElementById('loginTab').classList.toggle('active', tab === 'login');
+            document.getElementById('registerTab').classList.toggle('active', tab === 'register');
+            document.getElementById('loginForm').classList.toggle('active', tab === 'login');
+            document.getElementById('registerForm').classList.toggle('active', tab === 'register');
+        }
+
+        // 显示登录模态框
+        function showLoginModal() {
+            document.getElementById('loginModal').classList.remove('hidden');
+            switchLoginTab('login');
+        }
+
+        // 关闭登录模态框
+        function closeLoginModal() {
+            document.getElementById('loginModal').classList.add('hidden');
+            // 清空表单
+            document.getElementById('loginUsername').value = '';
+            document.getElementById('loginPassword').value = '';
+            document.getElementById('registerUsername').value = '';
+            document.getElementById('registerPassword').value = '';
+            document.getElementById('confirmPassword').value = '';
+            document.getElementById('email').value = '';
+        }
+
+        // 登录函数
+        function login() {
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            if (!username || !password) {
+                showToast('请输入用户名和密码');
+                return;
+            }
+            
+            // 模拟登录
+            if (username === 'demo' && password === 'demo123') {
+                UserData.isLoggedIn = true;
+                UserData.username = username;
+                UserData.avatarSeed = username;
+                UserData.userId = `USER${Math.floor(Math.random() * 10000)}`;
+                UserData.level = 'VIP 1级会员';
+                
+                updateProfileData();
+                closeLoginModal();
+                showToast('登录成功！');
+            } else {
+                // 演示模式，随便输入都能"登录"
+                UserData.isLoggedIn = true;
+                UserData.username = username || '新用户';
+                UserData.avatarSeed = username || 'user';
+                UserData.userId = `USER${Math.floor(Math.random() * 10000)}`;
+                UserData.level = '普通会员';
+                
+                updateProfileData();
+                closeLoginModal();
+                showToast('登录成功！(演示模式)');
+            }
+        }
+
+        // 注册函数
+        function register() {
+            const username = document.getElementById('registerUsername').value;
+            const password = document.getElementById('registerPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const email = document.getElementById('email').value;
+            
+            if (!username || !password || !confirmPassword || !email) {
+                showToast('请填写所有必填项');
+                return;
+            }
+            
+            if (password !== confirmPassword) {
+                showToast('两次输入的密码不一致');
+                return;
+            }
+            
+            if (password.length < 6) {
+                showToast('密码长度至少6位');
+                return;
+            }
+            
+            // 模拟注册
+            UserData.isLoggedIn = true;
+            UserData.username = username;
+            UserData.avatarSeed = username;
+            UserData.userId = `USER${Math.floor(Math.random() * 10000)}`;
+            UserData.level = '新会员';
+            UserData.registerDate = new Date().toISOString().split('T')[0];
+            
+            updateProfileData();
+            closeLoginModal();
+            showToast('注册成功！欢迎使用');
+        }
+
+        // 更换头像
+        function changeAvatar() {
+            const newSeed = prompt('请输入头像种子 (任意字符串):', UserData.avatarSeed);
+            if (newSeed) {
+                UserData.avatarSeed = newSeed;
+                updateProfileData();
+                showToast('头像已更新');
+            }
+        }
+
+        // 切换设置
+        function toggleSetting(setting) {
+            if (setting === 'notifications') {
+                UserData.settings.notifications = !UserData.settings.notifications;
+                document.getElementById('notificationsToggle').checked = UserData.settings.notifications;
+                showToast(UserData.settings.notifications ? '通知已开启' : '通知已关闭');
+            } else if (setting === 'darkMode') {
+                UserData.settings.darkMode = !UserData.settings.darkMode;
+                document.getElementById('darkModeToggle').checked = UserData.settings.darkMode;
+                showToast(UserData.settings.darkMode ? '深色模式已开启' : '深色模式已关闭');
+            }
+        }
+
+        // 清除缓存
+        function clearCache() {
+            if (confirm('确定要清除所有缓存数据吗？')) {
+                localStorage.clear();
+                // 重置部分用户数据
+                UserData.isLoggedIn = false;
+                UserData.username = '竞彩玩家';
+                UserData.userId = 'JC2026001';
+                UserData.level = 'VIP 3级会员';
+                UserData.avatarSeed = 'default';
+                
+                updateProfileData();
+                showToast('缓存已清除');
+            }
+        }
+
+        // ============================================
+        // 工具函数
+        // ============================================
+
+        // 格式化时间
+        function formatTime(date) {
+            if (!(date instanceof Date)) {
+                date = new Date(date);
+            }
+            return date.toLocaleTimeString('zh-CN', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+        }
+
+        // 格式化相对时间
+        function formatTimeAgo(timeString) {
+            const time = new Date(timeString);
+            const now = new Date();
+            const diffMs = now - time;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
+            
+            if (diffMins < 1) return '刚刚';
+            if (diffMins < 60) return `${diffMins}分钟前`;
+            if (diffHours < 24) return `${diffHours}小时前`;
+            if (diffDays < 7) return `${diffDays}天前`;
+            return time.toLocaleDateString('zh-CN');
+        }
+
+        // 获取类型标签
+        function getTypeLabel(type) {
+            const typeObj = MockConfig.intelligenceTypes.find(t => t.id === type);
+            return typeObj ? typeObj.name : type;
+        }
+
+        // 获取来源标签
+        function getSourceLabel(source) {
+            const sourceObj = MockConfig.sources.find(s => s.id === source);
+            return sourceObj ? sourceObj.name : source;
+        }
+
+        // 获取权重类别
+        function getWeightClass(weight) {
+            if (weight >= 8.0) return 'weight-high';
+            if (weight >= 6.0) return 'weight-medium';
+            return 'weight-low';
+        }
+
+        // 更新最后更新时间
+        function updateLastUpdateTime() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('zh-CN', { 
+                hour: '2-digit', 
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            const dateString = now.toLocaleDateString('zh-CN');
+            document.getElementById('lastUpdate').textContent = `最后更新: ${dateString} ${timeString}`;
+        }
+
+        // 显示加载状态
+        function showLoading() {
+            document.getElementById('loadingSpinner').classList.add('active');
+        }
+
+        // 隐藏加载状态
+        function hideLoading() {
+            document.getElementById('loadingSpinner').classList.remove('active');
+        }
+
+        // 显示Toast提示
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast-message';
+            toast.textContent = message;
+            toast.style.cssText = `
+                position: fixed;
+                top: 80px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: var(--primary);
+                color: white;
+                padding: 12px 24px;
+                border-radius: 8px;
+                z-index: 9999;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                animation: toastSlideIn 0.3s ease-out;
+            `;
+            
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.animation = 'toastSlideOut 0.3s ease-out';
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
+                    }
+                }, 300);
+            }, 3000);
+        }
+
+        // 添加Toast动画
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes toastSlideIn {
+                from { transform: translateX(-50%) translateY(-20px); opacity: 0; }
+                to { transform: translateX(-50%) translateY(0); opacity: 1; }
+            }
+            @keyframes toastSlideOut {
+                from { transform: translateX(-50%) translateY(0); opacity: 1; }
+                to { transform: translateX(-50%) translateY(-20px); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // 暴露全局函数供HTML调用
+        window.toggleMatchCard = toggleMatchCard;
+        window.refreshData = refreshData;
+        window.refreshStats = refreshStats;
+        window.showLoginModal = showLoginModal;
+        window.closeLoginModal = closeLoginModal;
+        window.login = login;
+        window.register = register;
+        window.changeAvatar = changeAvatar;
+        window.toggleSetting = toggleSetting;
+        window.clearCache = clearCache;
+        window.toggleFilterPanel = toggleFilterPanel;
+        window.clearFilter = clearFilter;
+        window.applyFilters = applyFilters;
+        window.removeFilterTag = removeFilterTag;
+    </script>
+</body>
+</html>
