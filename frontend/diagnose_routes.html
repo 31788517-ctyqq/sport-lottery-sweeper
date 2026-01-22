@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>路由诊断</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .route-test {
+            background: white;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 { color: #333; }
+        a {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            margin: 5px;
+        }
+        a:hover {
+            background: #0056b3;
+        }
+        .info {
+            background: #e7f3ff;
+            padding: 15px;
+            border-left: 4px solid #007bff;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 前端路由诊断工具</h1>
+    
+    <div class="info">
+        <strong>前端服务地址：</strong> http://localhost:3000<br>
+        <strong>后端服务地址：</strong> http://localhost:8000
+    </div>
+
+    <div class="route-test">
+        <h2>测试所有路由</h2>
+        <p>点击以下链接测试各个路由是否正常：</p>
+        
+        <a href="http://localhost:3000/" target="_blank">首页 /</a>
+        <a href="http://localhost:3000/#/" target="_blank">Hash首页 /#/</a>
+        <a href="http://localhost:3000/#/jczq" target="_blank">竞彩足球 /#/jczq</a>
+        <a href="http://localhost:3000/#/jczq-schedule" target="_blank">赛程表 /#/jczq-schedule</a>
+        <a href="http://localhost:3000/#/admin/login" target="_blank">管理登录 /#/admin/login</a>
+        <a href="http://localhost:3000/#/admin/dashboard" target="_blank">管理后台 /#/admin/dashboard</a>
+    </div>
+
+    <div class="route-test">
+        <h2>API测试</h2>
+        <a href="http://localhost:8000/docs" target="_blank">后端API文档</a>
+        <a href="http://localhost:8000/health" target="_blank">健康检查</a>
+    </div>
+
+    <div class="route-test">
+        <h2>📝 诊断步骤</h2>
+        <ol>
+            <li>点击上面的链接，查看哪些路由能正常打开</li>
+            <li>如果页面空白，按 F12 打开开发者工具，查看 Console 标签的错误信息</li>
+            <li>查看 Network 标签，确认 main.js 等文件是否正常加载</li>
+            <li>将错误信息截图反馈</li>
+        </ol>
+    </div>
+</body>
+</html>

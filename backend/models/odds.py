@@ -5,13 +5,13 @@ from datetime import datetime
 from typing import List, Optional
 from sqlalchemy import (
     Column, Integer, String, Boolean, DateTime, 
-    ForeignKey, Float, Text, Enum, CheckConstraint, Index, Date, Time
+    ForeignKey, Float, Text, Enum, CheckConstraint, Index, Date, Time, JSON
 )
 from sqlalchemy.orm import relationship, backref
-from sqlalchemy.dialects.postgresql import UUID, JSONB, ARRAY
 from sqlalchemy.sql import func
 import enum
 
+from sqlalchemy.ext.mutable import MutableDict
 from .base import Base, BaseAuditModel, BaseFullModel
 
 
@@ -55,62 +55,14 @@ class Odds(BaseFullModel):
     赔率模型
     """
     __tablename__ = "odds"
-class OddsMovement(BaseFullModel):
-    """
-    赔率变动模型
-    """
-    __tablename__ = "odds_movements"
     
-    # 关联信息
-    odds_id = Column(Integer, ForeignKey('odds.id', ondelete='CASCADE'), nullable=False, index=True)
-    bookmaker_id = Column(Integer, ForeignKey('bookmakers.id', ondelete='CASCADE'), nullable=False, index=True)
-    
-    # 变动类型
-    movement_type = Column(Enum(OddsMovementTypeEnum), nullable=False, index=True)
-    
-    # 变动前后的值
-    previous_home_win = Column(Float, nullable=True)
-    previous_draw = Column(Float, nullable=True)
-    previous_away_win = Column(Float, nullable=True)
-    
-    current_home_win = Column(Float, nullable=False)
-    current_draw = Column(Float, nullable=False)
-    current_away_win = Column(Float, nullable=False)
-    
-    # 变动幅度
-    home_change = Column(Float, nullable=True)    # 主胜变化
-    draw_change = Column(Float, nullable=True)    # 平局变化
-    away_change = Column(Float, nullable=True)    # 客胜变化
-    
-    # 百分比变化
-    home_change_percent = Column(Float, nullable=True)
-    draw_change_percent = Column(Float, nullable=True)
-    away_change_percent = Column(Float, nullable=True)
-    
-    # 变动时间
-    movement_time = Column(DateTime(timezone=True), default=func.now(), nullable=False, index=True)
-    
-    # 原因
-    reason = Column(String(200), nullable=True)   # 变动原因
-    
-    # 关系
-    odds = relationship("Odds")
-    bookmaker = relationship("Bookmaker")
-    
-    # 索引
-    __table_args__ = (
-        Index('idx_odds_movements_odds_time', 'odds_id', 'movement_time'),
-        Index('idx_odds_movements_bookmaker_time', 'bookmaker_id', 'movement_time'),
-        Index('idx_odds_movements_type_time', 'movement_type', 'movement_time'),
-        Index('idx_odds_movements_movement_time', 'movement_time'),
-    )
     # 关联信息
     match_id = Column(Integer, ForeignKey('matches.id', ondelete='CASCADE'), nullable=False, index=True)
     bookmaker_id = Column(Integer, ForeignKey('bookmakers.id', ondelete='CASCADE'), nullable=False, index=True)
     provider_id = Column(Integer, ForeignKey('odds_providers.id', ondelete='SET NULL'), nullable=True, index=True)
     
     # 赔率类型
-    odds_type = Column(Enum(OddsTypeEnum), nullable=False, index=True)
+    odds_type = Column(Enum(OddsTypeEnum, values_callable=lambda obj: [e.value for e in obj], native_enum=False), nullable=False, index=True)
     
     # 基本赔率
     home_win_odds = Column(Float, nullable=True, index=True)      # 主胜赔率
@@ -134,7 +86,7 @@ class OddsMovement(BaseFullModel):
     is_live = Column(Boolean, default=False, nullable=False, index=True)  # 是否实时赔率
     
     # 市场深度和流动性
-    market_depth = Column(JSONB, default=dict, nullable=False)      # 市场深度
+    market_depth = Column(MutableDict.as_mutable(Text), default=lambda: {}, nullable=False)      # 市场深度
     liquidity = Column(Float, default=0.0, nullable=False, index=True)  # 流动性
     volume = Column(Float, default=0.0, nullable=False, index=True)     # 交易量
     
@@ -200,13 +152,56 @@ class OddsMovement(BaseFullModel):
             return sum(valid_probs)
         return None
 
-    @property
-    def fair_odds_margin(self) -> Optional[float]:
-        """公平赔率利润率 (低于0表示套利机会)"""
-        total_prob = self.total_implied_probability
-        if total_prob is not None and total_prob > 0:
-            return (total_prob - 1) * 100
-        return None
+
+class OddsMovement(BaseFullModel):
+    """
+    赔率变动模型
+    """
+    __tablename__ = "odds_movements"
+    
+    # 关联信息
+    odds_id = Column(Integer, ForeignKey('odds.id', ondelete='CASCADE'), nullable=False, index=True)
+    bookmaker_id = Column(Integer, ForeignKey('bookmakers.id', ondelete='CASCADE'), nullable=False, index=True)
+    
+    # 变动类型
+    movement_type = Column(Enum(OddsMovementTypeEnum, values_callable=lambda obj: [e.value for e in obj], native_enum=False), nullable=False, index=True)
+    
+    # 变动前后的值
+    previous_home_win = Column(Float, nullable=True)
+    previous_draw = Column(Float, nullable=True)
+    previous_away_win = Column(Float, nullable=True)
+    
+    current_home_win = Column(Float, nullable=False)
+    current_draw = Column(Float, nullable=False)
+    current_away_win = Column(Float, nullable=False)
+    
+    # 变动幅度
+    home_change = Column(Float, nullable=True)    # 主胜变化
+    draw_change = Column(Float, nullable=True)    # 平局变化
+    away_change = Column(Float, nullable=True)    # 客胜变化
+    
+    # 百分比变化
+    home_change_percent = Column(Float, nullable=True)
+    draw_change_percent = Column(Float, nullable=True)
+    away_change_percent = Column(Float, nullable=True)
+    
+    # 变动时间
+    movement_time = Column(DateTime(timezone=True), default=func.now(), nullable=False, index=True)
+    
+    # 原因
+    reason = Column(String(200), nullable=True)   # 变动原因
+    
+    # 关系
+    odds = relationship("Odds")
+    bookmaker = relationship("Bookmaker")
+    
+    # 索引
+    __table_args__ = (
+        Index('idx_odds_movements_odds_time', 'odds_id', 'movement_time'),
+        Index('idx_odds_movements_bookmaker_time', 'bookmaker_id', 'movement_time'),
+        Index('idx_odds_movements_type_time', 'movement_type', 'movement_time'),
+        Index('idx_odds_movements_movement_time', 'movement_time'),
+    )
 
 
 class Bookmaker(BaseFullModel):
@@ -237,10 +232,10 @@ class Bookmaker(BaseFullModel):
     reputation_score = Column(Float, default=0.0, nullable=False, index=True)
     
     # 支持的市场
-    supported_markets = Column(ARRAY(String), default=list, nullable=False)
+    supported_markets = Column(Text, default='[]', nullable=False)  # 存储为JSON数组字符串
     
     # 配置信息
-    config = Column(JSONB, default=dict, nullable=False)
+    config = Column(MutableDict.as_mutable(Text), default=lambda: {}, nullable=False)
     
     # 关系
     odds = relationship("Odds", back_populates="bookmaker", cascade="all, delete-orphan")
@@ -253,6 +248,30 @@ class Bookmaker(BaseFullModel):
         Index('idx_bookmakers_reputation', 'reputation_score'),
         {'extend_existing': True}
     )
+    
+    def __repr__(self) -> str:
+        return f"<Bookmaker(id={self.id}, name='{self.name}', code='{self.code}')>"
+    
+    def to_dict(self) -> dict:
+        """转换为字典"""
+        return {
+            "id": self.id,
+            "name": self.name,
+            "code": self.code,
+            "full_name": self.full_name,
+            "country": self.country,
+            "country_code": self.country_code,
+            "license_info": self.license_info,
+            "website": self.website,
+            "logo_url": self.logo_url,
+            "is_active": self.is_active,
+            "is_reputable": self.is_reputable,
+            "reputation_score": self.reputation_score,
+            "supported_markets": self.supported_markets,
+            "config": self.config,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
 
 
 class OddsProvider(BaseFullModel):
@@ -264,23 +283,23 @@ class OddsProvider(BaseFullModel):
     # 基本信息
     name = Column(String(100), nullable=False, index=True)
     code = Column(String(50), unique=True, nullable=False, index=True)
-    description = Column(Text, nullable=True)
+    full_name = Column(String(200), nullable=True)
+    
+    # 地理信息
+    country = Column(String(100), nullable=True, index=True)
+    country_code = Column(String(10), nullable=True, index=True)
+    
+    # 网络信息
+    website = Column(String(200), nullable=True)
+    api_endpoint = Column(String(200), nullable=True)
+    api_key = Column(String(200), nullable=True)
     
     # 状态信息
     is_active = Column(Boolean, default=True, nullable=False, index=True)
-    
-    # 评级
-    quality_score = Column(Float, default=0.0, nullable=False, index=True)
-    
-    # 支持的类型
-    supported_odds_types = Column(ARRAY(String), default=list, nullable=False)
-    
-    # API相关信息
-    api_endpoint = Column(String(255), nullable=True)
-    api_key_required = Column(Boolean, default=False, nullable=False)
+    reliability_score = Column(Float, default=0.0, nullable=False, index=True)
     
     # 配置信息
-    config = Column(JSONB, default=dict, nullable=False)
+    config = Column(MutableDict.as_mutable(Text), default=lambda: {}, nullable=False)
     
     # 关系
     odds = relationship("Odds", back_populates="provider", cascade="all, delete-orphan")
@@ -288,6 +307,26 @@ class OddsProvider(BaseFullModel):
     # 索引
     __table_args__ = (
         Index('idx_odds_providers_active', 'is_active'),
-        Index('idx_odds_providers_quality', 'quality_score'),
         {'extend_existing': True}
     )
+    
+    def __repr__(self) -> str:
+        return f"<OddsProvider(id={self.id}, name='{self.name}', code='{self.code}')>"
+    
+    def to_dict(self) -> dict:
+        """转换为字典"""
+        return {
+            "id": self.id,
+            "name": self.name,
+            "code": self.code,
+            "full_name": self.full_name,
+            "country": self.country,
+            "country_code": self.country_code,
+            "website": self.website,
+            "api_endpoint": self.api_endpoint,
+            "is_active": self.is_active,
+            "reliability_score": self.reliability_score,
+            "config": self.config,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }

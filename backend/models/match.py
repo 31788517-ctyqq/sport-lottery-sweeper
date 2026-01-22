@@ -6,13 +6,13 @@ from typing import List, Optional
 from sqlalchemy import (
     Column, Integer, String, Boolean, DateTime, 
     ForeignKey, Float, Text, Enum, Date, Time,
-    CheckConstraint, Index
+    CheckConstraint, Index, JSON
 )
 from sqlalchemy.orm import relationship, backref
-from sqlalchemy.dialects.postgresql import UUID, JSONB, ARRAY
 from sqlalchemy.sql import func
 import enum
 
+from sqlalchemy.ext.mutable import MutableDict
 from .base import Base, BaseAuditModel, BaseFullModel
 
 # 比赛状态枚举
@@ -94,7 +94,7 @@ class League(BaseFullModel):
     average_attendance = Column(Integer, default=0, nullable=False)
     
     # 配置信息
-    config = Column(JSONB, default=dict, nullable=False)  # 联赛配置
+    config = Column(MutableDict.as_mutable(Text), default=lambda: {}, nullable=False)  # 联赛配置
     
     # 关系
     matches = relationship("Match", back_populates="league", cascade="all, delete-orphan")
@@ -171,13 +171,14 @@ class Team(BaseFullModel):
     external_source = Column(String(50), nullable=True, index=True)  # 外部数据来源
     
     # 配置信息
-    config = Column(JSONB, default=dict, nullable=False)  # 球队配置
+    config = Column(MutableDict.as_mutable(Text), default=lambda: {}, nullable=False)  # 球队配置
     
     # 关系
     league = relationship("League", back_populates="teams")
     home_matches = relationship("Match", foreign_keys='Match.home_team_id', back_populates="home_team")
     away_matches = relationship("Match", foreign_keys='Match.away_team_id', back_populates="away_team")
     players = relationship("Player", back_populates="team", cascade="all, delete-orphan")
+    intelligence_items = relationship("Intelligence", back_populates="team", cascade="all, delete-orphan")
     
     # 索引
     __table_args__ = (
@@ -214,7 +215,7 @@ class Match(BaseFullModel):
     scheduled_kickoff = Column(DateTime(timezone=True), nullable=False, index=True)  # 计划开球时间
     
     # 状态信息
-    status = Column(Enum(MatchStatusEnum), default=MatchStatusEnum.SCHEDULED, nullable=False, index=True)
+    status = Column(Enum(MatchStatusEnum, values_callable=lambda obj: [e.value for e in obj], native_enum=False), default=MatchStatusEnum.SCHEDULED, nullable=False, index=True)
     
     # 比赛分类信息
     match_day = Column(String(20), nullable=True, index=True)  # 比赛日 (第几轮)
@@ -224,8 +225,8 @@ class Match(BaseFullModel):
     group_name = Column(String(50), nullable=True, index=True)  # 组别名称
     
     # 重要性信息
-    importance = Column(Enum(MatchImportanceEnum), default=MatchImportanceEnum.MEDIUM, nullable=False, index=True)
-    type = Column(Enum(MatchTypeEnum), default=MatchTypeEnum.LEAGUE, nullable=False, index=True)
+    importance = Column(Enum(MatchImportanceEnum, values_callable=lambda obj: [e.value for e in obj], native_enum=False), default=MatchImportanceEnum.MEDIUM, nullable=False, index=True)
+    type = Column(Enum(MatchTypeEnum, values_callable=lambda obj: [e.value for e in obj], native_enum=False), default=MatchTypeEnum.LEAGUE, nullable=False, index=True)
     
     # 比赛统计信息
     attendance = Column(Integer, nullable=True)  # 观众人数
@@ -258,7 +259,7 @@ class Match(BaseFullModel):
     external_source = Column(String(50), nullable=True, index=True)  # 外部数据来源
     
     # 配置信息
-    config = Column(JSONB, default=dict, nullable=False)  # 比赛配置
+    config = Column(MutableDict.as_mutable(Text), default=lambda: {}, nullable=False)  # 比赛配置
     
     # 关系
     league = relationship("League", back_populates="matches")
@@ -268,7 +269,10 @@ class Match(BaseFullModel):
     intelligence = relationship("Intelligence", back_populates="match", cascade="all, delete-orphan")
     odds = relationship("Odds", back_populates="match", cascade="all, delete-orphan")
     predictions = relationship("Prediction", back_populates="match", cascade="all, delete-orphan")
-    
+    lineups = relationship("MatchLineup", back_populates="match", cascade="all, delete-orphan")
+    events = relationship("MatchEvent", back_populates="match", cascade="all, delete-orphan")
+    intelligence_items = relationship("Intelligence", back_populates="match", cascade="all, delete-orphan")
+
     # 索引
     __table_args__ = (
         Index('idx_matches_status_date', 'status', 'match_date'),
@@ -340,61 +344,6 @@ class Match(BaseFullModel):
             
         self.updated_at = datetime.utcnow()
 
-class Venue(BaseFullModel):
-    """
-    比赛场地模型
-    """
-    __tablename__ = "venues"
-    
-    # 基本信息
-    name = Column(String(200), nullable=False, index=True)
-    short_name = Column(String(100), nullable=True)
-    
-    # 位置信息
-    city = Column(String(100), nullable=False, index=True)
-    country = Column(String(100), nullable=False, index=True)
-    country_code = Column(String(10), nullable=False, index=True)
-    address = Column(String(500), nullable=True)
-    
-    # 地理坐标
-    latitude = Column(Float, nullable=True)
-    longitude = Column(Float, nullable=True)
-    altitude = Column(Float, nullable=True)  # 海拔高度
-    
-    # 场地属性
-    capacity = Column(Integer, nullable=True)
-    surface_type = Column(String(50), nullable=True)  # grass, artificial, hybrid
-    roof_type = Column(String(50), nullable=True)  # open, retractable, closed
-    built_year = Column(Integer, nullable=True)
-    
-    # 所属球队
-    team_id = Column(Integer, ForeignKey("teams.id", ondelete="SET NULL"), nullable=True, index=True)
-    
-    # 描述信息
-    description = Column(Text, nullable=True)
-    image_url = Column(String(500), nullable=True)
-    
-    # 外部数据
-    external_id = Column(String(100), nullable=True, index=True)
-    external_source = Column(String(50), nullable=True)
-    
-    # 统计信息
-    total_matches = Column(Integer, default=0, nullable=False)
-    average_attendance = Column(Integer, default=0, nullable=False)
-    
-    # 关系
-    team = relationship("Team", backref="home_venue")
-    matches = relationship("Match", back_populates="venue")
-    
-    # 索引
-    __table_args__ = (
-        Index('idx_venues_city_country', city, country),
-        Index('idx_venues_capacity', capacity),
-    )
-    
-    def __repr__(self) -> str:
-        return f"<Venue(id={self.id}, name={self.name}, city={self.city})>"
-
 class Player(BaseFullModel):
     """
     球员模型
@@ -453,6 +402,7 @@ class Player(BaseFullModel):
     team = relationship("Team", back_populates="players")
     lineups = relationship("MatchLineup", back_populates="player", cascade="all, delete-orphan")
     events = relationship("MatchEvent", back_populates="player", cascade="all, delete-orphan")
+    intelligence_items = relationship("Intelligence", back_populates="player", cascade="all, delete-orphan")
     
     # 索引
     __table_args__ = (
@@ -547,7 +497,7 @@ class MatchEvent(Base):
     team_id = Column(Integer, ForeignKey("teams.id", ondelete="SET NULL"), nullable=True, index=True)
     
     # 事件详情
-    details = Column(JSONB, default=dict, nullable=False)
+    details = Column(MutableDict.as_mutable(Text), default=lambda: {}, nullable=False)
     description = Column(Text, nullable=True)
     
     # 创建时间

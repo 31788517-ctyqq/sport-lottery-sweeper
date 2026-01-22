@@ -48,10 +48,28 @@ def authenticate_user(db: Session, username: str, password: str) -> User | None:
     """
     # Fetch user by username from the database
     user = db.query(User).filter(User.username == username).first()
-    # If user exists and password matches
-    if user and verify_password(password, user.hashed_password):
+    if not user:
+        return None
+    
+    # Try bcrypt verification first
+    from ..core.security import verify_password, get_password_hash
+    import hashlib
+    
+    if verify_password(password, user.password_hash):
         return user
-    # Return None if user not found or password incorrect
+    
+    # Bcrypt failed, try SHA256 (for legacy support)
+    sha256_hash = hashlib.sha256(password.encode('utf-8')).hexdigest()
+    if sha256_hash == user.password_hash:
+        # Upgrade to bcrypt hash
+        from ..core.security import get_password_hash
+        bcrypt_hash = get_password_hash(password)
+        user.password_hash = bcrypt_hash
+        db.commit()
+        db.refresh(user)
+        return user
+    
+    # Return None if password incorrect
     return None
 
 

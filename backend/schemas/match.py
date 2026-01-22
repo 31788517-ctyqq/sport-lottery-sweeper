@@ -1,169 +1,54 @@
 """
-比赛相关数据模式
+比赛信息相关Schema定义
 """
-from datetime import datetime
+
+from pydantic import BaseModel, Field
 from typing import Optional, List
-from pydantic import BaseModel
-from pydantic_settings import SettingsConfigDict
+from datetime import datetime
 
 
 class MatchBase(BaseModel):
-    """
-    比赛基础模型
-    """
-    home_team: str
-    away_team: str
-    league: str
-    match_date: datetime
-    venue: Optional[str] = None
+    match_id: str = Field(..., max_length=50, description="比赛唯一标识")
+    home_team: str = Field(..., max_length=100, description="主队名称")
+    away_team: str = Field(..., max_length=100, description="客队名称")
+    match_time: datetime = Field(..., description="比赛时间")
+    league: Optional[str] = Field(None, max_length=100, description="联赛/杯赛")
+    status: Optional[str] = Field("pending", max_length=20, description="比赛状态: pending/ongoing/finished")
+    home_score: Optional[int] = Field(None, description="主队得分")
+    away_score: Optional[int] = Field(None, description="客队得分")
+    final_result: Optional[str] = Field(None, max_length=20, description="最终赛果")
 
 
 class MatchCreate(MatchBase):
-    """
-    比赛建立模型
-    """
-    odds_home: Optional[float] = None
-    odds_draw: Optional[float] = None
-    odds_away: Optional[float] = None
+    pass
 
 
 class MatchUpdate(BaseModel):
-    """
-    比赛更新模型
-    """
-    home_team: Optional[str] = None
-    away_team: Optional[str] = None
-    league: Optional[str] = None
-    match_date: Optional[datetime] = None
-    venue: Optional[str] = None
-    odds_home: Optional[float] = None
-    odds_draw: Optional[float] = None
-    odds_away: Optional[float] = None
+    home_team: Optional[str] = Field(None, max_length=100)
+    away_team: Optional[str] = Field(None, max_length=100)
+    match_time: Optional[datetime] = None
+    league: Optional[str] = Field(None, max_length=100)
+    status: Optional[str] = Field(None, max_length=20)
+    home_score: Optional[int] = None
+    away_score: Optional[int] = None
+    final_result: Optional[str] = Field(None, max_length=20)
 
 
 class MatchResponse(MatchBase):
-    """
-    比赛响应模型
-    """
     id: int
     created_at: datetime
     updated_at: datetime
-    status: str  # pending, live, finished, cancelled
-    score_home: Optional[int] = None
-    score_away: Optional[int] = None
-
-    class Config(SettingsConfigDict):
+    
+    class Config:
         from_attributes = True
 
 
-class PublicMatchResponse(BaseModel):
-    """
-    公共比赛响应模型，用于前端展示
-    """
-    id: str
-    match_id: str
-    home_team: str
-    away_team: str
-    league: str
-    match_date: str
-    match_time: str
-    odds_home_win: float
-    odds_draw: float
-    odds_away_win: float
-    status: str
-    popularity: int
-    predicted_result: str
-    prediction_confidence: float
-
-
-class MatchList(BaseModel):
-    """
-    比赛列表响应模型
-    """
-    items: list[MatchResponse]
+class MatchListResponse(BaseModel):
+    items: List[MatchResponse]
     total: int
     page: int
     size: int
-    pages: int
 
 
-# 为admin模块添加缺失的类
-class TeamBase(BaseModel):
-    """
-    球队基础模型
-    """
-    name: str
-    short_name: str
-    country: str
-    logo_url: Optional[str] = None
-
-
-class TeamCreate(TeamBase):
-    """
-    球队创建模型
-    """
-    pass
-
-
-class TeamUpdate(BaseModel):
-    """
-    球队更新模型
-    """
-    name: Optional[str] = None
-    short_name: Optional[str] = None
-    country: Optional[str] = None
-    logo_url: Optional[str] = None
-
-
-class TeamResponse(TeamBase):
-    """
-    球队响应模型
-    """
-    id: int
-    created_at: datetime
-    updated_at: datetime
-
-    class Config(SettingsConfigDict):
-        from_attributes = True
-
-
-class LeagueBase(BaseModel):
-    """
-    联赛基础模型
-    """
-    name: str
-    country: str
-    level: int
-    logo_url: Optional[str] = None
-
-
-class LeagueCreate(LeagueBase):
-    """
-    联赛创建模型
-    """
-    pass
-
-
-class LeagueUpdate(BaseModel):
-    """
-    联赛更新模型
-    """
-    name: Optional[str] = None
-    country: Optional[str] = None
-    level: Optional[int] = None
-    logo_url: Optional[str] = None
-
-
-class LeagueResponse(LeagueBase):
-    """
-    联赛响应模型
-    """
-    id: int
-    created_at: datetime
-    updated_at: datetime
-
-    class Config(SettingsConfigDict):
-        from_attributes = True
-
-# Updated import to use relative path
-from ..schemas.match import MatchCreate
+# 为向后兼容提供别名
+Match = MatchResponse

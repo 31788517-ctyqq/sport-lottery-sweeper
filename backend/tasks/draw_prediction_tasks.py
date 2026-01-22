@@ -1,0 +1,106 @@
+"""
+平局预测相关的 Celery 定时任务
+"""
+from backend.celery_app import celery_app
+from backend.database import SessionLocal
+from backend.services.alert_service import check_and_trigger_alert
+from backend.services.draw_prediction_service import get_predictions
+from backend.models.draw_prediction_result import DrawPredictionResult
+from datetime import datetime, timedelta
+
+@celery_app.task
+def update_prediction_results():
+    """
+    定时任务：从数据源获取比赛结果并更新预测记录
+    建议每天凌晨执行一次
+    """
+    db = SessionLocal()
+    try:
+        # 获取最近30天内未结束的比赛预测
+        start_date = datetime.utcnow() - timedelta(days=30)
+        predictions = get_predictions(db, start_date=start_date)
+
+        # TODO: 实际项目中，这里应该对接爬虫或第三方API获取比赛结果
+        # 这里是模拟实现，随机更新一些预测结果
+        updated_count = 0
+        for pred in predictions:
+            if not pred.actual_result:
+                # 模拟：50%的概率已出结果
+                import random
+                if random.random() < 0.5:
+                    # 随机生成比赛结果（平局、主胜、客胜）
+                    result = random.choice(['draw', 'home', 'away'])
+                    pred.actual_result = result
+                    updated_count += 1
+
+        db.commit()
+        print(f"[定时任务] 更新了 {updated_count} 条预测结果")
+
+        return {
+            "status": "success",
+            "updated_count": updated_count,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+
+    except Exception as e:
+        print(f"[定时任务] 更新预测结果失败: {str(e)}")
+        db.rollback()
+        raise
+    finally:
+        db.close()
+
+
+@celery_app.task
+def monitor_and_alert():
+    """
+    定时任务：监控命中率并触发告警
+    建议每天执行一次
+    """
+    db = SessionLocal()
+    try:
+        alert_info = check_and_trigger_alert(db)
+
+        if alert_info['should_alert']:
+            # TODO: 实际项目中，这里应该发送邮件、短信或企业微信通知
+            print(f"[告警] {alert_info['message']}")
+
+            # 可以将告警记录到数据库，这里先打印日志
+            print(f"[告警] 当前命中率: {alert_info['accuracy']:.1%}, 阈值: {alert_info['threshold']:.1%}")
+
+        return {
+            "status": "success",
+            "alert_triggered": alert_info['should_alert'],
+            "accuracy": alert_info.get('accuracy'),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+
+    except Exception as e:
+        print(f"[定时任务] 监控告警失败: {str(e)}")
+        raise
+    finally:
+        db.close()
+
+
+# 配置定时任务执行周期
+@celery_app.on_after_configure.connect
+def setup_periodic_tasks(sender, **kwargs):
+    """
+    设置定时任务执行周期
+    """
+    # 每天凌晨2点更新比赛结果
+    sender.add_periodic_task(
+        update_prediction_results,
+        schedule=crontab(hour=2, minute=0),
+        name='update_prediction_results_daily'
+    )
+
+    # 每天上午9点监控命中率
+    sender.add_periodic_task(
+        monitor_and_alert,
+        schedule=crontab(hour=9, minute=0),
+        name='monitor_accuracy_daily'
+    )
+    print("[Celery] 定时任务已配置")
+
+
+from celery.schedules import crontab

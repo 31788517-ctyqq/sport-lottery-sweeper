@@ -7,7 +7,7 @@ import sys
 import os
 from contextlib import contextmanager
 from datetime import datetime
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import logging
@@ -17,32 +17,29 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(current_dir)
 sys.path.insert(0, parent_dir)
 
+# 导入数据库模块以确保表被创建
+from backend.database import engine
+
+# 添加项目用户管理路由
 from backend.config import settings
 from backend.core.middleware import RequestLoggingMiddleware
 from backend.core.async_initializer import get_async_initializer
-
+from backend.utils.logging_config import setup_logging, shutdown_logging
 
 @contextmanager
 def timer(name: str):
     """计时上下文管理器"""
     start = time.perf_counter()
     timestamp = datetime.now().strftime('%H:%M:%S.%f')[:-3]
-    print(f"[{timestamp}] 🚀 开始: {name}")
+    print(f"[{timestamp}] 开始: {name}")
     yield
     elapsed = time.perf_counter() - start
     timestamp = datetime.now().strftime('%H:%M:%S.%f')[:-3]
-    print(f"[{timestamp}] ✅ 完成: {name} (耗时: {elapsed:.3f}s)")
+    print(f"[{timestamp}] 完成: {name} (耗时: {elapsed:.3f}s)")
 
 
 # 配置日志
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler("app.log"),
-        logging.StreamHandler()
-    ]
-)
+setup_logging()
 logger = logging.getLogger(__name__)
 
 
@@ -53,19 +50,20 @@ async def lifespan(_app: FastAPI):
     """
     # 启动时执行
     startup_start = time.time()
-    print(f"[{datetime.now().strftime('%H:%M:%S.%f')[:-3]}] 🌟 开始启动应用...")
+    print(f"[{datetime.now().strftime('%H:%M:%S.%f')[:-3]}] 开始启动应用...")
 
     with timer("异步初始化关键服务"):
         initializer = get_async_initializer()
         await initializer.initialize_all()
 
     startup_total = time.time() - startup_start
-    print(f"[{datetime.now().strftime('%H:%M:%S.%f')[:-3]}] 🎉 应用启动完成，总耗时: {startup_total:.3f}s")
+    print(f"[{datetime.now().strftime('%H:%M:%S.%f')[:-3]}] 应用启动完成，总耗时: {startup_total:.3f}s")
 
     yield
 
     # 关闭时执行
-    print(f"[{datetime.now().strftime('%H:%M:%S.%f')[:-3]}] 💤 关闭应用...")
+    print(f"[{datetime.now().strftime('%H:%M:%S.%f')[:-3]}] 关闭应用...")
+    shutdown_logging()
 
 
 def create_app() -> FastAPI:
@@ -96,13 +94,11 @@ def create_app() -> FastAPI:
         app.add_middleware(RequestLoggingMiddleware)
 
     with timer("包含API路由"):
-        from backend.api import router
-        app.include_router(router, prefix=settings.API_V1_STR)
+        from backend.api.v1 import create_api_router
+        api_v1_router = create_api_router()
+        app.include_router(api_v1_router, prefix=settings.API_V1_STR)
 
-    with timer("包含管理后台路由"):
-        from backend.admin import admin_router
-        app.include_router(admin_router)
-
+    # 延迟导入管理后台路由，避免循环导入问题
     with timer("添加根路径路由"):
         @app.get("/")
         async def root():
@@ -116,13 +112,33 @@ def create_app() -> FastAPI:
             }
 
     app_total = time.time() - app_start
-    print(f"[{datetime.now().strftime('%H:%M:%S.%f')[:-3]}] 🏗️  应用构建完成，总耗时: {app_total:.3f}s")
+    print(f"[{datetime.now().strftime('%H:%M:%S.%f')[:-3]}] 应用构建完成，总耗时: {app_total:.3f}s")
 
     return app
 
 
 # 创建应用实例
 app = create_app()
+
+# 在应用启动后注册管理后台路由（避免循环导入）
+@app.on_event("startup")
+async def register_admin_routes():
+    """在应用启动后注册管理后台路由"""
+    print(f"[{datetime.now().strftime('%H:%M:%S.%f')[:-3]}] 开始注册管理后台路由...")
+    from backend.admin import admin_router
+    app.include_router(admin_router)
+    print(f"[{datetime.now().strftime('%H:%M:%S.%f')[:-3]}] 管理后台路由注册完成")
+
+import asyncio
+
+@app.websocket("/ws/matches")
+async def websocket_matches(websocket: WebSocket):
+    await websocket.accept()
+    try:
+        while True:
+            await asyncio.sleep(1)
+    except WebSocketDisconnect:
+        pass
 
 
 @app.get("/health")
@@ -137,7 +153,7 @@ async def health_check():
 
 if __name__ == "__main__":
     import uvicorn
-    print(f"[{datetime.now().strftime('%H:%M:%S.%f')[:-3]}] 🚀 启动Uvicorn服务器...")
+    print(f"[{datetime.now().strftime('%H:%M:%S.%f')[:-3]}] 启动Uvicorn服务器...")
 
     uvicorn.run(
         "backend.main:app",

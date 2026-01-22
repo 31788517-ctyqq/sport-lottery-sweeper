@@ -23,17 +23,17 @@ def create_api_router():
     try:
         from .v1 import router as v1_router
         router.include_router(v1_router)
-        logger.info("✓ API v1 路由已加载")
+        logger.info("API v1 路由已加载")
     except Exception as e:
-        logger.error(f"✗ API v1 路由加载失败: {e}")
+        logger.error(f"API v1 路由加载失败: {e}")
     
     # 2. 加载 WebSocket 路由
     try:
         from .websocket import router as ws_router
         router.include_router(ws_router, prefix="/ws", tags=["websocket"])
-        logger.info("✓ WebSocket 路由已加载")
+        logger.info("WebSocket 路由已加载")
     except Exception as e:
-        logger.error(f"✗ WebSocket 路由加载失败: {e}")
+        logger.error(f"WebSocket 路由加载失败: {e}")
     
     # 3. 向后兼容路由（已废弃，计划在 v2.0 移除）
     try:
@@ -43,7 +43,7 @@ def create_api_router():
             tags=["legacy-deprecated"],
             deprecated=True
         )
-        logger.warning("⚠ 向后兼容路由已加载（已废弃）")
+        logger.warning("向后兼容路由已加载（已废弃）")
     except Exception as e:
         logger.info(f"向后兼容路由未加载: {e}")
 

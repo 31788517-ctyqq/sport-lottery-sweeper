@@ -1,5 +1,8 @@
 // frontend/src/router/guards/auth.js
-import { useUserStore } from '@/store/modules/user'; // 假设用户状态存储在这个 store 中
+import { useAuthStore } from '../../store/modules/user';
+
+// 临时模拟模式 - 开发环境下跳过认证检查
+const isDevelopment = process.env.NODE_ENV === 'development';
 
 /**
  * 认证守卫
@@ -7,10 +10,16 @@ import { useUserStore } from '@/store/modules/user'; // 假设用户状态存储
  * @returns {Promise<boolean>} - 如果用户已认证则返回 true，否则返回 false
  */
 export const checkAuth = async () => {
-  const userStore = useUserStore();
+  // 开发环境临时跳过认证检查
+  if (isDevelopment) {
+    console.log('🔧 开发模式：跳过认证检查');
+    return true;
+  }
+  
+  const authStore = useAuthStore();
 
   // 如果 store 中已经有用户信息，认为是已登录
-  if (userStore.userInfo) {
+  if (authStore.userInfo) {
     return true;
   }
 

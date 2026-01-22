@@ -1,3 +1,5 @@
+import sys
+import os
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config
@@ -5,8 +7,27 @@ from sqlalchemy import pool
 
 from alembic import context
 
+# 获取项目根目录并添加到Python路径
+project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, project_root)
+sys.path.insert(0, os.path.join(project_root, "backend"))
+
 # 导入settings
-from ..config import settings
+try:
+    from backend.config import settings
+except ImportError:
+    try:
+        # 如果无法从backend导入，尝试从backend.core导入
+        sys.path.append(os.path.join(project_root, "backend"))
+        from core.config import Settings
+        settings = Settings()
+    except ImportError:
+        # 如果还是不行，手动创建settings对象
+        import pathlib
+        class FallbackSettings:
+            DATABASE_URL = f"sqlite:///{pathlib.Path(__file__).parent.parent.parent}/soccer_scanner.db"
+        
+        settings = FallbackSettings()
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -18,8 +39,8 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 # Import your models here for autogenerate support
-# This is assuming you have a Base class in your models
-from ..models.base import Base  # Update this import to match your actual Base class location
+# Directly import the Base from the absolute path
+from backend.models.base import Base
 target_metadata = Base.metadata
 
 def run_migrations_offline() -> None:

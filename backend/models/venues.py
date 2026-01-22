@@ -3,15 +3,16 @@
 """
 from datetime import datetime
 from typing import List, Optional
+import sqlalchemy as sa
 from sqlalchemy import (
     Column, Integer, String, Boolean, DateTime, 
     ForeignKey, Float, Text, Enum, CheckConstraint, Index, Table, Date
 )
 from sqlalchemy.orm import relationship, backref
-from sqlalchemy.dialects.postgresql import UUID, JSONB, ARRAY
 from sqlalchemy.sql import func
 import enum
 
+from sqlalchemy.ext.mutable import MutableDict
 from .base import Base, BaseAuditModel, BaseFullModel
 
 
@@ -47,7 +48,7 @@ class Venue(BaseFullModel):
     coordinates = Column(String(100), nullable=True, index=True)  # 坐标 (lat,lng)
     
     # 场地信息
-    surface_type = Column(Enum(VenueSurfaceEnum), nullable=True, index=True)  # 地面类型
+    surface_type = Column(Enum(VenueSurfaceEnum, values_callable=lambda obj: [e.value for e in obj], native_enum=False), nullable=True, index=True)  # 地面类型
     roof_type = Column(String(50), nullable=True, index=True)  # 屋顶类型 (open, closed, dome)
     
     # 建筑信息
@@ -55,7 +56,7 @@ class Venue(BaseFullModel):
     architect = Column(String(100), nullable=True)  # 建筑师
     
     # 图片资源
-    image_urls = Column(ARRAY(String), default=list, nullable=False)  # 图片URL数组
+    image_urls = Column(sa.JSON, default=list, nullable=False)  # 图片URL数组，SQLite JSON存储  # 图片URL数组
     logo_url = Column(String(500), nullable=True)  # 标志图片
     
     # 状态信息
@@ -63,7 +64,7 @@ class Venue(BaseFullModel):
     is_neutral = Column(Boolean, default=False, nullable=False, index=True)  # 是否中立场地
     
     # 设施信息
-    facilities = Column(ARRAY(String), default=list, nullable=False)  # 设施列表
+    facilities = Column(sa.JSON, default=list, nullable=False)  # 设施列表，SQLite JSON存储  # 设施列表
     
     # 气候信息
     climate_controlled = Column(Boolean, default=False, nullable=False)  # 是否气候受控
@@ -77,7 +78,7 @@ class Venue(BaseFullModel):
     external_source = Column(String(50), nullable=True, index=True)  # 外部数据来源
     
     # 配置信息
-    config = Column(JSONB, default=dict, nullable=False)  # 场馆配置
+    config = Column(MutableDict.as_mutable(Text), default=lambda: {}, nullable=False)  # 场馆配置
     
     # 关系
     matches = relationship("Match", back_populates="venue", cascade="all, delete-orphan")

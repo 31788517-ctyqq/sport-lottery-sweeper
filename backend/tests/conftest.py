@@ -13,7 +13,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from ..main import app  # Import your main FastAPI app instance
-from ..database import get_db_session  # Import the dependency to override
+from ..database import get_db  # Import the dependency to override
 from ..models import Base  # Import your declarative base
 
 # Use an in-memory SQLite database for testing, which is fast and isolated.
@@ -72,10 +72,10 @@ def override_get_db_session(db_session):
     """
     Overrides the get_db_session dependency with the test session.
     """
-    async def _get_db_session_override():
+    async def _get_db_override():
         yield db_session
 
-    app.dependency_overrides[get_db_session] = _get_db_session_override
+    app.dependency_overrides[get_db] = _get_db_override
     yield
     # Clean up the override after the test
     app.dependency_overrides.clear()
@@ -98,22 +98,3 @@ def mock_aiohttp_get():
     """
     with patch("aiohttp.ClientSession.get", new_callable=AsyncMock) as mock_get:
         yield mock_get
-
-# Example of a fixture for sample data
-@pytest.fixture
-def sample_user_data():
-    return {
-        "username": "testuser",
-        "email": "test@example.com",
-        "password": "strongpassword123"
-    }
-
-@pytest.fixture
-def sample_match_data():
-    return {
-        "home_team": "Team A",
-        "away_team": "Team B",
-        "match_time": "2023-10-27T15:00:00Z",
-        "league": "Test League",
-        "venue": "Test Stadium"
-    }

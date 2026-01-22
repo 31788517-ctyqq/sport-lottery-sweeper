@@ -4,9 +4,10 @@ class WebSocketService {
   constructor() {
     this.socket = null;
     this.store = null; // 延迟初始化store
-    this.reconnectInterval = 5000; // 5秒重连间隔
-    this.maxReconnectAttempts = 5;
+    this.reconnectInterval = 10000; // 10秒重连间隔
+    this.maxReconnectAttempts = 3; // 最多重连3次
     this.reconnectAttempts = 0;
+    this.isConnecting = false; // 防止并发连接
   }
 
   getStore() {
@@ -24,6 +25,12 @@ class WebSocketService {
 
   connect() {
     try {
+      // 防止重复连接
+      if (this.isConnecting) {
+        console.log('WebSocket正在连接中...');
+        return;
+      }
+
       // 检查是否需要连接WebSocket (仅当有后端服务时连接)
       if (!this.shouldConnect()) {
         console.log('WebSocket未启用,跳过连接');
@@ -37,11 +44,13 @@ class WebSocketService {
         return;
       }
 
-      this.socket = new WebSocket('ws://localhost:8000/ws/matches');
+      this.isConnecting = true;
+      this.socket = new WebSocket('ws://localhost:8001/ws/matches');
 
       this.socket.onopen = () => {
-        console.log('WebSocket连接已建立');
+        console.log('✅ WebSocket连接已建立');
         this.reconnectAttempts = 0; // 连接成功，重置重连次数
+        this.isConnecting = false;
       };
 
       this.socket.onmessage = (event) => {
@@ -50,20 +59,22 @@ class WebSocketService {
       };
 
       this.socket.onerror = (error) => {
-        console.warn('WebSocket连接失败 (这可能是因为后端未启动):', error.message);
+        console.warn('⚠️  WebSocket连接失败 (后端WebSocket服务未启动，页面功能不受影响)');
+        this.isConnecting = false;
       };
 
       this.socket.onclose = () => {
-        console.log('WebSocket连接已关闭');
-
+        this.isConnecting = false;
+        
         // 尝试重连
         if (this.reconnectAttempts < this.maxReconnectAttempts) {
+          this.reconnectAttempts++;
+          console.log(`🔄 WebSocket将在 ${this.reconnectInterval/1000} 秒后重连 (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
           setTimeout(() => {
-            this.reconnectAttempts++;
             this.connect();
           }, this.reconnectInterval);
         } else {
-          console.error('达到最大重连尝试次数');
+          console.log('ℹ️  WebSocket已停止重连，应用将使用静态数据模式');
         }
       };
     } catch (error) {

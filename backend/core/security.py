@@ -11,6 +11,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from .config import get_settings
+from .database import get_db
 
 # JWT算法常量
 ALGORITHM = "HS256"
@@ -134,3 +135,65 @@ def generate_secret_key(length: int = 32) -> str:
         A URL-safe base64-encoded string of the random key.
     """
     return secrets.token_urlsafe(length)
+
+
+# Admin user authentication dependencies
+def get_current_active_admin_user(
+    token: HTTPAuthorizationCredentials = Depends(HTTPBearer()),
+    db = Depends(get_db)
+):
+    """
+    获取当前活跃的后台管理用户
+    
+    Args:
+        token: Bearer token from Authorization header
+        db: Database session
+        
+    Returns:
+        AdminUser object if valid and active
+        
+    Raises:
+        HTTPException: If token is invalid or user is not active
+    """
+    from ..crud.admin_user import CRUDAdminUser
+    from ..models.admin_user import AdminStatusEnum
+    
+    if not token or not token.credentials:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    try:
+        payload = jwt.decode(token.credentials, settings.secret_key, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        if username is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+    except jwt.JWTError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    crud_admin_user = CRUDAdminUser()
+    admin_user = crud_admin_user.get_by_username(db, username)
+    if not admin_user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    if admin_user.status != AdminStatusEnum.ACTIVE:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User is not active",
+        )
+    
+    return admin_user

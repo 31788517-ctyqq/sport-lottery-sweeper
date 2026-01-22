@@ -146,112 +146,79 @@
   </div>
 </template>
 
-<script>
-import { computed } from 'vue';
-import { useAppStore } from '../stores';
-import FilterToolbar from './FilterToolbar.vue';
-import FilterSummary from './FilterSummary.vue';
-import StatsPanel from './StatsPanel.vue';
-import ProfilePanel from './ProfilePanel.vue';
-import MatchList from './MatchList.vue';
-import MatchTable from './MatchTable.vue';
+<script setup>
+import { computed } from 'vue'
+import { useAppStore } from '../stores'
+import FilterToolbar from './FilterToolbar.vue'
+import FilterSummary from './FilterSummary.vue'
+import StatsPanel from './StatsPanel.vue'
+import ProfilePanel from './ProfilePanel.vue'
+import MatchList from './MatchList.vue'
+import MatchTable from './MatchTable.vue'
 
-export default {
-  name: 'MainView',
-  components: {
-    FilterToolbar,
-    FilterSummary,
-    StatsPanel,
-    ProfilePanel,
-    MatchList,
-    MatchTable
-  },
-  setup() {
-    const store = useAppStore();
-    
-    const currentView = computed(() => store.currentView);
-    const panelState = computed(() => store.panelState);
-    const loading = computed(() => store.loading);
-    const filteredMatches = computed(() => store.filteredMatches);
-    
-    // 计算筛选计数
-    const intelTypeCount = computed(() => store.filterState.intelTypes.length);
-    const leagueCount = computed(() => store.filterState.leagues.length);
-    const sourceCount = computed(() => store.filterState.sources.length);
-    
-    // 模拟配置数据
-    const intelligenceTypes = computed(() => store.mockConfig.intelligenceTypes);
-    const leagues = computed(() => store.mockConfig.leagues);
-    const sources = computed(() => store.mockConfig.sources);
-    
-    // 方法
-    const toggleFilterPanel = (panelType) => {
-      const panel = document.getElementById(`${panelType}Panel`);
-      const isExpanded = panel.classList.contains('expanded');
-      
-      // 收起所有面板
-      closeAllFilterPanels();
-      
-      // 如果当前是收起的，则展开
-      if (!isExpanded) {
-        panel.classList.add('expanded');
-        store.panelState[`${panelType}Expanded`] = true;
-      }
-    };
-    
-    const closeAllFilterPanels = () => {
-      document.querySelectorAll('.filter-panel').forEach(panel => {
-        panel.classList.remove('expanded');
-      });
-      
-      // 更新面板状态
-      Object.keys(store.panelState).forEach(key => {
-        store.panelState[key] = false;
-      });
-    };
-    
-    const toggleFilterOption = (filterType, id) => {
-      store.toggleFilterOption(filterType, id);
-    };
-    
-    const isFilterSelected = (filterType, id) => {
-      return store.filterState[filterType + 's'].includes(id);
-    };
-    
-    const clearFilter = (filterType) => {
-      store.clearFilter(filterType);
-    };
-    
-    const applyFilters = () => {
-      // 收起所有筛选面板
-      closeAllFilterPanels();
-    };
-    
-    const generateMockData = () => {
-      store.generateMockData();
-    };
-    
-    return {
-      currentView,
-      panelState,
-      loading,
-      filteredMatches,
-      intelTypeCount,
-      leagueCount,
-      sourceCount,
-      intelligenceTypes,
-      leagues,
-      sources,
-      toggleFilterPanel,
-      closeAllFilterPanels,
-      toggleFilterOption,
-      isFilterSelected,
-      clearFilter,
-      applyFilters,
-      generateMockData
-    };
+const store = useAppStore()
+
+const currentView = computed(() => store.currentView)
+const panelState = computed(() => store.panelState)
+const loading = computed(() => store.loading)
+const filteredMatches = computed(() => store.filteredMatches)
+
+// 计算筛选计数
+const intelTypeCount = computed(() => store.filterState.intelTypes.length)
+const leagueCount = computed(() => store.filterState.leagues.length)
+const sourceCount = computed(() => store.filterState.sources.length)
+
+// 模拟配置数据
+const intelligenceTypes = computed(() => store.mockConfig.intelligenceTypes)
+const leagues = computed(() => store.mockConfig.leagues)
+const sources = computed(() => store.mockConfig.sources)
+
+// 方法
+const toggleFilterPanel = (panelType) => {
+  const panel = document.getElementById(`${panelType}Panel`)
+  const isExpanded = panel.classList.contains('expanded')
+  
+  // 收起所有面板
+  closeAllFilterPanels()
+  
+  // 如果当前是收起的，则展开
+  if (!isExpanded) {
+    panel.classList.add('expanded')
+    store.panelState[`${panelType}Expanded`] = true
   }
-};
+}
+
+const closeAllFilterPanels = () => {
+  document.querySelectorAll('.filter-panel').forEach(panel => {
+    panel.classList.remove('expanded')
+  })
+  
+  // 更新面板状态
+  Object.keys(store.panelState).forEach(key => {
+    store.panelState[key] = false
+  })
+}
+
+const toggleFilterOption = (filterType, id) => {
+  store.toggleFilterOption(filterType, id)
+}
+
+const isFilterSelected = (filterType, id) => {
+  return store.filterState[filterType + 's'].includes(id)
+}
+
+const clearFilter = (filterType) => {
+  store.clearFilter(filterType)
+}
+
+const applyFilters = () => {
+  // 收起所有筛选面板
+  closeAllFilterPanels()
+}
+
+const generateMockData = () => {
+  store.generateMockData()
+}
 </script>
 
 <style scoped>

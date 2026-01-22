@@ -47,6 +47,7 @@ dependencies = [
 dev = [
     "pytest>=7.4.0",
     "pytest-cov>=4.1.0",
+    "pytest-asyncio>=0.21.0",
     "black>=23.12.0",
     "flake8>=6.1.0",
     "mypy>=1.8.0",
@@ -54,8 +55,11 @@ dev = [
     "pre-commit>=3.6.0"
 ]
 
+[project.scripts]
+start = "backend.run:main"
+
 [tool.setuptools.packages.find]
-where = ["src"]
+where = ["backend"]
 include = ["backend*", "shared*"]
 
 [project.urls]
@@ -68,18 +72,31 @@ testpaths = ["tests"]
 python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
+asyncio_mode = "auto"
 markers = [
     "slow: marks tests as slow",
     "integration: marks tests as integration tests"
 ]
 
 [tool.coverage.run]
-source = ["src"]
+source = ["backend"]
 omit = [
     "*/tests/*",
     "*/venv/*",
     "*/__pycache__/*"
 ]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:"
+]
+show_missing = true
+skip_covered = false
+fail_under = 80
 
 [tool.black]
 line-length = 88

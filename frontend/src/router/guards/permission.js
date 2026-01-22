@@ -1,5 +1,5 @@
 // frontend/src/router/guards/permission.js
-import { useUserStore } from '@/store/modules/user'; // 假设用户状态和角色信息存储在这个 store 中
+import { useAuthStore } from '../../store/modules/user';
 
 /**
  * 权限守卫
@@ -8,8 +8,8 @@ import { useUserStore } from '@/store/modules/user'; // 假设用户状态和角
  * @returns {boolean} - 如果用户有权限则返回 true，否则返回 false
  */
 export const checkPermission = (route) => {
-  const userStore = useUserStore();
-  const userRoles = userStore.userRoles || []; // 假设 store 中存储了用户角色数组
+  const authStore = useAuthStore();
+  const userRoles = authStore.userRoles || []; // 注意：当前 store 中没有 userRoles，需要后续添加
   const requiredPermissions = route.meta?.permissions; // 从路由元信息中获取所需权限
 
   // 如果路由没有定义特定权限，则认为任何人都可以访问

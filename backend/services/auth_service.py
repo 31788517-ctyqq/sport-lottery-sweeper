@@ -8,13 +8,11 @@ from jose import JWTError, jwt
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_, func
 
-from ..core.auth import (
+from ..core.security import (
     verify_password, 
-    get_password_hash, 
-    create_access_token,
-    create_refresh_token
+    get_password_hash
 )
-from ..core.database import get_db_session
+from ..database import get_db
 from ..models.user import (
     User, 
     Role, 
@@ -42,47 +40,41 @@ class AuthenticationService:
     def __init__(self, db: Session):
         self.db = db
     
-    def authenticate_user(self, username: str, password: str) -> Optional[User]:
+    async def authenticate_user(self, username: str, password: str) -> Optional[User]:
         """
-        验证用户凭据
+        异步认证用户（支持邮箱或用户名登录）
+        """
+        logger.info(f"开始认证用户: {username}")
         
-        Args:
-            username: 用户名或邮箱
-            password: 密码
+        # 首先尝试按用户名查找
+        user = self.db.query(User).filter(User.username == username).first()
+        if not user:
+            # 如果按用户名没找到，尝试按邮箱查找
+            user = self.db.query(User).filter(User.email == username).first()
+            logger.info(f"按邮箱查找用户: {username}, 结果: {'找到' if user else '未找到'}")
             
-        Returns:
-            Optional[User]: 验证成功的用户，失败返回None
-        """
-        try:
-            # 尝试通过用户名或邮箱查找用户
-            user = self.db.query(User).filter(
-                or_(
-                    User.username == username,
-                    User.email == username
-                )
-            ).first()
-            
-            if not user:
-                logger.warning(f"用户不存在: {username}")
-                return None
-            
-            if not verify_password(password, user.hashed_password):
-                logger.warning(f"密码错误: {username}")
-                return None
-            
-            if not user.is_active:
-                logger.warning(f"用户被禁用: {username}")
-                return None
-            
-            # 记录登录日志
-            self._log_user_login(user, success=True)
-            
-            return user
-            
-        except Exception as e:
-            logger.error(f"用户认证失败: {str(e)}")
+        if not user:
+            logger.warning(f"用户不存在: {username}")
             return None
-    
+        
+        logger.info(f"找到用户: {user.username}, 状态: {user.status}, user_type: {user.user_type}")
+        logger.info(f"数据库密码哈希: {user.password_hash}")
+        logger.info(f"输入密码: {password}")
+        
+        if not verify_password(password, user.password_hash):
+            logger.warning(f"密码错误: {username}")
+            return None
+        
+        # 检查用户状态（使用status字段而不是is_active）
+        if user.status != UserStatusEnum.ACTIVE:
+            logger.warning(f"用户被禁用: {username}, 状态: {user.status}")
+            return None
+        
+        # 记录登录日志
+        self._log_user_login(user, success=True)
+        
+        return user
+            
     def register_user(self, user_data: UserCreate) -> Tuple[bool, Optional[User], str]:
         """
         注册新用户
@@ -109,17 +101,25 @@ class AuthenticationService:
                 return False, None, "邮箱已存在"
             
             # 创建新用户
-            hashed_password = get_password_hash(user_data.password)
+            password_hash = get_password_hash(user_data.password)
             user = User(
                 username=user_data.username,
                 email=user_data.email,
-                hashed_password=hashed_password,
-                full_name=user_data.full_name,
-                is_active=True,
-                is_verified=False,
-                is_superuser=False,
-                user_type=UserTypeEnum.NORMAL,
-                status=UserStatusEnum.ACTIVE
+                password_hash=password_hash,
+                first_name=getattr(user_data, 'first_name', ''),
+                last_name=getattr(user_data, 'last_name', ''),
+                nickname=getattr(user_data, 'nickname', ''),
+                bio=getattr(user_data, 'bio', ''),
+                avatar_url=getattr(user_data, 'avatar_url', ''),
+                phone=getattr(user_data, 'phone', ''),
+                country=getattr(user_data, 'country', ''),
+                city=getattr(user_data, 'city', ''),
+                role=getattr(user_data, 'role', ''),
+                is_verified=getattr(user_data, 'is_verified', False),
+                user_type=getattr(user_data, 'user_type', UserTypeEnum.NORMAL),
+                status=getattr(user_data, 'status', UserStatusEnum.ACTIVE),
+                timezone=getattr(user_data, 'timezone', 'UTC'),
+                language=getattr(user_data, 'language', 'zh')
             )
             
             # 分配默认角色
@@ -167,10 +167,10 @@ class AuthenticationService:
             if not user:
                 return False, "用户不存在"
             
-            if not verify_password(old_password, user.hashed_password):
+            if not verify_password(old_password, user.password_hash):
                 return False, "旧密码错误"
             
-            user.hashed_password = get_password_hash(new_password)
+            user.password_hash = get_password_hash(new_password)
             user.updated_at = datetime.utcnow()
             
             self.db.commit()
@@ -208,9 +208,7 @@ class AuthenticationService:
             if not user:
                 return False, "用户不存在"
             
-            user.hashed_password = get_password_hash(new_password)
-            user.reset_password_token = None
-            user.reset_password_expires = None
+            user.password_hash = get_password_hash(new_password)
             user.updated_at = datetime.utcnow()
             
             self.db.commit()
@@ -224,7 +222,7 @@ class AuthenticationService:
                 resource_id=str(user.id)
             )
             
-            logger.info(f"用户密码重置成功: {user.email}")
+            logger.info(f"用户密码重置成功: {user.username}")
             return True, "密码重置成功"
             
         except Exception as e:
@@ -232,12 +230,13 @@ class AuthenticationService:
             logger.error(f"密码重置失败: {str(e)}")
             return False, f"密码重置失败: {str(e)}"
     
-    def verify_email(self, user_id: int) -> Tuple[bool, str]:
+    def update_user_status(self, user_id: int, new_status: UserStatusEnum) -> Tuple[bool, str]:
         """
-        验证用户邮箱
+        更新用户状态
         
         Args:
             user_id: 用户ID
+            new_status: 新状态
             
         Returns:
             Tuple[bool, str]: (成功标志, 消息)
@@ -247,8 +246,8 @@ class AuthenticationService:
             if not user:
                 return False, "用户不存在"
             
-            user.is_verified = True
-            user.email_verified_at = datetime.utcnow()
+            old_status = user.status
+            user.status = new_status
             user.updated_at = datetime.utcnow()
             
             self.db.commit()
@@ -256,117 +255,105 @@ class AuthenticationService:
             # 记录用户活动
             self._log_user_activity(
                 user.id,
-                "verify_email",
-                "验证邮箱",
+                "update_status",
+                f"用户状态从 {old_status.value} 更新为 {new_status.value}",
                 resource_type="user",
                 resource_id=str(user.id)
             )
             
-            logger.info(f"用户邮箱验证成功: {user.email}")
-            return True, "邮箱验证成功"
+            logger.info(f"用户状态更新成功: {user.username}")
+            return True, "用户状态更新成功"
             
         except Exception as e:
             self.db.rollback()
-            logger.error(f"邮箱验证失败: {str(e)}")
-            return False, f"邮箱验证失败: {str(e)}"
+            logger.error(f"用户状态更新失败: {str(e)}")
+            return False, f"用户状态更新失败: {str(e)}"
     
-    def update_user_profile(self, user_id: int, profile_data: Dict[str, Any]) -> Tuple[bool, Optional[User], str]:
+    def get_user_by_id(self, user_id: int) -> Optional[User]:
         """
-        更新用户资料
+        根据ID获取用户
         
         Args:
             user_id: 用户ID
-            profile_data: 资料数据
             
         Returns:
-            Tuple[bool, Optional[User], str]: (成功标志, 用户对象, 消息)
+            User: 用户对象或None
         """
         try:
             user = self.db.query(User).filter(User.id == user_id).first()
-            if not user:
-                return False, None, "用户不存在"
-            
-            # 检查邮箱是否已被其他用户使用
-            if 'email' in profile_data and profile_data['email'] != user.email:
-                existing_email = self.db.query(User).filter(
-                    User.email == profile_data['email'],
-                    User.id != user_id
-                ).first()
-                if existing_email:
-                    return False, None, "邮箱已被其他用户使用"
-            
-            # 更新字段
-            for field, value in profile_data.items():
-                if hasattr(user, field) and field not in ['id', 'username', 'hashed_password', 'is_superuser']:
-                    setattr(user, field, value)
-            
-            user.updated_at = datetime.utcnow()
-            
-            self.db.commit()
-            self.db.refresh(user)
-            
-            # 记录用户活动
-            self._log_user_activity(
-                user.id,
-                "update_profile",
-                "更新资料",
-                resource_type="user",
-                resource_id=str(user.id)
-            )
-            
-            logger.info(f"用户资料更新成功: {user.username}")
-            return True, user, "资料更新成功"
-            
+            return user
         except Exception as e:
-            self.db.rollback()
-            logger.error(f"用户资料更新失败: {str(e)}")
-            return False, None, f"资料更新失败: {str(e)}"
+            logger.error(f"获取用户失败: {str(e)}")
+            return None
     
-    def _log_user_login(self, user: User, success: bool = True, ip_address: str = None, user_agent: str = None):
-        """记录用户登录日志"""
+    def get_user_by_email(self, email: str) -> Optional[User]:
+        """
+        根据邮箱获取用户
+        
+        Args:
+            email: 用户邮箱
+            
+        Returns:
+            User: 用户对象或None
+        """
+        try:
+            user = self.db.query(User).filter(User.email == email).first()
+            return user
+        except Exception as e:
+            logger.error(f"获取用户失败: {str(e)}")
+            return None
+    
+    def _log_user_login(self, user: User, success: bool = True):
+        """
+        记录用户登录日志
+        
+        Args:
+            user: 用户对象
+            success: 是否成功
+        """
         try:
             login_log = UserLoginLog(
                 user_id=user.id,
-                success=success,
-                login_ip=ip_address,
-                user_agent=user_agent,
-                login_at=datetime.utcnow()
+                success=success
             )
-            
             self.db.add(login_log)
             
-            # 更新用户登录信息
+            # 更新用户登录统计
+            user.last_login_at = datetime.utcnow()
+            user.login_count += 1
             if success:
-                user.last_login = datetime.utcnow()
-                user.login_count += 1
-                user.failed_login_count = 0
+                user.failed_login_attempts = 0
+                user.is_online = True
             else:
-                user.failed_login_count += 1
+                user.failed_login_attempts += 1
             
             self.db.commit()
-            
         except Exception as e:
             logger.error(f"记录登录日志失败: {str(e)}")
             self.db.rollback()
     
-    def _log_user_activity(self, user_id: int, activity_type: str, description: str, 
-                          resource_type: str = None, resource_id: str = None,
-                          details: Dict = None):
-        """记录用户活动日志"""
+    def _log_user_activity(self, user_id: int, action: str, description: str, 
+                          resource_type: str = "", resource_id: str = ""):
+        """
+        记录用户活动
+        
+        Args:
+            user_id: 用户ID
+            action: 操作类型
+            description: 操作描述
+            resource_type: 资源类型
+            resource_id: 资源ID
+        """
         try:
             activity = UserActivity(
                 user_id=user_id,
-                activity_type=activity_type,
-                activity_time=datetime.utcnow(),
+                action=action,
                 description=description,
                 resource_type=resource_type,
-                resource_id=resource_id,
-                details=details or {}
+                resource_id=resource_id
             )
-            
             self.db.add(activity)
             self.db.commit()
-            
         except Exception as e:
             logger.error(f"记录用户活动失败: {str(e)}")
             self.db.rollback()

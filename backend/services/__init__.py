@@ -9,7 +9,7 @@ from .auth_service import (
 )
 from .match_service import MatchService
 from .intelligence_service import IntelligenceService
-from .crawler_service import CrawlerService
+from .crawler_config_service import CrawlerService
 from .notification_service import NotificationService
 from .analytics_service import AnalyticsService
 

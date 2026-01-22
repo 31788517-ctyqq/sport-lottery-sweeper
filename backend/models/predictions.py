@@ -5,13 +5,13 @@ from datetime import datetime
 from typing import List, Optional
 from sqlalchemy import (
     Column, Integer, String, Boolean, DateTime, 
-    ForeignKey, Float, Text, Enum, CheckConstraint, Index, Date, Time
+    ForeignKey, Float, Text, Enum, CheckConstraint, Index, Date, Time, JSON
 )
 from sqlalchemy.orm import relationship, backref
-from sqlalchemy.dialects.postgresql import UUID, JSONB, ARRAY
 from sqlalchemy.sql import func
 import enum
 
+from sqlalchemy.ext.mutable import MutableDict
 from .base import Base, BaseAuditModel, BaseFullModel
 
 
@@ -55,8 +55,8 @@ class Prediction(BaseFullModel):
     match_id = Column(Integer, ForeignKey("matches.id", ondelete="CASCADE"), nullable=False, index=True)
     
     # 预测类型和方法
-    prediction_type = Column(Enum(PredictionTypeEnum), nullable=False, index=True)
-    prediction_method = Column(Enum(PredictionMethodEnum), nullable=False, index=True)
+    prediction_type = Column(Enum(PredictionTypeEnum, values_callable=lambda obj: [e.value for e in obj], native_enum=False), nullable=False, index=True)
+    prediction_method = Column(Enum(PredictionMethodEnum, values_callable=lambda obj: [e.value for e in obj], native_enum=False), nullable=False, index=True)
     
     # 预测结果
     predicted_outcome = Column(String(100), nullable=False, index=True)  # 预测结果文本描述
@@ -76,7 +76,7 @@ class Prediction(BaseFullModel):
     
     # 模型信息
     model_version = Column(String(50), nullable=True, index=True)  # 模型版本
-    features_used = Column(JSONB, default=list, nullable=False)  # 使用的特征
+    features_used = Column(MutableDict.as_mutable(Text), default=lambda: [], nullable=False)  # 使用的特征
     
     # 训练数据信息
     training_data_date = Column(Date, nullable=True, index=True)  # 训练数据日期

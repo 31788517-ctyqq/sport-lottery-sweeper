@@ -8,7 +8,7 @@ import logging
 from datetime import datetime, timedelta
 from unittest.mock import patch, MagicMock, AsyncMock
 import json
-from backend.app.cache.cache_manager import MemoryCache, HybridCache, generate_cache_key, CACHE_KEYS, get_cache, CacheConfig
+from core.cache_manager import MemoryCache, HybridCache, generate_cache_key, CACHE_KEYS, get_cache, CacheConfig
 
 # 配置日志
 logging.basicConfig(level=logging.INFO)
@@ -21,7 +21,7 @@ class TestSportteryScraper:
     @pytest.mark.asyncio
     async def test_mock_data_generation(self):
         """测试模拟数据生成"""
-        from backend.app.scrapers.sporttery_scraper_clean import sporttery_scraper
+        from scrapers.sporttery_scraper import sporttery_scraper
         
         async with sporttery_scraper:
             matches = await sporttery_scraper._generate_mock_data(3)
@@ -41,7 +41,7 @@ class TestSportteryScraper:
     @pytest.mark.asyncio
     async def test_date_filtering(self):
         """测试日期过滤功能"""
-        from backend.app.scrapers.sporttery_scraper_clean import sporttery_scraper
+        from scrapers.sporttery_scraper import sporttery_scraper
         
         async with sporttery_scraper:
             matches_3day = await sporttery_scraper.get_recent_matches(3)
@@ -60,7 +60,7 @@ class TestSportteryScraper:
     @pytest.mark.asyncio
     async def test_scraper_context_manager(self):
         """测试爬虫上下文管理器"""
-        from backend.app.scrapers.sporttery_scraper_clean import sporttery_scraper
+        from scrapers.sporttery_scraper import sporttery_scraper
         
         # 测试正常流程
         async with sporttery_scraper:
@@ -72,7 +72,7 @@ class TestSportteryScraper:
     @pytest.mark.asyncio
     async def test_scraper_returns_valid_data(self):
         """测试爬虫返回有效数据"""
-        from backend.app.scrapers.sporttery_scraper_clean import sporttery_scraper
+        from scrapers.sporttery_scraper import sporttery_scraper
         
         async with sporttery_scraper:
             matches = await sporttery_scraper.get_recent_matches(3)
@@ -98,7 +98,7 @@ class TestCacheManager:
     @pytest.mark.asyncio
     async def test_memory_cache_basic_operations(self):
         """测试内存缓存基本操作"""
-        from backend.app.cache.cache_manager import MemoryCache
+        from core.cache_manager import MemoryCache
         
         cache = MemoryCache()
         
@@ -121,7 +121,7 @@ class TestCacheManager:
     @pytest.mark.asyncio
     async def test_memory_cache_ttl(self):
         """测试内存缓存TTL过期"""
-        from backend.app.cache.cache_manager import MemoryCache
+        from core.cache_manager import MemoryCache
         
         cache = MemoryCache()
         
@@ -140,7 +140,7 @@ class TestCacheManager:
     @pytest.mark.asyncio
     async def test_memory_cache_stats(self):
         """测试缓存统计"""
-        from backend.app.cache.cache_manager import MemoryCache
+        from core.cache_manager import MemoryCache
         
         cache = MemoryCache()
         
@@ -155,7 +155,7 @@ class TestCacheManager:
     @pytest.mark.asyncio
     async def test_hybrid_cache_fallback(self):
         """测试混合缓存回退机制"""
-        from backend.app.cache.cache_manager import HybridCache
+        from core.cache_manager import HybridCache
         
         cache = HybridCache()
         
@@ -167,7 +167,7 @@ class TestCacheManager:
     @pytest.mark.asyncio
     async def test_cache_key_generation(self):
         """测试缓存键生成"""
-        from backend.app.cache.cache_manager import generate_cache_key, CACHE_KEYS
+        from core.cache_manager import generate_cache_key, CACHE_KEYS
         
         # 基本键生成
         key1 = generate_cache_key('prefix', 'arg1', 'arg2')
@@ -259,8 +259,8 @@ class TestIntegration:
     @pytest.mark.asyncio
     async def test_scraper_to_cache_to_api_flow(self):
         """测试从爬虫到缓存再到API的完整流程"""
-        from backend.app.scrapers.sporttery_scraper_clean import sporttery_scraper
-        from backend.app.cache.cache_manager import get_cache, CACHE_KEYS, CacheConfig
+        from scrapers.sporttery_scraper_clean import sporttery_scraper
+        from core.cache_manager import get_cache, CACHE_KEYS, CacheConfig
         
         cache = get_cache()
         cache_key = CACHE_KEYS['RECENT_MATCHES'](3)
@@ -286,8 +286,8 @@ class TestIntegration:
     @pytest.mark.asyncio
     async def test_multiple_concurrent_requests(self):
         """测试并发请求处理"""
-        from backend.app.scrapers.sporttery_scraper_clean import sporttery_scraper
-        from backend.app.cache.cache_manager import get_cache
+        from scrapers.sporttery_scraper_clean import sporttery_scraper
+        from core.cache_manager import get_cache
         
         cache = get_cache()
         
@@ -309,7 +309,7 @@ class TestDataValidation:
     @pytest.mark.asyncio
     async def test_match_data_types(self):
         """验证比赛数据类型"""
-        from backend.app.scrapers.sporttery_scraper_clean import sporttery_scraper
+        from scrapers.sporttery_scraper import sporttery_scraper
         
         async with sporttery_scraper:
             matches = await sporttery_scraper.get_recent_matches(3)
@@ -323,7 +323,7 @@ class TestDataValidation:
     @pytest.mark.asyncio
     async def test_odds_range_validation(self):
         """验证赔率范围"""
-        from backend.app.scrapers.sporttery_scraper_clean import sporttery_scraper
+        from scrapers.sporttery_scraper import sporttery_scraper
         
         async with sporttery_scraper:
             matches = await sporttery_scraper.get_recent_matches(3)
@@ -344,7 +344,7 @@ class TestDataValidation:
 def client():
     """创建FastAPI测试客户端"""
     from fastapi.testclient import TestClient
-    from app.main import app
+    from main import app
     return TestClient(app)
 
 

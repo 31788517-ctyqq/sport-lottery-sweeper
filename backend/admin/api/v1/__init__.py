@@ -7,7 +7,9 @@ from . import (
     data_admin,
     system_admin,
     match_admin,
-    review_admin
+    review_admin,
+    crawler_config_admin,
+    intelligence_admin
 )
 
 # 创建管理后台API v1路由器
@@ -19,5 +21,7 @@ router.include_router(data_admin.router)
 router.include_router(system_admin.router)
 router.include_router(match_admin.router)
 router.include_router(review_admin.router)
+router.include_router(crawler_config_admin.router)
+router.include_router(intelligence_admin.router)
 
 __all__ = ["router"]

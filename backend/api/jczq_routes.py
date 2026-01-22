@@ -206,7 +206,7 @@ async def get_match_detail(match_id: str) -> Dict[str, Any]:
         # 尝试从缓存获取
         cached_data = await cache_manager.get(cache_key)
         if cached_data:
-        return {
+         return {
             'status': 'success',
             'source': 'cache',
             'match': cached_data,

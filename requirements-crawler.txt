@@ -14,5 +14,5 @@ aiocache>=0.12.2  # 异步缓存
 # playwright>=1.40.0  # 浏览器自动化
 # selenium>=4.16.0  # 传统浏览器自动化
 
-# 可选: 代理支持
-# aiohttp-socks>=0.8.4  # SOCKS代理支持
+# 代理支持
+aiohttp-socks>=0.11.0  # SOCKS代理支持

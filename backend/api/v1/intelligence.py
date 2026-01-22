@@ -13,6 +13,7 @@ from ...models.intelligence import Intelligence, IntelligenceType, IntelligenceS
 from ...models.match import Match
 from ...models.user import User
 from ...schemas.intelligence import IntelligenceResponse, IntelligenceCreate, IntelligenceUpdate
+from ...schemas.response import UnifiedResponse  # 添加缺失的导入
 from ...core.auth import get_current_user
 from ...schemas.intelligence import IntelligenceTypeResponse, IntelligenceSourceResponse
 from ...schemas.intelligence import IntelligenceFilter

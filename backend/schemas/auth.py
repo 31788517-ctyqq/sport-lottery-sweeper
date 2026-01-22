@@ -12,6 +12,11 @@ class TokenData(BaseModel):
     username: Optional[str] = None
 
 
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+
 class UserBase(BaseModel):
     username: str
     email: Optional[str] = None
@@ -34,3 +39,9 @@ class UserResponse(UserBase):
 
     class Config:
         from_attributes = True
+
+
+class LoginResponse(BaseModel):
+    code: int
+    message: str
+    data: dict

@@ -117,9 +117,19 @@ export const setLanguage = (language) => {
 }
 
 // API 模块统一导出
-export * from './user'
 export * from './auth'
 export * from './match'
+export * from './admin'
+export * from './crawler'
+export * from './crawlerSource'
+export * from './crawlerTask'
+export * from './crawlerIntelligence'
+export * from './crawlerConfig'
+export * from './data'
+export * from './intelligence'
+export * from './lottery'
+export * from './proxy'
+export * from './system'
 
 // 导出实例
 export default apiClient

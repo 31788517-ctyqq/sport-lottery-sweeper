@@ -1,0 +1,90 @@
+﻿2026-01-22 13:11:40 - root - INFO - setup_logging:136 - 日志系统初始化完成 - 级别:INFO, 大小轮转:10MB, 时间轮转:midnight, 备份数:30
+2026-01-22 13:11:40 - backend.api - INFO - create_api_router:26 - API v1 路由已加载
+2026-01-22 13:11:40 - backend.api - INFO - create_api_router:34 - WebSocket 路由已加载
+2026-01-22 13:11:41 - backend.api - WARNING - create_api_router:46 - 向后兼容路由已加载（已废弃）
+2026-01-22 13:11:42 - api.v1.admin - INFO - register_sub_routers:84 - Admin - Admin user management routes registered
+2026-01-22 13:11:42 - api.v1.admin - INFO - register_sub_routers:92 - Admin - Frontend user management routes registered
+2026-01-22 13:11:42 - api.v1 - INFO - create_api_router:19 - API v1 - admin 路由已注册
+2026-01-22 13:11:42 - api.v1 - INFO - create_api_router:27 - API v1 - auth 路由已注册 (prefix=/auth)
+2026-01-22 13:11:42 - api.v1 - INFO - create_api_router:28 -   - /login
+2026-01-22 13:11:42 - api.v1 - INFO - create_api_router:29 -   - /me
+2026-01-22 13:11:42 - api.v1 - INFO - create_api_router:37 - API v1 - intelligence 路由已注册
+2026-01-22 13:11:42 - api.v1 - INFO - create_api_router:45 - API v1 - data_submission 路由已注册
+2026-01-22 13:11:42 - api.v1 - INFO - create_api_router:53 - API v1 - simple_user_api 路由已注册
+2026-01-22 13:11:42 - api.v1 - INFO - create_api_router:61 - API v1 - frontend_user_management 路由已注册
+2026-01-22 13:11:42 - api.v1 - ERROR - create_api_router:72 - API v1 - lottery 路由注册失败: cannot import name 'CrawlerService' from 'backend.services.crawler_service' (C:\Users\11581\Downloads\sport-lottery-sweeper\backend\services\crawler_service.py)
+2026-01-22 13:11:42 - api.v1 - ERROR - create_api_router:80 - API v1 - matches 路由注册失败: cannot import name 'crawler_service' from 'backend.services.crawler_service' (C:\Users\11581\Downloads\sport-lottery-sweeper\backend\services\crawler_service.py)
+2026-01-22 13:11:43 - api.v1 - INFO - create_api_router:86 - API v1 - public_matches 路由已注册
+2026-01-22 13:11:43 - api.v1 - INFO - create_api_router:94 - API v1 - crawler 路由已注册
+2026-01-22 13:11:43 - api.v1 - INFO - create_api_router:95 -   - /admin/crawler/sources (数据源管理)
+2026-01-22 13:11:43 - api.v1 - INFO - create_api_router:96 -   - /admin/crawler/tasks (任务调度)
+2026-01-22 13:11:43 - api.v1 - INFO - create_api_router:97 -   - /admin/crawler/intelligence (数据情报)
+2026-01-22 13:11:43 - api.v1 - INFO - create_api_router:98 -   - /admin/crawler/configs (爬虫配置)
+2026-01-22 13:11:43 - api.v1 - ERROR - create_api_router:112 - API v1 - crawler_alert 路由注册失败: cannot import name 'AlertRuleCreate' from 'backend.schemas.crawler' (C:\Users\11581\Downloads\sport-lottery-sweeper\backend\schemas\crawler.py)
+2026-01-22 13:11:43 - api.v1 - ERROR - create_api_router:125 - API v1 - monitoring_dashboard 路由注册失败: cannot import name 'AlertRuleCreate' from 'backend.schemas.crawler' (C:\Users\11581\Downloads\sport-lottery-sweeper\backend\schemas\crawler.py)
+2026-01-22 13:11:43 - api.v1 - INFO - create_api_router:131 - API v1 - draw_prediction 路由已注册
+2026-01-22 13:11:43 - api.v1 - INFO - create_api_router:132 -   - /admin/draw-prediction/data-feature (数据特征工程)
+2026-01-22 13:11:43 - api.v1 - INFO - create_api_router:133 -   - /admin/draw-prediction/model-train-eval (模型训练与评估)
+2026-01-22 13:11:43 - api.v1 - INFO - create_api_router:134 -   - /admin/draw-prediction/manage-deploy (模型管理与部署)
+2026-01-22 13:11:43 - api.v1 - INFO - create_api_router:135 -   - /admin/draw-prediction/prediction-monitor (预测监控)
+2026-01-22 13:11:43 - api.v1 - INFO - create_api_router:143 - API v1 - sp_management 路由已注册
+2026-01-22 13:11:43 - api.v1 - INFO - create_api_router:144 -   - /admin/sp/data-sources (数据源管理)
+2026-01-22 13:11:43 - api.v1 - INFO - create_api_router:145 -   - /admin/sp/matches (比赛信息管理)
+2026-01-22 13:11:43 - api.v1 - INFO - create_api_router:146 -   - /admin/sp/records (SP值管理)
+2026-01-22 13:11:43 - api.v1 - INFO - create_api_router:147 -   - /admin/sp/companies (赔率公司管理)
+2026-01-22 13:11:43 - api.v1 - INFO - create_api_router:148 -   - /admin/sp/analysis (数据分析与洞察)
+2026-01-22 13:11:43 - api.v1 - INFO - create_api_router:149 -   - /admin/sp/reports (报表导出)
+2026-01-22 13:11:43 - api.v1 - INFO - create_api_router:161 - API v1 路由器总共注册了 115 个路由
+2026-01-22 13:13:07 - root - INFO - setup_logging:136 - 日志系统初始化完成 - 级别:INFO, 大小轮转:10MB, 时间轮转:midnight, 备份数:30
+2026-01-22 13:13:07 - backend.api - INFO - create_api_router:26 - API v1 路由已加载
+2026-01-22 13:13:07 - backend.api - INFO - create_api_router:34 - WebSocket 路由已加载
+2026-01-22 13:13:08 - backend.api - WARNING - create_api_router:46 - 向后兼容路由已加载（已废弃）
+2026-01-22 13:13:08 - api.v1.admin - INFO - register_sub_routers:84 - Admin - Admin user management routes registered
+2026-01-22 13:13:08 - api.v1.admin - INFO - register_sub_routers:92 - Admin - Frontend user management routes registered
+2026-01-22 13:13:08 - api.v1 - INFO - create_api_router:19 - API v1 - admin 路由已注册
+2026-01-22 13:13:08 - api.v1 - INFO - create_api_router:27 - API v1 - auth 路由已注册 (prefix=/auth)
+2026-01-22 13:13:08 - api.v1 - INFO - create_api_router:28 -   - /login
+2026-01-22 13:13:08 - api.v1 - INFO - create_api_router:29 -   - /me
+2026-01-22 13:13:08 - api.v1 - INFO - create_api_router:37 - API v1 - intelligence 路由已注册
+2026-01-22 13:13:08 - api.v1 - INFO - create_api_router:45 - API v1 - data_submission 路由已注册
+2026-01-22 13:13:08 - api.v1 - INFO - create_api_router:53 - API v1 - simple_user_api 路由已注册
+2026-01-22 13:13:08 - api.v1 - INFO - create_api_router:61 - API v1 - frontend_user_management 路由已注册
+2026-01-22 13:13:08 - api.v1 - ERROR - create_api_router:72 - API v1 - lottery 路由注册失败: cannot import name 'CrawlerService' from 'backend.services.crawler_service' (C:\Users\11581\Downloads\sport-lottery-sweeper\backend\services\crawler_service.py)
+2026-01-22 13:13:08 - api.v1 - ERROR - create_api_router:80 - API v1 - matches 路由注册失败: cannot import name 'crawler_service' from 'backend.services.crawler_service' (C:\Users\11581\Downloads\sport-lottery-sweeper\backend\services\crawler_service.py)
+2026-01-22 13:13:09 - api.v1 - INFO - create_api_router:86 - API v1 - public_matches 路由已注册
+2026-01-22 13:13:09 - api.v1 - INFO - create_api_router:94 - API v1 - crawler 路由已注册
+2026-01-22 13:13:09 - api.v1 - INFO - create_api_router:95 -   - /admin/crawler/sources (数据源管理)
+2026-01-22 13:13:09 - api.v1 - INFO - create_api_router:96 -   - /admin/crawler/tasks (任务调度)
+2026-01-22 13:13:09 - api.v1 - INFO - create_api_router:97 -   - /admin/crawler/intelligence (数据情报)
+2026-01-22 13:13:09 - api.v1 - INFO - create_api_router:98 -   - /admin/crawler/configs (爬虫配置)
+2026-01-22 13:13:09 - api.v1 - ERROR - create_api_router:112 - API v1 - crawler_alert 路由注册失败: cannot import name 'AlertRuleCreate' from 'backend.schemas.crawler' (C:\Users\11581\Downloads\sport-lottery-sweeper\backend\schemas\crawler.py)
+2026-01-22 13:13:09 - api.v1 - ERROR - create_api_router:125 - API v1 - monitoring_dashboard 路由注册失败: cannot import name 'AlertRuleCreate' from 'backend.schemas.crawler' (C:\Users\11581\Downloads\sport-lottery-sweeper\backend\schemas\crawler.py)
+2026-01-22 13:13:09 - api.v1 - INFO - create_api_router:131 - API v1 - draw_prediction 路由已注册
+2026-01-22 13:13:09 - api.v1 - INFO - create_api_router:132 -   - /admin/draw-prediction/data-feature (数据特征工程)
+2026-01-22 13:13:09 - api.v1 - INFO - create_api_router:133 -   - /admin/draw-prediction/model-train-eval (模型训练与评估)
+2026-01-22 13:13:09 - api.v1 - INFO - create_api_router:134 -   - /admin/draw-prediction/manage-deploy (模型管理与部署)
+2026-01-22 13:13:09 - api.v1 - INFO - create_api_router:135 -   - /admin/draw-prediction/prediction-monitor (预测监控)
+2026-01-22 13:13:09 - api.v1 - INFO - create_api_router:143 - API v1 - sp_management 路由已注册
+2026-01-22 13:13:09 - api.v1 - INFO - create_api_router:144 -   - /admin/sp/data-sources (数据源管理)
+2026-01-22 13:13:09 - api.v1 - INFO - create_api_router:145 -   - /admin/sp/matches (比赛信息管理)
+2026-01-22 13:13:09 - api.v1 - INFO - create_api_router:146 -   - /admin/sp/records (SP值管理)
+2026-01-22 13:13:09 - api.v1 - INFO - create_api_router:147 -   - /admin/sp/companies (赔率公司管理)
+2026-01-22 13:13:09 - api.v1 - INFO - create_api_router:148 -   - /admin/sp/analysis (数据分析与洞察)
+2026-01-22 13:13:09 - api.v1 - INFO - create_api_router:149 -   - /admin/sp/reports (报表导出)
+2026-01-22 13:13:09 - api.v1 - INFO - create_api_router:161 - API v1 路由器总共注册了 115 个路由
+2026-01-22 13:59:21 - root - INFO - setup_logging:136 - 日志系统初始化完成 - 级别:INFO, 大小轮转:10MB, 时间轮转:midnight, 备份数:30
+2026-01-22 13:59:22 - backend.api.v1 - INFO - create_api_router:22 - API v1 - auth 路由已注册
+2026-01-22 13:59:22 - backend.api.v1 - INFO - create_api_router:30 - API v1 - admin 路由已注册
+2026-01-22 13:59:22 - backend.api.v1 - INFO - create_api_router:38 - API v1 - admin_user_management 路由已注册
+2026-01-22 13:59:22 - backend.api.v1 - INFO - create_api_router:46 - API v1 - frontend_user_management 路由已注册
+2026-01-22 13:59:22 - backend.api.v1 - INFO - create_api_router:54 - API v1 - simple_user_api 路由已注册
+2026-01-22 13:59:22 - backend.api.v1 - INFO - create_api_router:62 - API v1 - crawler 路由已注册
+2026-01-22 13:59:22 - backend.api - INFO - create_api_router:26 - API v1 路由已加载
+2026-01-22 13:59:22 - backend.api - INFO - create_api_router:34 - WebSocket 路由已加载
+2026-01-22 13:59:22 - backend.api - WARNING - create_api_router:46 - 向后兼容路由已加载（已废弃）
+2026-01-22 13:59:22 - backend.api.v1 - INFO - create_api_router:22 - API v1 - auth 路由已注册
+2026-01-22 13:59:22 - backend.api.v1 - INFO - create_api_router:30 - API v1 - admin 路由已注册
+2026-01-22 13:59:22 - backend.api.v1 - INFO - create_api_router:38 - API v1 - admin_user_management 路由已注册
+2026-01-22 13:59:22 - backend.api.v1 - INFO - create_api_router:46 - API v1 - frontend_user_management 路由已注册
+2026-01-22 13:59:22 - backend.api.v1 - INFO - create_api_router:54 - API v1 - simple_user_api 路由已注册
+2026-01-22 13:59:22 - backend.api.v1 - INFO - create_api_router:62 - API v1 - crawler 路由已注册

@@ -1,8 +1,11 @@
-class MatchDataParser:
-    """比赛数据解析器"""
+import logging
+from typing import List, Dict, Any
+from bs4 import BeautifulSoup
+
+class SportteryParser:
+    """竞彩网数据解析器"""
     
     def __init__(self):
-        self.extractor = DataExtractor()
         self.logger = logging.getLogger(__name__)
     
     def parse_sporttery_data(self, html_content: str) -> List[Dict[str, Any]]:
@@ -77,3 +80,13 @@ class MatchDataParser:
         except Exception as e:
             self.logger.error(f"解析竞彩网比赛数据失败: {str(e)}")
             return []
+
+class ZQSZSCParser:
+    """足球赛事数据解析器（简化版）"""
+    
+    def __init__(self):
+        self.logger = logging.getLogger(__name__)
+    
+    def parse_zqszsc_data(self, html_content: str) -> List[Dict[str, Any]]:
+        """解析足球赛事数据（返回空列表作为占位）"""
+        return []

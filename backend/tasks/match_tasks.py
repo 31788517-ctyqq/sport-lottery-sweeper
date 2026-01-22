@@ -4,11 +4,9 @@
 import logging
 from datetime import datetime, timedelta
 from typing import List, Dict, Any, Optional
-from celery import Task
-from backend.tasks import DatabaseTask, celery_app
+from celery import Task, shared_task
 from backend.services.match_service import MatchService
 from backend.services.crawler_service import CrawlerService
-from backend.core.database import SessionLocal
 
 
 class MatchTask(Task):
@@ -17,14 +15,14 @@ class MatchTask(Task):
         self.crawler_service = CrawlerService()
 
 
-@celery_app.task(base=MatchTask, bind=True)
+@shared_task(base=MatchTask, bind=True)
 def sync_matches_task(self):
     """同步比赛数据任务"""
     result = self.match_service.sync_matches()
     return result
 
 
-@shared_task(base=DatabaseTask, bind=True, name="app.tasks.match_tasks.update_matches_daily")
+@shared_task(bind=True, name="tasks.match_tasks.update_matches_daily")
 def update_matches_daily(self):
     """
     每日更新比赛数据任务
@@ -34,9 +32,8 @@ def update_matches_daily(self):
     logger.info("开始执行每日比赛数据更新任务")
     
     try:
-        db = self.db
-        match_service = MatchService(db)
-        crawler_service = CrawlerService(db)
+        match_service = MatchService()
+        crawler_service = CrawlerService()
         
         # 获取需要更新的联赛
         leagues = match_service.get_active_leagues()
@@ -107,9 +104,8 @@ def update_live_matches(self):
     logger.info("开始执行实时比赛数据更新任务")
     
     try:
-        db = self.db
-        match_service = MatchService(db)
-        crawler_service = CrawlerService(db)
+        match_service = MatchService()
+        crawler_service = CrawlerService()
         
         # 获取进行中的比赛
         live_matches = match_service.get_live_matches()
@@ -229,9 +225,8 @@ def sync_teams_data(self, league_id: Optional[int] = None):
     logger.info("开始同步球队数据任务")
     
     try:
-        db = self.db
-        match_service = MatchService(db)
-        crawler_service = CrawlerService(db)
+        match_service = MatchService()
+        crawler_service = CrawlerService()
         
         # 获取需要同步的联赛
         if league_id:
@@ -298,9 +293,8 @@ def sync_team_players(self, team_id: int):
     logger.info(f"开始同步球队球员数据，球队ID: {team_id}")
     
     try:
-        db = self.db
-        match_service = MatchService(db)
-        crawler_service = CrawlerService(db)
+        match_service = MatchService()
+        crawler_service = CrawlerService()
         
         # 获取球队
         team = match_service.get_team_by_id(team_id)

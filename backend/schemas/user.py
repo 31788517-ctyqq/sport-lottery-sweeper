@@ -3,8 +3,35 @@
 """
 from pydantic import BaseModel, EmailStr, Field
 from pydantic_settings import SettingsConfigDict
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
+from enum import Enum
+
+
+class UserStatusEnum(str, Enum):
+    """用户状态枚举"""
+    ACTIVE = "active"
+    INACTIVE = "inactive"
+    SUSPENDED = "suspended"
+    BANNED = "banned"
+
+
+class UserTypeEnum(str, Enum):
+    """用户类型枚举"""
+    NORMAL = "normal"
+    PREMIUM = "premium"
+    ANALYST = "analyst"
+    ADMIN = "admin"
+    SUPER_ADMIN = "super_admin"
+
+
+class UserRoleEnum(str, Enum):
+    """用户角色枚举"""
+    ADMIN = "admin"
+    MODERATOR = "moderator"
+    ANALYST = "analyst"
+    REGULAR_USER = "regular_user"
+    GUEST = "guest"
 
 
 class TokenData(BaseModel):
@@ -94,25 +121,51 @@ class UserBase(BaseModel):
     """
     用户基础模型
     """
-    username: str
-    email: EmailStr  # Use EmailStr for email validation
-    full_name: Optional[str] = None
+    username: str = Field(..., min_length=3, max_length=80, description="用户名")
+    email: EmailStr = Field(..., description="邮箱地址")
+    first_name: Optional[str] = Field(None, max_length=50, description="名字")
+    last_name: Optional[str] = Field(None, max_length=50, description="姓氏")
+    nickname: Optional[str] = Field(None, max_length=80, description="昵称")
+    bio: Optional[str] = Field(None, description="个人简介")
+    avatar_url: Optional[str] = Field(None, max_length=500, description="头像URL")
+    phone: Optional[str] = Field(None, max_length=20, description="电话号码")
+    country: Optional[str] = Field(None, max_length=100, description="国家")
+    city: Optional[str] = Field(None, max_length=100, description="城市")
+    role: UserRoleEnum = Field(default=UserRoleEnum.REGULAR_USER, description="用户角色")
+    status: UserStatusEnum = Field(default=UserStatusEnum.ACTIVE, description="用户状态")
+    is_verified: bool = Field(default=False, description="是否已验证")
+    user_type: UserTypeEnum = Field(default=UserTypeEnum.NORMAL, description="用户类型")
+    timezone: str = Field(default="UTC", max_length=50, description="时区")
+    language: str = Field(default="zh", max_length=10, description="语言")
 
 
 class UserCreate(UserBase):
     """
-    用户创建模型
+    创建用户模型
     """
-    password: str = Field(..., min_length=8, description="Password must be at least 8 characters long.")
+    password: str = Field(..., min_length=6, max_length=128, description="密码")
 
 
 class UserUpdate(BaseModel):
     """
-    用户更新模型
+    更新用户模型
     """
-    email: Optional[EmailStr] = None  # Use EmailStr for email validation
-    full_name: Optional[str] = None
-    phone: Optional[str] = None
+    username: Optional[str] = Field(None, min_length=3, max_length=80, description="用户名")
+    email: Optional[EmailStr] = Field(None, description="邮箱地址")
+    first_name: Optional[str] = Field(None, max_length=50, description="名字")
+    last_name: Optional[str] = Field(None, max_length=50, description="姓氏")
+    nickname: Optional[str] = Field(None, max_length=80, description="昵称")
+    bio: Optional[str] = Field(None, description="个人简介")
+    avatar_url: Optional[str] = Field(None, max_length=500, description="头像URL")
+    phone: Optional[str] = Field(None, max_length=20, description="电话号码")
+    country: Optional[str] = Field(None, max_length=100, description="国家")
+    city: Optional[str] = Field(None, max_length=100, description="城市")
+    role: Optional[UserRoleEnum] = Field(None, description="用户角色")
+    status: Optional[UserStatusEnum] = Field(None, description="用户状态")
+    is_verified: Optional[bool] = Field(None, description="是否已验证")
+    user_type: Optional[UserTypeEnum] = Field(None, description="用户类型")
+    timezone: Optional[str] = Field(None, max_length=50, description="时区")
+    language: Optional[str] = Field(None, max_length=10, description="语言")
 
 
 class UserResponse(UserBase):
@@ -137,3 +190,37 @@ class UserList(BaseModel):
     page: int
     size: int
     pages: int
+
+
+class User(UserBase):
+    """用户模型（包含ID和时间戳）"""
+    id: int = Field(..., description="用户ID")
+    created_at: datetime = Field(..., description="创建时间")
+    updated_at: datetime = Field(..., description="更新时间")
+    is_online: bool = Field(default=False, description="是否在线")
+    login_count: int = Field(default=0, description="登录次数")
+    last_login_at: Optional[datetime] = Field(None, description="最后登录时间")
+    last_activity_at: Optional[datetime] = Field(None, description="最后活动时间")
+    followers_count: int = Field(default=0, description="粉丝数")
+    following_count: int = Field(default=0, description="关注数")
+
+    model_config = SettingsConfigDict()
+
+
+class UserOut(UserBase):
+    """用户输出模型（不包含敏感信息）"""
+    id: int = Field(..., description="用户ID")
+    created_at: datetime = Field(..., description="创建时间")
+    updated_at: datetime = Field(..., description="更新时间")
+    is_online: bool = Field(default=False, description="是否在线")
+    login_count: int = Field(default=0, description="登录次数")
+    last_login_at: Optional[datetime] = Field(None, description="最后登录时间")
+    last_activity_at: Optional[datetime] = Field(None, description="最后活动时间")
+    followers_count: int = Field(default=0, description="粉丝数")
+    following_count: int = Field(default=0, description="关注数")
+
+    model_config = SettingsConfigDict()
+
+
+# 为兼容多处引用的 UserListResponse 名称，添加别名
+UserListResponse = UserList

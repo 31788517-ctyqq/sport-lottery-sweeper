@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>前端服务测试</title>
+    <style>
+        body { font-family: Arial; margin: 40px; background: #f0f0f0; }
+        .container { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .success { color: #4CAF50; font-size: 24px; font-weight: bold; }
+        .info { background: #e3f2fd; padding: 15px; border-left: 4px solid #2196F3; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="success">✅ 前端服务正常运行！</h1>
+        <div class="info">
+            <strong>服务状态：</strong> Vite 开发服务器已启动<br>
+            <strong>端口：</strong> 3000<br>
+            <strong>时间：</strong> 2026-01-20 16:25
+        </div>
+        
+        <h2>访问方式：</h2>
+        <ul>
+            <li><a href="/">首页</a> - 可能会404（因为Vue路由）</li>
+            <li><a href="/test">测试页</a> - 这个页面应该能访问</li>
+            <li><a href="/frontend-check.html">前端检查</a> - 系统诊断页面</li>
+        </ul>
+        
+        <h2>可能的问题和解决方案：</h2>
+        <ol>
+            <li><strong>Vue Router History模式：</strong> 直接访问 http://localhost:3000/ 会404，这是正常的。需要使用 http://localhost:3000/test 测试</li>
+            <li><strong>浏览器缓存：</strong> 按 Ctrl+F5 强制刷新</li>
+            <li><strong>防火墙：</strong> 检查Windows防火墙是否阻止了3000端口</li>
+            <li><strong>网络连接：</strong> 确保访问的是 http://localhost:3000 而不是其他地址</li>
+        </ol>
+        
+        <div class="info">
+            <strong>建议测试步骤：</strong><br>
+            1. 先访问 <a href="/frontend-check.html">http://localhost:3000/frontend-check.html</a><br>
+            2. 再访问 <a href="/test">http://localhost:3000/test</a><br>
+            3. 最后测试 <a href="/">http://localhost:3000/</a>（Vue应用）
+        </div>
+    </div>
+</body>
+</html>

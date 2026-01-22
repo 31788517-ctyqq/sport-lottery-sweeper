@@ -5,13 +5,13 @@ from datetime import datetime, date
 from typing import List, Optional
 from sqlalchemy import (
     Column, Integer, String, Boolean, DateTime, 
-    ForeignKey, Float, Text, Enum, CheckConstraint, Index, Date
+    ForeignKey, Float, Text, Enum, CheckConstraint, Index, Date, JSON
 )
 from sqlalchemy.orm import relationship, backref
-from sqlalchemy.dialects.postgresql import UUID, JSONB, ARRAY
 from sqlalchemy.sql import func
 import enum
 
+from sqlalchemy.ext.mutable import MutableDict
 from .base import Base, BaseAuditModel, BaseFullModel
 
 # 情报类型枚举
@@ -88,7 +88,7 @@ class IntelligenceType(Base):
     is_active = Column(Boolean, default=True, nullable=False, index=True)
     is_system = Column(Boolean, default=False, nullable=False)  # 是否为系统类型
     default_weight = Column(Float, default=0.5, nullable=False)  # 默认权重
-    default_confidence = Column(Enum(ConfidenceLevelEnum), default=ConfidenceLevelEnum.MEDIUM, nullable=False)
+    default_confidence = Column(Enum(ConfidenceLevelEnum, values_callable=lambda obj: [e.value for e in obj], native_enum=False), default=ConfidenceLevelEnum.MEDIUM, nullable=False)
     
     # 显示设置
     display_order = Column(Integer, default=0, nullable=False)
@@ -102,7 +102,6 @@ class IntelligenceType(Base):
         Index('idx_intel_types_active_category', 'is_active', 'category'),
         Index('idx_intel_types_system', 'is_system'),
         Index('idx_intel_types_code', 'code'),
-        CheckConstraint('reliability_score >= 0.0 AND reliability_score <= 1.0', name='ck_reliability_score_range')
     )
     
     def __repr__(self) -> str:
@@ -137,7 +136,7 @@ class IntelligenceSource(Base):
     last_crawled_at = Column(DateTime(timezone=True), nullable=True)
     
     # 配置信息
-    config = Column(JSONB, default=dict, nullable=False)  # 抓取配置
+    config = Column(MutableDict.as_mutable(Text), default=lambda: {}, nullable=False)  # 抓取配置
     
     # 统计信息
     total_items = Column(Integer, default=0, nullable=False)
@@ -175,13 +174,13 @@ class Intelligence(BaseFullModel):
     title = Column(String(500), nullable=False, index=True)
     content = Column(Text, nullable=False)
     summary = Column(Text, nullable=True)  # AI生成的摘要
-    keywords = Column(ARRAY(String(50)), default=[], nullable=False, index=True)
-    tags = Column(ARRAY(String(50)), default=[], nullable=False, index=True)
+    keywords = Column(Text, default='[]', nullable=False)  # 存储为JSON数组字符串
+    tags = Column(Text, default='[]', nullable=False)  # 存储为JSON数组字符串
     
     # 置信度和重要性
-    confidence = Column(Enum(ConfidenceLevelEnum), default=ConfidenceLevelEnum.MEDIUM, nullable=False, index=True)
+    confidence = Column(Enum(ConfidenceLevelEnum, values_callable=lambda obj: [e.value for e in obj], native_enum=False), default=ConfidenceLevelEnum.MEDIUM, nullable=False, index=True)
     confidence_score = Column(Float, default=0.5, nullable=False)  # 数值化的置信度 (0-1)
-    importance = Column(Enum(ImportanceLevelEnum), default=ImportanceLevelEnum.MEDIUM, nullable=False, index=True)
+    importance = Column(Enum(ImportanceLevelEnum, values_callable=lambda obj: [e.value for e in obj], native_enum=False), default=ImportanceLevelEnum.MEDIUM, nullable=False, index=True)
     
     # 权重计算
     base_weight = Column(Float, default=0.5, nullable=False)  # 基础权重
@@ -207,16 +206,16 @@ class Intelligence(BaseFullModel):
     # 外部数据
     external_id = Column(String(100), nullable=True, index=True)  # 外部系统ID
     external_url = Column(String(500), nullable=True)  # 原始信息来源URL
-    external_data = Column(JSONB, default=dict, nullable=False)  # 原始数据
+    external_data = Column(MutableDict.as_mutable(Text), default=lambda: {}, nullable=False)  # 原始数据
     
     # 关联数据
-    odds_data = Column(JSONB, default=dict, nullable=False)  # 赔率数据
-    stats_data = Column(JSONB, default=dict, nullable=False)  # 统计数据
-    prediction_data = Column(JSONB, default=dict, nullable=False)  # 预测数据
+    odds_data = Column(MutableDict.as_mutable(Text), default=lambda: {}, nullable=False)  # 赔率数据
+    stats_data = Column(MutableDict.as_mutable(Text), default=lambda: {}, nullable=False)  # 统计数据
+    prediction_data = Column(MutableDict.as_mutable(Text), default=lambda: {}, nullable=False)  # 预测数据
     
     # 附件信息
-    attachments = Column(JSONB, default=dict, nullable=False)  # 附件信息
-    images = Column(ARRAY(String(500)), default=[], nullable=False)  # 图片URL
+    attachments = Column(MutableDict.as_mutable(Text), default=lambda: {}, nullable=False)  # 附件信息
+    images = Column(Text, default='[]', nullable=False)  # 存储为JSON数组字符串
     
     # 统计信息
     view_count = Column(Integer, default=0, nullable=False, index=True)
@@ -236,7 +235,7 @@ class Intelligence(BaseFullModel):
     source_info = relationship("IntelligenceSource", back_populates="intelligence_items")
     reviewer = relationship("User", foreign_keys=[reviewed_by])
     related_intelligence = relationship("IntelligenceRelation", foreign_keys="IntelligenceRelation.intelligence_id", back_populates="intelligence", cascade="all, delete-orphan")
-    duplicate_reference = relationship("Intelligence", remote_side=[id], foreign_keys=[duplicate_of])
+    duplicate_reference = relationship("Intelligence", remote_side="Intelligence.id", foreign_keys=[duplicate_of])
     
     # 索引与表配置
     __table_args__ = (

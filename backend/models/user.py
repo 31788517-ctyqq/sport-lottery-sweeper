@@ -5,13 +5,13 @@ from datetime import datetime
 from typing import List, Optional
 from sqlalchemy import (
     Column, Integer, String, Boolean, DateTime, 
-    ForeignKey, Float, Text, Enum, CheckConstraint, Index, Table
+    ForeignKey, Float, Text, Enum, CheckConstraint, Index, Table, JSON
 )
 from sqlalchemy.orm import relationship, backref
-from sqlalchemy.dialects.postgresql import UUID, JSONB, ARRAY
 from sqlalchemy.sql import func
 import enum
 
+from sqlalchemy.ext.mutable import MutableDict
 from .base import Base, BaseAuditModel, BaseFullModel
 
 # 定义用户-角色关联表
@@ -82,16 +82,16 @@ class User(BaseAuditModel):
     city = Column(String(100), nullable=True, index=True)
     
     # 账户状态
-    role = Column(Enum(UserRoleEnum), default=UserRoleEnum.REGULAR_USER, nullable=False, index=True)
-    status = Column(Enum(UserStatusEnum), default=UserStatusEnum.ACTIVE, nullable=False, index=True)
+    role = Column(Enum(UserRoleEnum, values_callable=lambda obj: [e.value for e in obj], native_enum=False), default=UserRoleEnum.REGULAR_USER, nullable=False, index=True)
+    status = Column(Enum(UserStatusEnum, values_callable=lambda obj: [e.value for e in obj], native_enum=False), default=UserStatusEnum.ACTIVE, nullable=False, index=True)
     is_verified = Column(Boolean, default=False, nullable=False, index=True)
     is_online = Column(Boolean, default=False, nullable=False, index=True)
-    user_type = Column(Enum(UserTypeEnum), default=UserTypeEnum.NORMAL, nullable=False, index=True)
+    user_type = Column(Enum(UserTypeEnum, values_callable=lambda obj: [e.value for e in obj], native_enum=False), default=UserTypeEnum.NORMAL, nullable=False, index=True)
     
     # 偏好设置
     timezone = Column(String(50), default="UTC", nullable=False, index=True)
     language = Column(String(10), default="zh", nullable=False, index=True)
-    notification_preferences = Column(JSONB, default=dict, nullable=False)
+    notification_preferences = Column(Text, default='{}', nullable=False)
     
     # 统计信息
     login_count = Column(Integer, default=0, nullable=False, index=True)
@@ -107,13 +107,14 @@ class User(BaseAuditModel):
     external_source = Column(String(50), nullable=True, index=True)  # 外部数据来源
     
     # 配置信息
-    config = Column(JSONB, default=dict, nullable=False)  # 用户配置
+    config = Column(MutableDict.as_mutable(JSON), default=lambda: {}, nullable=False)  # 用户配置
     
     # 关系
     login_logs = relationship("UserLoginLog", back_populates="user", cascade="all, delete-orphan")
     activities = relationship("UserActivity", back_populates="user", cascade="all, delete-orphan")
     subscriptions = relationship("UserSubscription", back_populates="user", cascade="all, delete-orphan")
     predictions = relationship("UserPrediction", back_populates="user", cascade="all, delete-orphan")
+    roles = relationship("Role", secondary="user_roles", back_populates="users")
     
     # 索引
     __table_args__ = (
@@ -232,7 +233,7 @@ class UserActivity(Base):
     http_status = Column(Integer, nullable=True, index=True)       # HTTP状态码
     
     # 附加信息
-    details = Column(JSONB, default=dict, nullable=False)  # 额外的详细信息
+    details = Column(MutableDict.as_mutable(Text), default=lambda: {}, nullable=False)  # 额外的详细信息
     
     # 关系
     user = relationship("User", back_populates="activities")
@@ -269,7 +270,7 @@ class UserSubscription(Base):
     unsubscribed_at = Column(DateTime(timezone=True), nullable=True)
     
     # 偏好设置
-    preferences = Column(JSONB, default=dict, nullable=False)  # 特定于订阅的偏好设置
+    preferences = Column(Text, default='{}', nullable=False)  # 特定于订阅的偏好设置
     
     # 关系
     user = relationship("User", back_populates="subscriptions")

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>路由调试</title>
+    <style>
+        body { padding: 20px; font-family: Arial; background: #1a1a1a; color: #fff; }
+        .box { background: #2a2a2a; padding: 20px; margin: 10px 0; border-radius: 8px; }
+        button { padding: 12px 24px; background: #58a6ff; color: white; border: none; border-radius: 6px; cursor: pointer; margin: 5px; font-size: 16px; }
+        button:hover { background: #4c9aff; }
+        pre { background: #000; padding: 15px; overflow: auto; border-radius: 4px; }
+        code { color: #58a6ff; }
+    </style>
+</head>
+<body>
+    <h1>🐛 Vue Router 调试工具</h1>
+    
+    <div class="box">
+        <h2>步骤 1: 打开应用</h2>
+        <button onclick="window.open('http://localhost:3000/#/admin/login', 'appWindow')">打开管理登录页</button>
+    </div>
+
+    <div class="box">
+        <h2>步骤 2: 在打开的页面中按 F12</h2>
+        <p>然后在 Console 标签中**依次执行**以下命令：</p>
+        
+        <h3>① 检查当前路由</h3>
+        <pre><code>window.location.hash</code></pre>
+        <p>应该显示: <code>"#/admin/login"</code></p>
+
+        <h3>② 检查 Vue Router 实例</h3>
+        <pre><code>document.querySelector('#app').__vueParentComponent?.appContext?.config?.globalProperties?.$router</code></pre>
+        <p>或者:</p>
+        <pre><code>window.__VUE_ROUTER__</code></pre>
+
+        <h3>③ 检查当前路由对象</h3>
+        <pre><code>const app = document.querySelector('#app').__vueParentComponent;
+const router = app.appContext.config.globalProperties.$router;
+console.log('当前路由:', router.currentRoute.value);
+console.log('所有路由:', router.getRoutes());</code></pre>
+
+        <h3>④ 手动导航测试</h3>
+        <pre><code>const router = document.querySelector('#app').__vueParentComponent.appContext.config.globalProperties.$router;
+router.push('/admin/login');</code></pre>
+
+        <h3>⑤ 查看路由视图</h3>
+        <pre><code>document.querySelector('router-view') || document.querySelector('[data-v-app]').innerHTML</code></pre>
+    </div>
+
+    <div class="box">
+        <h2>步骤 3: 复制结果</h2>
+        <p>将上面每个命令的输出结果复制给我</p>
+    </div>
+
+    <div class="box">
+        <h2>快速测试</h2>
+        <button onclick="testAllRoutes()">测试所有路由</button>
+    </div>
+
+    <script>
+        function testAllRoutes() {
+            const routes = [
+                'http://localhost:3000',
+                'http://localhost:3000/#/',
+                'http://localhost:3000/#/jczq',
+                'http://localhost:3000/#/admin/login',
+                'http://localhost:3000/#/admin/dashboard'
+            ];
+            
+            routes.forEach((url, index) => {
+                setTimeout(() => {
+                    window.open(url, `route${index}`);
+                }, index * 500);
+            });
+            
+            alert('已打开所有路由,请查看每个页面的显示内容');
+        }
+    </script>
+</body>
+</html>

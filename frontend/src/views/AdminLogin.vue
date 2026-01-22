@@ -12,9 +12,11 @@
           <input 
             type="text" 
             id="username" 
+            name="username"
             v-model="credentials.username" 
             placeholder="请输入管理员用户名"
             required
+            autocomplete="username"
           />
         </div>
         
@@ -23,9 +25,11 @@
           <input 
             type="password" 
             id="password" 
+            name="password"
             v-model="credentials.password" 
             placeholder="请输入管理员密码"
             required
+            autocomplete="current-password"
           />
         </div>
         
@@ -33,7 +37,10 @@
           <label class="checkbox-label">
             <input 
               type="checkbox" 
+              id="rememberMe"
+              name="rememberMe"
               v-model="credentials.rememberMe"
+              autocomplete="off"
             />
             <span>记住我</span>
           </label>
@@ -61,50 +68,57 @@
 </template>
 
 <script>
-import { ref } from 'vue';
-import { useRouter } from 'vue-router';
-import { useAdminStore } from '@/stores/admin';
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAdminStore } from '@/stores/admin'
 
 export default {
   name: 'AdminLogin',
   setup() {
-    const router = useRouter();
-    const adminStore = useAdminStore();
-    
+    const router = useRouter()
+    const adminStore = useAdminStore()
+
     const credentials = ref({
       username: '',
       password: '',
       rememberMe: false
-    });
-    
-    const loading = ref(false);
-    const error = ref('');
-    
+    })
+
+    const loading = ref(false)
+    const error = ref('')
+
     const handleLogin = async () => {
-      loading.value = true;
-      error.value = '';
-      
-      try {
-        // 调用登录API
-        await adminStore.login(credentials.value);
-        
-        // 登录成功后跳转到管理首页
-        router.push('/admin/dashboard');
-      } catch (err) {
-        error.value = err.message || '登录失败，请检查用户名和密码';
-      } finally {
-        loading.value = false;
+      loading.value = true
+      error.value = ''
+
+      if (!credentials.value.username || !credentials.value.password) {
+        error.value = '请输入用户名和密码'
+        loading.value = false
+        return
       }
-    };
-    
+
+      try {
+        const result = await adminStore.login(credentials.value)
+        if (result.success) {
+          router.push('/admin/dashboard')
+        } else {
+          error.value = '登录失败，请检查用户名和密码'
+        }
+      } catch (err) {
+        error.value = err.message || '登录失败，请稍后重试'
+      } finally {
+        loading.value = false
+      }
+    }
+
     return {
       credentials,
       loading,
       error,
       handleLogin
-    };
+    }
   }
-};
+}
 </script>
 
 <style scoped>
@@ -113,77 +127,84 @@ export default {
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background: linear-gradient(135deg, #0d1117 0%, #161b22 100%);
+  background: linear-gradient(135deg, #f5f7fa 0%, #ffffff 100%);
   padding: 20px;
+  box-sizing: border-box;
 }
 
 .login-card {
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.15);
   width: 100%;
   max-width: 420px;
   padding: 40px;
-  color: #f0f6fc;
-}
-
-.logo-section {
-  text-align: center;
-  margin-bottom: 32px;
+  color: #303133;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .logo-section h1 {
   font-size: 24px;
   font-weight: 600;
   margin-bottom: 8px;
-  color: #58a6ff;
+  color: #409EFF;
+  text-align: center;
 }
 
 .logo-section p {
-  color: #8b949e;
+  color: #909399;
   font-size: 14px;
+  text-align: center;
+  margin: 0;
 }
 
 .login-form {
+  width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
+  margin-top: 20px;
 }
 
 .input-group {
+  width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 6px;
 }
 
 .input-group label {
   font-size: 14px;
-  color: #c9d1d9;
+  color: #606266;
   font-weight: 500;
+  margin-bottom: 6px;
 }
 
 .input-group input {
   padding: 12px 16px;
   border-radius: 8px;
-  border: 1px solid rgba(240, 246, 252, 0.1);
-  background: rgba(0, 0, 0, 0.2);
-  color: #f0f6fc;
+  border: 1px solid #dcdfe6;
+  background: #fff;
+  color: #303133;
   font-size: 16px;
-  transition: all 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .input-group input:focus {
   outline: none;
-  border-color: #58a6ff;
-  box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.2);
+  border-color: #409EFF;
+  box-shadow: 0 0 0 3px rgba(64, 158, 255, 0.2);
 }
 
 .checkbox-group {
   flex-direction: row;
   align-items: center;
   gap: 8px;
+  width: 100%;
+  margin-top: 4px;
 }
 
 .checkbox-group .checkbox-label {
@@ -192,47 +213,42 @@ export default {
   gap: 8px;
   cursor: pointer;
   font-size: 14px;
-  color: #8b949e;
+  color: #606266;
 }
 
 .checkbox-group input[type="checkbox"] {
   width: 16px;
   height: 16px;
-  accent-color: #58a6ff;
+  accent-color: #409EFF;
 }
 
 .login-btn {
-  background: #58a6ff;
-  color: white;
+  background: #409EFF;
+  color: #fff;
   border: none;
   border-radius: 8px;
   padding: 14px 20px;
   font-size: 16px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background 0.2s;
+  width: 100%;
   margin-top: 8px;
 }
 
 .login-btn:hover:not(:disabled) {
-  background: #4c9aff;
+  background: #66b1ff;
 }
 
 .login-btn:disabled {
-  background: #32383f;
+  background: #c0c4cc;
   cursor: not-allowed;
 }
 
-.loading-text {
-  display: inline-block;
-  width: 40px;
-  text-align: center;
-}
-
 .error-message {
-  background: rgba(248, 81, 73, 0.2);
-  border: 1px solid rgba(248, 81, 73, 0.3);
-  color: #ff7b72;
+  background: rgba(245, 108, 108, 0.1);
+  border: 1px solid rgba(245, 108, 108, 0.2);
+  color: #f56c6c;
   padding: 12px 16px;
   border-radius: 8px;
   text-align: center;
@@ -244,12 +260,14 @@ export default {
   text-align: center;
   margin-top: 32px;
   padding-top: 24px;
-  border-top: 1px solid rgba(240, 246, 252, 0.1);
+  border-top: 1px solid #ebeef5;
+  width: 100%;
 }
 
 .footer-info p {
-  color: #8b949e;
+  color: #909399;
   font-size: 12px;
+  margin: 0;
 }
 
 @media (max-width: 480px) {

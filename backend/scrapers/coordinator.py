@@ -8,7 +8,8 @@ from typing import Dict, List, Optional, Any
 from enum import Enum
 
 from .core.base_scraper import BaseScraper, MockScraper
-from .core.engine import ScraperEngine
+from .core.engine_enhanced import EnhancedScraperEngine as ScraperEngine
+from .core.config_loader import create_enhanced_engine_from_config, get_anti_crawler_config
 
 logger = logging.getLogger(__name__)
 

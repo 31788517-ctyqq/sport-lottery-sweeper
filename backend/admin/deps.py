@@ -1,7 +1,7 @@
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
-from ..api.deps import get_current_user
+from ..core.auth import get_current_user
 from ..models.user import User
 
 
