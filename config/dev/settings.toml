@@ -1,0 +1,13 @@
+# 开发环境配置
+[app]
+debug = true
+log_level = "DEBUG"
+database_url = "sqlite:///./dev_sport_lottery.db"
+
+[scraper]
+scrape_interval = 300  # 5分钟
+max_retry = 2
+
+[cache]
+enabled = false
+ttl = 300  # 5分钟

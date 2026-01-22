@@ -1,0 +1,10 @@
+{
+    "livePreview.defaultPreviewPath": "/frontend/public/index.html",
+    "Lingma.cloudModelEnable": true,
+    "workbench.editor.autoLockGroups": {
+        "workbench.input.interactive": true
+    }
+}
+
+
+

@@ -1,0 +1,247 @@
+version: '3.8'
+
+services:
+  # 反向代理
+  nginx:
+    image: nginx:alpine
+    container_name: soccer-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./infrastructure/docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./infrastructure/docker/nginx/sites-enabled:/etc/nginx/sites-enabled:ro
+      - ./infrastructure/docker/nginx/ssl:/etc/nginx/ssl:ro
+      - ./logs/nginx:/var/log/nginx
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - soccer-network
+    restart: unless-stopped
+
+  # 后端API服务
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: soccer-backend
+    env_file:
+      - ./config/development/backend.env
+    volumes:
+      - ./backend:/app
+      - ./logs/backend:/app/logs
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - soccer-network
+    restart: unless-stopped
+    command: >
+      sh -c "alembic upgrade head &&
+             uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+
+  # 前端应用
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: soccer-frontend
+    env_file:
+      - ./config/development/frontend.env
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+    networks:
+      - soccer-network
+    restart: unless-stopped
+    command: npm run dev
+
+  # PostgreSQL数据库
+  postgres:
+    image: postgres:15-alpine
+    container_name: soccer-postgres
+    environment:
+      POSTGRES_USER: soccer_user
+      POSTGRES_PASSWORD: soccer_password
+      POSTGRES_DB: soccer_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infrastructure/docker/postgres/initdb.d:/docker-entrypoint-initdb.d
+      - ./storage/backup/scripts:/backup
+    ports:
+      - "5432:5432"
+    networks:
+      - soccer-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U soccer_user -d soccer_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis缓存
+  redis:
+    image: redis:7-alpine
+    container_name: soccer-redis
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+      - ./infrastructure/docker/redis/redis.conf:/usr/local/etc/redis/redis.conf
+    ports:
+      - "6379:6379"
+    networks:
+      - soccer-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # MongoDB (用于日志和原始数据)
+  mongo:
+    image: mongo:6
+    container_name: soccer-mongo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: soccer_admin
+      MONGO_INITDB_ROOT_PASSWORD: soccer_mongo_password
+    volumes:
+      - mongo_data:/data/db
+      - ./infrastructure/docker/mongo/init.js:/docker-entrypoint-initdb.d/init.js
+    ports:
+      - "27017:27017"
+    networks:
+      - soccer-network
+    restart: unless-stopped
+
+  # Celery Worker
+  celery_worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: soccer-celery-worker
+    env_file:
+      - ./config/development/backend.env
+    volumes:
+      - ./backend:/app
+      - ./logs/backend:/app/logs
+    depends_on:
+      - redis
+      - postgres
+    networks:
+      - soccer-network
+    restart: unless-stopped
+    command: celery -A app.tasks.celery_app worker --loglevel=info
+
+  # Celery Beat (定时任务)
+  celery_beat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: soccer-celery-beat
+    env_file:
+      - ./config/development/backend.env
+    volumes:
+      - ./backend:/app
+      - ./logs/backend:/app/logs
+    depends_on:
+      - redis
+      - postgres
+    networks:
+      - soccer-network
+    restart: unless-stopped
+    command: celery -A app.tasks.celery_app beat --loglevel=info
+
+  # Flower (Celery监控)
+  flower:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: soccer-flower
+    env_file:
+      - ./config/development/backend.env
+    ports:
+      - "5555:5555"
+    depends_on:
+      - celery_worker
+      - redis
+    networks:
+      - soccer-network
+    restart: unless-stopped
+    command: celery -A app.tasks.celery_app flower
+
+  # 爬虫服务
+  crawler:
+    build:
+      context: ./crawler
+      dockerfile: Dockerfile.dev
+    container_name: soccer-crawler
+    env_file:
+      - ./config/development/crawler.env
+    volumes:
+      - ./crawler:/app
+      - ./logs/crawler:/app/logs
+      - ./data/crawler:/app/data
+    depends_on:
+      - redis
+      - postgres
+    networks:
+      - soccer-network
+    restart: unless-stopped
+    command: python scripts/run_spider.py
+
+  # 监控 - Prometheus
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: soccer-prometheus
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/prometheus/targets:/etc/prometheus/targets:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    networks:
+      - soccer-network
+    restart: unless-stopped
+
+  # 监控 - Grafana
+  grafana:
+    image: grafana/grafana:latest
+    container_name: soccer-grafana
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin123
+      GF_INSTALL_PLUGINS: grafana-piechart-panel
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
+    ports:
+      - "3001:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - soccer-network
+    restart: unless-stopped
+
+networks:
+  soccer-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+  mongo_data:
+  prometheus_data:
+  grafana_data:

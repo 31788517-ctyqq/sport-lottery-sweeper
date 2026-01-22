@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>主页内容检查</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .section {
+      background: white;
+      padding: 20px;
+      margin: 15px 0;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    pre {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 15px;
+      border-radius: 5px;
+      overflow-x: auto;
+      max-height: 400px;
+    }
+    button {
+      background: #2196F3;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      margin: 5px;
+    }
+    button:hover { background: #1976D2; }
+    .error { color: #f44336; font-weight: bold; }
+    .success { color: #4CAF50; font-weight: bold; }
+    .warning { color: #ff9800; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>🔍 主页内容实时检查</h1>
+
+  <div class="section">
+    <h2>当前主页内容</h2>
+    <button onclick="loadAndShowContent()">加载主页内容</button>
+    <pre id="main-content">点击上方按钮加载...</pre>
+  </div>
+
+  <div class="section">
+    <h2>检查结果</h2>
+    <div id="checks"></div>
+  </div>
+
+  <div class="section">
+    <h2>操作</h2>
+    <button onclick="window.open('/', '_blank')">在新标签页打开主页</button>
+    <button onclick="window.open('/?t=' + Date.now(), '_blank')">绕过缓存打开主页</button>
+    <button onclick="location.reload()">刷新此页</button>
+  </div>
+
+  <div class="section">
+    <h2>浏览器控制台检查</h2>
+    <p>按 <strong>F12</strong> 打开开发者工具,然后:</p>
+    <ol>
+      <li>切换到 <strong>Console</strong> 标签</li>
+      <li>查看是否有红色错误</li>
+      <li>复制所有错误信息</li>
+      <li>切换到 <strong>Network</strong> 标签</li>
+      <li>刷新页面,查看是否有404错误</li>
+    </ol>
+  </div>
+
+  <script>
+    async function loadAndShowContent() {
+      const contentDiv = document.getElementById('main-content');
+      const checksDiv = document.getElementById('checks');
+
+      contentDiv.textContent = '加载中...';
+
+      try {
+        const response = await fetch('/?_nocache=' + Date.now());
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const html = await response.text();
+        contentDiv.textContent = html;
+
+        // 检查各项
+        const checks = [
+          {
+            name: 'DOCTYPE声明',
+            pass: html.includes('<!DOCTYPE html>'),
+            critical: true
+          },
+          {
+            name: 'html标签',
+            pass: html.includes('<html') && html.includes('</html>'),
+            critical: true
+          },
+          {
+            name: 'head标签',
+            pass: html.includes('<head>') && html.includes('</head>'),
+            critical: true
+          },
+          {
+            name: 'body标签',
+            pass: html.includes('<body>') && html.includes('</body>'),
+            critical: true
+          },
+          {
+            name: '#app div',
+            pass: html.includes('<div id="app"'),
+            critical: true
+          },
+          {
+            name: 'main.js脚本',
+            pass: html.includes('src/main.js') || html.includes('/src/main.js'),
+            critical: true
+          },
+          {
+            name: 'FontAwesome',
+            pass: html.includes('font-awesome'),
+            critical: false
+          },
+          {
+            name: '页面标题',
+            pass: html.includes('竞彩足球扫盘系统'),
+            critical: false
+          }
+        ];
+
+        let htmlOutput = '<h3>检查结果:</h3><ul>';
+
+        checks.forEach(check => {
+          const statusClass = check.pass ? 'success' : 'error';
+          const icon = check.pass ? '✅' : '❌';
+          const importance = check.critical ? ' (关键)' : '';
+          htmlOutput += `<li class="${statusClass}">${icon} ${check.name}: ${check.pass ? '通过' : '失败'}${importance}</li>`;
+        });
+
+        const criticalPassed = checks.filter(c => c.critical && c.pass).length;
+        const criticalTotal = checks.filter(c => c.critical).length;
+
+        if (criticalPassed === criticalTotal) {
+          htmlOutput += '</ul><p class="success">✅ 所有关键检查通过!</p>';
+        } else {
+          htmlOutput += '</ul><p class="error">❌ 有 ' + (criticalTotal - criticalPassed) + ' 个关键检查失败</p>';
+        }
+
+        checksDiv.innerHTML = htmlOutput;
+
+        // 额外检查
+        const extraChecks = [];
+        if (html.includes('#app')) {
+          const appDivMatch = html.match(/<div id="app"[^>]*>(.*?)<\/div>/s);
+          if (appDivMatch) {
+            const appContent = appDivMatch[1].trim();
+            if (appContent.length > 0) {
+              extraChecks.push('<p class="warning">⚠️ #app中已有内容,这可能是Vue SSR或预渲染的结果</p>');
+            } else {
+              extraChecks.push('<p class="success">✅ #app为空,这是正常的(Vue会填充它)</p>');
+            }
+          }
+        }
+
+        if (extraChecks.length > 0) {
+          checksDiv.innerHTML += '<h3>额外检查:</h3>' + extraChecks.join('');
+        }
+
+      } catch (error) {
+        contentDiv.textContent = '错误: ' + error.message;
+        checksDiv.innerHTML = '<p class="error">❌ 无法加载主页: ' + error.message + '</p>';
+      }
+    }
+
+    // 页面加载后自动执行
+    window.onload = function() {
+      setTimeout(loadAndShowContent, 500);
+    };
+  </script>
+</body>
+</html>

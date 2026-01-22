@@ -1,0 +1,50 @@
+/* styles/responsive/tablet.css */
+/* Styles specific to tablet devices (typically screens between 769px and 1024px) */
+
+@media (min-width: 769px) and (max-width: 1024px) {
+
+  /* Layout adjustments */
+  .app-sidebar {
+    width: 200px; /* Slightly narrower sidebar */
+  }
+
+  .app-main-content {
+    margin-left: 200px; /* Match sidebar width */
+  }
+
+  /* Typography */
+  h1 { font-size: var(--font-size-xl); }
+  h2 { font-size: var(--font-size-lg); }
+
+  /* Components */
+  .card {
+    margin-bottom: var(--spacing-md); /* Adjust card spacing */
+  }
+
+  /* Utilities */
+  .container {
+    max-width: 900px; /* Adjust container max-width */
+  }
+
+  /* Responsive Grid */
+  .col-md-1 { flex: 0 0 calc(100% / 12 * 1); }
+  .col-md-2 { flex: 0 0 calc(100% / 12 * 2); }
+  .col-md-3 { flex: 0 0 calc(100% / 12 * 3); }
+  .col-md-4 { flex: 0 0 calc(100% / 12 * 4); }
+  .col-md-5 { flex: 0 0 calc(100% / 12 * 5); }
+  .col-md-6 { flex: 0 0 calc(100% / 12 * 6); }
+  .col-md-7 { flex: 0 0 calc(100% / 12 * 7); }
+  .col-md-8 { flex: 0 0 calc(100% / 12 * 8); }
+  .col-md-9 { flex: 0 0 calc(100% / 12 * 9); }
+  .col-md-10 { flex: 0 0 calc(100% / 12 * 10); }
+  .col-md-11 { flex: 0 0 calc(100% / 12 * 11); }
+  .col-md-12 { flex: 0 0 100%; }
+
+  /* Example: Stack some columns on smaller tablets */
+  @media (max-width: 850px) {
+    .col-md-stack {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+  }
+}

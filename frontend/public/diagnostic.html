@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>前端诊断工具</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .test-item {
+      background: white;
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 5px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .test-item.success { border-left: 4px solid #4CAF50; }
+    .test-item.error { border-left: 4px solid #f44336; }
+    .test-item.info { border-left: 4px solid #2196F3; }
+    .status { font-weight: bold; }
+    .status.success { color: #4CAF50; }
+    .status.error { color: #f44336; }
+    .status.info { color: #2196F3; }
+    button {
+      background: #2196F3;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 5px;
+    }
+    button:hover { background: #1976D2; }
+    #console-output {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 15px;
+      border-radius: 5px;
+      margin-top: 20px;
+      max-height: 300px;
+      overflow-y: auto;
+      font-family: monospace;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🔍 前端诊断工具</h1>
+
+  <div class="test-item info">
+    <span class="status info">ℹ️</span> 当前URL: <span id="current-url"></span>
+  </div>
+
+  <div class="test-item" id="javascript-test">
+    <span class="status">⏳</span> JavaScript 运行测试
+  </div>
+
+  <div class="test-item" id="css-test">
+    <span class="status">⏳</span> CSS 样式测试
+  </div>
+
+  <div class="test-item" id="vue-test">
+    <span class="status">⏳</span> Vue 可用性测试
+  </div>
+
+  <div class="test-item" id="vue-app-test">
+    <span class="status">⏳</span> Vue 应用挂载测试
+  </div>
+
+  <div class="test-item" id="pinia-test">
+    <span class="status">⏳</span> Pinia 状态管理测试
+  </div>
+
+  <div class="test-item" id="main-app-test">
+    <span class="status">⏳</span> 主应用加载测试
+  </div>
+
+  <div class="test-item">
+    <button onclick="runAllTests()">运行所有测试</button>
+    <button onclick="window.location.reload()">刷新页面</button>
+  </div>
+
+  <h2>控制台输出</h2>
+  <div id="console-output"></div>
+
+  <script>
+    const consoleOutput = document.getElementById('console-output');
+
+    function log(message, type = 'info') {
+      const timestamp = new Date().toLocaleTimeString();
+      const color = type === 'error' ? '#f44336' : type === 'success' ? '#4CAF50' : '#d4d4d4';
+      consoleOutput.innerHTML += `<div style="color: ${color}">[${timestamp}] ${message}</div>`;
+      consoleOutput.scrollTop = consoleOutput.scrollHeight;
+    }
+
+    function updateTest(elementId, status, message) {
+      const element = document.getElementById(elementId);
+      element.className = `test-item ${status}`;
+      element.innerHTML = `<span class="status ${status}">${status === 'success' ? '✅' : status === 'error' ? '❌' : 'ℹ️'}</span> ${message}`;
+    }
+
+    function runAllTests() {
+      log('开始运行诊断测试...', 'info');
+
+      // 显示当前URL
+      document.getElementById('current-url').textContent = window.location.href;
+
+      // JavaScript 测试
+      try {
+        const test = { works: true };
+        updateTest('javascript-test', 'success', 'JavaScript 正常运行');
+        log('JavaScript 测试通过', 'success');
+      } catch (e) {
+        updateTest('javascript-test', 'error', 'JavaScript 错误: ' + e.message);
+        log('JavaScript 测试失败: ' + e.message, 'error');
+      }
+
+      // CSS 测试
+      const computedStyle = window.getComputedStyle(document.body);
+      if (computedStyle.fontFamily) {
+        updateTest('css-test', 'success', 'CSS 样式正常加载');
+        log('CSS 测试通过', 'success');
+      } else {
+        updateTest('css-test', 'error', 'CSS 样式未加载');
+        log('CSS 测试失败', 'error');
+      }
+
+      // 检查是否在Vite开发服务器环境中
+      const isViteEnv = window.location.port === '3000' || window.location.hostname === 'localhost';
+
+      if (isViteEnv) {
+        log('检测到Vite开发服务器环境', 'info');
+
+        // 尝试导入Vue模块
+        import('/node_modules/vue/dist/vue.esm-browser.js')
+          .then(() => {
+            updateTest('vue-test', 'success', 'Vue 模块可用');
+            log('Vue 模块测试通过', 'success');
+
+            // 尝试加载Pinia
+            return import('/node_modules/pinia/dist/pinia.esm-browser.js');
+          })
+          .then(() => {
+            updateTest('pinia-test', 'success', 'Pinia 模块可用');
+            log('Pinia 模块测试通过', 'success');
+          })
+          .catch((e) => {
+            log('模块导入失败(可能使用了npm/pnpm,不是直接访问): ' + e.message, 'warning');
+            updateTest('vue-test', 'info', 'Vue和Pinia通过依赖管理系统安装');
+            updateTest('pinia-test', 'info', '依赖已安装,无法直接通过路径导入');
+          });
+      } else {
+        log('未检测到Vite开发服务器环境', 'warning');
+        updateTest('vue-test', 'info', '需要在Vite开发服务器中运行');
+      }
+
+      // Vue 应用挂载测试
+      setTimeout(() => {
+        const app = document.getElementById('app');
+        if (app) {
+          const hasContent = app.innerHTML.trim().length > 0 || app.hasChildNodes();
+          if (hasContent) {
+            updateTest('vue-app-test', 'success', 'Vue 应用已成功挂载');
+            log('Vue 应用挂载成功', 'success');
+            log('App内容长度: ' + app.innerHTML.length + ' 字符', 'info');
+
+            // 测试主应用
+            const hasMobileContainer = app.querySelector('.mobile-container');
+            if (hasMobileContainer) {
+              updateTest('main-app-test', 'success', '主应用组件已渲染');
+              log('主应用组件渲染成功', 'success');
+            } else {
+              updateTest('main-app-test', 'error', '主应用组件未找到');
+              log('主应用组件未找到', 'error');
+            }
+          } else {
+            updateTest('vue-app-test', 'error', 'Vue 应用已挂载但内容为空');
+            updateTest('main-app-test', 'error', '主应用未加载');
+            log('Vue 应用挂载但内容为空', 'error');
+          }
+        } else {
+          updateTest('vue-app-test', 'error', '找不到 #app 元素');
+          updateTest('main-app-test', 'error', '应用挂载失败');
+          log('找不到 #app 元素', 'error');
+        }
+      }, 2000);
+
+      log('诊断测试启动完成', 'info');
+    }
+
+    // 页面加载后自动运行测试
+    window.onload = function() {
+      log('页面已加载', 'info');
+      log('当前环境: ' + (window.location.port === '3000' ? 'Vite开发服务器' : '其他'), 'info');
+      setTimeout(runAllTests, 1000);
+    };
+  </script>
+</body>
+</html>

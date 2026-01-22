@@ -1,25 +1,17 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.ext.declarative import declarative_base
-import os
-import sys
-
-# 添加项目根目录到 Python 路径
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-# 数据库配置
-SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./sport_lottery.db")
+from .models.base import Base  # 使用相对导入，确保使用统一的Base类
+from .config import settings
 
 # 创建数据库引擎
 engine = create_engine(
-    SQLALCHEMY_DATABASE_URL,
-    connect_args={"check_same_thread": False} if "sqlite" in SQLALCHEMY_DATABASE_URL else {}
+    settings.DATABASE_URL,
+    connect_args={"check_same_thread": False}  # 仅SQLite需要此参数
 )
 
-# 创建SessionLocal类
+# 创建会话工厂
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# 获取数据库会话的依赖项
 def get_db():
     db = SessionLocal()
     try:

@@ -1,40 +1,44 @@
-from pydantic import BaseSettings
-from typing import List
+from pydantic import Field, validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
+from typing import List, Optional
+import secrets
+
 
 class Settings(BaseSettings):
-    # API配置
+    # --- Project Info ---
+    PROJECT_NAME: str = "Sport Lottery Sweeper System"
+    PROJECT_NAME_CN: str = "竞彩足球扫盘系统"  # Chinese name for reference
+    VERSION: str = "0.1.0"
+    DESCRIPTION: str = "Sport Lottery Sweeper System API"
+
+    # --- API Settings ---
     API_V1_STR: str = "/api/v1"
-    PROJECT_NAME: str = "竞彩扫盘工具"
-    VERSION: str = "1.0.0"
+    DEBUG: bool = True  # 设置为True以启用调试模式
+    DOCS_ENABLED: bool = True
+    HOST: str = "0.0.0.0"  # 改为0.0.0.0允许外部访问
+    PORT: int = 8000
 
-    # 数据库配置
-    DATABASE_URL: str = "sqlite:///./sport_lottery.db"
+    # --- Security Settings ---
+    SECRET_KEY: str = Field(default=secrets.token_urlsafe(32), description="Secret key for signing JWT tokens and other security purposes")
 
-    # 爬虫配置
-    SCRAPERS: List[str] = ["netease", "sina", "tencent"]
-    SCRAPE_INTERVAL: int = 1800  # 30分钟
-    MAX_RETRY: int = 3
+    # --- Database Settings ---
+    DATABASE_URL: str = Field(default="sqlite:///./sport_lottery.db", description="Database connection string (e.g., postgresql+asyncpg://user:pass@host:port/db)")
+    DATABASE_ECHO: bool = False # Set to True to echo SQL queries in logs
 
-    # 数据源配置
-    NETEASE_SPORTS_URL: str = "https://sports.163.com"
-    SINA_SPORTS_URL: str = "https://sports.sina.com.cn"
-    TENCENT_SPORTS_URL: str = "https://sports.qq.com"
+    # --- Async Database Settings (using asyncpg) ---
+    # These can be derived from database_url but kept separate for clarity if needed    
+    ASYNC_DATABASE_URL: Optional[str] = Field(default="sqlite+aiosqlite:///./sport_lottery.db", description="Async database connection string, defaults to database_url")
 
-    # 权重配置
-    WEIGHTS: dict = {
-        "injury": 9.0,
-        "weather": 7.5,
-        "referee": 7.0,
-        "motive": 8.5,
-        "tactics": 7.0,
-        "coach": 7.5,
-        "atmosphere": 6.5,
-        "history": 5.0,
-        "other": 6.0
-    }
+    # --- Redis Settings ---
+    REDIS_HOST: str = "localhost"
+    REDIS_PORT: int = 6379
+    REDIS_PASSWORD: Optional[str] = Field(None, description="Redis password, leave empty if not set")
+    REDIS_DB: int = 0
 
-    class Config:
-        case_sensitive = True
-        env_file = ".env"
+    # --- Backend CORS Origins ---
+    BACKEND_CORS_ORIGINS: List[str] = Field(default=["*"], description="A list of origins that are allowed to access the API")
+
+    model_config = SettingsConfigDict(env_file=".env", extra="allow")
+
 
 settings = Settings()

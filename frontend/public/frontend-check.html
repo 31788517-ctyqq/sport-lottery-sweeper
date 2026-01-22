@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>主页诊断</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .test-box {
+      background: white;
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 5px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      border-left: 4px solid #ccc;
+    }
+    .success { border-left-color: #4CAF50; }
+    .error { border-left-color: #f44336; }
+    .info { border-left-color: #2196F3; }
+    h2 { margin-top: 0; color: #333; }
+    .status { font-weight: bold; margin-left: 10px; }
+    .status.success { color: #4CAF50; }
+    .status.error { color: #f44336; }
+    button {
+      background: #2196F3;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    button:hover { background: #1976D2; }
+    .hint {
+      background: #fff3cd;
+      border: 1px solid #ffc107;
+      padding: 10px;
+      border-radius: 5px;
+      margin: 10px 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>🔍 前端运行诊断</h1>
+
+  <div class="hint">
+    <strong>提示:</strong> 此页面直接检查 http://localhost:3000 的实际运行状态
+  </div>
+
+  <div class="test-box" id="test-server">
+    <h2>1. Vite服务器状态</h2>
+    <span class="status">检查中...</span>
+  </div>
+
+  <div class="test-box" id="test-html">
+    <h2>2. HTML结构</h2>
+    <span class="status">检查中...</span>
+  </div>
+
+  <div class="test-box" id="test-vue">
+    <h2>3. Vue应用</h2>
+    <span class="status">检查中...</span>
+  </div>
+
+  <div class="test-box" id="test-pinia">
+    <h2>4. Pinia状态</h2>
+    <span class="status">检查中...</span>
+  </div>
+
+  <div class="test-box" id="test-components">
+    <h2>5. 组件渲染</h2>
+    <span class="status">检查中...</span>
+  </div>
+
+  <div class="test-box" id="test-data">
+    <h2>6. 数据加载</h2>
+    <span class="status">检查中...</span>
+  </div>
+
+  <div class="test-box" id="test-styles">
+    <h2>7. 样式加载</h2>
+    <span class="status">检查中...</span>
+  </div>
+
+  <div class="test-box">
+    <h2>操作</h2>
+    <button onclick="location.href='/?_nocache=' + Date.now()">打开主页(绕过缓存)</button>
+    <button onclick="window.open('/verify-main.html', '_blank')">详细验证工具</button>
+    <button onclick="location.reload()">刷新此页面</button>
+  </div>
+
+  <script>
+    function updateTest(id, status, message) {
+      const box = document.getElementById(id);
+      box.className = 'test-box ' + status;
+      const statusSpan = box.querySelector('.status');
+      statusSpan.className = 'status ' + status;
+      statusSpan.textContent = status === 'success' ? '✅ ' + message : (status === 'error' ? '❌ ' + message : 'ℹ️ ' + message);
+    }
+
+    async function runTests() {
+      // 测试1: Vite服务器
+      try {
+        const response = await fetch('/?_nocache=' + Date.now(), { method: 'HEAD' });
+        if (response.ok) {
+          updateTest('test-server', 'success', 'Vite服务器正常运行 (HTTP ' + response.status + ')');
+        } else {
+          updateTest('test-server', 'error', 'Vite服务器返回错误: HTTP ' + response.status);
+        }
+      } catch (error) {
+        updateTest('test-server', 'error', '无法连接到服务器: ' + error.message);
+      }
+
+      // 测试2: HTML结构
+      try {
+        const response = await fetch('/?_nocache=' + Date.now());
+        const html = await response.text();
+
+        const checks = [
+          { name: 'DOCTYPE', pass: html.includes('<!DOCTYPE html>') },
+          { name: '<html>标签', pass: html.includes('<html') },
+          { name: '<body>标签', pass: html.includes('<body>') },
+          { name: '#app div', pass: html.includes('<div id="app"') },
+          { name: 'main.js引用', pass: html.includes('/src/main.js') },
+          { name: 'FontAwesome', pass: html.includes('font-awesome') }
+        ];
+
+        const passed = checks.filter(c => c.pass).length;
+        const total = checks.length;
+
+        if (passed === total) {
+          updateTest('test-html', 'success', `HTML结构完整 (${passed}/${total} 项通过)`);
+        } else {
+          const failed = checks.filter(c => !c.pass).map(c => c.name);
+          updateTest('test-html', 'error', `HTML结构不完整: ${failed.join(', ')}`);
+        }
+      } catch (error) {
+        updateTest('test-html', 'error', '检查失败: ' + error.message);
+      }
+
+      // 测试3: Vue应用
+      try {
+        // 使用iframe加载主页并检查Vue
+        const iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        iframe.src = '/?_nocache=' + Date.now();
+        document.body.appendChild(iframe);
+
+        setTimeout(() => {
+          try {
+            const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+            const appElement = iframeDoc.getElementById('app');
+
+            if (appElement) {
+              const hasChildren = appElement.hasChildNodes() || appElement.innerHTML.trim().length > 0;
+
+              if (hasChildren) {
+                updateTest('test-vue', 'success', 'Vue应用已挂载并有内容');
+
+                // 测试4: Pinia
+                const vueInstance = appElement.__vue__;
+                if (vueInstance && vueInstance.$pinia) {
+                  updateTest('test-pinia', 'success', 'Pinia已正确初始化');
+                } else {
+                  updateTest('test-pinia', 'info', '无法验证Pinia状态(可能使用了懒加载)');
+                }
+
+                // 测试5: 组件
+                const mobileContainer = appElement.querySelector('.mobile-container');
+                if (mobileContainer) {
+                  updateTest('test-components', 'success', '主要组件已渲染 (.mobile-container存在)');
+
+                  // 测试6: 数据
+                  const statsCards = mobileContainer.querySelectorAll('.stats-grid, .stat-card');
+                  if (statsCards.length > 0) {
+                    updateTest('test-data', 'success', `数据已加载 (找到 ${statsCards.length} 个统计卡片)`);
+                  } else {
+                    updateTest('test-data', 'info', '数据可能在加载中(检查store.generateMockData)');
+                  }
+                } else {
+                  updateTest('test-components', 'error', '主要组件未渲染 (.mobile-container不存在)');
+                  updateTest('test-data', 'error', '无法检查数据(组件未渲染)');
+                }
+
+                // 测试7: 样式
+                const computedStyle = window.getComputedStyle(appElement);
+                const backgroundColor = computedStyle.backgroundColor;
+                const color = computedStyle.color;
+
+                if (backgroundColor !== 'rgba(0, 0, 0, 0)' && color !== 'rgba(0, 0, 0, 0)') {
+                  updateTest('test-styles', 'success', '样式已加载 (背景色: ' + backgroundColor + ')');
+                } else {
+                  updateTest('test-styles', 'error', '样式可能未正确加载');
+                }
+
+              } else {
+                updateTest('test-vue', 'error', 'Vue应用已挂载但内容为空');
+                updateTest('test-pinia', 'error', '无法检查Pinia(Vue未正确挂载)');
+                updateTest('test-components', 'error', '无法检查组件(Vue未正确挂载)');
+                updateTest('test-data', 'error', '无法检查数据(Vue未正确挂载)');
+                updateTest('test-styles', 'error', '无法检查样式(Vue未正确挂载)');
+              }
+            } else {
+              updateTest('test-vue', 'error', '#app 元素不存在');
+              updateTest('test-pinia', 'error', '无法检查Pinia(#app不存在)');
+              updateTest('test-components', 'error', '无法检查组件(#app不存在)');
+              updateTest('test-data', 'error', '无法检查数据(#app不存在)');
+              updateTest('test-styles', 'error', '无法检查样式(#app不存在)');
+            }
+          } catch (error) {
+            updateTest('test-vue', 'error', '检查失败: ' + error.message);
+          }
+
+          document.body.removeChild(iframe);
+        }, 2000);
+
+      } catch (error) {
+        updateTest('test-vue', 'error', 'Vue应用检查失败: ' + error.message);
+      }
+    }
+
+    // 页面加载后运行测试
+    window.onload = function() {
+      setTimeout(runTests, 500);
+    };
+  </script>
+</body>
+</html>

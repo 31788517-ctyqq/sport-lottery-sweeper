@@ -1,0 +1,65 @@
+# 生产环境Docker Compose配置
+version: '3.8'
+
+services:
+  # FastAPI后端
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.production
+    container_name: sport-lottery-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - LOG_LEVEL=INFO
+      - WORKERS=4
+    depends_on:
+      - redis
+    volumes:
+      - ./backend:/app
+      - ./logs:/app/logs
+    restart: always
+    networks:
+      - sport-lottery-network
+
+  # Redis缓存
+  redis:
+    image: redis:7-alpine
+    container_name: sport-lottery-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --requirepass ""
+    restart: always
+    networks:
+      - sport-lottery-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # Nginx反向代理（可选）
+  nginx:
+    image: nginx:alpine
+    container_name: sport-lottery-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./certs:/etc/nginx/certs:ro
+    depends_on:
+      - backend
+    restart: always
+    networks:
+      - sport-lottery-network
+
+volumes:
+  redis_data:
+
+networks:
+  sport-lottery-network:
+    driver: bridge

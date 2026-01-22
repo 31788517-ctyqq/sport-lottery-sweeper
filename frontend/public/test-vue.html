@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>前端测试 - Vue + Vite</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+  <div id="app">
+    <h1>前端环境测试</h1>
+    <p>Vue版本: {{ vueVersion }}</p>
+    <p>当前时间: {{ currentTime }}</p>
+    <button @click="testClick">点击测试</button>
+    <p>点击次数: {{ clickCount }}</p>
+    <div v-if="loading">加载中...</div>
+  </div>
+
+  <script type="module">
+    import { createApp, ref, onMounted } from 'vue';
+
+    const app = createApp({
+      setup() {
+        const vueVersion = ref('3.x');
+        const currentTime = ref('');
+        const clickCount = ref(0);
+        const loading = ref(false);
+
+        const testClick = () => {
+          clickCount.value++;
+          loading.value = true;
+          setTimeout(() => {
+            loading.value = false;
+          }, 500);
+        };
+
+        const updateTime = () => {
+          currentTime.value = new Date().toLocaleString('zh-CN');
+        };
+
+        onMounted(() => {
+          console.log('Vue应用已挂载');
+          updateTime();
+          setInterval(updateTime, 1000);
+        });
+
+        return {
+          vueVersion,
+          currentTime,
+          clickCount,
+          loading,
+          testClick
+        };
+      }
+    });
+
+    app.mount('#app');
+    console.log('测试页面加载完成');
+  </script>
+</body>
+</html>

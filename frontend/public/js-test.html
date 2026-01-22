@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>JavaScript加载测试</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .test {
+      background: white;
+      padding: 20px;
+      margin: 10px 0;
+      border-radius: 5px;
+      border-left: 4px solid #ccc;
+    }
+    .success { border-left-color: #4CAF50; background: #e8f5e9; }
+    .error { border-left-color: #f44336; background: #ffebee; }
+    .info { border-left-color: #2196F3; background: #e3f2fd; }
+    h2 { margin-top: 0; }
+    pre {
+      background: #f5f5f5;
+      padding: 10px;
+      border-radius: 3px;
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>🔧 JavaScript模块加载测试</h1>
+
+  <div class="test" id="test1">
+    <h2>测试1: ES6模块支持</h2>
+    <div id="result1">检查中...</div>
+  </div>
+
+  <div class="test" id="test2">
+    <h2>测试2: Vue模块加载</h2>
+    <div id="result2">检查中...</div>
+  </div>
+
+  <div class="test" id="test3">
+    <h2>测试3: main.js加载</h2>
+    <div id="result3">检查中...</div>
+  </div>
+
+  <div class="test" id="test4">
+    <h2>测试4: 浏览器控制台错误</h2>
+    <pre id="console-output">控制台输出将显示在这里...</pre>
+  </div>
+
+  <div class="test info">
+    <h3>📋 诊断说明</h3>
+    <p>如果测试3失败,请检查:</p>
+    <ol>
+      <li>浏览器控制台(F12)中的错误信息</li>
+      <li>Vite开发服务器是否正常运行</li>
+      <li>是否有依赖包未安装</li>
+    </ol>
+  </div>
+
+  <script>
+    // 拦截console.error
+    const consoleOutput = document.getElementById('console-output');
+    const originalError = console.error;
+    console.error = function(...args) {
+      consoleOutput.textContent += '\n[ERROR] ' + args.join(' ');
+      originalError.apply(console, args);
+    };
+
+    // 测试1: ES6模块支持
+    try {
+      document.getElementById('test1').className = 'test success';
+      document.getElementById('result1').innerHTML = '✅ 浏览器支持ES6模块';
+    } catch (e) {
+      document.getElementById('test1').className = 'test error';
+      document.getElementById('result1').innerHTML = '❌ ' + e.message;
+    }
+
+    // 测试2: Vue模块加载
+    (async function() {
+      try {
+        const vue = await import('/node_modules/vue/dist/vue.esm-browser.js');
+        document.getElementById('test2').className = 'test success';
+        document.getElementById('result2').innerHTML = '✅ Vue模块加载成功<br>版本: ' + (vue?.default?.version || '未知');
+      } catch (e) {
+        document.getElementById('test2').className = 'test error';
+        document.getElementById('result2').innerHTML = '❌ Vue模块加载失败: ' + e.message;
+      }
+    })();
+
+    // 测试3: main.js加载
+    (async function() {
+      try {
+        const start = Date.now();
+        await import('/src/main.js');
+        const elapsed = Date.now() - start;
+
+        document.getElementById('test3').className = 'test success';
+        document.getElementById('result3').innerHTML = '✅ main.js加载成功<br>耗时: ' + elapsed + 'ms';
+      } catch (e) {
+        document.getElementById('test3').className = 'test error';
+        document.getElementById('result3').innerHTML = '❌ main.js加载失败:<br>' + e.message;
+      }
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,92 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sport-lottery-sweeper"
+version = "1.0.0"
+description = "竞彩足球扫盘系统 - 专业的足球数据采集、分析和预测平台"
+authors = [
+    {name = "Developer", email = "developer@example.com"}
+]
+license = {text = "MIT"}
+readme = "docs/README.md"
+requires-python = ">=3.11"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12"
+]
+
+dependencies = [
+    "fastapi>=0.104.1,<0.105.0",
+    "uvicorn[standard]>=0.24.0",
+    "sqlalchemy>=2.0.23,<2.1.0",
+    "alembic>=1.13.1",
+    "asyncpg>=0.29.0",
+    "aiohttp>=3.9.0",
+    "beautifulsoup4>=4.12.2",
+    "playwright>=1.40.0",
+    "pydantic>=2.5.0,<3.0.0",
+    "pydantic-settings>=2.1.0",
+    "python-multipart>=0.0.6",
+    "passlib[bcrypt]>=1.7.4",
+    "python-jose[cryptography]>=3.3.0",
+    "redis>=5.0.1,<6.0.0",
+    "celery>=5.3.6,<6.0.0",
+    "rabbitmq>=3.12.0",
+    "requests>=2.31.0",
+    "pandas>=2.1.0",
+    "numpy>=1.24.3",
+    "scrapy>=2.11.0"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "black>=23.12.0",
+    "flake8>=6.1.0",
+    "mypy>=1.8.0",
+    "isort>=5.13.0",
+    "pre-commit>=3.6.0"
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["backend*", "shared*"]
+
+[project.urls]
+Homepage = "https://github.com/your-username/sport-lottery-sweeper"
+Repository = "https://github.com/your-username/sport-lottery-sweeper"
+Issues = "https://github.com/your-username/sport-lottery-sweeper/issues"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+markers = [
+    "slow: marks tests as slow",
+    "integration: marks tests as integration tests"
+]
+
+[tool.coverage.run]
+source = ["src"]
+omit = [
+    "*/tests/*",
+    "*/venv/*",
+    "*/__pycache__/*"
+]
+
+[tool.black]
+line-length = 88
+target-version = ['py311']
+include = '\.pyi?$'
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+known_first_party = ["backend", "shared"]

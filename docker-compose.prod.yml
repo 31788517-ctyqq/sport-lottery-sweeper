@@ -1,0 +1,146 @@
+version: '3.8'
+
+services:
+  # 生产Nginx（SSL配置）
+  nginx:
+    image: nginx:alpine
+    container_name: soccer-nginx-prod
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./infrastructure/docker/nginx/nginx-prod.conf:/etc/nginx/nginx.conf:ro
+      - ./infrastructure/docker/nginx/sites-enabled/prod:/etc/nginx/sites-enabled:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - ./logs/nginx:/var/log/nginx
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - soccer-network
+    restart: unless-stopped
+
+  # 生产后端（多实例）
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    container_name: soccer-backend-prod
+    env_file:
+      - ./config/production/backend.env
+    volumes:
+      - ./logs/backend:/app/logs
+    expose:
+      - "8000"
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - soccer-network
+    restart: unless-stopped
+    deploy:
+      replicas: 3
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: start-first
+
+  # 生产前端
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+    container_name: soccer-frontend-prod
+    env_file:
+      - ./config/production/frontend.env
+    volumes:
+      - ./logs/frontend:/var/log/nginx
+    expose:
+      - "80"
+    networks:
+      - soccer-network
+    restart: unless-stopped
+
+  # 生产数据库（持久化）
+  postgres:
+    image: postgres:15-alpine
+    container_name: soccer-postgres-prod
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_prod_data:/var/lib/postgresql/data
+      - ./storage/backup/scripts:/backup
+      - ./infrastructure/docker/postgres/postgresql.conf:/etc/postgresql/postgresql.conf
+    expose:
+      - "5432"
+    networks:
+      - soccer-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 生产Redis（哨兵模式）
+  redis:
+    image: redis:7-alpine
+    container_name: soccer-redis-prod
+    command: redis-server /usr/local/etc/redis/redis.conf
+    volumes:
+      - redis_prod_data:/data
+      - ./infrastructure/docker/redis/redis-prod.conf:/usr/local/etc/redis/redis.conf
+    expose:
+      - "6379"
+    networks:
+      - soccer-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 生产监控栈
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: soccer-prometheus-prod
+    volumes:
+      - ./monitoring/prometheus/prometheus-prod.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_prod_data:/prometheus
+    expose:
+      - "9090"
+    networks:
+      - soccer-network
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: soccer-grafana-prod
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
+      GF_SERVER_ROOT_URL: ${GRAFANA_URL}
+    volumes:
+      - grafana_prod_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+    expose:
+      - "3000"
+    networks:
+      - soccer-network
+    restart: unless-stopped
+
+networks:
+  soccer-network:
+    driver: bridge
+
+volumes:
+  postgres_prod_data:
+  redis_prod_data:
+  prometheus_prod_data:
+  grafana_prod_data:

@@ -1,0 +1,12 @@
+{
+  "common": {
+    "hello": "Hello",
+    "welcome": "Welcome",
+    "logout": "Logout"
+  },
+  "nav": {
+    "home": "Home",
+    "about": "About",
+    "contact": "Contact"
+  }
+}

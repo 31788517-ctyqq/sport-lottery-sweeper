@@ -1,46 +1,148 @@
+"""
+FastAPI主应用入口
+包含性能优化和时间监测功能
+"""
+import time
+import sys
+import os
+from contextlib import contextmanager
+from datetime import datetime
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
-import uvicorn
-from api import router
-from models import Base
-from database import engine
-import os
-import sys
+from contextlib import asynccontextmanager
+import logging
 
-# 添加项目根目录到 Python 路径
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# 添加项目根目录到Python路径，以确保模块可以正确导入
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(current_dir)
+sys.path.insert(0, parent_dir)
 
-# 创建数据库表
-Base.metadata.create_all(bind=engine)
+from backend.config import settings
+from backend.core.middleware import RequestLoggingMiddleware
+from backend.core.async_initializer import get_async_initializer
 
-# 创建FastAPI应用
-app = FastAPI(
-    title="竞彩扫盘工具API",
-    version="1.0.0",
-    description="竞彩足球情报分析系统API"
+
+@contextmanager
+def timer(name: str):
+    """计时上下文管理器"""
+    start = time.perf_counter()
+    timestamp = datetime.now().strftime('%H:%M:%S.%f')[:-3]
+    print(f"[{timestamp}] 🚀 开始: {name}")
+    yield
+    elapsed = time.perf_counter() - start
+    timestamp = datetime.now().strftime('%H:%M:%S.%f')[:-3]
+    print(f"[{timestamp}] ✅ 完成: {name} (耗时: {elapsed:.3f}s)")
+
+
+# 配置日志
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler("app.log"),
+        logging.StreamHandler()
+    ]
 )
+logger = logging.getLogger(__name__)
 
-# 配置CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # 在生产环境中应该设置具体的允许域名
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
-# 注册API路由
-app.include_router(router, prefix="/api")
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    """
+    应用生命周期管理
+    """
+    # 启动时执行
+    startup_start = time.time()
+    print(f"[{datetime.now().strftime('%H:%M:%S.%f')[:-3]}] 🌟 开始启动应用...")
 
-# 挂载静态文件服务
-if os.path.exists("../frontend"):
-    app.mount("/", StaticFiles(directory="../frontend", html=True), name="frontend")
+    with timer("异步初始化关键服务"):
+        initializer = get_async_initializer()
+        await initializer.initialize_all()
+
+    startup_total = time.time() - startup_start
+    print(f"[{datetime.now().strftime('%H:%M:%S.%f')[:-3]}] 🎉 应用启动完成，总耗时: {startup_total:.3f}s")
+
+    yield
+
+    # 关闭时执行
+    print(f"[{datetime.now().strftime('%H:%M:%S.%f')[:-3]}] 💤 关闭应用...")
+
+
+def create_app() -> FastAPI:
+    """创建优化的FastAPI应用实例"""
+    app_start = time.time()
+
+    with timer("创建FastAPI应用实例"):
+        app = FastAPI(
+            title=settings.PROJECT_NAME,
+            version=settings.VERSION,
+            description=settings.DESCRIPTION,
+            openapi_url=f"{settings.API_V1_STR}/openapi.json",
+            docs_url="/docs" if settings.DOCS_ENABLED else None,
+            redoc_url="/redoc" if settings.DOCS_ENABLED else None,
+            lifespan=lifespan
+        )
+
+    with timer("配置CORS中间件"):
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=settings.BACKEND_CORS_ORIGINS,
+            allow_credentials=True,
+            allow_methods=["*"],
+            allow_headers=["*"],
+        )
+
+    with timer("添加自定义中间件"):
+        app.add_middleware(RequestLoggingMiddleware)
+
+    with timer("包含API路由"):
+        from backend.api import router
+        app.include_router(router, prefix=settings.API_V1_STR)
+
+    with timer("包含管理后台路由"):
+        from backend.admin import admin_router
+        app.include_router(admin_router)
+
+    with timer("添加根路径路由"):
+        @app.get("/")
+        async def root():
+            startup_time = time.time() - app_start
+            return {
+                "message": "Welcome to Sport Lottery Sweeper API",
+                "version": settings.VERSION,
+                "startup_time": f"{startup_time:.3f}s",
+                "docs": f"{settings.API_V1_STR}/docs" if settings.DOCS_ENABLED else None,
+                "timestamp": datetime.now().isoformat()
+            }
+
+    app_total = time.time() - app_start
+    print(f"[{datetime.now().strftime('%H:%M:%S.%f')[:-3]}] 🏗️  应用构建完成，总耗时: {app_total:.3f}s")
+
+    return app
+
+
+# 创建应用实例
+app = create_app()
+
+
+@app.get("/health")
+async def health_check():
+    """健康检查端点"""
+    return {
+        "status": "healthy",
+        "timestamp": datetime.now().isoformat(),
+        "uptime": time.time()
+    }
+
 
 if __name__ == "__main__":
+    import uvicorn
+    print(f"[{datetime.now().strftime('%H:%M:%S.%f')[:-3]}] 🚀 启动Uvicorn服务器...")
+
     uvicorn.run(
-        "main:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=os.getenv("DEBUG", "False").lower() == "true"
+        "backend.main:app",
+        host=settings.HOST,
+        port=settings.PORT,
+        reload=settings.DEBUG,
+        log_level="info"
     )

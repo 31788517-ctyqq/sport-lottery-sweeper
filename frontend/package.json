@@ -1,0 +1,89 @@
+{
+  "name": "soccer-scanning-system-frontend",
+  "version": "1.0.0",
+  "description": "竞彩足球扫盘系统前端应用",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
+    "format": "prettier --write src/",
+    "type-check": "vue-tsc --noEmit",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage"
+  },
+  "dependencies": {
+    "@element-plus/icons-vue": "^2.3.1",
+    "@sxzz/popperjs-es": "^2.11.7",
+    "@vueuse/core": "^10.7.0",
+    "axios": "^1.6.2",
+    "dayjs": "^1.11.10",
+    "echarts": "^5.4.3",
+    "element-plus": "^2.4.4",
+    "js-cookie": "^3.0.5",
+    "lodash-es": "^4.17.21",
+    "normalize.css": "^8.0.1",
+    "nprogress": "^0.2.0",
+    "pinia": "^2.1.7",
+    "vue": "^3.4.0",
+    "vue-echarts": "^6.6.1",
+    "vue-i18n": "^11.2.8",
+    "vue-router": "^4.6.4",
+    "vuex": "^4.1.0"
+  },
+  "devDependencies": {
+    "@types/js-cookie": "^3.0.6",
+    "@types/lodash-es": "^4.17.12",
+    "@types/node": "^20.10.5",
+    "@vitejs/plugin-vue": "^5.0.2",
+    "@vitest/ui": "^1.1.0",
+    "@vue/eslint-config-prettier": "^9.0.0",
+    "@vue/eslint-config-typescript": "^12.0.0",
+    "@vue/test-utils": "^2.4.3",
+    "autoprefixer": "^10.4.16",
+    "eslint": "^8.56.0",
+    "eslint-plugin-vue": "^9.19.2",
+    "jsdom": "^23.0.1",
+    "postcss": "^8.4.32",
+    "prettier": "^3.1.1",
+    "sass": "^1.69.5",
+    "tailwindcss": "^3.3.6",
+    "typescript": "^5.3.3",
+    "unplugin-auto-import": "^0.17.2",
+    "unplugin-vue-components": "^0.26.0",
+    "vite": "^5.0.10",
+    "vite-plugin-compression": "^0.5.1",
+    "vite-plugin-pwa": "^1.2.0",
+    "vite-plugin-svg-icons": "^2.0.1",
+    "vite-plugin-vue-devtools": "^8.0.5",
+    "vitest": "^1.1.0",
+    "vue-tsc": "^1.8.25"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "packageManager": "pnpm@8.14.0",
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead",
+    "not ie 11"
+  ],
+  "keywords": [
+    "vue3",
+    "vite",
+    "element-plus",
+    "soccer",
+    "betting",
+    "数据分析"
+  ],
+  "author": "AutoGLM",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/soccer-scanning-system.git"
+  }
+}

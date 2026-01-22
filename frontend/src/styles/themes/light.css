@@ -1,0 +1,10 @@
+/* styles/themes/light.css */
+/* Explicitly define light theme styles if needed, otherwise variables.css serves as default */
+/* This file can override specific parts of the default theme if required */
+
+/* Example: Specific overrides for light theme only */
+/* :root { */
+/*   --some-light-specific-var: value; */
+/* } */
+/* No need for explicit overrides here if variables.css defines the light theme as default. */
+/* This file acts as a placeholder for any future light-theme-specific rules. */

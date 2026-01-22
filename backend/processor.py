@@ -2,7 +2,15 @@ from typing import List, Dict, Optional
 from datetime import datetime
 from sqlalchemy.orm import Session
 import models
-from config import settings
+from backend.config import settings
+
+
+def process_data(data):
+    """处理数据"""
+    print(f"使用配置: {settings.PROJECT_NAME}")
+    # 处理逻辑...
+    return data
+
 
 class DataProcessor:
     """数据处理类"""
