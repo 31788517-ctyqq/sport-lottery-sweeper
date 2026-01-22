@@ -6,7 +6,8 @@
 import re
 from pathlib import Path
 
-MODELS_DIR = Path("c:/Users/11581/Downloads/sport-lottery-sweeper/backend/models")
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+MODELS_DIR = BASE_DIR / "backend" / "models"
 
 # 需要修复的文件和对应的 ARRAY 字段
 ARRAY_FIXES = {

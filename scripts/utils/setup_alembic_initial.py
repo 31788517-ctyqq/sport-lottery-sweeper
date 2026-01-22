@@ -1,26 +1,28 @@
 # setup_alembic_initial.py
+from pathlib import Path
+BASE_DIR = Path(__file__).resolve().parent.parent
+
 import os
 import subprocess
 import sys
 
-PROJECT_DIR = r"c:\Users\11581\Downloads\sport-lottery-sweeper"
-os.chdir(PROJECT_DIR)
+os.chdir(BASE_DIR)
 
 # 1. 检查 alembic.ini 并修改 sqlalchemy.url
-alembic_ini = os.path.join(PROJECT_DIR, "alembic.ini")
+alembic_ini = BASE_DIR / "alembic.ini"
 with open(alembic_ini, "r", encoding="utf-8") as f:
     content = f.read()
 # 替换默认占位 URL 为 SQLite 绝对路径
 content = content.replace(
     "sqlalchemy.url = driver://user:pass@localhost/dbname",
-    "sqlalchemy.url = sqlite:///c:/Users/11581/Downloads/sport-lottery-sweeper/sport_lottery.db"
+    f"sqlite:///{BASE_DIR / 'sport_lottery.db'}"
 )
 with open(alembic_ini, "w", encoding="utf-8") as f:
     f.write(content)
 print("✅ 更新 alembic.ini 的数据库连接")
 
 # 2. 修改 env.py 引入 Base.metadata
-env_py = os.path.join(PROJECT_DIR, "alembic", "env.py")
+env_py = BASE_DIR / "alembic" / "env.py"
 with open(env_py, "r", encoding="utf-8") as f:
     env_content = f.read()
 

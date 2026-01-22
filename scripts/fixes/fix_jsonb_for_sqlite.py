@@ -7,7 +7,8 @@ import os
 import re
 from pathlib import Path
 
-MODELS_DIR = Path("c:/Users/11581/Downloads/sport-lottery-sweeper/backend/models")
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+MODELS_DIR = BASE_DIR / "backend" / "models"
 
 def fix_file(fp: Path):
     with fp.open("r", encoding="utf-8") as f:

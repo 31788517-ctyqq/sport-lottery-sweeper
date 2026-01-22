@@ -1,0 +1,76 @@
+{
+  "qualityGate": {
+    "name": "Sport Lottery Sweeper Quality Gate",
+    "conditions": [
+      {
+        "metric": "new_bugs",
+        "op": "GT",
+        "error": "0"
+      },
+      {
+        "metric": "new_vulnerabilities",
+        "op": "GT",
+        "error": "0"
+      },
+      {
+        "metric": "new_security_hotspots_reviewed",
+        "op": "LT",
+        "error": "100"
+      },
+      {
+        "metric": "new_code_smells",
+        "op": "GT",
+        "warning": "10",
+        "error": "50"
+      },
+      {
+        "metric": "coverage",
+        "op": "LT",
+        "warning": "80",
+        "error": "70"
+      },
+      {
+        "metric": "new_coverage",
+        "op": "LT",
+        "warning": "80",
+        "error": "70"
+      },
+      {
+        "metric": "duplicated_lines_density",
+        "op": "GT",
+        "warning": "5",
+        "error": "10"
+      },
+      {
+        "metric": "ncloc_language_distribution",
+        "op": "GT",
+        "warning": "100000"
+      },
+      {
+        "metric": "tests",
+        "op": "LT",
+        "warning": "50"
+      },
+      {
+        "metric": "test_errors",
+        "op": "GT",
+        "error": "0"
+      },
+      {
+        "metric": "test_failures",
+        "op": "GT",
+        "error": "0"
+      },
+      {
+        "metric": "blocker_violations",
+        "op": "GT",
+        "error": "0"
+      },
+      {
+        "metric": "critical_violations",
+        "op": "GT",
+        "error": "0"
+      }
+    ]
+  }
+}

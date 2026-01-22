@@ -2,8 +2,9 @@
 import os
 from pathlib import Path
 
+BASE_DIR = Path(__file__).resolve().parent.parent
 # 创建测试目录结构
-base_path = Path("c:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests")
+base_path = BASE_DIR / "frontend" / "src" / "tests"
 
 # 高优先级测试目录
 unit_dirs = [

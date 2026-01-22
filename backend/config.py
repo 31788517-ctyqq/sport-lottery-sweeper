@@ -2,7 +2,11 @@ from pydantic import Field, validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import List, Optional
 import secrets
-import os
+from pathlib import Path
+
+# 动态获取项目根目录（config.py 位于 backend/ 目录下）
+PROJECT_ROOT = Path(__file__).parent.parent
+DATABASE_PATH = PROJECT_ROOT / "sport_lottery.db"
 
 
 class Settings(BaseSettings):
@@ -35,11 +39,11 @@ class Settings(BaseSettings):
     DB_POOL_PRE_PING: bool = Field(default=True, description="Enable connection health checks")
     
     # --- Database Settings ---
-    DATABASE_URL: str = f"sqlite:///{os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'sport_lottery.db'))}"
+    DATABASE_URL: str = f"sqlite:///{DATABASE_PATH}"
     DATABASE_ECHO: bool = False
 
     # --- Async Database Settings ---
-    ASYNC_DATABASE_URL: str = f"sqlite+aiosqlite:///{os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'sport_lottery.db'))}"
+    ASYNC_DATABASE_URL: str = f"sqlite+aiosqlite:///{DATABASE_PATH}"
     
     # Async connection pool settings
     ASYNC_DB_POOL_SIZE: int = Field(default=5, description="Async pool size")

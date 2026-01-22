@@ -12,6 +12,9 @@ import logging
 import subprocess
 from datetime import datetime
 
+from pathlib import Path
+BASE_DIR = Path(__file__).resolve().parent.parent
+
 # 配置日志
 logging.basicConfig(
     level=logging.INFO,
@@ -30,10 +33,10 @@ def crawl_500wang_now():
     
     try:
         result = subprocess.run(
-            ['python', 'crawl_500_com.py'],
+            ['python', str(BASE_DIR / 'crawl_500_com.py')],
             capture_output=True,
             text=True,
-            cwd='c:/Users/11581/Downloads/sport-lottery-sweeper',
+            cwd=str(BASE_DIR),
             encoding='utf-8'
         )
         
@@ -67,7 +70,7 @@ def setup_basic_scheduler():
     print("   - 每小时更新: 每小时执行")
     print("4. 设置操作:")
     print(f'   - 程序: {sys.executable}')
-    print(f'   - 参数: c:/Users/11581/Downloads/sport-lottery-sweeper/scripts/manual_crawler_control.py --crawl')
+    print(f'   - 参数: {str(BASE_DIR / "scripts" / "manual_crawler_control.py")} --crawl')
     print("="*60)
     
 def continuous_mode():

@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
+from pathlib import Path
+BASE_DIR = Path(__file__).resolve().parent.parent
+
 import sqlite3
 import os
 from datetime import datetime
+import sys
 
 def log_message(message):
     """输出带时间戳的日志"""
@@ -11,10 +15,10 @@ def log_message(message):
 def optimize_database_indexes():
     """执行核心索引优化"""
     
-    db_path = "c:/Users/11581/Downloads/sport-lottery-sweeper/sport_lottery.db"
+    db_path = BASE_DIR / "sport_lottery.db"
     
     # 检查数据库文件是否存在
-    if not os.path.exists(db_path):
+    if not db_path.exists():
         log_message("❌ 错误: 未找到数据库文件 sport_lottery.db")
         log_message("   请检查文件路径是否正确")
         return False
@@ -33,7 +37,7 @@ def optimize_database_indexes():
         log_message(f"📊 发现 {table_count} 个数据表")
         
         # 检查数据库大小
-        size_bytes = os.path.getsize(db_path)
+        size_bytes = db_path.stat().st_size
         size_mb = size_bytes / (1024 * 1024)
         log_message(f"💾 数据库大小: {size_mb:.2f} MB")
         
@@ -132,7 +136,7 @@ def optimize_database_indexes():
             log_message("        ✅ 数据库空间优化完成")
             
             # 检查优化后的大小
-            new_size_bytes = os.path.getsize(db_path)
+            new_size_bytes = db_path.stat().st_size
             new_size_mb = new_size_bytes / (1024 * 1024)
             space_saved = size_mb - new_size_mb
             log_message(f"        💾 优化后大小: {new_size_mb:.2f} MB")

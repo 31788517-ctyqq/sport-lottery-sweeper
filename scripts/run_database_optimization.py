@@ -9,6 +9,8 @@ import os
 from database_index_optimizer import (
     DatabaseIndexOptimizer, BusinessViewCreator, DataCleanupManager
 )
+from pathlib import Path
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 def print_section(title):
     """打印章节标题"""
@@ -23,7 +25,7 @@ def print_step(step):
 def execute_optimization_plan():
     """执行完整的数据库优化计划"""
     
-    db_path = "c:/Users/11581/Downloads/sport-lottery-sweeper/sport_lottery.db"
+    db_path = BASE_DIR / "sport_lottery.db"
     
     print("🚀 体育彩票扫盘系统 - 数据库优化执行")
     print("目标: 提升查询性能、优化存储结构、增强数据分析能力")

@@ -9,16 +9,18 @@ import asyncio
 import logging
 import sys
 import os
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 # 添加路径
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(str(BASE_DIR))
 
 from datetime import datetime, timedelta
 from celery import Celery
 
 # 直接导入爬虫服务，避免循环导入
-import sys
-sys.path.append('c:/Users/11581/Downloads/sport-lottery-sweeper')
+sys.path.append(str(BASE_DIR))
 from crawl_500_com import SportteryCrawler
 
 # 配置日志
@@ -39,10 +41,10 @@ def fetch_daily_matches():
         # 直接使用现有的爬虫脚本
         import subprocess
         result = subprocess.run(
-            ['python', 'c:/Users/11581/Downloads/sport-lottery-sweeper/crawl_500_com.py'],
+            ['python', str(BASE_DIR / 'crawl_500_com.py')],
             capture_output=True,
             text=True,
-            cwd='c:/Users/11581/Downloads/sport-lottery-sweeper'
+            cwd=str(BASE_DIR)
         )
         
         if result.returncode == 0:
@@ -66,10 +68,10 @@ def fetch_hourly_update():
         # 直接使用现有的爬虫脚本，限制为1天
         import subprocess
         result = subprocess.run(
-            ['python', 'c:/Users/11581/Downloads/sport-lottery-sweeper/crawl_500_com.py'],
+            ['python', str(BASE_DIR / 'crawl_500_com.py')],
             capture_output=True,
             text=True,
-            cwd='c:/Users/11581/Downloads/sport-lottery-sweeper'
+            cwd=str(BASE_DIR)
         )
         
         if result.returncode == 0:

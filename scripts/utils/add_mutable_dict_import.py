@@ -6,7 +6,7 @@ import os
 import re
 from pathlib import Path
 
-MODELS_DIR = Path("c:/Users/11581/Downloads/sport-lottery-sweeper/backend/models")
+MODELS_DIR = Path(__file__).resolve().parent.parent / "backend" / "models"
 
 # 需要添加导入的文件列表
 FILES_TO_FIX = [

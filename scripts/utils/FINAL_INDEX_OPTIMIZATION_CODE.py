@@ -1,6 +1,9 @@
 # 体育彩票扫盘系统 - 核心索引优化代码
 # 复制到Python环境中直接执行
 
+from pathlib import Path
+BASE_DIR = Path(__file__).resolve().parent.parent
+
 import sqlite3
 import os
 from datetime import datetime
@@ -10,9 +13,9 @@ def optimize_database():
     print("="*50)
     
     # 数据库路径
-    db_path = "c:/Users/11581/Downloads/sport-lottery-sweeper/sport_lottery.db"
+    db_path = BASE_DIR / "sport_lottery.db"
     
-    if not os.path.exists(db_path):
+    if not db_path.exists():
         print("❌ 数据库文件不存在")
         return
     
@@ -27,7 +30,7 @@ def optimize_database():
     tables = cursor.fetchone()[0]
     print(f"📊 数据表数量: {tables}")
     
-    size_mb = os.path.getsize(db_path) / (1024*1024)
+    size_mb = db_path.stat().st_size / (1024*1024)
     print(f"💾 数据库大小: {size_mb:.2f} MB")
     
     # 检查主要表数据量

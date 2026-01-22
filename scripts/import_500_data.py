@@ -8,7 +8,11 @@
 import json
 import os
 import sys
+from pathlib import Path
 from datetime import datetime
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
 from database import SessionLocal
 from models.sporttery import MatchData
 from sqlalchemy import text
@@ -17,7 +21,7 @@ def import_500_data():
     """导入500彩票网数据到数据库"""
     
     # 查找最新的抓取数据文件
-    debug_dir = 'c:/Users/11581/Downloads/sport-lottery-sweeper/debug'
+    debug_dir = BASE_DIR / "debug"
     json_files = [f for f in os.listdir(debug_dir) if f.startswith('500_com_matches_') and f.endswith('.json')]
     
     if not json_files:
@@ -26,7 +30,7 @@ def import_500_data():
     
     # 按时间排序，取最新的文件
     json_files.sort(reverse=True)
-    latest_file = os.path.join(debug_dir, json_files[0])
+    latest_file = debug_dir / json_files[0]
     
     print(f'📂 读取数据文件: {latest_file}')
     
