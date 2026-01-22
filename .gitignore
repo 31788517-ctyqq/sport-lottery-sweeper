@@ -1,1 +1,11 @@
 node_modules
+
+# 脚本归档目录 - 不纳入版本控制
+scripts/archive/
+
+# 运行时文件
+backend/logs/
+sport_lottery.db
+*.log
+*.tmp
+.DS_Store

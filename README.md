@@ -326,3 +326,10 @@ pytest tests/ --cov=backend --cov-report=term-missing
 ## 许可证
 
 MIT
+
+## 📋 开发规范与文件生成指南
+
+为保证项目结构统一与代码可维护性，请所有开发者与 AI 助手遵循 [文件生成指令示例清单](./FILE_GENERATION_GUIDE.md) 进行新文件的创建。
+该清单基于项目的 `<always_applied_workspace_rules>` 制定，涵盖 Vue 组件、页面、API、工具函数、测试等所有模块的路径与命名规范。
+
+> ✅ 使用清单可确保文件始终生成到正确目录，避免结构混乱与后期重构成本。
