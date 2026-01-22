@@ -1,4 +1,0 @@
-<tool_call>create_file
-<arg_key>file_path</arg_key>
-<arg_value>/home/wuying/autoglm/session_e06fc591-9df3-4aa0-9ed2-5280680eee0f/frontend/Dockerfile.txt</arg_value>
-</tool_call>
