@@ -44,6 +44,18 @@
             />
             <span>记住我</span>
           </label>
+          
+          <label class="checkbox-label">
+            <input 
+              type="checkbox" 
+              id="rememberPassword"
+              name="rememberPassword"
+              v-model="credentials.rememberPassword"
+              :disabled="!credentials.rememberMe"
+              autocomplete="off"
+            />
+            <span :class="{ 'disabled': !credentials.rememberMe }">记住密码</span>
+          </label>
         </div>
         
         <button 
@@ -68,7 +80,7 @@
 </template>
 
 <script>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAdminStore } from '@/stores/admin'
 
@@ -81,11 +93,30 @@ export default {
     const credentials = ref({
       username: '',
       password: '',
-      rememberMe: false
+      rememberMe: false,
+      rememberPassword: false
     })
 
     const loading = ref(false)
     const error = ref('')
+
+    // 页面加载时恢复记住的凭据
+    onMounted(() => {
+      const savedCredentials = localStorage.getItem('admin_login_credentials')
+      if (savedCredentials) {
+        try {
+          const parsed = JSON.parse(savedCredentials)
+          credentials.value.username = parsed.username || ''
+          if (parsed.rememberPassword) {
+            credentials.value.password = parsed.password || ''
+            credentials.value.rememberPassword = true
+          }
+          credentials.value.rememberMe = parsed.rememberMe || false
+        } catch (e) {
+          console.error('Failed to parse saved credentials:', e)
+        }
+      }
+    })
 
     const handleLogin = async () => {
       loading.value = true
@@ -98,8 +129,25 @@ export default {
       }
 
       try {
-        const result = await adminStore.login(credentials.value)
+        const result = await adminStore.login({
+          username: credentials.value.username,
+          password: credentials.value.password,
+          rememberMe: credentials.value.rememberMe
+        })
         if (result.success) {
+          // 如果用户选择了记住密码，保存凭据
+          if (credentials.value.rememberMe && credentials.value.rememberPassword) {
+            const credentialsToSave = {
+              username: credentials.value.username,
+              password: credentials.value.password,
+              rememberMe: true,
+              rememberPassword: true
+            }
+            localStorage.setItem('admin_login_credentials', JSON.stringify(credentialsToSave))
+          } else {
+            // 否则清除已保存的凭据
+            localStorage.removeItem('admin_login_credentials')
+          }
           router.push('/admin/dashboard')
         } else {
           error.value = '登录失败，请检查用户名和密码'
@@ -202,24 +250,39 @@ export default {
 .checkbox-group {
   flex-direction: row;
   align-items: center;
-  gap: 8px;
+  gap: 16px;
   width: 100%;
   margin-top: 4px;
+  display: flex;
+  justify-content: space-between;
 }
 
-.checkbox-group .checkbox-label {
+.checkbox-label {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   cursor: pointer;
   font-size: 14px;
   color: #606266;
+  flex: 1;
 }
 
-.checkbox-group input[type="checkbox"] {
+.checkbox-label:first-child {
+  justify-content: flex-start;
+}
+
+.checkbox-label:last-child {
+  justify-content: flex-end;
+}
+
+.checkbox-label input[type="checkbox"] {
   width: 16px;
   height: 16px;
   accent-color: #409EFF;
+}
+
+.checkbox-label .disabled {
+  color: #bbb;
 }
 
 .login-btn {

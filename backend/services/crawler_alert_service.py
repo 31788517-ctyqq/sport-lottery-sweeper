@@ -16,7 +16,7 @@ from ..models.crawler_tasks import CrawlerTask
 from ..models.crawler_alert_rules import CrawlerAlertRule
 from ..models.crawler_alert_records import CrawlerAlertRecord
 from ..models.crawler_metrics import CrawlerMetric
-from ..schemas.crawler import AlertRuleCreate, AlertRuleUpdate
+from ..schemas.crawler_alert import AlertRuleCreate, AlertRuleUpdate
 from ..services.notification_service import NotificationService
 from ..core.cache_manager import CacheManager
 

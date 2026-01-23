@@ -63,6 +63,14 @@ def create_api_router():
     except Exception as e:
         logger.error(f"API v1 - crawler 路由注册失败: {e}")
 
+    # 监控仪表板相关路由
+    try:
+        from .monitoring_dashboard import router as monitoring_router
+        router.include_router(monitoring_router, prefix="/monitoring", tags=["monitoring"])
+        logger.info("API v1 - monitoring_dashboard 路由已注册")
+    except Exception as e:
+        logger.error(f"API v1 - monitoring_dashboard 路由注册失败: {e}")
+
     # 返回router对象
     return router
 

@@ -5,7 +5,6 @@ import 'element-plus/dist/index.css'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 
 // 导入主路由配置
-import SevenStarLadybugIcon from '@/components/icons/SevenStarLadybugIcon.vue'
 import router from './router/index.js'
 import App from './App.vue'
 
@@ -20,9 +19,6 @@ app.use(ElementPlus)
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
   app.component(key, component)
 }
-
-// 注册七星瓢虫图标组件
-app.component('SevenStarLadybugIcon', SevenStarLadybugIcon)
 
 // 注册 Pinia
 app.use(pinia)

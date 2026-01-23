@@ -1,6 +1,5 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
-import axios from 'axios';
 import request from '@/utils/request';
 import { useUserStore } from '@/store/user';
 
@@ -8,10 +7,12 @@ export const useAdminStore = defineStore('admin', () => {
   // 状态 - 从 localStorage 初始化
   const storedToken = localStorage.getItem('admin_token');
   const storedUser = localStorage.getItem('admin_user');
+  const storedRemember = localStorage.getItem('admin_remember');
   
   const token = ref(storedToken || '');
   const user = ref(storedUser ? JSON.parse(storedUser) : null);
   const isAuthenticated = ref(!!storedToken);
+  const rememberMe = ref(false);
 
   console.log('[Admin Store] 初始化状态:', {
     hasToken: !!storedToken,
@@ -24,22 +25,18 @@ export const useAdminStore = defineStore('admin', () => {
     try {
       console.log('[Admin Login] 开始登录请求:', credentials.username);
       
-      // 调用后端登录API - 使用相对路径,让 Vite proxy 处理
+      // 调用后端登录API - 使用配置好的request实例
       console.log('[Admin Login] 请求路径: /api/v1/auth/login');
-      
-      const response = await axios.post('/api/v1/auth/login', {
+
+      const response = await request.post('/api/v1/auth/login', {
         username: credentials.username,
         password: credentials.password
-      }, {
-        headers: {
-          'Content-Type': 'application/json'
-        }
       });
 
-      console.log('[Admin Login] 收到响应:', response.data);
+      console.log('[Admin Login] 收到响应:', response);
 
-      if (response.data && response.data.code === 200) {
-        const { access_token, user_info } = response.data.data;
+      if (response && response.code === 200) {
+        const { access_token, user_info } = response.data;
         
         // 保存token到本地存储
         token.value = access_token;
@@ -51,10 +48,7 @@ export const useAdminStore = defineStore('admin', () => {
         
         // 更新认证状态
         isAuthenticated.value = true;
-        
-        // 设置axios默认请求头
-        axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
-        
+
         // 同时更新user store以兼容路由守卫
         try {
           const userStore = useUserStore();
@@ -72,9 +66,24 @@ export const useAdminStore = defineStore('admin', () => {
           user: user.value
         });
         
+        // 处理记住密码逻辑
+        if (credentials.rememberMe) {
+          // 保存记住的用户名和密码（实际项目中密码应该加密存储）
+          localStorage.setItem('admin_remember', JSON.stringify({
+            username: credentials.username,
+            // 注意：这里仅作演示，实际项目中密码需要加密
+            password: credentials.password
+          }));
+          rememberMe.value = true;
+        } else {
+          // 清除记住的登录信息
+          localStorage.removeItem('admin_remember');
+          rememberMe.value = false;
+        }
+
         return { success: true };
       } else {
-        throw new Error(response.data.message || '登录失败');
+        throw new Error(response.message || '登录失败');
       }
     } catch (error) {
       console.error('[Admin Login] 登录错误详情:', {
@@ -104,14 +113,13 @@ export const useAdminStore = defineStore('admin', () => {
     token.value = '';
     user.value = null;
     isAuthenticated.value = false;
+    rememberMe.value = false;
     
     // 清除本地存储
     localStorage.removeItem('admin_token');
     localStorage.removeItem('admin_user');
-    
-    // 清除axios默认请求头
-    delete axios.defaults.headers.common['Authorization'];
-    
+    // 登出时不清除 remember 信息，以便下次登录时可以自动填充
+
     // 同时清除user store
     try {
       const userStore = useUserStore();
@@ -127,10 +135,7 @@ export const useAdminStore = defineStore('admin', () => {
     if (storedToken) {
       token.value = storedToken;
       isAuthenticated.value = true;
-      
-      // 设置axios默认请求头
-      axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
-      
+
       // 同时初始化user store
       try {
         const userStore = useUserStore();
@@ -157,21 +162,14 @@ export const useAdminStore = defineStore('admin', () => {
   const refreshToken = async () => {
     try {
       // 调用后端刷新token的API
-      const response = await axios.post('/api/v1/auth/refresh', {}, {
-        headers: {
-          Authorization: `Bearer ${token.value}`
-        }
-      });
+      const response = await request.post('/api/v1/auth/refresh');
 
-      if (response.data && response.data.code === 200) {
-        const { access_token } = response.data.data;
-        
+      if (response && response.code === 200) {
+        const { access_token } = response.data;
+
         token.value = access_token;
         localStorage.setItem('admin_token', access_token);
-        
-        // 更新axios请求头
-        axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
-        
+
         return true;
       }
     } catch (error) {
@@ -181,13 +179,40 @@ export const useAdminStore = defineStore('admin', () => {
     }
   };
 
+  // 获取记住的登录信息
+  const getRememberedCredentials = () => {
+    try {
+      const stored = localStorage.getItem('admin_remember');
+      if (stored) {
+        const rememberData = JSON.parse(stored);
+        rememberMe.value = true;
+        return {
+          username: rememberData.username,
+          password: rememberData.password
+        };
+      }
+    } catch (e) {
+      console.warn('获取记住的登录信息失败:', e);
+    }
+    return null;
+  };
+
+  // 清除记住的登录信息
+  const clearRememberedCredentials = () => {
+    localStorage.removeItem('admin_remember');
+    rememberMe.value = false;
+  };
+
   return {
     token,
     user,
     isAuthenticated,
+    rememberMe,
     login,
     logout,
     initializeAuth,
-    refreshToken
+    refreshToken,
+    getRememberedCredentials,
+    clearRememberedCredentials
   };
 });

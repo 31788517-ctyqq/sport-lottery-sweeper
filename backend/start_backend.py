@@ -1,14 +1,14 @@
 import subprocess
 import sys
-from pathlib import Path
+import os
 
 def start_backend():
     """启动后端服务"""
     print("启动后端服务...")
     
-    # 动态定位backend目录
-    backend_dir = Path(__file__).parent
-    os.chdir(backend_dir)
+    # 切换到backend目录（使用当前脚本所在目录）
+    backend_path = os.path.dirname(os.path.abspath(__file__))
+    os.chdir(backend_path)
     
     # 启动FastAPI服务
     cmd = [

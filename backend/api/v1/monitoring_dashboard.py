@@ -4,6 +4,7 @@
 """
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
+from sqlalchemy import and_
 from typing import List, Optional
 import logging
 from datetime import datetime, timedelta
@@ -13,8 +14,11 @@ from ...services.crawler_alert_service import CrawlerAlertService
 from ...services.enhanced_crawler_service import EnhancedCrawlerService
 from ...models.crawler_config import CrawlerConfig
 from ...models.crawler_logs import CrawlerTaskLog, CrawlerSourceStat
+from ...models.crawler_alert_records import CrawlerAlertRecord
+from ...models.crawler_alert_rules import CrawlerAlertRule
 from ...core.auth import get_current_user
 from ...models.admin_user import AdminUser
+from ...schemas.crawler_monitoring import MonitoringOverview, SourcePerformance, AlertTrends, RealtimeMetrics, TopIssues
 
 logger = logging.getLogger(__name__)
 

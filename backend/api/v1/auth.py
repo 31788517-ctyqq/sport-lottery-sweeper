@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 # 使用正确的相对导入
 from ...config import settings
 from ...core.database import get_db
+from ...core.response import success_response
 from ...schemas.user import UserCreate, UserResponse
 from ...services.auth_service import AuthenticationService
 from ...core.auth import get_current_user
@@ -72,11 +73,9 @@ async def register(user_data: UserCreate, db: Session = Depends(get_db)):
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(user.username, expires_delta=access_token_expires)
     
-    # 返回前端期望的格式
-    return {
-        "code": 200,
-        "message": "注册成功",
-        "data": {
+    # 使用统一响应格式
+    return success_response(
+        data={
             "access_token": access_token,
             "token_type": "bearer",
             "user_info": {
@@ -84,8 +83,9 @@ async def register(user_data: UserCreate, db: Session = Depends(get_db)):
                 "email": user.email,
                 "is_active": user.status.value == "active"
             }
-        }
-    }
+        },
+        message="注册成功"
+    )
 
 @router.post("/login", response_model=dict)
 async def login(credentials: LoginRequest, db: Session = Depends(get_db)):
@@ -93,7 +93,7 @@ async def login(credentials: LoginRequest, db: Session = Depends(get_db)):
     用户登录接口
     """
     auth_service = AuthenticationService(db)
-    user = await auth_service.authenticate_user(credentials.username, credentials.password)
+    user = auth_service.authenticate_user(credentials.username, credentials.password)
     
     if not user:
         raise HTTPException(
@@ -106,11 +106,9 @@ async def login(credentials: LoginRequest, db: Session = Depends(get_db)):
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(user.username, expires_delta=access_token_expires)
     
-    # 返回前端期望的格式
-    return {
-        "code": 200,
-        "message": "登录成功",
-        "data": {
+    # 使用统一响应格式
+    return success_response(
+        data={
             "access_token": access_token,
             "token_type": "bearer",
             "user_info": {
@@ -118,5 +116,6 @@ async def login(credentials: LoginRequest, db: Session = Depends(get_db)):
                 "email": user.email,
                 "is_active": user.status.value == "active"
             }
-        }
-    }
+        },
+        message="登录成功"
+    )

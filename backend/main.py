@@ -12,8 +12,10 @@ from contextlib import asynccontextmanager
 import logging
 from pathlib import Path
 
-# 动态添加项目根目录到Python路径
-PROJECT_ROOT = Path(__file__).parent.parent
+# 添加项目根目录到Python路径 - 使用当前脚本所在目录
+import sys
+from pathlib import Path
+PROJECT_ROOT = Path(__file__).parent.parent  # 获取backend的父目录
 sys.path.insert(0, str(PROJECT_ROOT))
 
 # 导入数据库模块以确保表被创建

@@ -9,21 +9,25 @@ import os
 import bcrypt
 from datetime import datetime
 
-# 添加backend到路径
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'backend')))
+# 获取项目根目录路径
+project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, project_root)
 
-from core.database import SessionLocal, engine
-from models.user import User, Role, Permission, user_roles
-from models.user import UserRoleEnum, UserStatusEnum, UserTypeEnum
+# 现在可以导入backend模块
+from backend.core.database import SessionLocal
+from backend.models.user import User, Role, Permission, user_roles, UserRoleEnum, UserStatusEnum, UserTypeEnum
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy import create_engine
+from backend.config import settings
 
 # 密码哈希函数
 def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
 def init_admin_data():
-    # 创建数据库会话
-    Session = sessionmaker(bind=engine)
+    # 使用与后端相同的数据库引擎
+    db_engine = create_engine(settings.DATABASE_URL)
+    Session = sessionmaker(bind=db_engine)
     db = Session()
     
     try:
@@ -34,7 +38,7 @@ def init_admin_data():
             {"name": "管理员", "code": "admin", "description": "系统管理员，拥有大部分管理权限", "is_active": True},
             {"name": "分析师", "code": "analyst", "description": "数据分析师，可以查看和分析所有数据", "is_active": True},
             {"name": "高级用户", "code": "premium", "description": "高级用户，可以查看所有情报和高级功能", "is_active": True},
-            {"name": "普通用户", "code": "normal", "description": "普通用户，只能查看基本情报", "is_active": True, "is_default": True},
+            {"name": "普通用户", "code": "normal", "description": "普通用户，只能查看基本情报", "is_active": True},
         ]
         
         role_map = {}  # code -> role_id
@@ -113,7 +117,6 @@ def init_admin_data():
                 role=UserRoleEnum.ADMIN,
                 status=UserStatusEnum.ACTIVE,
                 is_verified=True,
-                is_active=True,
                 user_type=UserTypeEnum.ADMIN,
                 login_count=0
             )

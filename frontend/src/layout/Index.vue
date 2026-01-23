@@ -7,9 +7,10 @@
         :default-active="$route.path"
         router
         class="menu"
-        background-color="#304156"
-        text-color="#bfcbd9"
+        background-color="#2c2c2c"
+        text-color="#e0e0e0"
         active-text-color="#409EFF"
+        unique-opened
       >
         <el-menu-item index="/admin/dashboard">
           <el-icon><House /></el-icon>
@@ -115,7 +116,7 @@
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/store/modules/user'
-import { House, User, Timer, DataAnalysis, Document, SetUp, Setting, ArrowDown, Monitor, Calendar, Platform } from '@element-plus/icons-vue'
+import { House, User, Timer, DataAnalysis, Document, SetUp, Setting, ArrowDown, Calendar, Platform } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -133,7 +134,7 @@ const logout = () => {
   height: 100vh;
 }
 .sidebar {
-  background-color: #304156;
+  background-color: #2c2c2c;
 }
 .logo {
   color: #fff;
@@ -144,6 +145,18 @@ const logout = () => {
 }
 .menu {
   border-right: none;
+  height: calc(100vh - 60px);
+}
+.menu :deep(.el-sub-menu__title) {
+  color: #e0e0e0;
+}
+.menu :deep(.el-sub-menu .el-menu-item) {
+  background-color: #242424;
+}
+.menu :deep(.el-menu-item),
+.menu :deep(.el-sub-menu__title) {
+  height: 50px;
+  line-height: 50px;
 }
 .header {
   background: #fff;
@@ -161,5 +174,52 @@ const logout = () => {
 .main {
   background: #f0f2f5;
   padding: 20px;
+}
+/* 统一子菜单标题图标对齐 */
+.menu :deep(.el-sub-menu__title .el-icon) {
+  width: 20px;
+  text-align: center;
+  margin-right: 8px;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+/* 统一子菜单标题文字对齐 */
+.menu :deep(.el-sub-menu__title span) {
+  display: inline-block;
+  vertical-align: middle;
+  line-height: 50px;
+}
+/* 统一菜单项图标对齐 */
+.menu :deep(.el-menu-item .el-icon) {
+  width: 20px;
+  text-align: center;
+  margin-right: 8px;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+/* 防止图标字体差异导致偏移 */
+.menu :deep(.el-icon) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+/* 强制所有子菜单标题对齐（补充） */
+.menu :deep(.el-sub-menu__title) {
+  padding-left: 20px !important;
+  display: flex !important;
+  align-items: center !important;
+}
+/* 新增：彻底统一左侧缩进，防止不同图标宽度造成错位 */
+.menu :deep(.el-sub-menu__title) {
+  padding-left: 20px !important;
+  text-indent: 0 !important;
+}
+.menu :deep(.el-sub-menu__title .el-icon) {
+  min-width: 20px !important;
+  width: 20px !important;
+}
+.menu :deep(.el-sub-menu__title span) {
+  padding-left: 0 !important;
+  margin-left: 0 !important;
 }
 </style>

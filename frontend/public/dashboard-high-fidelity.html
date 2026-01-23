@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>仪表盘 - 高保真原型</title>
+  <!-- Vue 3 -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <!-- Element Plus CSS & JS -->
+  <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css" />
+  <script src="https://unpkg.com/element-plus/dist/index.full.min.js"></script>
+  <!-- ECharts -->
+  <script src="https://unpkg.com/echarts@5.6.0/dist/echarts.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', SimSun, sans-serif;
+      background-color: #f5f7fa;
+    }
+    .header {
+      background: #409eff;
+      color: #fff;
+      padding: 0 20px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 20px;
+      font-weight: bold;
+    }
+    .nav {
+      display: flex;
+      gap: 20px;
+    }
+    .nav a {
+      color: #fff;
+      text-decoration: none;
+      padding: 5px 10px;
+    }
+    .nav a.router-link-active {
+      border-bottom: 2px solid #ffd04b;
+    }
+    .main {
+      padding: 20px;
+    }
+    .stat-row {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+    .chart-container {
+      width: 100%;
+      height: 300px;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <el-container>
+      <el-header class="header">
+        <span>竞彩扫盘系统</span>
+        <nav class="nav">
+          <a href="#" class="router-link-active">首页</a>
+          <a href="#">情报</a>
+          <a href="#">SP值</a>
+          <a href="#">爬虫</a>
+          <a href="#">设置</a>
+        </nav>
+      </el-header>
+      <el-main class="main">
+        <el-row :gutter="20" class="stat-row">
+          <el-col :span="6">
+            <el-card shadow="hover">
+              <div class="card-title">今日扫描</div>
+              <div class="card-value">124 场</div>
+            </el-card>
+          </el-col>
+          <el-col :span="6">
+            <el-card shadow="hover">
+              <div class="card-title">成功率</div>
+              <div class="card-value">98%</div>
+            </el-card>
+          </el-col>
+          <el-col :span="6">
+            <el-card shadow="hover">
+              <div class="card-title">异常赛事</div>
+              <div class="card-value">2 场</div>
+            </el-card>
+          </el-col>
+          <el-col :span="6">
+            <el-card shadow="hover">
+              <div class="card-title">最后更新</div>
+              <div class="card-value">14:40</div>
+            </el-card>
+          </el-col>
+        </el-row>
+
+        <el-card shadow="always">
+          <template #header>胜率趋势图</template>
+          <div ref="chart" class="chart-container"></div>
+        </el-card>
+
+        <el-card shadow="always" style="margin-top: 20px;">
+          <template #header>最新扫描结果</template>
+          <el-table :data="tableData" style="width: 100%">
+            <el-table-column prop="time" label="时间" width="180" />
+            <el-table-column prop="match" label="赛事" />
+            <el-table-column prop="recommend" label="推荐" width="120" />
+          </el-table>
+        </el-card>
+      </el-main>
+    </el-container>
+  </div>
+
+  <script>
+    const { createApp, ref, onMounted } = Vue;
+    const app = createApp({
+      setup() {
+        const tableData = ref([
+          { time: '14:20', match: '曼联 vs 切尔西', recommend: '主胜' },
+          { time: '14:35', match: '巴萨 vs 皇马', recommend: '平局' },
+          { time: '14:38', match: '拜仁 vs 多特', recommend: '主胜' },
+          { time: '14:39', match: '巴黎 vs 里昂', recommend: '客胜' }
+        ]);
+        const chart = ref(null);
+        onMounted(() => {
+          const myChart = echarts.init(chart.value);
+          const option = {
+            tooltip: { trigger: 'axis' },
+            xAxis: {
+              type: 'category',
+              data: ['Day1', 'Day2', 'Day3', 'Day4', 'Day5', 'Day6', 'Day7']
+            },
+            yAxis: { type: 'value', min: 85, max: 100 },
+            series: [
+              {
+                data: [88, 92, 90, 93, 95, 94, 96],
+                type: 'line',
+                smooth: true,
+                areaStyle: { color: 'rgba(64,158,255,0.1)' },
+                itemStyle: { color: '#409eff' },
+                lineStyle: { width: 3 }
+              }
+            ]
+          };
+          myChart.setOption(option);
+        });
+        return { tableData, chart };
+      }
+    });
+    app.use(ElementPlus);
+    app.mount('#app');
+  </script>
+</body>
+</html>

@@ -1,9 +1,10 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 from typing import AsyncGenerator
+from ..config import settings
 
 # 同步数据库配置
-SQLALCHEMY_DATABASE_URL = "sqlite:///./soccer_scanner.db"
+SQLALCHEMY_DATABASE_URL = settings.DATABASE_URL
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL, 
     connect_args={"check_same_thread": False}

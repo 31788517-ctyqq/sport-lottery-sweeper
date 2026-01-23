@@ -13,10 +13,10 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'json', 'html']
     },
-    // 添加模块配置
+    // 添加模块配置 - 使用绝对路径
     server: {
       fs: {
-        allow: ['..']
+        allow: [process.cwd()]
       }
     }
   }

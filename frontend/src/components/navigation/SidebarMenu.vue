@@ -1,11 +1,20 @@
 <template>
-  <aside class="sidebar-menu" :class="{ open: isOpen }">
+  <aside 
+    class="sidebar-menu" 
+    :class="{ open: isOpen, collapsed: isCollapsed && !isMobile }"
+    @touchstart="onTouchStart"
+    @touchend="onTouchEnd"
+  >
     <div class="sidebar-header">
       <div class="logo-container">
         <i class="fas fa-futbol logo-icon"></i>
-        <h2 class="logo-text">竞彩扫盘</h2>
+        <h2 class="logo-text" v-show="!isCollapsed || isMobile">竞彩扫盘</h2>
       </div>
-      <button class="close-btn" @click="closeMenu">
+      <!-- 桌面端收缩/展开按钮 -->
+      <button class="collapse-btn" @click="toggleCollapse" v-show="!isMobile">
+        <i :class="isCollapsed ? 'fas fa-angle-right' : 'fas fa-angle-left'"></i>
+      </button>
+      <button class="close-btn" @click="closeMenu" v-show="isMobile">
         <i class="fas fa-times"></i>
       </button>
     </div>
@@ -19,7 +28,7 @@
         @click="navigateTo(item.path)"
       >
         <i :class="item.icon" class="nav-icon"></i>
-        <span class="nav-text">{{ item.text }}</span>
+        <span class="nav-text" v-show="!isCollapsed || isMobile">{{ item.text }}</span>
       </div>
     </nav>
     
@@ -28,7 +37,7 @@
         <div class="avatar">
           <i class="fas fa-user"></i>
         </div>
-        <div class="user-details">
+        <div class="user-details" v-show="!isCollapsed || isMobile">
           <div class="username">用户</div>
           <div class="user-level">VIP会员</div>
         </div>
@@ -40,24 +49,31 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 
 const router = useRouter()
 const route = useRoute()
 const isOpen = ref(false)
+const isCollapsed = ref(false)
+const isMobile = ref(false)
 
-// 菜单项
+// 手势相关
+const touchStartX = ref(0)
+const SWIPE_THRESHOLD = 50 // 最小滑动距离
+
 const menuItems = [
-  { path: '/', text: '首页', icon: 'fas fa-home' },
-  { path: '/matches', text: '比赛列表', icon: 'fas fa-futbol' },
-  { path: '/analysis', text: '数据分析', icon: 'fas fa-chart-bar' },
-  { path: '/intelligence', text: '情报中心', icon: 'fas fa-newspaper' },
-  { path: '/favorites', text: '我的收藏', icon: 'fas fa-star' },
-  { path: '/settings', text: '系统设置', icon: 'fas fa-cog' }
+  { path: '/admin/dashboard', text: '仪表盘', icon: 'fas fa-tachometer-alt' },
+  { path: '/admin/users/all', text: '用户管理', icon: 'fas fa-users' },
+  { path: '/admin/match/all', text: '比赛管理', icon: 'fas fa-futbol' },
+  { path: '/admin/intelligence', text: '情报中心', icon: 'fas fa-newspaper' },
+  { path: '/admin/data', text: '数据管理', icon: 'fas fa-database' },
+  { path: '/admin/crawler/logs', text: '爬虫管理', icon: 'fas fa-spider' },
+  { path: '/admin/sp/all', text: 'SP管理', icon: 'fas fa-percentage' },
+  { path: '/admin/draw-prediction/all', text: '平局预测', icon: 'fas fa-balance-scale' },
+  { path: '/admin/system', text: '系统设置', icon: 'fas fa-cog' }
 ]
 
-// 方法
 const navigateTo = (path) => {
   router.push(path)
   closeMenu()
@@ -77,11 +93,39 @@ const closeMenu = () => {
   document.body.style.overflow = ''
 }
 
-// 提供给父组件使用
-defineExpose({
-  openMenu,
-  closeMenu
+const toggleCollapse = () => {
+  isCollapsed.value = !isCollapsed.value
+}
+
+// 检测移动端
+const checkMobile = () => {
+  isMobile.value = window.innerWidth < 768
+}
+onMounted(() => {
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
 })
+onUnmounted(() => {
+  window.removeEventListener('resize', checkMobile)
+})
+
+// 手势处理
+const onTouchStart = (e) => {
+  touchStartX.value = e.changedTouches[0].screenX
+}
+const onTouchEnd = (e) => {
+  const touchEndX = e.changedTouches[0].screenX
+  const dx = touchEndX - touchStartX.value
+  if (Math.abs(dx) > SWIPE_THRESHOLD) {
+    if (dx > 0 && !isOpen.value) {
+      openMenu()
+    } else if (dx < 0 && isOpen.value) {
+      closeMenu()
+    }
+  }
+}
+
+defineExpose({ openMenu, closeMenu })
 </script>
 
 <style scoped>
@@ -94,7 +138,7 @@ defineExpose({
   background: var(--bg-card);
   z-index: 1001;
   transform: translateX(-100%);
-  transition: transform 0.3s ease;
+  transition: transform 0.35s cubic-bezier(0.4,0,0.2,1), width 0.35s ease, box-shadow 0.35s ease;
   display: flex;
   flex-direction: column;
   border-right: 1px solid var(--border-color);
@@ -104,6 +148,10 @@ defineExpose({
   transform: translateX(0);
 }
 
+.sidebar-menu.collapsed {
+  width: 64px;
+}
+
 .sidebar-header {
   padding: 20px 16px;
   display: flex;
@@ -111,11 +159,18 @@ defineExpose({
   justify-content: space-between;
   border-bottom: 1px solid var(--border-color);
   background: var(--bg-header);
+  position: relative;
 }
 
 .logo-container {
   display: flex;
   align-items: center;
+  margin-right: 12px;
+}
+
+.sidebar-menu.collapsed .logo-container {
+  justify-content: center;
+  margin-right: 0;
 }
 
 .logo-icon {
@@ -124,10 +179,35 @@ defineExpose({
   margin-right: 10px;
 }
 
+.sidebar-menu.collapsed .logo-icon {
+  margin-right: 0;
+}
+
 .logo-text {
   color: var(--text-main);
   margin: 0;
   font-size: 18px;
+}
+
+.collapse-btn {
+  position: absolute;
+  right: -12px;
+  top: 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-sub);
+  cursor: pointer;
+  z-index: 10;
+}
+
+.collapse-btn:hover {
+  color: var(--primary);
 }
 
 .close-btn {
@@ -153,7 +233,7 @@ defineExpose({
 .nav-item {
   display: flex;
   align-items: center;
-  padding: 12px 20px;
+  padding: 10px 16px;
   color: var(--text-sub);
   cursor: pointer;
   transition: all 0.2s;
@@ -166,9 +246,18 @@ defineExpose({
 }
 
 .nav-icon {
-  margin-right: 12px;
+  margin-right: 10px;
   width: 20px;
   text-align: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  line-height: 1;
+}
+
+.sidebar-menu.collapsed .nav-text {
+  display: none;
 }
 
 .nav-text {
@@ -184,7 +273,11 @@ defineExpose({
 .user-info {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
+}
+
+.sidebar-menu.collapsed .user-details {
+  display: none;
 }
 
 .avatar {
@@ -222,5 +315,52 @@ defineExpose({
   height: 100%;
   background: rgba(0, 0, 0, 0.5);
   z-index: 1000;
+  opacity: 0;
+  transition: opacity 0.25s ease, visibility 0.25s;
+  visibility: hidden;
+}
+
+.sidebar-menu.open + .sidebar-overlay {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* 响应式适配 */
+@media (max-width: 480px) {
+  .sidebar-menu {
+    width: 100%;
+    max-width: 100%;
+    transform: translateX(-100%);
+    box-shadow: none;
+  }
+  .sidebar-overlay {
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+  .sidebar-menu.open + .sidebar-overlay {
+    opacity: 1;
+  }
+}
+
+@media (min-width: 481px) and (max-width: 767px) {
+  .sidebar-menu {
+    width: 80%;
+    max-width: 320px;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1024px) {
+  .sidebar-menu {
+    width: 220px;
+  }
+  .sidebar-menu.open {
+    box-shadow: 2px 0 8px rgba(0,0,0,0.15);
+  }
+}
+
+@media (min-width: 1025px) {
+  .sidebar-menu {
+    width: 260px;
+  }
 }
 </style>

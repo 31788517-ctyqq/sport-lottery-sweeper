@@ -40,9 +40,9 @@ class AuthenticationService:
     def __init__(self, db: Session):
         self.db = db
     
-    async def authenticate_user(self, username: str, password: str) -> Optional[User]:
+    def authenticate_user(self, username: str, password: str) -> Optional[User]:
         """
-        异步认证用户（支持邮箱或用户名登录）
+        认证用户（支持邮箱或用户名登录）
         """
         logger.info(f"开始认证用户: {username}")
         
@@ -58,8 +58,7 @@ class AuthenticationService:
             return None
         
         logger.info(f"找到用户: {user.username}, 状态: {user.status}, user_type: {user.user_type}")
-        logger.info(f"数据库密码哈希: {user.password_hash}")
-        logger.info(f"输入密码: {password}")
+        logger.info(f"数据库密码哈希: {user.password_hash[:20]}..." if user.password_hash else "无")
         
         if not verify_password(password, user.password_hash):
             logger.warning(f"密码错误: {username}")
