@@ -50,3 +50,9 @@ frontend/.cache/
 Thumbs.db
 *.swp
 *.swo
+# 环境配置文件
+*.env
+*.env.*
+backend.env
+crawler.env
+config/*/settings.toml
