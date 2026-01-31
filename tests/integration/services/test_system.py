@@ -8,15 +8,15 @@ from backend.scrapers.advanced_crawler import advanced_crawler
 
 @pytest.mark.asyncio
 async def test_system():
-    print("🔧 测试优化后的爬虫系统...")
+    print("[FIX] 测试优化后的爬虫系统...")
     
     # 获取比赛数据
     matches = await advanced_crawler.crawl_sporttery_matches(3)
     
-    print(f'✅ 获取到 {len(matches)} 场比赛数据')
+    print(f'[OK] 获取到 {len(matches)} 场比赛数据')
     
     if matches:
-        print("\n📊 前3场比赛预览:")
+        print("\n[ANALYTICS] 前3场比赛预览:")
         for i, match in enumerate(matches[:3]):
             print(f"  {i+1}. {match.get('home_team', 'N/A')} VS {match.get('away_team', 'N/A')} "
                   f"[{match.get('league', 'N/A')}]")
@@ -27,9 +27,9 @@ async def test_system():
     
     # 测试获取趋势话题
     trending_topics = await advanced_crawler.get_trending_topics()
-    print(f'📈 获取到 {len(trending_topics)} 个趋势话题')
+    print(f'[TREND] 获取到 {len(trending_topics)} 个趋势话题')
     
-    print("\n🎉 系统测试完成!")
+    print("\n[SUCCESS] 系统测试完成!")
 
 
 if __name__ == "__main__":

@@ -7,10 +7,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 
-from ...database import get_db
-from ...models import DataReview
-from ...models.data_review import DataTypeEnum, ReviewStatusEnum
-from ...schemas.response import UnifiedResponse, PageResponse, ErrorResponse
+from backend.database import get_db
+from backend.models import DataReview
+from backend.models.data_review import DataTypeEnum, ReviewStatusEnum
+from backend.schemas.response import UnifiedResponse, PageResponse, ErrorResponse
 
 router = APIRouter(tags=["data-submission"])
 

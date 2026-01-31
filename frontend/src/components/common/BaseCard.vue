@@ -1,3 +1,4 @@
+<!-- AI_WORKING: coder1 @2026-01-26T11:30:00 - 添加工具栏模式支持，包括headerVariant、toolbarAlign、titleAlign等属性 -->
 <template>
   <div 
     :class="[
@@ -21,9 +22,10 @@
     </div>
     
     <!-- 卡片头部 -->
-    <div v-if="showHeader" class="base-card__header">
+    <div v-if="showHeader" class="base-card__header" :class="`base-card__header--${headerVariant}`">
       <slot name="header">
-        <div class="base-card__header-content">
+        <!-- 简单模式（默认） -->
+        <div v-if="headerVariant === 'simple'" class="base-card__header-content">
           <div v-if="icon" class="base-card__icon">
             <i :class="icon"></i>
           </div>
@@ -33,6 +35,30 @@
           </div>
           <div class="base-card__header-actions">
             <slot name="header-actions"></slot>
+          </div>
+        </div>
+        
+        <!-- 工具栏模式 -->
+        <div v-else class="base-card__header-toolbar">
+          <div class="base-card__header-title" :style="{ textAlign: titleAlign }">
+            <slot name="toolbar-title">
+              <h3 v-if="title">{{ title }}</h3>
+              <p v-if="subtitle" class="base-card__subtitle">{{ subtitle }}</p>
+            </slot>
+          </div>
+          
+          <div 
+            class="base-card__header-tools" 
+            :style="{ 
+              justifyContent: toolbarAlign === 'right' ? 'flex-end' : toolbarAlign,
+              padding: toolbarPadding,
+              borderTop: showToolbarBorder ? '1px solid var(--border-color-light, #ebeef5)' : 'none'
+            }"
+          >
+            <slot name="toolbar">
+              <!-- 默认显示 header-actions 插槽内容以保持兼容 -->
+              <slot name="header-actions"></slot>
+            </slot>
           </div>
         </div>
       </slot>
@@ -110,6 +136,31 @@ const props = defineProps({
     default: false
   },
   isEmpty: {
+    type: Boolean,
+    default: false
+  },
+  
+  // 头部变体
+  headerVariant: {
+    type: String,
+    default: 'simple', // 'simple' | 'toolbar'
+    validator: (value) => ['simple', 'toolbar'].includes(value)
+  },
+  toolbarAlign: {
+    type: String,
+    default: 'right',
+    validator: (value) => ['left', 'center', 'right'].includes(value)
+  },
+  titleAlign: {
+    type: String,
+    default: 'left',
+    validator: (value) => ['left', 'center', 'right'].includes(value)
+  },
+  toolbarPadding: {
+    type: String,
+    default: '0 0 0 1rem'
+  },
+  showToolbarBorder: {
     type: Boolean,
     default: false
   },
@@ -320,6 +371,40 @@ const handleClick = (event) => {
   background-color: var(--primary);
 }
 
+/* 头部变体样式 */
+.base-card__header--toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.base-card__header-toolbar {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.base-card__header-title {
+  flex: 1;
+}
+
+.base-card__header-title h3 {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.base-card__header-tools {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
 /* 变体样式 */
 .base-card--primary .base-card__border {
   background-color: var(--primary);
@@ -359,4 +444,5 @@ const handleClick = (event) => {
     padding: 0.75rem 1rem;
   }
 }
+/* AI_DONE: coder1 @2026-01-26T11:32:00 */
 </style>

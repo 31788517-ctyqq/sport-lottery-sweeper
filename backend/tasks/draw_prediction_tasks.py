@@ -2,6 +2,8 @@
 平局预测相关的 Celery 定时任务
 """
 from backend.celery_app import celery_app
+import logging
+logger = logging.getLogger(__name__)
 from backend.database import SessionLocal
 from backend.services.alert_service import check_and_trigger_alert
 from backend.services.draw_prediction_service import get_predictions
@@ -34,7 +36,7 @@ def update_prediction_results():
                     updated_count += 1
 
         db.commit()
-        print(f"[定时任务] 更新了 {updated_count} 条预测结果")
+        logger.debug(f"[定时任务] 更新了 {updated_count} 条预测结果")
 
         return {
             "status": "success",
@@ -43,7 +45,7 @@ def update_prediction_results():
         }
 
     except Exception as e:
-        print(f"[定时任务] 更新预测结果失败: {str(e)}")
+        logger.debug(f"[定时任务] 更新预测结果失败: {str(e)}")
         db.rollback()
         raise
     finally:
@@ -62,10 +64,10 @@ def monitor_and_alert():
 
         if alert_info['should_alert']:
             # TODO: 实际项目中，这里应该发送邮件、短信或企业微信通知
-            print(f"[告警] {alert_info['message']}")
+            logger.debug(f"[告警] {alert_info['message']}")
 
             # 可以将告警记录到数据库，这里先打印日志
-            print(f"[告警] 当前命中率: {alert_info['accuracy']:.1%}, 阈值: {alert_info['threshold']:.1%}")
+            logger.debug(f"[告警] 当前命中率: {alert_info['accuracy']:.1%}, 阈值: {alert_info['threshold']:.1%}")
 
         return {
             "status": "success",
@@ -75,7 +77,7 @@ def monitor_and_alert():
         }
 
     except Exception as e:
-        print(f"[定时任务] 监控告警失败: {str(e)}")
+        logger.debug(f"[定时任务] 监控告警失败: {str(e)}")
         raise
     finally:
         db.close()
@@ -100,7 +102,7 @@ def setup_periodic_tasks(sender, **kwargs):
         schedule=crontab(hour=9, minute=0),
         name='monitor_accuracy_daily'
     )
-    print("[Celery] 定时任务已配置")
+    logger.debug("[Celery] 定时任务已配置")
 
 
 from celery.schedules import crontab

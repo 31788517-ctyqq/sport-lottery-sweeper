@@ -3,7 +3,7 @@
  * Manages user login, logout, token storage, and authentication state.
  */
 
-import { ref, computed } from 'vue';
+import { ref, computed, readonly } from 'vue';
 import { useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus'; // Or element-ui
 import { authAPI } from '@/api/modules/auth'; // Adjust path based on your structure

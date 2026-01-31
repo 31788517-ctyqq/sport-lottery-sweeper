@@ -7,7 +7,7 @@ from typing import List
 
 from ....core.database import get_db
 from ....crud.intelligence_record import IntelligenceRecord as crud_intelligence_record
-from ..deps import get_current_admin
+from ...deps import get_current_admin
 
 router = APIRouter()
 

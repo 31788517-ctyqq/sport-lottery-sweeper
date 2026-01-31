@@ -4,6 +4,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
+from datetime import datetime
 
 from ...deps import get_current_admin
 from .... import crud
@@ -45,6 +46,9 @@ async def list_users(
             ))
         
         # 获取总数（带过滤条件）
+        from sqlalchemy import select, func
+        from ....models.user import User
+        
         count_query = select(func.count(User.id))
         if status:
             count_query = count_query.where(User.status == status)
@@ -105,6 +109,9 @@ async def update_user_status(
     更新用户状态
     """
     try:
+        from sqlalchemy import select
+        from ....models.user import User
+        
         result = await db.execute(select(User).where(User.id == user_id))
         user = result.scalar_one_or_none()
         

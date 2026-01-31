@@ -47,6 +47,6 @@ if files:
         print(f"  total: {formatted['total']}")
         print(f"  message: {formatted['message']}")
     else:
-        print("❌ 没有周一比赛！")
+        print("[ERROR] 没有周一比赛！")
 else:
-    print("❌ 没有数据文件！")
+    print("[ERROR] 没有数据文件！")

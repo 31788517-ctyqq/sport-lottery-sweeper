@@ -5,6 +5,13 @@
 from fastapi import APIRouter, Depends, HTTPException
 from backend.utils.log_manager import log_manager
 from typing import Dict, Any
+from datetime import datetime
+from backend.database import get_db
+from backend.core.auth import get_current_admin_user
+from backend.models.admin_user import AdminUser
+from sqlalchemy.orm import Session
+from backend.services.log_service import LogService
+from backend.schemas.log_entry import LogEntryWithCount
 
 router = APIRouter()
 
@@ -138,3 +145,198 @@ async def delete_log_file(filename: str) -> Dict[str, Any]:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"删除日志文件失败: {str(e)}")
+
+
+# ==================== 新增：数据库日志相关API ====================
+
+@router.get("/logs/db/system",
+           summary="获取系统日志",
+           description="从数据库获取系统日志信息")
+async def get_system_logs(
+    skip: int = 0,
+    limit: int = 20,
+    level: str = None,
+    module: str = None,
+    start_date: str = None,
+    end_date: str = None,
+    search: str = None,
+    db: Session = Depends(get_db),
+    current_user: AdminUser = Depends(get_current_admin_user)
+):
+    """
+    获取系统日志
+    """
+    try:
+        # 解析日期参数
+        from datetime import datetime
+        parsed_start_date = datetime.fromisoformat(start_date) if start_date else None
+        parsed_end_date = datetime.fromisoformat(end_date) if end_date else None
+        
+        log_service = LogService(db)
+        logs, total = log_service.get_log_entries(
+            skip=skip,
+            limit=limit,
+            level=level,
+            module=module,
+            start_date=parsed_start_date,
+            end_date=parsed_end_date,
+            search=search
+        )
+        
+        return {
+            "items": logs,
+            "total": total,
+            "skip": skip,
+            "limit": limit
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"获取系统日志失败: {str(e)}")
+
+
+@router.get("/logs/db/user",
+           summary="获取用户日志",
+           description="从数据库获取用户活动日志信息")
+async def get_user_logs(
+    skip: int = 0,
+    limit: int = 20,
+    user_id: int = None,
+    level: str = None,
+    start_date: str = None,
+    end_date: str = None,
+    search: str = None,
+    db: Session = Depends(get_db),
+    current_user: AdminUser = Depends(get_current_admin_user)
+):
+    """
+    获取用户日志
+    """
+    try:
+        # 解析日期参数
+        from datetime import datetime
+        parsed_start_date = datetime.fromisoformat(start_date) if start_date else None
+        parsed_end_date = datetime.fromisoformat(end_date) if end_date else None
+        
+        log_service = LogService(db)
+        logs, total = log_service.get_log_entries(
+            skip=skip,
+            limit=limit,
+            user_id=user_id,
+            level=level,
+            start_date=parsed_start_date,
+            end_date=parsed_end_date,
+            search=search
+        )
+        
+        return {
+            "items": logs,
+            "total": total,
+            "skip": skip,
+            "limit": limit
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"获取用户日志失败: {str(e)}")
+
+
+@router.get("/logs/db/security",
+           summary="获取安全日志",
+           description="从数据库获取安全相关日志信息")
+async def get_security_logs(
+    skip: int = 0,
+    limit: int = 20,
+    level: str = None,
+    start_date: str = None,
+    end_date: str = None,
+    search: str = None,
+    db: Session = Depends(get_db),
+    current_user: AdminUser = Depends(get_current_admin_user)
+):
+    """
+    获取安全日志
+    """
+    try:
+        # 解析日期参数
+        from datetime import datetime
+        parsed_start_date = datetime.fromisoformat(start_date) if start_date else None
+        parsed_end_date = datetime.fromisoformat(end_date) if end_date else None
+        
+        log_service = LogService(db)
+        logs, total = log_service.get_log_entries(
+            skip=skip,
+            limit=limit,
+            level=level,
+            module="security",  # 特定的安全模块
+            start_date=parsed_start_date,
+            end_date=parsed_end_date,
+            search=search
+        )
+        
+        return {
+            "items": logs,
+            "total": total,
+            "skip": skip,
+            "limit": limit
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"获取安全日志失败: {str(e)}")
+
+
+@router.get("/logs/db/api",
+           summary="获取API日志",
+           description="从数据库获取API访问日志信息")
+async def get_api_logs(
+    skip: int = 0,
+    limit: int = 20,
+    level: str = None,
+    start_date: str = None,
+    end_date: str = None,
+    search: str = None,
+    db: Session = Depends(get_db),
+    current_user: AdminUser = Depends(get_current_admin_user)
+):
+    """
+    获取API日志
+    """
+    try:
+        # 解析日期参数
+        from datetime import datetime
+        parsed_start_date = datetime.fromisoformat(start_date) if start_date else None
+        parsed_end_date = datetime.fromisoformat(end_date) if end_date else None
+        
+        log_service = LogService(db)
+        logs, total = log_service.get_log_entries(
+            skip=skip,
+            limit=limit,
+            level=level,
+            module="api",  # 特定的API模块
+            start_date=parsed_start_date,
+            end_date=parsed_end_date,
+            search=search
+        )
+        
+        return {
+            "items": logs,
+            "total": total,
+            "skip": skip,
+            "limit": limit
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"获取API日志失败: {str(e)}")
+
+
+@router.get("/logs/db/statistics",
+           summary="获取数据库日志统计",
+           description="从数据库获取日志统计信息")
+async def get_log_statistics_from_db(
+    db: Session = Depends(get_db),
+    current_user: AdminUser = Depends(get_current_admin_user)
+):
+    """
+    获取数据库日志统计
+    """
+    try:
+        log_service = LogService(db)
+        stats = log_service.get_log_statistics()
+        
+        return stats
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"获取日志统计失败: {str(e)}")

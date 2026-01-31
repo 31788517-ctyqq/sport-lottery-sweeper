@@ -141,7 +141,7 @@ async def reset_user_password(
         raise HTTPException(status_code=404, detail="用户不存在")
     
     # 更新密码
-    from ...core.auth import get_password_hash
+    from backend.core.auth import get_password_hash
     user.password_hash = get_password_hash(new_password)
     db.add(user)
     await db.commit()

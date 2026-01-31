@@ -2,6 +2,8 @@
 检查用户脚本
 """
 import sqlite3
+import logging
+logger = logging.getLogger(__name__)
 
 def check_admin_user():
     conn = sqlite3.connect('sport_lottery.db')
@@ -9,10 +11,10 @@ def check_admin_user():
     cursor.execute("SELECT username, password_hash FROM users WHERE username = 'admin'")
     result = cursor.fetchone()
     if result:
-        print(f"User: {result[0]}")
-        print(f"Hash: {result[1]}")
+        logger.debug(f"User: {result[0]}")
+        logger.debug(f"Hash: {result[1]}")
     else:
-        print("Admin user not found")
+        logger.debug("Admin user not found")
     conn.close()
 
 if __name__ == "__main__":

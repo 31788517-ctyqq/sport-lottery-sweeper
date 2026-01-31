@@ -1,11 +1,12 @@
+// AI_WORKING: coder1 @2026-01-29 18:36:01 - 修复导入路径和语法问题
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { useMatches } from '@/composables/useMatches.js'
+import { useMatches } from '../../composables/useMatches.js'
 import { ref } from 'vue'
 
 // 模拟 vue-router
 global.window = Object.create(window)
 Object.defineProperty(window, 'location', {
-  value: { href: 'http://localhost:3000/' },
+  value,
   writable: true
 })
 
@@ -121,8 +122,7 @@ describe('useMatches', () => {
         { id: 3, match_time: `${tomorrow}T15:00:00Z`, status: 'upcoming' }
       ]
       
-      const grouped = matches.groupedMatches.value
-      
+      const grouped = matches.groupedMatches.
       expect(grouped).toHaveProperty(today)
       expect(grouped).toHaveProperty(tomorrow)
       expect(grouped[today]).toHaveLength(2)
@@ -136,8 +136,7 @@ describe('useMatches', () => {
         { id: 3, match_time: '2024-01-24T18:00:00Z' }
       ]
       
-      const sorted = matches.sortedMatches.value
-      
+      const sorted = matches.sortedMatches.
       expect(sorted[0].match_time).toBe('2024-01-24T18:00:00Z')
       expect(sorted[1].match_time).toBe('2024-01-25T15:00:00Z')
       expect(sorted[2].match_time).toBe('2024-01-25T20:00:00Z')
@@ -151,8 +150,7 @@ describe('useMatches', () => {
         { id: 4, status: 'finished' }
       ]
       
-      const live = matches.liveMatches.value
-      
+      const live = matches.liveMatches.
       expect(live).toHaveLength(2)
       expect(live.every(match => match.status === 'live')).toBe(true)
     })
@@ -165,8 +163,7 @@ describe('useMatches', () => {
         { id: 4, status: 'finished' }
       ]
       
-      const upcoming = matches.upcomingMatches.value
-      
+      const upcoming = matches.upcomingMatches.
       expect(upcoming).toHaveLength(2)
       expect(upcoming.every(match => match.status === 'upcoming')).toBe(true)
     })
@@ -179,8 +176,7 @@ describe('useMatches', () => {
         { id: 4, status: 'finished' }
       ]
       
-      const finished = matches.finishedMatches.value
-      
+      const finished = matches.finishedMatches.
       expect(finished).toHaveLength(2)
       expect(finished.every(match => match.status === 'finished')).toBe(true)
     })
@@ -192,8 +188,7 @@ describe('useMatches', () => {
         { id: 3, match_time: '2024-01-26T15:00:00Z' }
       ]
       
-      const dates = matches.availableDates.value
-      
+      const dates = matches.availableDates.
       expect(dates).toHaveLength(2)
       expect(dates).toContain('2024-01-25')
       expect(dates).toContain('2024-01-26')
@@ -207,12 +202,8 @@ describe('useMatches', () => {
         { id: 2, league: '西甲', home_team: '巴萨', away_team: '皇马', match_time: '2024-01-25T20:00:00Z' }
       ]
       
-      vi.doMock('@/api/modules/matches.js', () => ({
-        matchesAPI: {
-          getMatches: vi.fn().mockResolvedValue({
-            success: true,
-            data: mockMatches
-          })
+      vi.doMock('../../api/modules/matches.js', () => ({
+        matchesAPI)
         }
       }))
       
@@ -225,10 +216,8 @@ describe('useMatches', () => {
     })
 
     it('应该处理获取比赛失败', async () => {
-      vi.doMock('@/api/modules/matches.js', () => ({
-        matchesAPI: {
-          getMatches: vi.fn().mockRejectedValue(new Error('Network error'))
-        }
+      vi.doMock('../../api/modules/matches.js', () => ({
+        matchesAPI
       }))
       
       await matches.fetchMatches()
@@ -242,9 +231,8 @@ describe('useMatches', () => {
     it('应该支持日期筛选参数', async () => {
       const mockMatches = [{ id: 1, match_time: '2024-01-25T15:00:00Z' }]
       
-      vi.doMock('@/api/modules/matches.js', () => ({
-        matchesAPI: {
-          getMatches: vi.fn().mockResolvedValue({ success: true, data: mockMatches })
+      vi.doMock('../../api/modules/matches.js', () => ({
+        matchesAPI)
         }
       }))
       
@@ -256,9 +244,8 @@ describe('useMatches', () => {
     it('应该支持联赛筛选参数', async () => {
       const mockMatches = [{ id: 1, league: '英超' }]
       
-      vi.doMock('@/api/modules/matches.js', () => ({
-        matchesAPI: {
-          getMatches: vi.fn().mockResolvedValue({ success: true, data: mockMatches })
+      vi.doMock('../../api/modules/matches.js', () => ({
+        matchesAPI)
         }
       }))
       
@@ -271,10 +258,8 @@ describe('useMatches', () => {
       let resolvePromise
       const promise = new Promise(resolve => resolvePromise = resolve)
       
-      vi.doMock('@/api/modules/matches.js', () => ({
-        matchesAPI: {
-          getMatches: vi.fn().mockReturnValue(promise)
-        }
+      vi.doMock('../../api/modules/matches.js', () => ({
+        matchesAPI
       }))
       
       const fetchPromise = matches.fetchMatches()
@@ -293,12 +278,8 @@ describe('useMatches', () => {
     it('应该成功获取联赛列表', async () => {
       const mockLeagues = ['英超', '西甲', '德甲', '意甲']
       
-      vi.doMock('@/api/modules/matches.js', () => ({
-        matchesAPI: {
-          getLeagues: vi.fn().mockResolvedValue({
-            success: true,
-            data: mockLeagues
-          })
+      vi.doMock('../../api/modules/matches.js', () => ({
+        matchesAPI)
         }
       }))
       
@@ -309,10 +290,8 @@ describe('useMatches', () => {
     })
 
     it('应该处理获取联赛失败', async () => {
-      vi.doMock('@/api/modules/matches.js', () => ({
-        matchesAPI: {
-          getLeagues: vi.fn().mockRejectedValue(new Error('API error'))
-        }
+      vi.doMock('../../api/modules/matches.js', () => ({
+        matchesAPI
       }))
       
       await matches.fetchLeagues()
@@ -330,15 +309,11 @@ describe('useMatches', () => {
         home_team: '曼联',
         away_team: '切尔西',
         match_time: '2024-01-25T15:00:00Z',
-        odds: { win: 2.1, draw: 3.2, lose: 2.8 }
+        odds
       }
       
-      vi.doMock('@/api/modules/matches.js', () => ({
-        matchesAPI: {
-          getMatchDetail: vi.fn().mockResolvedValue({
-            success: true,
-            data: mockMatchDetail
-          })
+      vi.doMock('../../api/modules/matches.js', () => ({
+        matchesAPI)
         }
       }))
       
@@ -349,10 +324,8 @@ describe('useMatches', () => {
     })
 
     it('应该处理比赛详情不存在的情况', async () => {
-      vi.doMock('@/api/modules/matches.js', () => ({
-        matchesAPI: {
-          getMatchDetail: vi.fn().mockRejectedValue({
-            response: { status: 404 }
+      vi.doMock('../../api/modules/matches.js', () => ({
+        matchesAPI
           })
         }
       }))
@@ -413,9 +386,8 @@ describe('useMatches', () => {
     it('应该获取指定日期的比赛', () => {
       const mockMatches = [{ id: 1, match_time: '2024-01-26T15:00:00Z' }]
       
-      vi.doMock('@/api/modules/matches.js', () => ({
-        matchesAPI: {
-          getMatches: vi.fn().mockResolvedValue({ success: true, data: mockMatches })
+      vi.doMock('../../api/modules/matches.js', () => ({
+        matchesAPI)
         }
       }))
       
@@ -585,11 +557,9 @@ describe('useMatches', () => {
       ]
       
       // 第一次计算
-      const result1 = matches.filteredMatches.value
-      
+      const result1 = matches.filteredMatches.
       // 相同条件下第二次计算应该使用缓存
-      const result2 = matches.filteredMatches.value
-      
+      const result2 = matches.filteredMatches.
       expect(result1).toBe(result2) // 引用相同说明使用了缓存
     })
 
@@ -600,14 +570,12 @@ describe('useMatches', () => {
       ]
       
       // 第一次计算
-      const result1 = matches.filteredMatches.value
-      
+      const result1 = matches.filteredMatches.
       // 改变筛选条件
       matches.filters.value = { ...matches.filters.value, leagues: ['英超'] }
       
       // 第二次计算应该不同
-      const result2 = matches.filteredMatches.value
-      
+      const result2 = matches.filteredMatches.
       expect(result1).not.toBe(result2)
       expect(result1).toHaveLength(2)
       expect(result2).toHaveLength(1)
@@ -616,11 +584,8 @@ describe('useMatches', () => {
 
   describe('错误处理', () => {
     it('应该处理网络超时', async () => {
-      vi.doMock('@/api/modules/matches.js', () => ({
-        matchesAPI: {
-          getMatches: vi.fn().mockImplementation(() => new Promise((_, reject) => {
-            setTimeout(() => reject(new Error('timeout')), 100)
-          }))
+      vi.doMock('../../api/modules/matches.js', () => ({
+        matchesAPI))
         }
       }))
       
@@ -631,12 +596,8 @@ describe('useMatches', () => {
     })
 
     it('应该处理服务器错误', async () => {
-      vi.doMock('@/api/modules/matches.js', () => ({
-        matchesAPI: {
-          getMatches: vi.fn().mockRejectedValue({
-            response: {
-              status: 500,
-              data: { message: 'Internal server error' }
+      vi.doMock('../../api/modules/matches.js', () => ({
+        matchesAPI
             }
           })
         }
@@ -649,12 +610,8 @@ describe('useMatches', () => {
     })
 
     it('应该处理认证失败', async () => {
-      vi.doMock('@/api/modules/matches.js', () => ({
-        matchesAPI: {
-          getMatches: vi.fn().mockRejectedValue({
-            response: {
-              status: 401,
-              data: { message: 'Unauthorized' }
+      vi.doMock('../../api/modules/matches.js', () => ({
+        matchesAPI
             }
           })
         }
@@ -710,9 +667,10 @@ describe('useMatches', () => {
       matches.matches.value = [specialCharMatch]
       matches.filters.value = { ...matches.filters.value, search: 'United' }
       
-      const filtered = matches.filteredMatches.value
+      const filtered = matches.filteredMatches.
       expect(filtered).toHaveLength(1)
       expect(filtered[0].home_team).toContain('United')
     })
   })
 })
+// AI_DONE: coder1 @2026-01-29 18:36:01

@@ -29,7 +29,7 @@ async def test_database_connection():
         assert row[0] == 1
     
     await engine.dispose()
-    print("✅ 数据库连接测试通过")
+    print("[OK] 数据库连接测试通过")
 
 
 @pytest.mark.asyncio
@@ -85,7 +85,7 @@ async def test_admin_user_crud_integration():
         assert deleted_user is None
     
     await engine.dispose()
-    print("✅ 管理员用户CRUD集成测试通过")
+    print("[OK] 管理员用户CRUD集成测试通过")
 
 
 @pytest.mark.asyncio
@@ -135,7 +135,7 @@ async def test_crawler_config_crud_integration():
         assert deleted_config is None
     
     await engine.dispose()
-    print("✅ 爬虫配置CRUD集成测试通过")
+    print("[OK] 爬虫配置CRUD集成测试通过")
 
 
 @pytest.mark.asyncio
@@ -193,7 +193,7 @@ async def test_cross_module_integration():
         await crud_admin_user.remove(session, id=created_admin.id)
     
     await engine.dispose()
-    print("✅ 跨模块数据交互集成测试通过")
+    print("[OK] 跨模块数据交互集成测试通过")
 
 
 if __name__ == "__main__":

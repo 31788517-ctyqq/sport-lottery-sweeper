@@ -1,0 +1,17 @@
+{
+  "active_ais": [
+    "coder1"
+  ],
+  "last_updated": "2026-01-31T00:37:07.573199",
+  "current_tasks": {
+    "coder1": "ÐÞ¸Äpackage.json"
+  },
+  "file_locks": [
+    "check_db.py.coder1.1769622769.lock",
+    "check_db_real.py.coder1.1769622776.lock",
+    "check_db_structure.py.coder1.1769622839.lock",
+    "package.json.coder1.1769791027.lock"
+  ]
+}"
+  ]
+}

@@ -1,132 +1,96 @@
 """
-反爬虫配置加载器
-从环境变量和配置文件加载反爬虫设置
+爬虫配置加载器
+用于加载和管理爬虫配置
 """
 import os
-import logging
-from typing import List, Optional, Dict, Any
-from .engine_enhanced import EnhancedScraperEngine
-
-logger = logging.getLogger(__name__)
+import json
+from typing import Dict, Any, Optional
+from .enhanced_engine import EnhancedScraperEngine
 
 
-class AntiCrawlerConfig:
-    """反爬虫配置类"""
-    
-    def __init__(self):
-        """从环境变量加载配置"""
-        self.load_config()
-    
-    def load_config(self):
-        """加载所有反爬虫相关配置"""
-        
-        # 代理配置
-        self.proxy_enabled = self._get_bool_env('PROXY_POOL_ENABLED', True)
-        self.proxy_urls = self._get_list_env('PROXY_URLS', [])
-        self.proxy_health_check_interval = self._get_int_env('PROXY_HEALTH_CHECK_INTERVAL', 300)
-        self.proxy_ban_duration = self._get_int_env('PROXY_BAN_DURATION', 1800)
-        self.proxy_min_score = self._get_float_env('PROXY_MIN_SCORE', 20.0)
-        
-        # Cookie配置
-        self.cookie_enabled = self._get_bool_env('COOKIE_ENABLED', True)
-        self.cookie_file = self._get_str_env('COOKIE_FILE', './cookies.json')
-        
-        # 请求头配置
-        self.header_profile = self._get_str_env('HEADER_PROFILE', 'chrome_desktop')
-        self.enable_fingerprint = self._get_bool_env('ENABLE_FINGERPRINT', True)
-        self.header_rotation_interval = self._get_int_env('HEADER_ROTATION_INTERVAL', 50)
-        
-        # 浏览器指纹配置
-        self.enable_canvas_fingerprint = self._get_bool_env('ENABLE_CANVAS_FINGERPRINT', True)
-        self.enable_webgl_fingerprint = self._get_bool_env('ENABLE_WEBGL_FINGERPRINT', True)
-        self.screen_resolutions = self._get_list_env(
-            'SCREEN_RESOLUTIONS', 
-            ['1920x1080', '1366x768', '1440x900', '1536x864', '2560x1440']
-        )
-        self.timezones = self._get_list_env(
-            'TIMEZONES', 
-            ['Asia/Shanghai', 'Asia/Beijing', 'UTC+8', 'GMT+0800']
-        )
-        
-        logger.info("反爬虫配置加载完成")
-        self._log_config()
-    
-    def _get_str_env(self, key: str, default: str = '') -> str:
-        """获取字符串环境变量"""
-        return os.getenv(key, default)
-    
-    def _get_int_env(self, key: str, default: int = 0) -> int:
-        """获取整数环境变量"""
-        try:
-            return int(os.getenv(key, default))
-        except ValueError:
-            logger.warning(f"环境变量 {key} 格式错误，使用默认值: {default}")
-            return default
-    
-    def _get_float_env(self, key: str, default: float = 0.0) -> float:
-        """获取浮点数环境变量"""
-        try:
-            return float(os.getenv(key, default))
-        except ValueError:
-            logger.warning(f"环境变量 {key} 格式错误，使用默认值: {default}")
-            return default
-    
-    def _get_bool_env(self, key: str, default: bool = False) -> bool:
-        """获取布尔环境变量"""
-        value = os.getenv(key, str(default)).lower()
-        return value in ('true', '1', 'yes', 'on')
-    
-    def _get_list_env(self, key: str, default: List[str] = None) -> List[str]:
-        """获取列表环境变量（逗号分隔）"""
-        if default is None:
-            default = []
-        
-        value = os.getenv(key)
-        if not value:
-            return default
-        
-        return [item.strip() for item in value.split(',') if item.strip()]
-    
-    def _log_config(self):
-        """记录配置信息（隐藏敏感信息）"""
-        logger.info(f"代理池启用: {self.proxy_enabled}")
-        logger.info(f"代理数量: {len(self.proxy_urls)}")
-        logger.info(f"Cookie启用: {self.cookie_enabled}")
-        logger.info(f"请求头配置: {self.header_profile}")
-        logger.info(f"指纹启用: {self.enable_fingerprint}")
-        logger.info(f"指纹轮换间隔: {self.header_rotation_interval}")
-    
-    def create_engine_config(self) -> Dict[str, Any]:
-        """创建引擎配置字典"""
-        config = {
-            'max_connections': int(os.getenv('SCRAPER_MAX_CONNECTIONS', '100')),
-            'timeout': int(os.getenv('SCRAPER_TIMEOUT', '15')),
-            'max_retries': int(os.getenv('SCRAPER_MAX_RETRIES', '3')),
-            'rate_limit': int(os.getenv('SCRAPER_RATE_LIMIT', '10')) if os.getenv('SCRAPER_RATE_LIMIT') else None,
-            'enable_cache': os.getenv('SCRAPER_ENABLE_CACHE', 'true').lower() == 'true',
-            'cache_ttl': int(os.getenv('SCRAPER_CACHE_TTL', '300')),
-            'header_profile': self.header_profile,
-            'enable_fingerprint': self.enable_fingerprint,
-            'rotation_interval': self.header_rotation_interval,
-            'cookie_file': self.cookie_file if self.cookie_enabled else None
-        }
-        
-        # 添加代理配置
-        if self.proxy_enabled and self.proxy_urls:
-            config['proxy_urls'] = self.proxy_urls
-        
-        return config
+def get_default_config() -> Dict[str, Any]:
+    """
+    获取默认配置
+    """
+    return {
+        "max_connections": 100,
+        "timeout": 15,
+        "max_retries": 3,
+        "rate_limit": 10,
+        "enable_cache": True,
+        "cache_ttl": 300,
+        "use_dynamic_proxies": True,
+        "proxy_refresh_interval": 300
+    }
 
 
-def get_anti_crawler_config() -> AntiCrawlerConfig:
-    """获取全局反爬虫配置实例"""
-    return AntiCrawlerConfig()
-
-
-def create_enhanced_engine_from_config() -> EnhancedScraperEngine:
-    """根据配置创建增强爬虫引擎"""
-    config_loader = get_anti_crawler_config()
-    engine_config = config_loader.create_engine_config()
+def load_config_from_env() -> Dict[str, Any]:
+    """
+    从环境变量加载配置
+    """
+    config = get_default_config()
     
-    logger.info("根据配置创建增强爬虫引擎")
-    return EnhancedScraperEngine(**engine_config)
+    # 从环境变量覆盖配置
+    if os.getenv("SCRAPER_MAX_CONNECTIONS"):
+        config["max_connections"] = int(os.getenv("SCRAPER_MAX_CONNECTIONS"))
+    
+    if os.getenv("SCRAPER_TIMEOUT"):
+        config["timeout"] = int(os.getenv("SCRAPER_TIMEOUT"))
+    
+    if os.getenv("SCRAPER_MAX_RETRIES"):
+        config["max_retries"] = int(os.getenv("SCRAPER_MAX_RETRIES"))
+    
+    if os.getenv("SCRAPER_RATE_LIMIT"):
+        config["rate_limit"] = int(os.getenv("SCRAPER_RATE_LIMIT"))
+    
+    if os.getenv("SCRAPER_ENABLE_CACHE"):
+        config["enable_cache"] = os.getenv("SCRAPER_ENABLE_CACHE").lower() == "true"
+    
+    if os.getenv("SCRAPER_CACHE_TTL"):
+        config["cache_ttl"] = int(os.getenv("SCRAPER_CACHE_TTL"))
+    
+    if os.getenv("SCRAPER_USE_DYNAMIC_PROXIES"):
+        config["use_dynamic_proxies"] = os.getenv("SCRAPER_USE_DYNAMIC_PROXIES").lower() == "true"
+    
+    if os.getenv("SCRAPER_PROXY_REFRESH_INTERVAL"):
+        config["proxy_refresh_interval"] = int(os.getenv("SCRAPER_PROXY_REFRESH_INTERVAL"))
+    
+    return config
+
+
+def create_enhanced_engine_from_config(config: Optional[Dict[str, Any]] = None) -> EnhancedScraperEngine:
+    """
+    根据配置创建增强型爬虫引擎
+    """
+    if config is None:
+        config = load_config_from_env()
+    
+    return EnhancedScraperEngine(
+        max_connections=config.get("max_connections", 100),
+        timeout=config.get("timeout", 15),
+        max_retries=config.get("max_retries", 3),
+        rate_limit=config.get("rate_limit", 10),
+        enable_cache=config.get("enable_cache", True),
+        cache_ttl=config.get("cache_ttl", 300),
+        use_dynamic_proxies=config.get("use_dynamic_proxies", True),
+        proxy_refresh_interval=config.get("proxy_refresh_interval", 300)
+    )
+
+
+def get_anti_crawler_config() -> Dict[str, Any]:
+    """
+    获取反爬虫配置
+    """
+    return {
+        "headers": {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+            "Accept-Encoding": "gzip, deflate, br",
+            "Connection": "keep-alive",
+            "Upgrade-Insecure-Requests": "1",
+        },
+        "delay_range": (1, 3),  # 请求延迟范围（秒）
+        "retry_attempts": 3,     # 重试次数
+        "use_proxy": True        # 是否使用代理
+    }

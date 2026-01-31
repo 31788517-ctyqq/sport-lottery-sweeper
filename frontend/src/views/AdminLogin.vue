@@ -33,30 +33,7 @@
           />
         </div>
         
-        <div class="input-group checkbox-group">
-          <label class="checkbox-label">
-            <input 
-              type="checkbox" 
-              id="rememberMe"
-              name="rememberMe"
-              v-model="credentials.rememberMe"
-              autocomplete="off"
-            />
-            <span>记住我</span>
-          </label>
-          
-          <label class="checkbox-label">
-            <input 
-              type="checkbox" 
-              id="rememberPassword"
-              name="rememberPassword"
-              v-model="credentials.rememberPassword"
-              :disabled="!credentials.rememberMe"
-              autocomplete="off"
-            />
-            <span :class="{ 'disabled': !credentials.rememberMe }">记住密码</span>
-          </label>
-        </div>
+        <!-- 自动登录功能已移除 -->
         
         <button 
           type="submit" 

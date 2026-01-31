@@ -45,14 +45,14 @@ def test_api():
                 for match in monday_matches:
                     print(f"  - {match['match_id']} | {match['league']} | {match['home_team']} vs {match['away_team']} | {match['match_time']}")
             else:
-                print("⚠️ No Monday matches found!")
+                print("[WARNING] No Monday matches found!")
                 print("\nShowing all match IDs:")
                 for match in matches[:10]:
                     print(f"  - {match.get('match_id', 'NO_ID')}")
         else:
-            print("⚠️ No files found matching pattern!")
+            print("[WARNING] No files found matching pattern!")
     else:
-        print("❌ Debug directory does not exist!")
+        print("[ERROR] Debug directory does not exist!")
 
 if __name__ == "__main__":
     test_api()

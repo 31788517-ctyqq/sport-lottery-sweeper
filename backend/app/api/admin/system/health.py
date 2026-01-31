@@ -4,7 +4,7 @@
 """
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from backend.database import get_db
+from backend.database import get_db, get_db_engine_info
 from backend.services.database_monitor import db_monitor
 from typing import Dict, Any
 import asyncio

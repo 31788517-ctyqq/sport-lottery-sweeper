@@ -8,7 +8,7 @@ import logging
 from datetime import datetime, timedelta
 from unittest.mock import patch, MagicMock, AsyncMock
 import json
-from core.cache_manager import MemoryCache, HybridCache, generate_cache_key, CACHE_KEYS, get_cache, CacheConfig
+from core.cache_manager import MemoryCache, get_cache_manager
 
 # 配置日志
 logging.basicConfig(level=logging.INFO)

@@ -1,0 +1,89 @@
+// Import design system variables (Note: @import is deprecated in Sass but still works for CSS variables)
+// Modern Sass: Using @use instead of deprecated @import
+@use './_design-system' as ds;
+
+:root {
+  --el-color-primary: #8aa3ab;
+  --el-color-primary-light-3: #a3b8be;
+  --el-color-primary-light-5: #b8c9ce;
+  --el-color-primary-light-7: #cddade;
+  --el-color-primary-light-8: #dce4e7;
+  --el-color-primary-light-9: #ebf0f1;
+  --el-color-primary-dark-2: #748a91;
+  --el-bg-color: #ffffff;
+  --el-bg-color-page: #f5f5f5;
+  --el-border-color: #e5e7eb;
+  --el-border-color-light: #f3f4f6;
+  --el-border-radius-base: 6px;
+  --el-text-color-primary: #374151;
+  --el-text-color-regular: #6b7280;
+  --el-text-color-secondary: #9ca3af;
+  --el-text-color-placeholder: #c0c4cc;
+}
+
+.el-button {
+  border-radius: var(--el-border-radius-base);
+  box-shadow: none;
+  font-weight: 500;
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+}
+.el-button--primary {
+  background-color: var(--el-color-primary);
+  border: 1px solid var(--el-color-primary);
+  color: #ffffff;
+}
+.el-button--primary:hover,
+.el-button--primary:focus {
+  background-color: var(--el-color-primary-light-3);
+  border-color: var(--el-color-primary-light-3);
+  color: #ffffff;
+}
+.el-button--default {
+  background-color: #ffffff;
+  border: 1px solid var(--el-border-color);
+  color: var(--el-text-color-regular);
+}
+.el-button--default:hover,
+.el-button--default:focus {
+  background-color: var(--el-bg-color-page);
+  border-color: var(--el-color-primary-light-3);
+  color: var(--el-color-primary);
+}
+
+.el-card {
+  border: 1px solid var(--el-border-color);
+  border-radius: var(--el-border-radius-base);
+  background-color: var(--el-bg-color);
+  box-shadow: none;
+  transition: box-shadow 0.2s;
+}
+.el-card:hover {
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+.el-card__header {
+  border-bottom: 1px solid var(--el-border-color-light);
+  padding: 12px 16px;
+  font-weight: 600;
+  color: var(--el-text-color-primary);
+}
+
+.el-table {
+  background-color: var(--el-bg-color);
+  border-radius: var(--el-border-radius-base);
+  overflow: hidden;
+}
+.el-table th {
+  background-color: var(--el-bg-color-page);
+  color: var(--el-text-color-primary);
+  font-weight: 600;
+}
+.el-table td {
+  border-bottom: 1px solid var(--el-border-color-light);
+  color: var(--el-text-color-regular);
+}
+.el-table--striped .el-table__body tr.el-table__row--striped td {
+  background-color: var(--el-bg-color-page);
+}
+.el-table .el-table__cell {
+  padding: 10px 12px;
+}

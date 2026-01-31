@@ -7,16 +7,16 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query, Path, Body
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import or_
 
-from ...core.database import get_db
+from backend.core.database import get_db
 from backend.config import settings
-from ...models.intelligence import Intelligence, IntelligenceType, IntelligenceSource
-from ...models.match import Match
-from ...models.user import User
-from ...schemas.intelligence import IntelligenceResponse, IntelligenceCreate, IntelligenceUpdate
-from ...schemas.response import UnifiedResponse  # 添加缺失的导入
-from ...core.auth import get_current_user
-from ...schemas.intelligence import IntelligenceTypeResponse, IntelligenceSourceResponse
-from ...schemas.intelligence import IntelligenceFilter
+from backend.models.intelligence import Intelligence, IntelligenceType, IntelligenceSource
+from backend.models.match import Match
+from backend.models.user import User
+from backend.schemas.intelligence import IntelligenceResponse, IntelligenceCreate, IntelligenceUpdate
+from backend.schemas.response import UnifiedResponse  # 添加缺失的导入
+from backend.core.auth import get_current_user
+from backend.schemas.intelligence import IntelligenceTypeResponse, IntelligenceSourceResponse
+from backend.schemas.intelligence import IntelligenceFilter
 
 # 创建情报路由
 router = APIRouter()

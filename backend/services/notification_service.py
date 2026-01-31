@@ -3,6 +3,8 @@
 负责发送系统通知、邮件、短信等
 """
 from typing import Dict, List, Optional
+import logging
+logger = logging.getLogger(__name__)
 from datetime import datetime
 import asyncio
 
@@ -23,7 +25,7 @@ class NotificationService:
             return {"success": False, "message": "通知服务未启用"}
         
         # 在实际实现中，这里会发送邮件、短信或推送通知
-        print(f"发送通知给用户 {user_id}: {title}")
+        logger.debug(f"发送通知给用户 {user_id}: {title}")
         return {
             "success": True,
             "message": "通知已发送",
@@ -48,7 +50,7 @@ class NotificationService:
             return {"success": False, "message": "通知服务未启用"}
         
         # 在实际实现中，这里会使用SMTP或其他邮件服务
-        print(f"发送邮件至 {recipient}: {subject}")
+        logger.debug(f"发送邮件至 {recipient}: {subject}")
         return {
             "success": True,
             "message": "邮件已发送",
@@ -61,7 +63,7 @@ class NotificationService:
             return {"success": False, "message": "通知服务未启用"}
         
         # 在实际实现中，这里会使用短信网关服务
-        print(f"发送短信至 {phone_number}: {message}")
+        logger.debug(f"发送短信至 {phone_number}: {message}")
         return {
             "success": True,
             "message": "短信已发送",

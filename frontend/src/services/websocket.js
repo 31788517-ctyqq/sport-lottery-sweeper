@@ -44,8 +44,10 @@ class WebSocketService {
         return;
       }
 
+      // AI_WORKING: coder1 @2026-01-28T03:30:00Z - 修复WebSocket硬编码端口
       this.isConnecting = true;
-      this.socket = new WebSocket('ws://localhost:8001/ws/matches');
+      this.socket = new WebSocket('/ws/matches');
+      // AI_DONE: coder1 @2026-01-28T03:30:00Z
 
       this.socket.onopen = () => {
         console.log('✅ WebSocket连接已建立');

@@ -1,226 +1,236 @@
+#!/usr/bin/env python3
 """
-用户相关数据模式
+用户相关的Pydantic模式定义
+用于API请求和响应的数据验证
 """
-from pydantic import BaseModel, EmailStr, Field
-from pydantic_settings import SettingsConfigDict
-from typing import Optional, List
-from datetime import datetime
+
+from pydantic import BaseModel, Field, field_validator, EmailStr, ConfigDict
+from typing import Optional, List, Dict, Any
 from enum import Enum
+from datetime import datetime
 
-
+# 枚举定义
 class UserStatusEnum(str, Enum):
-    """用户状态枚举"""
     ACTIVE = "active"
     INACTIVE = "inactive"
     SUSPENDED = "suspended"
-    BANNED = "banned"
-
+    PENDING = "pending"
 
 class UserTypeEnum(str, Enum):
-    """用户类型枚举"""
-    NORMAL = "normal"
+    FREE = "free"
     PREMIUM = "premium"
-    ANALYST = "analyst"
-    ADMIN = "admin"
+    VIP = "vip"
+
+class AdminRoleEnum(str, Enum):
     SUPER_ADMIN = "super_admin"
-
-
-class UserRoleEnum(str, Enum):
-    """用户角色枚举"""
     ADMIN = "admin"
-    MODERATOR = "moderator"
+    OPERATOR = "operator"
     ANALYST = "analyst"
-    REGULAR_USER = "regular_user"
-    GUEST = "guest"
 
+class AdminStatusEnum(str, Enum):
+    ACTIVE = "active"
+    INACTIVE = "inactive"
+    SUSPENDED = "suspended"
 
-class TokenData(BaseModel):
-    """
-    Token数据模型
-    """
-    username: Optional[str] = None
+# 基础响应模型
+class BaseResponse(BaseModel):
+    success: bool = True
+    message: Optional[str] = None
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
 
-
-class LoginRequest(BaseModel):
-    """
-    登录请求模型
-    """
-    username: str
-    password: str
-
-
-class RoleBase(BaseModel):
-    """
-    角色基础模型
-    """
-    name: str
-    description: Optional[str] = None
-
-
-class RoleCreate(RoleBase):
-    """
-    角色创建模型
-    """
-    pass
-
-
-class RoleUpdate(BaseModel):
-    """
-    角色更新模型
-    """
-    name: Optional[str] = None
-    description: Optional[str] = None
-
-
-class RoleResponse(RoleBase):
-    """
-    角色响应模型
-    """
-    id: int
-    created_at: datetime
-    updated_at: datetime
-
-    model_config = SettingsConfigDict()
-
-
-class PermissionBase(BaseModel):
-    """
-    权限基础模型
-    """
-    name: str
-    description: Optional[str] = None
-
-
-class PermissionCreate(PermissionBase):
-    """
-    权限创建模型
-    """
-    pass
-
-
-class PermissionUpdate(BaseModel):
-    """
-    权限更新模型
-    """
-    name: Optional[str] = None
-    description: Optional[str] = None
-
-
-class PermissionResponse(PermissionBase):
-    """
-    权限响应模型
-    """
-    id: int
-    created_at: datetime
-    updated_at: datetime
-
-    model_config = SettingsConfigDict()
-
+# ==================== 普通用户模式 ====================
 
 class UserBase(BaseModel):
-    """
-    用户基础模型
-    """
-    username: str = Field(..., min_length=3, max_length=80, description="用户名")
+    """用户基础信息"""
+    username: str = Field(..., min_length=3, max_length=50, description="用户名")
     email: EmailStr = Field(..., description="邮箱地址")
-    first_name: Optional[str] = Field(None, max_length=50, description="名字")
-    last_name: Optional[str] = Field(None, max_length=50, description="姓氏")
-    nickname: Optional[str] = Field(None, max_length=80, description="昵称")
-    bio: Optional[str] = Field(None, description="个人简介")
-    avatar_url: Optional[str] = Field(None, max_length=500, description="头像URL")
-    phone: Optional[str] = Field(None, max_length=20, description="电话号码")
-    country: Optional[str] = Field(None, max_length=100, description="国家")
-    city: Optional[str] = Field(None, max_length=100, description="城市")
-    role: UserRoleEnum = Field(default=UserRoleEnum.REGULAR_USER, description="用户角色")
-    status: UserStatusEnum = Field(default=UserStatusEnum.ACTIVE, description="用户状态")
-    is_verified: bool = Field(default=False, description="是否已验证")
-    user_type: UserTypeEnum = Field(default=UserTypeEnum.NORMAL, description="用户类型")
-    timezone: str = Field(default="UTC", max_length=50, description="时区")
-    language: str = Field(default="zh", max_length=10, description="语言")
-
+    nickname: Optional[str] = Field(None, max_length=50, description="昵称")
+    phone: Optional[str] = Field(None, max_length=20, description="手机号")
+    avatar: Optional[str] = Field(None, description="头像URL")
 
 class UserCreate(UserBase):
-    """
-    创建用户模型
-    """
-    password: str = Field(..., min_length=6, max_length=128, description="密码")
-
+    """创建用户请求模式"""
+    password: str = Field(..., min_length=8, description="密码")
+    confirm_password: str = Field(..., description="确认密码")
+    
+    @field_validator('password')
+    def validate_password(cls, v):
+        if len(v) < 8:
+            raise ValueError('密码长度至少8位')
+        return v
+    
+    @field_validator('confirm_password')
+    def passwords_match(cls, v, values):
+        if 'password' in values and v != values['password']:
+            raise ValueError('密码不匹配')
+        return v
 
 class UserUpdate(BaseModel):
-    """
-    更新用户模型
-    """
-    username: Optional[str] = Field(None, min_length=3, max_length=80, description="用户名")
+    """更新用户请求模式"""
+    nickname: Optional[str] = Field(None, max_length=50, description="昵称")
     email: Optional[EmailStr] = Field(None, description="邮箱地址")
-    first_name: Optional[str] = Field(None, max_length=50, description="名字")
-    last_name: Optional[str] = Field(None, max_length=50, description="姓氏")
-    nickname: Optional[str] = Field(None, max_length=80, description="昵称")
-    bio: Optional[str] = Field(None, description="个人简介")
-    avatar_url: Optional[str] = Field(None, max_length=500, description="头像URL")
-    phone: Optional[str] = Field(None, max_length=20, description="电话号码")
-    country: Optional[str] = Field(None, max_length=100, description="国家")
-    city: Optional[str] = Field(None, max_length=100, description="城市")
-    role: Optional[UserRoleEnum] = Field(None, description="用户角色")
-    status: Optional[UserStatusEnum] = Field(None, description="用户状态")
-    is_verified: Optional[bool] = Field(None, description="是否已验证")
-    user_type: Optional[UserTypeEnum] = Field(None, description="用户类型")
-    timezone: Optional[str] = Field(None, max_length=50, description="时区")
-    language: Optional[str] = Field(None, max_length=10, description="语言")
-
+    phone: Optional[str] = Field(None, max_length=20, description="手机号")
+    avatar: Optional[str] = Field(None, description="头像URL")
+    password: Optional[str] = Field(None, min_length=8, description="新密码")
+    confirm_password: Optional[str] = Field(None, description="确认新密码")
+    
+    @field_validator('confirm_password')
+    def passwords_match(cls, v, values):
+        if 'password' in values and v and v != values['password']:
+            raise ValueError('密码不匹配')
+        return v
 
 class UserResponse(UserBase):
-    """
-    用户响应模型
-    """
+    """用户响应模式"""
     id: int
-    is_active: bool
-    is_verified: bool
+    status: UserStatusEnum
+    user_type: UserTypeEnum
+    email_verified: bool
+    phone_verified: bool
+    last_login_time: Optional[datetime]
     created_at: datetime
     updated_at: datetime
+    
+    model_config = ConfigDict(from_attributes=True)
 
-    model_config = SettingsConfigDict()
-
-
-class UserList(BaseModel):
-    """
-    用户列表响应模型
-    """
-    items: list[UserResponse]
+class UserListResponse(BaseResponse):
+    """用户列表响应模式"""
+    users: List[UserResponse]
     total: int
     page: int
     size: int
-    pages: int
+
+# ==================== 管理员用户模式 ====================
+
+class AdminUserBase(BaseModel):
+    """管理员用户基础信息"""
+    username: str = Field(..., min_length=3, max_length=50, description="用户名")
+    email: EmailStr = Field(..., description="邮箱地址")
+    full_name: str = Field(..., max_length=50, description="姓名")
+    role: AdminRoleEnum = Field(..., description="角色")
+    phone: Optional[str] = Field(None, max_length=20, description="手机号")
+    department: Optional[str] = Field(None, max_length=100, description="部门")
+    permissions: Optional[List[str]] = Field(None, description="权限列表")
+
+class AdminUserCreate(AdminUserBase):
+    """创建管理员用户请求模式"""
+    password: str = Field(..., min_length=8, description="密码")
+    confirm_password: str = Field(..., description="确认密码")
+    
+    @field_validator('password')
+    def validate_password(cls, v):
+        if len(v) < 8:
+            raise ValueError('密码长度至少8位')
+        return v
+    
+    @field_validator('confirm_password')
+    def passwords_match(cls, v, values):
+        if 'password' in values and v != values['password']:
+            raise ValueError('密码不匹配')
+        return v
+
+class AdminUserUpdate(BaseModel):
+    """更新管理员用户请求模式"""
+    full_name: Optional[str] = Field(None, max_length=50, description="姓名")
+    role: Optional[AdminRoleEnum] = Field(None, description="角色")
+    phone: Optional[str] = Field(None, max_length=20, description="手机号")
+    department: Optional[str] = Field(None, max_length=100, description="部门")
+    permissions: Optional[List[str]] = Field(None, description="权限列表")
+    status: Optional[AdminStatusEnum] = Field(None, description="状态")
+    password: Optional[str] = Field(None, min_length=8, description="新密码")
+    confirm_password: Optional[str] = Field(None, description="确认新密码")
+    
+    @field_validator('confirm_password')
+    def passwords_match(cls, v, values):
+        if 'password' in values and v and v != values['password']:
+            raise ValueError('密码不匹配')
+        return v
+
+class AdminUserResponse(AdminUserBase):
+    """管理员用户响应模式"""
+    id: int
+    status: AdminStatusEnum
+    last_login_time: Optional[datetime]
+    login_count: int
+    created_at: datetime
+    updated_at: datetime
+    created_by: Optional[int]
+    
+    model_config = ConfigDict(from_attributes=True)
+
+class AdminUserListResponse(BaseResponse):
+    """管理员用户列表响应模式"""
+    admins: List[AdminUserResponse]
+    total: int
+    page: int
+    size: int
+
+# ==================== 认证相关模式 ====================
+
+class LoginRequest(BaseModel):
+    """登录请求模式"""
+    username: str = Field(..., description="用户名或邮箱")
+    password: str = Field(..., description="密码")
+
+class LoginResponse(BaseResponse):
+    """登录响应模式"""
+    access_token: str
+    refresh_token: str
+    token_type: str = "bearer"
+    expires_in: int
+    user_info: UserResponse
+
+class RefreshTokenRequest(BaseModel):
+    """刷新令牌请求模式"""
+    refresh_token: str = Field(..., description="刷新令牌")
+
+class ChangePasswordRequest(BaseModel):
+    """修改密码请求模式"""
+    old_password: str = Field(..., description="旧密码")
+    new_password: str = Field(..., min_length=8, description="新密码")
+    confirm_new_password: str = Field(..., description="确认新密码")
+    
+    @field_validator('confirm_new_password')
+    def passwords_match(cls, v, values):
+        if 'new_password' in values and v != values['new_password']:
+            raise ValueError('新密码不匹配')
+        return v
+
+# ==================== 通用User类（兼容性导出）====================
+
+# 为了兼容现有代码，将UserResponse别名为User
+User = UserResponse
 
 
-class User(UserBase):
-    """用户模型（包含ID和时间戳）"""
-    id: int = Field(..., description="用户ID")
-    created_at: datetime = Field(..., description="创建时间")
-    updated_at: datetime = Field(..., description="更新时间")
-    is_online: bool = Field(default=False, description="是否在线")
-    login_count: int = Field(default=0, description="登录次数")
-    last_login_at: Optional[datetime] = Field(None, description="最后登录时间")
-    last_activity_at: Optional[datetime] = Field(None, description="最后活动时间")
-    followers_count: int = Field(default=0, description="粉丝数")
-    following_count: int = Field(default=0, description="关注数")
+# ==================== 统计信息模式 ====================
 
-    model_config = SettingsConfigDict()
+class UserStatsResponse(BaseResponse):
+    """用户统计信息响应模式"""
+    total_users: int
+    active_users: int
+    new_users_today: int
+    new_users_this_week: int
+    new_users_this_month: int
+    user_type_distribution: Dict[str, int]
+    status_distribution: Dict[str, int]
 
-
-class UserOut(UserBase):
-    """用户输出模型（不包含敏感信息）"""
-    id: int = Field(..., description="用户ID")
-    created_at: datetime = Field(..., description="创建时间")
-    updated_at: datetime = Field(..., description="更新时间")
-    is_online: bool = Field(default=False, description="是否在线")
-    login_count: int = Field(default=0, description="登录次数")
-    last_login_at: Optional[datetime] = Field(None, description="最后登录时间")
-    last_activity_at: Optional[datetime] = Field(None, description="最后活动时间")
-    followers_count: int = Field(default=0, description="粉丝数")
-    following_count: int = Field(default=0, description="关注数")
-
-    model_config = SettingsConfigDict()
+class AdminStatsResponse(BaseResponse):
+    """管理员统计信息响应模式"""
+    total_admins: int
+    active_admins: int
+    new_admins_today: int
+    new_admins_this_week: int
+    new_admins_this_month: int
+    role_distribution: Dict[str, int]
+    status_distribution: Dict[str, int]
 
 
-# 为兼容多处引用的 UserListResponse 名称，添加别名
-UserListResponse = UserList
+# ==================== 兼容性别名 ====================
+# 为了兼容现有代码中的导入
+AdminDataCreate = AdminUserCreate
+AdminDataUpdate = AdminUserUpdate
+AdminDataResponse = AdminUserResponse
+AdminDataListResponse = AdminUserListResponse
+# AI_WORKING: coder1 @2026-01-26 - 添加UserLogin别名以修复导入错误
+UserLogin = LoginRequest
+# AI_DONE: coder1 @2026-01-26 - 添加UserLogin别名以修复导入错误

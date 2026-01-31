@@ -1,3 +1,4 @@
+// AI_WORKING: coder1 @2026-01-29 18:36:01 - 修复导入路径和语法问题
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { betsAPI } from '@/api/modules/bets.js'
 
@@ -34,18 +35,13 @@ describe('betsAPI', () => {
         created_at: '2024-01-22T10:00:00Z'
       }
       
-      vi.doMock('@/utils/request.js', () => ({
-        default: {
-          post: vi.fn().mockResolvedValue({
-            success: true,
-            data: mockBet,
-            message: '投注创建成功'
-          })
+      vi.doMock('../../utils/request.js', () => ({
+        default)
         }
       }))
       
       vi.resetModules()
-      const { betsAPI: freshBetsAPI } = await import('@/api/modules/bets.js')
+      const { betsAPI: freshBetsAPI } = await import('../../api/modules/bets.js')
       
       const betData = {
         match_id: 1,
@@ -66,23 +62,15 @@ describe('betsAPI', () => {
     })
 
     it('余额不足应该返回错误', async () => {
-      vi.doMock('@/utils/request.js', () => ({
-        default: {
-          post: vi.fn().mockRejectedValue({
-            response: {
-              status: 400,
-              data: {
-                success: false,
-                message: 'Insufficient balance',
-                code: 'INSUFFICIENT_BALANCE'
-              }
+      vi.doMock('../../utils/request.js', () => ({
+        default
             }
           })
         }
       }))
       
       vi.resetModules()
-      const { betsAPI: freshBetsAPI } = await import('@/api/modules/bets.js')
+      const { betsAPI: freshBetsAPI } = await import('../../api/modules/bets.js')
       
       try {
         await freshBetsAPI.createBet({
@@ -97,16 +85,8 @@ describe('betsAPI', () => {
     })
 
     it('赔率已变化应该返回警告', async () => {
-      vi.doMock('@/utils/request.js', () => ({
-        default: {
-          post: vi.fn().mockRejectedValue({
-            response: {
-              status: 409,
-              data: {
-                success: false,
-                message: 'Odds have changed',
-                code: 'ODDS_CHANGED',
-                current_odds: { win: 2.2, draw: 3.3, lose: 2.9 }
+      vi.doMock('../../utils/request.js', () => ({
+        default
               }
             }
           })
@@ -114,7 +94,7 @@ describe('betsAPI', () => {
       }))
       
       vi.resetModules()
-      const { betsAPI: freshBetsAPI } = await import('@/api/modules/bets.js')
+      const { betsAPI: freshBetsAPI } = await import('../../api/modules/bets.js')
       
       try {
         await freshBetsAPI.createBet({
@@ -151,22 +131,14 @@ describe('betsAPI', () => {
         }
       ]
       
-      vi.doMock('@/utils/request.js', () => ({
-        default: {
-          get: vi.fn().mockResolvedValue({
-            success: true,
-            data: mockBets,
-            pagination: {
-              page: 1,
-              limit: 20,
-              total: 2
-            }
+      vi.doMock('../../utils/request.js', () => ({
+        default
           })
         }
       }))
       
       vi.resetModules()
-      const { betsAPI: freshBetsAPI } = await import('@/api/modules/bets.js')
+      const { betsAPI: freshBetsAPI } = await import('../../api/modules/bets.js')
       
       const result = await freshBetsAPI.getUserBets({ page: 1, limit: 20 })
       
@@ -178,18 +150,14 @@ describe('betsAPI', () => {
     })
 
     it('应该支持状态筛选', async () => {
-      vi.doMock('@/utils/request.js', () => ({
-        default: {
-          get: vi.fn().mockResolvedValue({
-            success: true,
-            data: [],
-            pagination: { page: 1, limit: 20, total: 0 }
+      vi.doMock('../../utils/request.js', () => ({
+        default
           })
         }
       }))
       
       vi.resetModules()
-      const { betsAPI: freshBetsAPI } = await import('@/api/modules/bets.js')
+      const { betsAPI: freshBetsAPI } = await import('../../api/modules/bets.js')
       
       await freshBetsAPI.getUserBets({ status: 'pending' })
       
@@ -210,27 +178,19 @@ describe('betsAPI', () => {
         win_amount: 210.0,
         created_at: '2024-01-20T10:00:00Z',
         settled_at: '2024-01-20T17:00:00Z',
-        match_info: {
-          home_team: '曼联',
-          away_team: '切尔西',
-          final_score: '2-1'
-        },
+        match_info,
         selections: [
           { option: 'win', odds: 2.1, result: 'win' }
         ]
       }
       
-      vi.doMock('@/utils/request.js', () => ({
-        default: {
-          get: vi.fn().mockResolvedValue({
-            success: true,
-            data: mockBetDetail
-          })
+      vi.doMock('../../utils/request.js', () => ({
+        default)
         }
       }))
       
       vi.resetModules()
-      const { betsAPI: freshBetsAPI } = await import('@/api/modules/bets.js')
+      const { betsAPI: freshBetsAPI } = await import('../../api/modules/bets.js')
       
       const result = await freshBetsAPI.getBetDetail(1)
       
@@ -243,17 +203,13 @@ describe('betsAPI', () => {
 
   describe('cancelBet', () => {
     it('应该取消待处理的投注', async () => {
-      vi.doMock('@/utils/request.js', () => ({
-        default: {
-          post: vi.fn().mockResolvedValue({
-            success: true,
-            message: '投注已取消'
-          })
+      vi.doMock('../../utils/request.js', () => ({
+        default)
         }
       }))
       
       vi.resetModules()
-      const { betsAPI: freshBetsAPI } = await import('@/api/modules/bets.js')
+      const { betsAPI: freshBetsAPI } = await import('../../api/modules/bets.js')
       
       const result = await freshBetsAPI.cancelBet(1)
       
@@ -262,23 +218,15 @@ describe('betsAPI', () => {
     })
 
     it('已结算的投注不能取消', async () => {
-      vi.doMock('@/utils/request.js', () => ({
-        default: {
-          post: vi.fn().mockRejectedValue({
-            response: {
-              status: 400,
-              data: {
-                success: false,
-                message: 'Cannot cancel settled bet',
-                code: 'BET_ALREADY_SETTLED'
-              }
+      vi.doMock('../../utils/request.js', () => ({
+        default
             }
           })
         }
       }))
       
       vi.resetModules()
-      const { betsAPI: freshBetsAPI } = await import('@/api/modules/bets.js')
+      const { betsAPI: freshBetsAPI } = await import('../../api/modules/bets.js')
       
       try {
         await freshBetsAPI.cancelBet(1)
@@ -307,17 +255,13 @@ describe('betsAPI', () => {
         ]
       }
       
-      vi.doMock('@/utils/request.js', () => ({
-        default: {
-          get: vi.fn().mockResolvedValue({
-            success: true,
-            data: mockStats
-          })
+      vi.doMock('../../utils/request.js', () => ({
+        default)
         }
       }))
       
       vi.resetModules()
-      const { betsAPI: freshBetsAPI } = await import('@/api/modules/bets.js')
+      const { betsAPI: freshBetsAPI } = await import('../../api/modules/bets.js')
       
       const result = await freshBetsAPI.getBetStatistics()
       
@@ -341,17 +285,13 @@ describe('betsAPI', () => {
         }
       ]
       
-      vi.doMock('@/utils/request.js', () => ({
-        default: {
-          get: vi.fn().mockResolvedValue({
-            success: true,
-            data: mockHistory
-          })
+      vi.doMock('../../utils/request.js', () => ({
+        default)
         }
       }))
       
       vi.resetModules()
-      const { betsAPI: freshBetsAPI } = await import('@/api/modules/bets.js')
+      const { betsAPI: freshBetsAPI } = await import('../../api/modules/bets.js')
       
       const filters = {
         start_date: '2024-01-01',
@@ -366,3 +306,4 @@ describe('betsAPI', () => {
     })
   })
 })
+// AI_DONE: coder1 @2026-01-29 18:36:01

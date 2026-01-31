@@ -1,6 +1,7 @@
+// AI_WORKING: coder1 @2026-01-29 18:36:01 - 修复导入路径和语法问题
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { ref, onMounted, onUnmounted } from 'vue'
-import { useWebSocket } from '@/composables/useWebSocket.js'
+import { useWebSocket } from '../../composables/useWebSocket.js'
 
 // 模拟 WebSocket
 global.WebSocket = vi.fn(() => ({
@@ -247,7 +248,7 @@ describe('useWebSocket.js', () => {
       websocket.onMessage(messageHandler)
       
       // 模拟接收消息
-      const testMessage = { type: 'match_update', data: { id: 1, status: 'live' } }
+      const testMessage = { type: 'match_update', data }
       const messageEvent = { data: JSON.stringify(testMessage) }
       
       mockWs.addEventListener.mockImplementation((event, handler) => {
@@ -447,3 +448,4 @@ describe('useWebSocket.js', () => {
     })
   })
 })
+// AI_DONE: coder1 @2026-01-29 18:36:01

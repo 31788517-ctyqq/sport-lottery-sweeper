@@ -1,377 +1,396 @@
+#!/usr/bin/env python3
 """
-用户数据模型
+用户数据库模型模块
+定义用户相关的SQLAlchemy ORM模型
 """
-from datetime import datetime
-from typing import List, Optional
-from sqlalchemy import (
-    Column, Integer, String, Boolean, DateTime, 
-    ForeignKey, Float, Text, Enum, CheckConstraint, Index, Table, JSON
-)
-from sqlalchemy.orm import relationship, backref
+
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text, Enum, ForeignKey, UniqueConstraint
+from sqlalchemy.orm import relationship, validates
 from sqlalchemy.sql import func
-import enum
+from enum import Enum as PyEnum
+from ..database import Base
+# AI_DELETED: coder1 @2026-01-29 - 移除对predictions模块的导入，因为UserPrediction现在在user_models.py中
+from .user_models import UserPrediction
+import re
 
-from sqlalchemy.ext.mutable import MutableDict
-from .base import Base, BaseAuditModel, BaseFullModel
+# 枚举定义
+class UserRole(PyEnum):
+    """用户角色枚举"""
+    USER = "user"
+    ADMIN = "admin"
+    MODERATOR = "moderator"
+    VIP = "vip"
 
-# 定义用户-角色关联表
-user_roles = Table(
-    'user_roles',
-    Base.metadata,
-    Column('user_id', Integer, ForeignKey('users.id', ondelete='CASCADE'), primary_key=True),
-    Column('role_id', Integer, ForeignKey('roles.id', ondelete='CASCADE'), primary_key=True),
-    Column('assigned_at', DateTime(timezone=True), default=func.now(), nullable=False)
-)
-
-# 定义角色-权限关联表
-role_permissions = Table(
-    'role_permissions',
-    Base.metadata,
-    Column('role_id', Integer, ForeignKey('roles.id', ondelete='CASCADE'), primary_key=True),
-    Column('permission_id', Integer, ForeignKey('permissions.id', ondelete='CASCADE'), primary_key=True),
-    Column('assigned_at', DateTime(timezone=True), default=func.now(), nullable=False)
-)
-
-# 用户状态枚举
-class UserStatusEnum(enum.Enum):
+class UserStatus(PyEnum):
     """用户状态枚举"""
     ACTIVE = "active"
     INACTIVE = "inactive"
     SUSPENDED = "suspended"
     BANNED = "banned"
+    PENDING = "pending"
 
-# 用户类型枚举
-class UserTypeEnum(enum.Enum):
+class SocialProvider(PyEnum):
+    """社交登录提供商枚举"""
+    WECHAT = "wechat"
+    QQ = "qq"
+    WEIBO = "weibo"
+    GITHUB = "github"
+    GOOGLE = "google"
+    FACEBOOK = "facebook"
+
+class UserType(PyEnum):
     """用户类型枚举"""
-    NORMAL = "normal"        # 普通用户
-    PREMIUM = "premium"      # 高级用户
-    ANALYST = "analyst"      # 分析师
-    ADMIN = "admin"          # 管理员
-    SUPER_ADMIN = "super_admin"  # 超级管理员
+    FREE = "free"
+    PREMIUM = "premium"
+    VIP = "vip"
 
-class UserRoleEnum(enum.Enum):
-    """用户角色枚举"""
-    ADMIN = "admin"
-    MODERATOR = "moderator"
-    ANALYST = "analyst"
-    REGULAR_USER = "regular_user"
-    GUEST = "guest"
-
-class User(BaseAuditModel):
-    """
-    用户模型
-    """
+class User(Base):
+    """用户数据库模型"""
     __tablename__ = "users"
-    __table_args__ = {'extend_existing': True}  # 添加此选项以允许扩展已存在的表
+    __table_args__ = {'extend_existing': True}
     
-    # 基本信息
-    username = Column(String(80), unique=True, nullable=False, index=True)
-    email = Column(String(120), unique=True, nullable=False, index=True)
-    password_hash = Column(String(255), nullable=False)
-    
-    # 个人信息
-    first_name = Column(String(50), nullable=True, index=True)
-    last_name = Column(String(50), nullable=True, index=True)
-    nickname = Column(String(80), nullable=True, index=True)
+    # 基础字段
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    username = Column(String(50), unique=True, index=True, nullable=False)
+    email = Column(String(100), unique=True, index=True, nullable=False)
+    hashed_password = Column(String(255), nullable=False)
+    nickname = Column(String(50), nullable=True)
+    avatar = Column(Text, nullable=True)
+    phone = Column(String(20), nullable=True, unique=True)
     bio = Column(Text, nullable=True)
-    avatar_url = Column(String(500), nullable=True)
     
-    # 联系信息
-    phone = Column(String(20), nullable=True, index=True)
-    country = Column(String(100), nullable=True, index=True)
-    city = Column(String(100), nullable=True, index=True)
+    # 状态字段
+    status = Column(Enum(UserStatus), default=UserStatus.PENDING, nullable=False)
+    email_verified = Column(Boolean, default=False, nullable=False)
+    phone_verified = Column(Boolean, default=False, nullable=False)
     
-    # 账户状态
-    role = Column(Enum(UserRoleEnum, values_callable=lambda obj: [e.value for e in obj], native_enum=False), default=UserRoleEnum.REGULAR_USER, nullable=False, index=True)
-    status = Column(Enum(UserStatusEnum, values_callable=lambda obj: [e.value for e in obj], native_enum=False), default=UserStatusEnum.ACTIVE, nullable=False, index=True)
-    is_verified = Column(Boolean, default=False, nullable=False, index=True)
-    is_online = Column(Boolean, default=False, nullable=False, index=True)
-    user_type = Column(Enum(UserTypeEnum, values_callable=lambda obj: [e.value for e in obj], native_enum=False), default=UserTypeEnum.NORMAL, nullable=False, index=True)
+    # 登录统计字段
+    last_login_time = Column(DateTime(timezone=True), nullable=True)
+    last_login_ip = Column(String(45), nullable=True)  # IPv6 compatible
+    login_count = Column(Integer, default=0, nullable=False)
     
-    # 偏好设置
-    timezone = Column(String(50), default="UTC", nullable=False, index=True)
-    language = Column(String(10), default="zh", nullable=False, index=True)
-    notification_preferences = Column(Text, default='{}', nullable=False)
+    # 时间戳字段
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), 
+                       onupdate=func.now(), nullable=False)
     
-    # 统计信息
-    login_count = Column(Integer, default=0, nullable=False, index=True)
-    last_login_at = Column(DateTime(timezone=True), nullable=True, index=True)
-    last_activity_at = Column(DateTime(timezone=True), nullable=True, index=True)
+    # 关系定义
+    # AI_WORKING: coder1 @2026-01-29T06:05:00 - 明确指定外键关系，解决AmbiguousForeignKeysError
+    roles = relationship("UserRoleMapping", foreign_keys="[UserRoleMapping.user_id]", back_populates="user", cascade="all, delete-orphan")
+    social_accounts = relationship("SocialAccount", back_populates="user", cascade="all, delete-orphan")
+    login_records = relationship("LoginRecord", back_populates="user", cascade="all, delete-orphan")
+    password_reset_tokens = relationship("PasswordResetToken", back_populates="user", cascade="all, delete-orphan")
+    email_verification_tokens = relationship("EmailVerificationToken", back_populates="user", cascade="all, delete-orphan")
+    # AI_WORKING: coder1 @2026-01-29 - 使用字符串引用解决循环导入问题
+    # user_predictions = relationship("UserPrediction", back_populates="user", cascade="all, delete-orphan")
     
-    # 社交信息
-    followers_count = Column(Integer, default=0, nullable=False, index=True)
-    following_count = Column(Integer, default=0, nullable=False, index=True)
+    # AI_WORKING: coder1 @2026-01-26T01:16:00 - 修复User.__repr__缺少闭合括号的语法错误
+    def __repr__(self):
+        return f"<User(id={self.id}, username='{self.username}', email='{self.email}', status='{self.status}')>"
+    # AI_DONE: coder1 @2026-01-26T01:16:00
     
-    # 外部数据
-    external_id = Column(String(100), nullable=True, index=True)  # 外部系统ID
-    external_source = Column(String(50), nullable=True, index=True)  # 外部数据来源
+    @property
+    def is_active(self) -> bool:
+        """检查用户是否处于活跃状态"""
+        return self.status == UserStatus.ACTIVE
     
-    # 配置信息
-    config = Column(MutableDict.as_mutable(JSON), default=lambda: {}, nullable=False)  # 用户配置
+    @property
+    def display_name(self) -> str:
+        """获取用户显示名称"""
+        return self.nickname or self.username
     
-    # 关系
-    login_logs = relationship("UserLoginLog", back_populates="user", cascade="all, delete-orphan")
-    activities = relationship("UserActivity", back_populates="user", cascade="all, delete-orphan")
-    subscriptions = relationship("UserSubscription", back_populates="user", cascade="all, delete-orphan")
-    predictions = relationship("UserPrediction", back_populates="user", cascade="all, delete-orphan")
-    roles = relationship("Role", secondary="user_roles", back_populates="users")
+    @property
+    def has_admin_role(self) -> bool:
+        """检查用户是否具有管理员角色"""
+        return any(role.role == UserRole.ADMIN for role in self.roles)
     
-    # 索引
+    @property
+    def avatar_url(self) -> str:
+        """获取用户头像URL"""
+        if self.avatar:
+            return self.avatar
+        # 返回默认头像
+        return f"https://ui-avatars.com/api/?name={self.username}&background=random"
+    
+    def to_dict(self) -> dict:
+        """转换为字典格式"""
+        return {
+            "id": self.id,
+            "username": self.username,
+            "email": self.email,
+            "nickname": self.nickname,
+            "avatar": self.avatar,
+            "phone": self.phone,
+            "bio": self.bio,
+            "status": self.status.value,
+            "email_verified": self.email_verified,
+            "phone_verified": self.phone_verified,
+            "last_login_time": self.last_login_time.isoformat() if self.last_login_time else None,
+            "last_login_ip": self.last_login_ip,
+            "login_count": self.login_count,
+            "created_at": self.created_at.isoformat(),
+            "updated_at": self.updated_at.isoformat(),
+            "roles": [role.role.value for role in self.roles]
+        }
+    
+    @staticmethod
+    def validate_username(username):
+        """验证用户名"""
+        if not username or len(username.strip()) == 0:
+            raise ValueError('用户名不能为空')
+        
+        username = username.strip()
+        
+        # 长度验证
+        if len(username) < 3 or len(username) > 50:
+            raise ValueError('用户名长度必须在3-50个字符之间')
+        
+        # 格式验证（字母、数字、下划线）
+        if not re.match(r'^[a-zA-Z0-9_]+$', username):
+            raise ValueError('用户名只能包含字母、数字和下划线')
+        
+        # 保留字检查
+        reserved_words = ['admin', 'root', 'system', 'test', 'guest']
+        if username.lower() in reserved_words:
+            raise ValueError(f'用户名不能使用保留字: {username}')
+        
+        # 连续字符检查
+        if re.search(r'(.)\1{2,}', username):
+            raise ValueError('用户名不能包含连续3个以上相同字符')
+        
+        return username
+    
+    @staticmethod
+    def validate_email(email):
+        """验证邮箱"""
+        if not email:
+            raise ValueError('邮箱不能为空')
+        
+        # 基础邮箱格式验证
+        email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        if not re.match(email_pattern, email):
+            raise ValueError('邮箱格式不正确')
+        
+        return email.lower()
+    
+    @staticmethod
+    def validate_phone(phone):
+        """验证手机号"""
+        if phone is not None:
+            # 简单的中国手机号验证
+            if not re.match(r'^1[3-9]\d{9}$', phone):
+                raise ValueError('手机号格式不正确')
+        return phone
+    
+    @staticmethod
+    def validate_bio(bio):
+        """验证个人简介"""
+        if bio is not None and len(bio) > 500:
+            raise ValueError('个人简介不能超过500个字符')
+        return bio
+
+class UserRoleMapping(Base):
+    """用户角色映射模型"""
+    __tablename__ = "user_role_mappings"
+    
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    role = Column(Enum(UserRole), nullable=False)
+    granted_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    granted_by = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    
+    # 关系定义
+    user = relationship("User", foreign_keys=[user_id], back_populates="roles")
+    granted_by_user = relationship("User", foreign_keys=[granted_by])
+    
+    def __repr__(self):
+        return f"<UserRoleMapping(user_id={self.user_id}, role='{self.role}')>"
+    
+    def to_dict(self) -> dict:
+        """转换为字典格式"""
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "role": self.role.value,
+            "granted_at": self.granted_at.isoformat(),
+            "granted_by": self.granted_by
+        }
+
+class SocialAccount(Base):
+    """社交账号关联模型"""
+    __tablename__ = "social_accounts"
+    
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    provider = Column(Enum(SocialProvider), nullable=False)
+    openid = Column(String(100), nullable=False)  # 社交平台用户唯一标识
+    unionid = Column(String(100), nullable=True)   # 微信开放平台统一标识
+    access_token = Column(Text, nullable=True)
+    refresh_token = Column(Text, nullable=True)
+    expires_at = Column(DateTime(timezone=True), nullable=True)
+    profile_data = Column(Text, nullable=True)  # 社交平台返回的用户资料JSON
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), 
+                       onupdate=func.now(), nullable=False)
+    
+    # 关系定义
+    user = relationship("User", foreign_keys=[user_id], back_populates="social_accounts")
+    
+    # 表级配置
     __table_args__ = (
-        Index('idx_users_status_role', 'status', 'role'),
-        Index('idx_users_country_city', 'country', 'city'),
-        Index('idx_users_created_at', 'created_at'),
-        {'extend_existing': True}  # 确保支持表扩展
+        # 唯一约束：同一用户在同一平台只能绑定一个账号
+        UniqueConstraint('user_id', 'provider', name='uix_user_provider'),
+        {'sqlite_autoincrement': True, 'mysql_charset': 'utf8mb4', 'extend_existing': True}
     )
 
-class Role(BaseFullModel):
-    """
-    角色模型
-    """
-    __tablename__ = "roles"
-    __table_args__ = {'extend_existing': True}  # 添加此选项以允许扩展已存在的表
     
-    name = Column(String(50), unique=True, nullable=False, index=True)
-    code = Column(String(30), unique=True, nullable=False, index=True)
-    description = Column(Text, nullable=True)
-    is_active = Column(Boolean, default=True, nullable=False, index=True)
+    def __repr__(self):
+        return f"<SocialAccount(user_id={self.user_id}, provider='{self.provider}', openid='{self.openid}')>"
     
-    # 权限关联
-    permissions = relationship("Permission", secondary="role_permissions", back_populates="roles")
-    users = relationship("User", secondary="user_roles", back_populates="roles")
+    @property
+    def is_token_valid(self) -> bool:
+        """检查访问令牌是否有效"""
+        if not self.expires_at:
+            return True  # 如果没有过期时间，认为一直有效
+        return self.expires_at > func.now()
     
-    __table_args__ = (
-        Index('idx_roles_active', 'is_active'),
-        {'extend_existing': True}  # 确保支持表扩展
-    )
+    def to_dict(self) -> dict:
+        """转换为字典格式"""
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "provider": self.provider.value,
+            "openid": self.openid,
+            "unionid": self.unionid,
+            "expires_at": self.expires_at.isoformat() if self.expires_at else None,
+            "created_at": self.created_at.isoformat(),
+            "updated_at": self.updated_at.isoformat()
+        }
 
-class Permission(BaseFullModel):
-    """
-    权限模型
-    """
-    __tablename__ = "permissions"
-    __table_args__ = {'extend_existing': True}  # 添加此选项以允许扩展已存在的表
+class LoginRecord(Base):
+    """登录记录模型"""
+    __tablename__ = "login_records"
     
-    name = Column(String(50), unique=True, nullable=False, index=True)
-    code = Column(String(30), unique=True, nullable=False, index=True)
-    description = Column(Text, nullable=True)
-    resource = Column(String(50), nullable=False, index=True)  # 资源类型
-    action = Column(String(50), nullable=False, index=True)    # 操作类型
-    is_active = Column(Boolean, default=True, nullable=False, index=True)
-    
-    # 角色关联
-    roles = relationship("Role", secondary="role_permissions", back_populates="permissions")
-    
-    __table_args__ = (
-        Index('idx_permissions_resource_action', 'resource', 'action'),
-        Index('idx_permissions_active', 'is_active'),
-        {'extend_existing': True}  # 确保支持表扩展
-    )
-
-class UserLoginLog(Base):
-    """
-    用户登录日志模型
-    """
-    __tablename__ = "user_login_logs"
-    __table_args__ = {'extend_existing': True}  # 添加此选项以允许扩展已存在的表
-    
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'), nullable=False, index=True)
-    login_at = Column(DateTime(timezone=True), default=func.now(), nullable=False, index=True)
-    login_ip = Column(String(45), nullable=True, index=True)  # 支持IPv6
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    login_time = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    login_ip = Column(String(45), nullable=False)  # IPv6 compatible
     user_agent = Column(Text, nullable=True)
-    success = Column(Boolean, default=True, nullable=False, index=True)
-    failure_reason = Column(String(255), nullable=True, index=True)
+    success = Column(Boolean, default=True, nullable=False)
+    failure_reason = Column(String(200), nullable=True)  # 登录失败原因
+    location = Column(String(100), nullable=True)  # IP地理位置
+    device_info = Column(Text, nullable=True)  # 设备信息JSON
     
-    # 地理位置信息
-    country = Column(String(100), nullable=True, index=True)
-    region = Column(String(100), nullable=True, index=True)
-    city = Column(String(100), nullable=True, index=True)
-    latitude = Column(String(20), nullable=True)
-    longitude = Column(String(20), nullable=True)
+    # 关系定义
+    user = relationship("User", foreign_keys=[user_id], back_populates="login_records")
     
-    # 设备信息
-    device_type = Column(String(50), nullable=True, index=True)  # mobile, tablet, desktop
-    device_name = Column(String(100), nullable=True)
-    os = Column(String(50), nullable=True, index=True)  # 操作系统
-    browser = Column(String(50), nullable=True, index=True)  # 浏览器
+    # AI_WORKING: coder1 @2026-01-28 - 修复LoginRecord.__repr__缺少闭合括号的语法错误
+    def __repr__(self):
+        return f"<LoginRecord(user_id={self.user_id}, login_time={self.login_time}, success={self.success})>"
+    # AI_DONE: coder1 @2026-01-28
     
-    # 关系
-    user = relationship("User", back_populates="login_logs")
-    
-    # 索引
-    __table_args__ = (
-        Index('idx_login_logs_user_time', 'user_id', 'login_at'),
-        Index('idx_login_logs_ip_time', 'login_ip', 'login_at'),
-        Index('idx_login_logs_success_time', 'success', 'login_at'),
-        {'extend_existing': True}  # 确保支持表扩展
-    )
+    def to_dict(self) -> dict:
+        """转换为字典格式"""
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "login_time": self.login_time.isoformat(),
+            "login_ip": self.login_ip,
+            "user_agent": self.user_agent,
+            "success": self.success,
+            "failure_reason": self.failure_reason,
+            "location": self.location,
+            "device_info": self.device_info
+        }
 
-class UserActivity(Base):
-    """
-    用户活动日志模型
-    """
-    __tablename__ = "user_activities"
-    __table_args__ = {'extend_existing': True}  # 添加此选项以允许扩展已存在的表
+class PasswordResetToken(Base):
+    """密码重置令牌模型"""
+    __tablename__ = "password_reset_tokens"
     
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'), nullable=False, index=True)
-    activity_type = Column(String(100), nullable=False, index=True)  # 登录、浏览、下单等
-    activity_time = Column(DateTime(timezone=True), default=func.now(), nullable=False, index=True)
-    description = Column(Text, nullable=True)
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    token = Column(String(255), unique=True, index=True, nullable=False)
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    used = Column(Boolean, default=False, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    used_at = Column(DateTime(timezone=True), nullable=True)
     
-    # 资源信息
-    resource_type = Column(String(50), nullable=True, index=True)  # match, league, prediction等
-    resource_id = Column(String(50), nullable=True, index=True)    # 资源ID
-    resource_name = Column(String(255), nullable=True, index=True) # 资源名称
+    # 关系定义
+    user = relationship("User", foreign_keys=[user_id], back_populates="password_reset_tokens")
     
-    # 请求信息
-    ip_address = Column(String(45), nullable=True, index=True)
-    user_agent = Column(Text, nullable=True)
-    endpoint = Column(String(255), nullable=True, index=True)      # 请求端点
-    http_method = Column(String(10), nullable=True, index=True)    # GET, POST等
-    http_status = Column(Integer, nullable=True, index=True)       # HTTP状态码
+    # AI_WORKING: coder1 @2026-01-25T21:36:00 - 修复PasswordResetToken.__repr__缺少闭合括号的语法错误
+    def __repr__(self):
+        return f"<PasswordResetToken(user_id={self.user_id}, used={self.used}, expires_at={self.expires_at})>"
+    # AI_DONE: coder1 @2026-01-25T21:36:00
     
-    # 附加信息
-    details = Column(MutableDict.as_mutable(Text), default=lambda: {}, nullable=False)  # 额外的详细信息
+    @property
+    def is_valid(self) -> bool:
+        """检查令牌是否有效"""
+        return not self.used and self.expires_at > func.now()
     
-    # 关系
-    user = relationship("User", back_populates="activities")
+    @property
+    def is_expired(self) -> bool:
+        """检查令牌是否过期"""
+        return self.expires_at <= func.now()
     
-    # 索引
-    __table_args__ = (
-        Index('idx_activities_user_time', 'user_id', 'activity_time'),
-        Index('idx_activities_type_time', 'activity_type', 'activity_time'),
-        Index('idx_activities_resource', 'resource_type', 'resource_id'),
-        {'extend_existing': True}  # 确保支持表扩展
-    )
+    def to_dict(self) -> dict:
+        """转换为字典格式"""
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "token": self.token,
+            "expires_at": self.expires_at.isoformat(),
+            "used": self.used,
+            "created_at": self.created_at.isoformat(),
+            "used_at": self.used_at.isoformat() if self.used_at else None,
+            "is_valid": self.is_valid
+        }
 
-class UserSubscription(Base):
-    """
-    用户订阅模型
-    """
-    __tablename__ = "user_subscriptions"
-    __table_args__ = {'extend_existing': True}  # 添加此选项以允许扩展已存在的表
+class EmailVerificationToken(Base):
+    """邮箱验证令牌模型"""
+    __tablename__ = "email_verification_tokens"
     
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'), nullable=False, index=True)
-    subscription_type = Column(String(50), nullable=False, index=True)  # match_updates, league_news, predictions等
-    target_id = Column(String(50), nullable=False, index=True)  # 订阅目标ID (联赛ID、球队ID等)
-    target_name = Column(String(255), nullable=False, index=True)  # 订阅目标名称
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    email = Column(String(100), nullable=False)  # 验证的邮箱地址
+    token = Column(String(255), unique=True, index=True, nullable=False)
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    used = Column(Boolean, default=False, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    used_at = Column(DateTime(timezone=True), nullable=True)
     
-    # 通知设置
-    notification_enabled = Column(Boolean, default=True, nullable=False)
-    email_notifications = Column(Boolean, default=True, nullable=False)
-    push_notifications = Column(Boolean, default=False, nullable=False)
+    # 关系定义
+    user = relationship("User", foreign_keys=[user_id], back_populates="email_verification_tokens")
     
-    # 状态
-    is_active = Column(Boolean, default=True, nullable=False, index=True)
-    subscribed_at = Column(DateTime(timezone=True), default=func.now(), nullable=False)
-    unsubscribed_at = Column(DateTime(timezone=True), nullable=True)
+    # AI_WORKING: coder1 @2026-01-25T21:37:00 - 修复EmailVerificationToken.__repr__缺少闭合括号的语法错误
+    def __repr__(self):
+        return f"<EmailVerificationToken(user_id={self.user_id}, email='{self.email}', used={self.used})>"
+    # AI_DONE: coder1 @2026-01-25T21:37:00
     
-    # 偏好设置
-    preferences = Column(Text, default='{}', nullable=False)  # 特定于订阅的偏好设置
+    @property
+    def is_valid(self) -> bool:
+        """检查令牌是否有效"""
+        return not self.used and self.expires_at > func.now()
     
-    # 关系
-    user = relationship("User", back_populates="subscriptions")
-    
-    # 索引
-    __table_args__ = (
-        Index('idx_subscriptions_user_type', 'user_id', 'subscription_type'),
-        Index('idx_subscriptions_target_active', 'target_id', 'is_active'),
-        Index('idx_subscriptions_active_type', 'is_active', 'subscription_type'),
-        {'extend_existing': True}  # 确保支持表扩展
-    )
+    def to_dict(self) -> dict:
+        """转换为字典格式"""
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "email": self.email,
+            "token": self.token,
+            "expires_at": self.expires_at.isoformat(),
+            "used": self.used,
+            "created_at": self.created_at.isoformat(),
+            "used_at": self.used_at.isoformat() if self.used_at else None,
+            "is_valid": self.is_valid
+        }
 
-# 初始化系统角色和权限
-SYSTEM_ROLES = [
-    {
-        "name": "超级管理员",
-        "code": "super_admin",
-        "description": "系统超级管理员，拥有所有权限",
-        "level": 0,
-        "is_default": False,
-        "is_system": True
-    },
-    {
-        "name": "管理员",
-        "code": "admin",
-        "description": "系统管理员，拥有大部分管理权限",
-        "level": 1,
-        "is_default": False,
-        "is_system": True
-    },
-    {
-        "name": "分析师",
-        "code": "analyst",
-        "description": "数据分析师，可以查看和分析所有数据",
-        "level": 2,
-        "is_default": False,
-        "is_system": True
-    },
-    {
-        "name": "高级用户",
-        "code": "premium",
-        "description": "高级用户，可以查看所有情报和高级功能",
-        "level": 3,
-        "is_default": False,
-        "is_system": False
-    },
-    {
-        "name": "普通用户",
-        "code": "normal",
-        "description": "普通用户，只能查看基本情报",
-        "level": 4,
-        "is_default": True,
-        "is_system": False
-    }
-]
-
-SYSTEM_PERMISSIONS = [
-    # 用户管理权限
-    {"name": "查看用户列表", "code": "user.read", "resource": "user", "action": "read"},
-    {"name": "创建用户", "code": "user.create", "resource": "user", "action": "create"},
-    {"name": "编辑用户", "code": "user.update", "resource": "user", "action": "update"},
-    {"name": "删除用户", "code": "user.delete", "resource": "user", "action": "delete"},
-    
-    # 角色管理权限
-    {"name": "查看角色列表", "code": "role.read", "resource": "role", "action": "read"},
-    {"name": "创建角色", "code": "role.create", "resource": "role", "action": "create"},
-    {"name": "编辑角色", "code": "role.update", "resource": "role", "action": "update"},
-    {"name": "删除角色", "code": "role.delete", "resource": "role", "action": "delete"},
-    
-    # 权限管理权限
-    {"name": "查看权限列表", "code": "permission.read", "resource": "permission", "action": "read"},
-    {"name": "创建权限", "code": "permission.create", "resource": "permission", "action": "create"},
-    {"name": "编辑权限", "code": "permission.update", "resource": "permission", "action": "update"},
-    {"name": "删除权限", "code": "permission.delete", "resource": "permission", "action": "delete"},
-    
-    # 比赛管理权限
-    {"name": "查看比赛列表", "code": "match.read", "resource": "match", "action": "read"},
-    {"name": "查看比赛详情", "code": "match.read_detail", "resource": "match", "action": "read_detail"},
-    {"name": "创建比赛", "code": "match.create", "resource": "match", "action": "create"},
-    {"name": "编辑比赛", "code": "match.update", "resource": "match", "action": "update"},
-    {"name": "删除比赛", "code": "match.delete", "resource": "match", "action": "delete"},
-    
-    # 情报管理权限
-    {"name": "查看情报列表", "code": "intelligence.read", "resource": "intelligence", "action": "read"},
-    {"name": "查看情报详情", "code": "intelligence.read_detail", "resource": "intelligence", "action": "read_detail"},
-    {"name": "创建情报", "code": "intelligence.create", "resource": "intelligence", "action": "create"},
-    {"name": "编辑情报", "code": "intelligence.update", "resource": "intelligence", "action": "update"},
-    {"name": "删除情报", "code": "intelligence.delete", "resource": "intelligence", "action": "delete"},
-    
-    # 高级数据权限
-    {"name": "查看赔率数据", "code": "odds.read", "resource": "odds", "action": "read"},
-    {"name": "查看高级统计", "code": "stats.advanced", "resource": "stats", "action": "advanced"},
-    {"name": "查看预测数据", "code": "prediction.read", "resource": "prediction", "action": "read"},
-    
-    # 系统管理权限
-    {"name": "访问管理后台", "code": "admin.access", "resource": "admin", "action": "access"},
-    {"name": "查看系统日志", "code": "log.read", "resource": "log", "action": "read"},
-    {"name": "管理系统配置", "code": "config.manage", "resource": "config", "action": "manage"},
-    {"name": "查看系统状态", "code": "system.status", "resource": "system", "action": "status"},
-    
-    # 数据导入导出权限
-    {"name": "导入数据", "code": "data.import", "resource": "data", "action": "import"},
-    {"name": "导出数据", "code": "data.export", "resource": "data", "action": "export"},
+# 导出所有模型
+__all__ = [
+    # 枚举
+    'UserRole', 'UserStatus', 'SocialProvider',
+    # 主要模型
+    'User', 'UserRoleMapping', 'SocialAccount', 
+    'LoginRecord', 'PasswordResetToken', 'EmailVerificationToken'
 ]

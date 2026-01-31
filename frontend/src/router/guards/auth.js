@@ -2,7 +2,7 @@
 import { useAuthStore } from '../../store/modules/user';
 
 // 临时模拟模式 - 开发环境下跳过认证检查
-const isDevelopment = process.env.NODE_ENV === 'development';
+const isDevelopment = import.meta.env.MODE === 'development';
 
 /**
  * 认证守卫

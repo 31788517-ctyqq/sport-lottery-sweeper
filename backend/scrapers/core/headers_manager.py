@@ -235,7 +235,7 @@ class CookieManager:
         headers = base_headers.copy() if base_headers else {}
         
         # 添加指纹相关头部
-        fp = self.generate_browser_fingerprint()
+        fp = self.generate_browser_fingerlogger.debug()
         
         # Sec-CH-UA (Chrome的用户代理客户端提示)
         chrome_versions = ['91', '92', '93', '94', '95', '96', '97', '98', '99', '100']
@@ -479,7 +479,7 @@ class HeadersManager:
         headers = profile.generate_headers(platform)
         
         # 添加浏览器指纹
-        headers = CookieManager().get_headers_with_fingerprint(headers)
+        headers = CookieManager().get_headers_with_fingerlogger.debug(headers)
         
         # 随机化一些头部顺序和值
         if random.random() > 0.7:

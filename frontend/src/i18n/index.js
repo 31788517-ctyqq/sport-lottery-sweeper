@@ -23,7 +23,7 @@ export function createI18nInstance() {
     messages,
     datetimeFormats: createDatetimeFormats(),
     numberFormats: createNumberFormats(),
-    silentTranslationWarn: process.env.NODE_ENV === 'production',
+    silentTranslationWarn: import.meta.env.MODE === 'production',
     missingWarn: false,
     fallbackWarn: false,
     silentFallbackWarn: true,

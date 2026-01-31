@@ -40,3 +40,22 @@ class CrawlerConfig(CrawlerConfigBase):
 
     class Config:
         from_attributes = True
+
+
+class CrawlerConfigResponse(BaseModel):
+    """爬虫配置响应模型"""
+    id: int
+    name: str
+    source_url: str
+    enabled: bool
+    interval_minutes: int
+    timeout_seconds: int
+    retry_times: int
+    headers: Optional[str]
+    proxy_enabled: bool
+    priority: int
+    created_at: datetime
+    updated_at: datetime
+    
+    class Config:
+        from_attributes = True

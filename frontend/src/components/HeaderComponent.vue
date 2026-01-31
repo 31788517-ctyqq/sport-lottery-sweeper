@@ -17,7 +17,7 @@
 </template>
 
 <script>
-import { useAppStore } from '../stores';
+import { useAppStore } from '@/stores';
 
 export default {
   name: 'HeaderComponent',

@@ -133,6 +133,23 @@ export const adminAPI = {
   getServerLogs(params = {}) {
     return client.get('/admin/monitoring/server-logs', { params });
   },
+
+  // 兼容别名方法
+  getUsersList(params = {}) {
+    return this.getUsers(params);
+  },
+
+  getOperationLogs(params = {}) {
+    return this.getSystemLogs(params);
+  },
+
+  getStats() {
+    return this.getSystemMetrics();
+  },
+
+  updateUserStatus(userId, status) {
+    return this.updateUser(userId, { status });
+  },
 };
 
 // 解构所有方法
@@ -173,4 +190,8 @@ export const {
   deleteBackup: adminDeleteBackup,
   getSystemMetrics: adminGetSystemMetrics,
   getServerLogs: adminGetServerLogs,
+  getUsersList: adminGetUsersList,
+  getOperationLogs: adminGetOperationLogs,
+  getStats: adminGetStats,
+  updateUserStatus: adminUpdateUserStatus,
 } = adminAPI;

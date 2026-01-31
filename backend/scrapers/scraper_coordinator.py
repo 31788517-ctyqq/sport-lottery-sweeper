@@ -3,6 +3,8 @@
 负责协调多个爬虫模块的工作
 """
 from enum import Enum
+import logging
+logger = logging.getLogger(__name__)
 from typing import List, Dict, Any
 from .zqszsc_scraper import zqszsc_scraper
 
@@ -42,7 +44,7 @@ class ScraperCoordinator:
                     match['source'] = source
                 all_matches.extend(matches)
             except Exception as e:
-                print(f"获取 {source} 数据时出错: {e}")
+                logger.debug(f"获取 {source} 数据时出错: {e}")
                 
         return all_matches
 
@@ -54,7 +56,7 @@ class ScraperCoordinator:
         try:
             return self.scrapers[source].get_matches_within_days(days_ahead)
         except Exception as e:
-            print(f"获取 {source} 数据时出错: {e}")
+            logger.debug(f"获取 {source} 数据时出错: {e}")
             return []
 
 

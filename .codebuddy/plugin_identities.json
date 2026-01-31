@@ -1,0 +1,163 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2026-01-25T00:00:00Z",
+  "description": "AI插件身份注册与协同配置",
+  "plugins": {
+    "coder1": {
+      "name": "主要代码编写AI",
+      "type": "primary_coder",
+      "identity": "claude-3-5-sonnet",
+      "capabilities": [
+        "代码编写",
+        "架构设计", 
+        "bug修复",
+        "性能优化",
+        "代码重构"
+      ],
+      "priority": 1,
+      "color": "#FF6B6B",
+      "can_modify_files": true,
+      "can_create_files": true,
+      "max_concurrent_operations": 3,
+      "specialties": ["Vue 3", "FastAPI", "TypeScript", "Python"],
+      "communication_protocol": "json_rpc",
+      "heartbeat_interval": 30
+    },
+    "coder2": {
+      "name": "辅助代码编写AI",
+      "type": "secondary_coder",
+      "identity": "github-copilot",
+      "capabilities": [
+        "代码补全",
+        "单元测试生成",
+        "文档编写",
+        "简单功能实现"
+      ],
+      "priority": 2,
+      "color": "#4ECDC4",
+      "can_modify_files": true,
+      "can_create_files": false,
+      "max_concurrent_operations": 2,
+      "specialties": ["JavaScript", "Python", "Vue", "API集成"],
+      "communication_protocol": "direct_message",
+      "heartbeat_interval": 60
+    },
+    "tester1": {
+      "name": "测试AI",
+      "type": "quality_assurance",
+      "identity": "tabnine-test",
+      "capabilities": [
+        "测试用例生成",
+        "测试执行",
+        "覆盖率分析",
+        "性能测试"
+      ],
+      "priority": 3,
+      "color": "#45B7D1",
+      "can_modify_files": true,
+      "can_create_files": true,
+      "max_concurrent_operations": 2,
+      "specialties": ["Pytest", "Vitest", "E2E测试", "性能基准"],
+      "communication_protocol": "event_driven",
+      "heartbeat_interval": 45
+    },
+    "reviewer1": {
+      "name": "代码审查AI",
+      "type": "code_reviewer",
+      "identity": "sonarqube-ai",
+      "capabilities": [
+        "代码质量检查",
+        "安全漏洞扫描",
+        "最佳实践验证",
+        "性能分析"
+      ],
+      "priority": 4,
+      "color": "#96CEB4",
+      "can_modify_files": false,
+      "can_create_files": true,
+      "max_concurrent_operations": 1,
+      "specialties": ["代码审查", "静态分析", "安全审计", "合规性检查"],
+      "communication_protocol": "batch_report",
+      "heartbeat_interval": 120
+    },
+    "analyzer1": {
+      "name": "分析AI",
+      "type": "data_analyzer",
+      "identity": "codegecko-analyzer",
+      "capabilities": [
+        "项目分析",
+        "依赖关系分析",
+        "性能瓶颈识别",
+        "架构建议"
+      ],
+      "priority": 5,
+      "color": "#FECA57",
+      "can_modify_files": false,
+      "can_create_files": true,
+      "max_concurrent_operations": 1,
+      "specialties": ["静态分析", "架构分析", "依赖分析", "趋势预测"],
+      "communication_protocol": "report_only",
+      "heartbeat_interval": 300
+    }
+  },
+  "collaboration_rules": {
+    "conflict_resolution": {
+      "strategy": "timestamp_priority",
+      "fallback": "user_arbitration",
+      "rules": [
+        "时间戳优先：先获取锁的AI获得优先权",
+        "优先级次之：同时间时按priority数值决定",
+        "用户仲裁：无法解决时标记需要人工介入"
+      ]
+    },
+    "communication_format": {
+      "file_modification": {
+        "required_fields": ["ai_id", "timestamp", "action", "file_path", "description"],
+        "format": {
+          "ai_working": "# AI_WORKING: {ai_id} @{timestamp} - {description}",
+          "ai_done": "# AI_DONE: {ai_id} @{timestamp}",
+          "ai_conflict": "# AI_CONFLICT: {ai_id} @{timestamp} - {issue_description}"
+        }
+      },
+      "state_notifications": {
+        "lock_acquired": {
+          "type": "notification",
+          "message": {
+            "event": "lock_acquired",
+            "ai_id": "{ai_id}",
+            "file": "{file_path}",
+            "timestamp": "{timestamp}",
+            "expires_at": "{expires_at}"
+          }
+        },
+        "work_completed": {
+          "type": "notification", 
+          "message": {
+            "event": "work_completed",
+            "ai_id": "{ai_id}",
+            "file": "{file_path}",
+            "timestamp": "{timestamp}",
+            "changes": "{changes_summary}"
+          }
+        }
+      }
+    },
+    "atomic_operations": {
+      "max_changes_per_file": 3,
+      "min_interval_same_file": 5,
+      "complex_task_decomposition": true,
+      "require_confirmation_after": 5
+    }
+  },
+  "active_plugins": {
+    "registration_required": true,
+    "auto_cleanup": true,
+    "timeout_threshold": 600
+  },
+  "monitoring": {
+    "enabled": true,
+    "log_level": "INFO",
+    "metrics_collection": true,
+    "performance_tracking": true
+  }
+}

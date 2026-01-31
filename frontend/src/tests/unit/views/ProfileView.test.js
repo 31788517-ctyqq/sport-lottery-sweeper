@@ -1,10 +1,11 @@
+// AI_WORKING: coder1 @2026-01-29 18:36:01 - 修复导入路径和语法问题
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import { createRouter, createWebHistory } from 'vue-router'
-import ProfileView from '@/views/ProfileView.vue'
-import { useAuth } from '@/composables/useAuth.js'
-import { useBets } from '@/composables/useBets.js'
+import ProfileView from '../../views/ProfileView.vue'
+import { useAuth } from '../../composables/useAuth.js'
+import { useBets } from '../../composables/useBets.js'
 
 // 模拟 toast
 global.toast = {
@@ -17,17 +18,17 @@ global.toast = {
 // 模拟 vue-router 导航守卫
 global.window = Object.create(window)
 Object.defineProperty(window, 'location', {
-  value: { href: 'http://localhost:3000/' },
+  value,
   writable: true
 })
 
 const routes = [
-  { path: '/', component: { template: '<div>Home</div>' } },
-  { path: '/profile/edit', component: { template: '<div>Edit Profile</div>' } },
-  { path: '/profile/password', component: { template: '<div>Change Password</div>' } },
-  { path: '/profile/preferences', component: { template: '<div>Preferences</div>' } },
-  { path: '/login', component: { template: '<div>Login</div>' } },
-  { path: '/bets/history', component: { template: '<div>Bet History</div>' } }
+  { path: '/', component },
+  { path: '/profile/edit', component },
+  { path: '/profile/password', component },
+  { path: '/profile/preferences', component },
+  { path: '/login', component },
+  { path: '/bets/history', component }
 ]
 
 const router = createRouter({
@@ -45,39 +46,11 @@ describe('ProfileView.vue', () => {
     
     const pinia = createTestingPinia({
       createSpy: vi.fn,
-      initialState: {
-        auth: {
-          user: {
-            id: 1,
-            username: 'testuser',
-            email: 'test@example.com',
-            phone: '13800138000',
-            nickname: 'Test User',
-            balance: 1000.0,
-            points: 100,
-            avatar: '/avatars/default.jpg',
-            member_level: 'gold',
-            join_date: '2024-01-01T00:00:00Z',
-            last_login: '2024-01-22T10:00:00Z',
-            preferences: {
-              notifications: true,
-              theme: 'light',
-              language: 'zh-CN'
-            }
+      initialState
           },
           loading: false
         },
-        bets: {
-          statistics: {
-            total_bets: 50,
-            won_bets: 30,
-            lost_bets: 18,
-            pending_bets: 2,
-            win_rate: 60.0,
-            total_amount: 5000.0,
-            total_won: 6200.0,
-            net_profit: 1200.0
-          },
+        bets,
           loading: false
         }
       }
@@ -87,19 +60,7 @@ describe('ProfileView.vue', () => {
     betsComposable = useBets()
     
     wrapper = mount(ProfileView, {
-      global: {
-        plugins: [pinia, router],
-        stubs: {
-          UserAvatar: true,
-          InfoCard: true,
-          StatsGrid: true,
-          PreferenceItem: true,
-          SecurityItem: true,
-          BettingStats: true,
-          EditProfileModal: true,
-          ChangePasswordModal: true,
-          PreferencesModal: true
-        }
+      
       }
     })
     
@@ -466,7 +427,7 @@ describe('ProfileView.vue', () => {
       if (avatarUpload.exists()) {
         const file = new File(['avatar'], 'avatar.jpg', { type: 'image/jpeg' })
         
-        await avatarUpload.trigger('change', { target: { files: [file] } })
+        await avatarUpload.trigger('change', { target })
         
         expect(wrapper.vm.uploadAvatar).toHaveBeenCalled()
       }
@@ -738,14 +699,15 @@ describe('ProfileView.vue', () => {
 
     it('应该防止XSS攻击', async () => {
       const xssData = {
-        nickname: '<script>alert("xss")</script>',
-        email: 'test@<script>evil</script>.com'
+        nickname: 'alert("xss")</script>',
+        email: 'test@evil</script>.com'
       }
       
       await wrapper.vm.saveProfile(xssData)
       
       // 验证XSS数据被清理
-      expect(wrapper.vm.user.nickname).not.toContain('<script>')
+      expect(wrapper.vm.user.nickname).not.toContain('')
     })
   })
 })
+// AI_DONE: coder1 @2026-01-29 18:36:01

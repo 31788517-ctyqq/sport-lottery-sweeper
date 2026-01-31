@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites name="vitest tests" tests="1" failures="1" errors="0" time="6752.943">
+    <testsuite name="src/tests/unit/basic.test.js" timestamp="2026-01-29T16:48:37.448Z" hostname="dmc" tests="1" failures="1" errors="0" skipped="0" time="0">
+        <testcase classname="src/tests/unit/basic.test.js" name="src/tests/unit/basic.test.js" time="0">
+            <failure message="Cannot read properties of undefined (reading &apos;test&apos;)" type="TypeError">
+TypeError: Cannot read properties of undefined (reading &apos;test&apos;)
+ ❯ src/tests/unit/basic.test.js:3:1
+            </failure>
+        </testcase>
+    </testsuite>
+</testsuites>

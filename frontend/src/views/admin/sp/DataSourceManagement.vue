@@ -142,17 +142,73 @@
         </el-form-item>
         
         <el-form-item label="类型" prop="type">
-          <el-radio-group v-model="form.type">
+          <el-radio-group v-model="form.type" @change="handleTypeChange">
             <el-radio label="api">API接口</el-radio>
             <el-radio label="file">本地文件</el-radio>
           </el-radio-group>
         </el-form-item>
         
-        <el-form-item label="地址/路径" prop="url">
+        <el-form-item 
+          v-if="form.type === 'api'" 
+          label="地址/路径" 
+          prop="url"
+        >
           <el-input 
             v-model="form.url" 
-            :placeholder="form.type === 'api' ? '请输入API接口地址' : '请输入文件路径'"
+            placeholder="请输入API接口地址"
           />
+        </el-form-item>
+        
+        <el-form-item 
+          v-else 
+          label="上传文件" 
+          prop="url"
+        >
+          <div class="file-upload-section">
+            <el-upload
+              class="upload-demo"
+              drag
+              :action="uploadUrl"
+              :on-success="handleFileUploadSuccess"
+              :on-error="handleFileUploadError"
+              :before-upload="beforeFileUpload"
+              :file-list="fileList"
+              :show-file-list="true"
+              accept=".csv,.xlsx,.xls,.json,.txt"
+            >
+              <div v-if="!uploadedFile" class="upload-placeholder">
+                <el-icon class="el-icon--upload"><upload-filled /></el-icon>
+                <div class="el-upload__text">
+                  拖拽文件到此处或<em>点击上传</em>
+                </div>
+                <div class="el-upload__tip">
+                  只能上传 csv/xlsx/xls/json/txt 文件
+                </div>
+              </div>
+              <div v-else class="uploaded-file-info">
+                <div class="file-name">{{ uploadedFile.name }}</div>
+                <div class="file-size">{{ formatFileSize(uploadedFile.size) }}</div>
+              </div>
+            </el-upload>
+            
+            <div v-if="uploadedFile" class="file-path-display">
+              <el-input 
+                v-model="form.url" 
+                placeholder="上传后的文件路径"
+                readonly
+              >
+                <template #prepend>{{ storagePrefix }}</template>
+              </el-input>
+              <el-button 
+                type="danger" 
+                size="small" 
+                @click="removeUploadedFile"
+                style="margin-left: 10px;"
+              >
+                重新选择
+              </el-button>
+            </div>
+          </div>
         </el-form-item>
         
         <el-form-item label="配置信息" prop="config">
@@ -204,7 +260,7 @@
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Connection, Upload, SuccessFilled, CircleCloseFilled } from '@element-plus/icons-vue'
+import { Plus, Connection, Upload, SuccessFilled, CircleCloseFilled, UploadFilled } from '@element-plus/icons-vue'
 import { getDataSourceList, createDataSource, updateDataSource, deleteDataSource, testDataSourceConnection } from '@/api/sp'
 
 // 响应式数据
@@ -215,6 +271,12 @@ const testResultVisible = ref(false)
 const formRef = ref()
 const tableData = ref([])
 const selectedRows = ref([])
+const fileList = ref([])
+const uploadedFile = ref(null)
+
+// 上传相关配置
+const uploadUrl = ref(`${import.meta.env.VITE_API_BASE_URL}/admin/sp/upload-file`) // 假设后端有这个上传接口
+const storagePrefix = ref('/uploads/') // 假设文件存储在该路径下
 
 // 搜索表单
 const searchForm = reactive({
@@ -244,7 +306,14 @@ const form = reactive({
 const rules = {
   name: [{ required: true, message: '请输入数据源名称', trigger: 'blur' }],
   type: [{ required: true, message: '请选择类型', trigger: 'change' }],
-  url: [{ required: true, message: '请输入地址/路径', trigger: 'blur' }]
+  url: [
+    { 
+      required: true, 
+      message: '请输入地址/路径', 
+      trigger: 'blur',
+      validator: validateUrl 
+    }
+  ]
 }
 
 // 测试连接结果
@@ -252,6 +321,17 @@ const testResult = ref({})
 
 // 计算属性
 const dialogTitle = computed(() => form.id ? '编辑数据源' : '新增数据源')
+
+// 验证URL
+function validateUrl(rule, value, callback) {
+  if (form.type === 'api' && !value) {
+    callback(new Error('请输入API接口地址'))
+  } else if (form.type === 'file' && !value && !uploadedFile.value) {
+    callback(new Error('请上传文件'))
+  } else {
+    callback()
+  }
+}
 
 // 方法
 const loadData = async () => {
@@ -298,6 +378,13 @@ const handleAdd = () => {
 
 const handleEdit = (row) => {
   Object.assign(form, row)
+  // 如果是文件类型，提取文件名显示
+  if (form.type === 'file' && form.url) {
+    uploadedFile.value = {
+      name: form.url.split('/').pop(),
+      size: 0 // 实际应用中可能需要从后端获取文件大小
+    }
+  }
   dialogVisible.value = true
 }
 
@@ -322,6 +409,11 @@ const handleSubmit = async () => {
   if (!formRef.value) return
   
   try {
+    // 特殊处理文件类型：如果选择了文件类型但还没有URL，但是有上传的文件，则使用上传的文件
+    if (form.type === 'file' && !form.url && uploadedFile.value) {
+      form.url = storagePrefix.value + uploadedFile.value.name
+    }
+    
     await formRef.value.validate()
     submitLoading.value = true
     
@@ -336,7 +428,15 @@ const handleSubmit = async () => {
     dialogVisible.value = false
     loadData()
   } catch (error) {
-    ElMessage.error(form.id ? '更新失败' : '创建失败')
+    console.error('提交错误:', error)
+    if (error?.message?.includes('ElUpload')) {
+      // 这是Element Plus上传组件的错误
+      ElMessage.error('请先上传文件')
+    } else if (error?.toString().includes('表单验证失败')) {
+      ElMessage.error('请填写必填字段')
+    } else {
+      ElMessage.error(form.id ? '更新失败' : '创建失败')
+    }
   } finally {
     submitLoading.value = false
   }
@@ -408,6 +508,8 @@ const resetForm = () => {
     config: '',
     status: true
   })
+  uploadedFile.value = null
+  fileList.value = []
   if (formRef.value) {
     formRef.value.resetFields()
   }
@@ -415,7 +517,95 @@ const resetForm = () => {
 
 const formatDate = (date) => {
   if (!date) return '-'
-  return new Date(date).toLocaleString()
+  // 尝试解析ISO格式日期字符串
+  let dateObj
+  if (typeof date === 'string') {
+    dateObj = new Date(date)
+  } else {
+    dateObj = date
+  }
+  
+  // 检查日期是否有效
+  if (isNaN(dateObj.getTime())) {
+    return '-'
+  }
+  
+  // 格式化为本地日期时间字符串
+  return dateObj.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
+  })
+}
+
+// 添加缺失的handleViewLogs方法
+const handleViewLogs = (row) => {
+  // 跳转到日志页面，传入数据源ID
+  ElMessage.info('跳转到日志查看页面，当前仅作演示')
+  console.log('查看数据源', row.id, '的日志')
+}
+
+// 添加缺失的handleImport方法
+const handleImport = () => {
+  ElMessage.info('批量导入功能，当前仅作演示')
+  console.log('开始批量导入数据源')
+}
+
+// 处理类型变化
+const handleTypeChange = (type) => {
+  if (type === 'api') {
+    // 切换到API时不处理
+  } else {
+    // 切换到文件类型时清空URL，准备上传文件
+    form.url = ''
+    uploadedFile.value = null
+  }
+}
+
+// 文件上传相关方法
+const beforeFileUpload = (file) => {
+  const allowedTypes = ['text/csv', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/json', 'text/plain']
+  const isAllowedType = allowedTypes.includes(file.type)
+  const isLt2M = file.size / 1024 / 1024 < 20 // 限制20MB
+
+  if (!isAllowedType) {
+    ElMessage.error('只能上传csv/xlsx/xls/json/txt格式的文件!')
+  }
+  if (!isLt2M) {
+    ElMessage.error('文件大小不能超过20MB!')
+  }
+
+  return isAllowedType && isLt2M
+}
+
+const handleFileUploadSuccess = (response, file) => {
+  ElMessage.success('文件上传成功')
+  uploadedFile.value = file
+  // 假设后端返回文件路径，或者直接使用文件名
+  form.url = storagePrefix.value + file.name
+}
+
+const handleFileUploadError = (error) => {
+  console.error('文件上传失败:', error)
+  ElMessage.error('文件上传失败')
+}
+
+const removeUploadedFile = () => {
+  uploadedFile.value = null
+  form.url = ''
+  fileList.value = []
+  ElMessage.info('已清除已上传的文件')
+}
+
+const formatFileSize = (bytes) => {
+  if (bytes === 0) return '0 Bytes'
+  const k = 1024
+  const sizes = ['Bytes', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
 }
 
 // 生命周期
@@ -484,5 +674,50 @@ onMounted(() => {
 
 :deep(.el-form-item__label) {
   font-weight: 500;
+}
+
+.file-upload-section {
+  width: 100%;
+}
+
+.upload-demo {
+  width: 100%;
+}
+
+.upload-placeholder {
+  text-align: center;
+  padding: 20px;
+  border: 1px dashed #d9d9d9;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: border-color 0.3s;
+}
+
+.upload-placeholder:hover {
+  border-color: #409eff;
+}
+
+.uploaded-file-info {
+  padding: 10px;
+  background-color: #f5f7fa;
+  border-radius: 4px;
+  margin-top: 10px;
+}
+
+.file-name {
+  font-weight: bold;
+  color: #303133;
+  margin-bottom: 5px;
+}
+
+.file-size {
+  color: #909399;
+  font-size: 12px;
+}
+
+.file-path-display {
+  display: flex;
+  align-items: center;
+  margin-top: 15px;
 }
 </style>

@@ -14,15 +14,15 @@ try:
     
     if response.status_code == 200:
         result = response.json()
-        print("\n✅ 登录成功!")
+        print("\n[OK] 登录成功!")
         print(json.dumps(result, indent=2, ensure_ascii=False))
         sys.exit(0)
     else:
-        print(f"\n❌ 登录失败")
+        print(f"\n[ERROR] 登录失败")
         sys.exit(1)
         
 except Exception as e:
-    print(f"❌ 错误: {e}")
+    print(f"[ERROR] 错误: {e}")
     import traceback
     traceback.print_exc()
     sys.exit(1)

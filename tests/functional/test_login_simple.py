@@ -36,12 +36,12 @@ def test_login():
         print(f"响应内容: {r.text}")
         
         if r.status_code == 200:
-            print("✅ 登录成功!")
+            print("[OK] 登录成功!")
             response_data = r.json()
             if 'access_token' in response_data:
                 print(f"   访问令牌: {response_data['access_token'][:50]}...")
         else:
-            print("❌ 登录失败")
+            print("[ERROR] 登录失败")
             
     except Exception as e:
         print(f"登录请求异常: {e}")

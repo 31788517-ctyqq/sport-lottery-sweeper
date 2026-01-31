@@ -1,0 +1,53 @@
+---
+description: 
+alwaysApply: true
+enabled: true
+updatedAt: 2026-01-25T09:32:38.745Z
+provider: 
+---
+
+# 多AI协同工作机制 - 强制遵守
+
+## 核心原则
+**所有AI必须严格遵守此规则，否则会造成项目冲突**
+
+## 必须执行的流程
+
+### 修改任何文件前，AI必须按顺序执行：
+1. **检查锁状态**: `python .codebuddy/locks/check_lock.py check 文件名 AI标识`
+2. **创建锁**: `python .codebuddy/locks/check_lock.py create 文件名 AI标识` 
+3. **进行代码修改**
+4. **释放锁**: `python .codebuddy/locks/check_lock.py release 文件名 AI标识`
+
+### AI身份标识分配：
+- `coder1`: 主要代码编写AI
+- `coder2`: 辅助代码编写AI  
+- `tester1`: 测试AI
+- `reviewer1`: 代码审查AI
+- `analyzer1`: 分析AI
+
+## 代码注释强制规范
+修改代码时必须在相关段落添加：
+```python
+# AI_WORKING: [AI标识] @[时间戳] - 具体修改说明
+# [修改的代码]
+# AI_DONE: [AI标识] @[时间戳]
+```
+
+## 冲突处理
+- 发现LOCKED状态：**必须停止修改**，等待或联系协调
+- 发现STALE状态：可清理过期锁后继续
+- 无法解决冲突：添加 `# AI_CONFLICT: 需要人工介入` 并停止
+
+## 原子化操作
+- 单次只能修改1个文件的前3处变更
+- 连续修改同一文件间隔≥5秒
+- 复杂任务必须拆解成多个独立步骤
+
+## 验证机制
+每次操作后AI必须：
+1. 检查锁状态确认成功
+2. 验证status.json已更新
+3. 确认代码注释已添加
+
+**违反此规则的AI操作将被拒绝执行**

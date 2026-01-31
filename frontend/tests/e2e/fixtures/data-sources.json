@@ -1,0 +1,41 @@
+{
+  "code": 200,
+  "message": "success",
+  "data": {
+    "items": [
+      {
+        "id": 1,
+        "name": "500彩票网API",
+        "type": "api",
+        "url": "https://api.500.com/v1/lottery",
+        "status": true,
+        "last_update": "2024-01-15T10:30:00Z",
+        "error_rate": 2.5,
+        "config": "{\"headers\":{\"Authorization\":\"Bearer token\"}}"
+      },
+      {
+        "id": 2,
+        "name": "本地比赛数据",
+        "type": "file",
+        "url": "/uploads/matches.csv",
+        "status": true,
+        "last_update": "2024-01-14T15:45:00Z",
+        "error_rate": 0.0,
+        "config": "{\"delimiter\":\",\"}"
+      },
+      {
+        "id": 3,
+        "name": "测试数据源",
+        "type": "api",
+        "url": "https://test.api.com/data",
+        "status": false,
+        "last_update": "2024-01-10T09:20:00Z",
+        "error_rate": 15.0,
+        "config": "{}"
+      }
+    ],
+    "total": 3,
+    "page": 1,
+    "size": 20
+  }
+}

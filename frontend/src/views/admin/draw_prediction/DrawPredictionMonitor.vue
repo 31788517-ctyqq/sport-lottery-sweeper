@@ -76,8 +76,8 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, onUnmounted, nextTick } from 'vue'
-import axios from 'axios'
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
+import { getPredictions } from '@/api/drawPrediction'
 import { ElMessage } from 'element-plus'
 import * as echarts from 'echarts'
 
@@ -102,11 +102,12 @@ const fetchPredictions = async () => {
       params.start_date = dateRange.value[0]
       params.end_date = dateRange.value[1]
     }
-    const res = await axios.get('/api/v1/admin/draw-prediction/predictions', { params })
+    const res = await getPredictions(params)
     predictionList.value = res.data
     await nextTick()
     initChart()
   } catch (err) {
+    console.error('获取预测数据失败:', err)
     ElMessage.error('获取预测数据失败')
   }
 }

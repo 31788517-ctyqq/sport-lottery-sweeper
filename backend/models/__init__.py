@@ -4,9 +4,9 @@
 from .base import Base, BaseModel, BaseAuditModel, BaseSoftDeleteModel, BaseFullModel, BaseUUIDModel
 from .match import Match, Team, League, MatchStatusEnum, MatchTypeEnum, MatchImportanceEnum
 from .intelligence import Intelligence, IntelligenceType, IntelligenceSource, IntelligenceTypeEnum, IntelligenceSourceEnum
-from .user import User, UserRoleEnum, UserStatusEnum, UserTypeEnum, Permission, Role
+from .user_models import User, UserRole, UserStatus, SocialProvider, UserPrediction
 from .venues import Venue, VenueTypeEnum, VenueSurfaceEnum
-from .predictions import Prediction, UserPrediction, PredictionMethodEnum, PredictionTypeEnum, PredictionAccuracyEnum
+from .predictions import Prediction, PredictionMethodEnum, PredictionTypeEnum, PredictionAccuracyEnum
 from .odds import Odds, Bookmaker, OddsProviderEnum, OddsTypeEnum, OddsMovementTypeEnum
 from .data_review import DataReview, DataTypeEnum, ReviewStatusEnum
 from .admin_user import AdminUser, AdminRoleEnum, AdminStatusEnum
@@ -19,6 +19,7 @@ from .crawler_metrics import CrawlerMetric
 from .intelligence_record import IntelligenceRecord
 from .crawler_tasks import CrawlerTask
 from .crawler_logs import CrawlerTaskLog, CrawlerSourceStat
+from .department import Department
 
 # SP管理模块新添加的模型
 from .data_sources import DataSource
@@ -33,6 +34,9 @@ from .draw_training_job import DrawTrainingJob
 from .draw_model_version import DrawModelVersion
 from .draw_prediction_result import DrawPredictionResult
 
+# 日志模型
+from .log_entry import LogEntry
+
 __all__ = [
     # Base models
     "Base", "BaseModel", "BaseAuditModel", "BaseSoftDeleteModel", "BaseFullModel", "BaseUUIDModel",
@@ -45,16 +49,17 @@ __all__ = [
     "Intelligence", "IntelligenceType", "IntelligenceSource", "IntelligenceTypeEnum", "IntelligenceSourceEnum",
     
     # User models
-    "User", "UserRoleEnum", "UserStatusEnum", "UserTypeEnum", "Permission", "Role",
+    "User", "UserRole", "UserStatus", "SocialProvider", "UserPrediction",
     
     # Admin user models
     "AdminUser", "AdminRoleEnum", "AdminStatusEnum",
+    "Department",
     
     # Venues models
     "Venue", "VenueTypeEnum", "VenueSurfaceEnum",
     
-    # Predictions models
-    "Prediction", "UserPrediction", "PredictionMethodEnum", "PredictionTypeEnum", "PredictionAccuracyEnum",
+    # Predictions models (excluding UserPrediction since it's now in user_models)
+    "Prediction", "PredictionMethodEnum", "PredictionTypeEnum", "PredictionAccuracyEnum",
     
     # Odds models
     "Odds", "Bookmaker", "OddsProviderEnum", "OddsTypeEnum", "OddsMovementTypeEnum",
@@ -97,5 +102,8 @@ __all__ = [
     "DrawFeature",
     "DrawTrainingJob",
     "DrawModelVersion",
-    "DrawPredictionResult"
+    "DrawPredictionResult",
+    
+    # 日志模型
+    "LogEntry"
 ]

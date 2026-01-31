@@ -20,9 +20,9 @@ def test_user_data():
     print("1. 创建数据库表...")
     try:
         Base.metadata.create_all(bind=engine)
-        print("   ✅ 表创建成功\n")
+        print("   [OK] 表创建成功\n")
     except Exception as e:
-        print(f"   ❌ 表创建失败: {e}\n")
+        print(f"   [ERROR] 表创建失败: {e}\n")
         return
 
     db = get_db().__next__()
@@ -59,7 +59,7 @@ def test_user_data():
             for user in result.scalars():
                 print(f"   - {user.username} ({user.role}, {user.status})")
         else:
-            print("   ⚠️  没有找到后台用户数据")
+            print("   [WARNING]  没有找到后台用户数据")
 
         print("\n3. 查询前台用户...")
         result = db.execute(select(User))
@@ -82,7 +82,7 @@ def test_user_data():
             for user in result.scalars():
                 print(f"   - {user.username} ({user.user_type}, {user.status})")
         else:
-            print("   ⚠️  没有找到前台用户数据")
+            print("   [WARNING]  没有找到前台用户数据")
 
         print("\n4. 检查模拟数据标识...")
         # 检查是否有包含标识符的数据
@@ -94,10 +94,10 @@ def test_user_data():
         mock_user_count = len(result.scalars().all())
         print(f"   前台模拟用户数: {mock_user_count}")
 
-        print("\n✅ 用户数据测试完成!")
+        print("\n[OK] 用户数据测试完成!")
 
     except Exception as e:
-        print(f"❌ 错误: {e}")
+        print(f"[ERROR] 错误: {e}")
         import traceback
         traceback.print_exc()
     finally:

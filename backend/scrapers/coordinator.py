@@ -8,7 +8,8 @@ from typing import Dict, List, Optional, Any
 from enum import Enum
 
 from .core.base_scraper import BaseScraper, MockScraper
-from .core.engine_enhanced import EnhancedScraperEngine as ScraperEngine
+# 修改导入，使用增强型引擎
+from .core.enhanced_engine import EnhancedScraperEngine as ScraperEngine
 from .core.config_loader import create_enhanced_engine_from_config, get_anti_crawler_config
 
 logger = logging.getLogger(__name__)
@@ -17,6 +18,7 @@ logger = logging.getLogger(__name__)
 class DataSourceEnum(Enum):
     """数据源枚举"""
     SPORTTERY = "sporttery"  # 中国竞彩网
+    FIVE_HUNDRED = "five_hundred"  # 500彩票网
     MOCK = "mock"  # 模拟数据源
 
 
@@ -46,9 +48,11 @@ class ScraperCoordinator:
         """初始化所有爬虫"""
         # 延迟导入以避免循环依赖
         from .sources.sporttery import SportteryScraper
+        from .sources.five_hundred_scraper import FiveHundredScraper
         
         # 注册爬虫（使用共享引擎）
         self.scrapers[DataSourceEnum.SPORTTERY.value] = SportteryScraper(self.engine)
+        self.scrapers[DataSourceEnum.FIVE_HUNDRED.value] = FiveHundredScraper(self.engine)
         self.scrapers[DataSourceEnum.MOCK.value] = MockScraper(self.engine)
         
         logger.info(f"已初始化 {len(self.scrapers)} 个爬虫: {list(self.scrapers.keys())}")
@@ -80,7 +84,7 @@ class ScraperCoordinator:
             比赛数据列表
         """
         if sources is None:
-            sources = [DataSourceEnum.SPORTTERY.value]  # 默认使用竞彩网
+            sources = [DataSourceEnum.SPORTTERY.value, DataSourceEnum.FIVE_HUNDRED.value]  # 默认使用竞彩网和500彩票网
         
         # 并发获取多个数据源
         tasks = []

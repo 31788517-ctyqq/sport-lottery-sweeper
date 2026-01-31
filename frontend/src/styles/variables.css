@@ -1,21 +1,28 @@
 :root {
-  /* 颜色系统 - 莫兰迪色系（稍深） */
-  --primary: #7a8ca5;
-  --primary-light: #b8c4d0;
-  --primary-dark: #4a5b73;
+  /* 颜色系统 - 莫兰迪色系 */
+  --primary: #8aa3ab;
+  --primary-light: #a3b8be;
   --secondary: #7d8491;
   --secondary-light: #c4c9d0;
   --secondary-dark: #5f6673;
 
-  /* 功能色 - 莫兰迪色系 */
-  --success: #5a6b5f;
-  --success-light: #bcd0c5;
-  --warning: #a68b5b;
-  --warning-light: #ded2bc;
-  --danger: #a86c6c;
-  --danger-light: #d6bcbc;
-  --info: #5b8993;
-  --info-light: #bcd4da;
+  /* 默认浅色模式背景 - 纯白底色 */
+  --bg-body: #ffffff;
+  --bg-card: #ffffff;
+  --bg-header: #bdc9d7;
+  --text-main: #374151;
+  --text-sub: #6b7280;
+  --border-color: #e5e7eb;
+
+  /* 功能色 - 莫兰迪点缀色系 */
+  --success: #8a9b8f;      /* 灰绿色 */
+  --success-light: #d0ddd4;
+  --warning: #b8a98f;      /* 米灰色 */
+  --warning-light: #e6dfd4;
+  --danger: #b88a8a;       /* 灰粉色 */
+  --danger-light: #ded0d0;
+  --info: #8aa3ab;         /* 与主色一致 */
+  --info-light: #a3b8be;
 
   /* 中性色 */
   --white: #ffffff;
@@ -31,31 +38,21 @@
   --gray-800: #3e434a;
   --gray-900: #2e3136;
 
-  /* 移动端优化配色 - 莫兰迪深色 */
-  --bg-body: #3a3f44;
-  --bg-card: #484e54;
-  --bg-header: #393e43;
-  --text-main: #d8dde6;
-  --text-sub: #a2a8b3;
-  --border-color: #5a6069;
-  
-  /* 背景色 */
+  /* 背景色 - 默认浅色模式 */
   --bg-primary: var(--bg-body);
   --bg-secondary: var(--bg-card);
-  --bg-card: var(--bg-card);
   --bg-sidebar: var(--bg-header);
   --bg-navbar: var(--bg-header);
   --bg-overlay: rgba(0, 0, 0, 0.5);
-  
+
   /* 文本色 */
   --text-primary: var(--text-main);
   --text-secondary: var(--text-sub);
   --text-muted: var(--gray-400);
   --text-inverse: var(--white);
   --text-link: var(--primary);
-  
+
   /* 边框色 */
-  --border-color: var(--border-color);
   --border-light: var(--gray-100);
   --border-dark: var(--gray-600);
   
@@ -174,7 +171,6 @@
 
   --bg-primary: var(--bg-body);
   --bg-secondary: var(--bg-card);
-  --bg-card: var(--bg-card);
   --bg-sidebar: var(--bg-header);
   --bg-navbar: var(--bg-header);
 
@@ -183,7 +179,6 @@
   --text-muted: var(--gray-400);
   --text-inverse: var(--white);
 
-  --border-color: var(--border-color);
   --border-light: var(--gray-100);
   --border-dark: var(--gray-600);
 }
@@ -195,26 +190,24 @@
   --warning: #ffc107;
   --danger: #dc3545;
   --info: #17a2b8;
-  
+
   --bg-body: #000000;
   --bg-card: #1a1a1a;
   --bg-header: #121212;
   --text-main: #ffffff;
   --text-sub: #cccccc;
   --border-color: #333333;
-  
+
   --bg-primary: var(--bg-body);
   --bg-secondary: var(--bg-card);
-  --bg-card: var(--bg-card);
   --bg-sidebar: var(--bg-header);
   --bg-navbar: var(--bg-header);
-  
+
   --text-primary: var(--text-main);
   --text-secondary: var(--text-sub);
   --text-muted: #aaaaaa;
   --text-inverse: var(--white);
-  
-  --border-color: var(--border-color);
+
   --border-light: #222222;
   --border-dark: #444444;
 }

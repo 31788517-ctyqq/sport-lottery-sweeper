@@ -1,80 +1,86 @@
 """
-API v1 初始化
+API v1 路由入口
 """
-from fastapi import APIRouter
 import logging
+from fastapi import APIRouter
+from typing import Dict, Any
 
 logger = logging.getLogger(__name__)
 
-def create_api_router():
+# 创建API路由器
+router = APIRouter(prefix="/v1", tags=["v1"])
+
+# 动态导入并注册子路由
+def register_routes():
     """
-    创建并注册所有API v1路由
+    动态注册所有API路由
+    """
+    routes_to_register = [
+        ("admin", "admin"),
+        ("crawler", "crawler"),
+        ("lottery", "lottery"),
+        ("hedging", "hedging"),
+        ("simple_hedging", "simple_hedging"),
+        ("intelligence", "intelligence"),
+        ("predictions", "predictions"),
+        ("llm", "llm"),  # 添加LLM路由
+        ("real_time_decision", "real_time"),  # 新增实时决策路由
+    ]
     
-    Returns:
-        APIRouter: 包含所有v1路由的路由器对象
+    for module_name, route_prefix in routes_to_register:
+        try:
+            # 根据模块名动态导入路由
+            module = __import__(f"backend.api.v1.{module_name}", fromlist=["router"])
+            module_router = getattr(module, "router", None)
+            
+            if module_router:
+                # 注册路由
+                router.include_router(
+                    module_router, 
+                    prefix=f"/{route_prefix}", 
+                    tags=[route_prefix]
+                )
+                logger.info(f"API v1 - {module_name} 路由已注册")
+            else:
+                logger.warning(f"API v1 - {module_name} 模块中未找到router")
+                
+        except ImportError as e:
+            logger.error(f"API v1 - {module_name} 路由注册失败: {e}")
+        except Exception as e:
+            logger.error(f"API v1 - {module_name} 路由注册异常: {e}")
+
+# 执行路由注册
+register_routes()
+
+# API健康检查端点
+@router.get("/health")
+async def health_check() -> Dict[str, Any]:
     """
-    router = APIRouter()
+    API健康检查端点
+    """
+    return {
+        "status": "healthy",
+        "api_version": "v1",
+        "endpoints": "dynamic",
+        "timestamp": __import__('datetime').datetime.now().isoformat()
+    }
 
-    # 用户认证相关路由
-    try:
-        from .auth import router as auth_router
-        router.include_router(auth_router, prefix="/auth", tags=["auth"])
-        logger.info("API v1 - auth 路由已注册")
-    except Exception as e:
-        logger.error(f"API v1 - auth 路由注册失败: {e}")
-
-    # 管理员相关路由
-    try:
-        from .admin import router as admin_router
-        router.include_router(admin_router, prefix="/admin", tags=["admin"])
-        logger.info("API v1 - admin 路由已注册")
-    except Exception as e:
-        logger.error(f"API v1 - admin 路由注册失败: {e}")
-
-    # 管理员用户管理相关路由
-    try:
-        from .admin_user_management import router as admin_user_router
-        router.include_router(admin_user_router, prefix="/admin/users", tags=["admin"])
-        logger.info("API v1 - admin_user_management 路由已注册")
-    except Exception as e:
-        logger.error(f"API v1 - admin_user_management 路由注册失败: {e}")
-
-    # 前端用户管理相关路由
-    try:
-        from .frontend_user_management import router as frontend_user_router
-        router.include_router(frontend_user_router, prefix="/users", tags=["users"])
-        logger.info("API v1 - frontend_user_management 路由已注册")
-    except Exception as e:
-        logger.error(f"API v1 - frontend_user_management 路由注册失败: {e}")
-
-    # 简单用户API相关路由
-    try:
-        from .simple_user_api import router as simple_user_router
-        router.include_router(simple_user_router, prefix="/users", tags=["users"])
-        logger.info("API v1 - simple_user_api 路由已注册")
-    except Exception as e:
-        logger.error(f"API v1 - simple_user_api 路由注册失败: {e}")
-
-    try:
-        # 爬虫管理相关路由
-        from .crawler import router as crawler_router
-        router.include_router(crawler_router, prefix="/crawler", tags=["crawler"])
-        logger.info("API v1 - crawler 路由已注册")
-    except Exception as e:
-        logger.error(f"API v1 - crawler 路由注册失败: {e}")
-
-    # 监控仪表板相关路由
-    try:
-        from .monitoring_dashboard import router as monitoring_router
-        router.include_router(monitoring_router, prefix="/monitoring", tags=["monitoring"])
-        logger.info("API v1 - monitoring_dashboard 路由已注册")
-    except Exception as e:
-        logger.error(f"API v1 - monitoring_dashboard 路由注册失败: {e}")
-
-    # 返回router对象
-    return router
-
-# 创建并导出router对象
-router = create_api_router()
-
-__all__ = ["router"]
+# API信息端点
+@router.get("/info")
+async def api_info() -> Dict[str, Any]:
+    """
+    API信息端点
+    """
+    return {
+        "title": "体育彩票扫盘系统 API v1",
+        "version": "1.0.0",
+        "description": "提供体育彩票数据分析、预测和对冲策略服务",
+        "features": [
+            "数据爬取和处理",
+            "比赛结果预测",
+            "对冲策略分析",
+            "情报分析",
+            "LLM集成服务"
+        ],
+        "timestamp": __import__('datetime').datetime.now().isoformat()
+    }

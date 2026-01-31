@@ -15,7 +15,7 @@ os.environ['PYTHONPATH'] = project_root
 
 def test_imports():
     """测试关键模块导入"""
-    print("🔍 测试模块导入...")
+    print("[INSPECT] 测试模块导入...")
     
     tests = [
         ("数据库引擎", "from backend.core.database import engine, Base"),
@@ -38,16 +38,16 @@ def test_imports():
     for name, import_stmt in tests:
         try:
             exec(import_stmt)
-            print(f"  ✅ {name}")
+            print(f"  [OK] {name}")
         except Exception as e:
-            print(f"  ❌ {name}: {str(e)[:100]}")
+            print(f"  [ERROR] {name}: {str(e)[:100]}")
             failed.append((name, str(e)))
     
     return failed
 
 def test_database_connection():
     """测试数据库连接"""
-    print("\n🔍 测试数据库连接...")
+    print("\n[INSPECT] 测试数据库连接...")
     try:
         from backend.core.database import engine, Base
         from sqlalchemy import text
@@ -55,21 +55,21 @@ def test_database_connection():
         # 尝试连接
         with engine.connect() as conn:
             result = conn.execute(text("SELECT 1"))
-            print("  ✅ 数据库连接成功")
+            print("  [OK] 数据库连接成功")
         
         # 尝试创建表（如果存在则不创建）
         Base.metadata.create_all(bind=engine)
-        print("  ✅ 表结构同步成功")
+        print("  [OK] 表结构同步成功")
         
         return True
     except Exception as e:
-        print(f"  ❌ 数据库连接失败: {e}")
+        print(f"  [ERROR] 数据库连接失败: {e}")
         traceback.print_exc()
         return False
 
 def test_api_routes():
     """测试API路由注册"""
-    print("\n🔍 测试API路由...")
+    print("\n[INSPECT] 测试API路由...")
     try:
         from backend.main import app
         routes = [route.path for route in app.routes]
@@ -91,50 +91,50 @@ def test_api_routes():
             if not any(r.startswith(route) for r in routes):
                 missing.append(route)
             else:
-                print(f"  ✅ {route}")
+                print(f"  [OK] {route}")
         
         if missing:
-            print(f"  ❌ 缺失路由: {missing}")
+            print(f"  [ERROR] 缺失路由: {missing}")
             return False
         else:
-            print(f"  ✅ 所有关键路由已注册 (共 {len(routes)} 个路由)")
+            print(f"  [OK] 所有关键路由已注册 (共 {len(routes)} 个路由)")
             return True
     except Exception as e:
-        print(f"  ❌ API路由测试失败: {e}")
+        print(f"  [ERROR] API路由测试失败: {e}")
         traceback.print_exc()
         return False
 
 def main():
     print("="*60)
-    print("🎯 后端启动验证测试")
+    print("[TARGET] 后端启动验证测试")
     print("="*60)
     
     # 测试1: 模块导入
     failed_imports = test_imports()
     if failed_imports:
-        print(f"\n❌ 有 {len(failed_imports)} 个模块导入失败")
+        print(f"\n[ERROR] 有 {len(failed_imports)} 个模块导入失败")
         return False
     
     # 测试2: 数据库连接
     if not test_database_connection():
-        print("\n❌ 数据库连接失败")
+        print("\n[ERROR] 数据库连接失败")
         return False
     
     # 测试3: API路由
     if not test_api_routes():
-        print("\n❌ API路由注册不完整")
+        print("\n[ERROR] API路由注册不完整")
         return False
     
     print("\n" + "="*60)
-    print("🎉 所有测试通过！后端应该可以正常启动")
+    print("[SUCCESS] 所有测试通过！后端应该可以正常启动")
     print("="*60)
-    print("\n📋 修复总结:")
-    print("  1. ✅ 修复了所有 Enum 列的 SQLAlchemy 兼容性")
-    print("  2. ✅ 解决了 crawler_task_logs 表重复定义问题")
-    print("  3. ✅ 修复了 draw_prediction 导入路径错误")
-    print("  4. ✅ 移除了所有 PostgreSQL 特有类型导入")
-    print("  5. ✅ 补充了缺失的 imports")
-    print("\n🚀 可以尝试运行: start_backend.bat")
+    print("\n[LOG] 修复总结:")
+    print("  1. [OK] 修复了所有 Enum 列的 SQLAlchemy 兼容性")
+    print("  2. [OK] 解决了 crawler_task_logs 表重复定义问题")
+    print("  3. [OK] 修复了 draw_prediction 导入路径错误")
+    print("  4. [OK] 移除了所有 PostgreSQL 特有类型导入")
+    print("  5. [OK] 补充了缺失的 imports")
+    print("\n[ROCKET] 可以尝试运行: start_backend.bat")
     
     return True
 

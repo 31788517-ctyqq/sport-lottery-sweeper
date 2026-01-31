@@ -15,7 +15,6 @@ def create_api_router():
     路由优先级（从高到低）：
     1. API v1 - 新版标准API (/api/v1/*)
     2. WebSocket - 实时通信 (/api/v1/ws/*)
-    3. 向后兼容路由 - 遗留API (/api/v1/jczq/* - 已废弃)
     """
     router = APIRouter()
     
@@ -29,24 +28,14 @@ def create_api_router():
     
     # 2. 加载 WebSocket 路由
     try:
-        from .websocket import router as ws_router
+        from .websocket_handler import router as ws_router
         router.include_router(ws_router, prefix="/ws", tags=["websocket"])
         logger.info("WebSocket 路由已加载")
     except Exception as e:
         logger.error(f"WebSocket 路由加载失败: {e}")
     
-    # 3. 向后兼容路由（已废弃，计划在 v2.0 移除）
-    try:
-        from .jczq_routes import router as legacy_jczq_router
-        router.include_router(
-            legacy_jczq_router, 
-            tags=["legacy-deprecated"],
-            deprecated=True
-        )
-        logger.warning("向后兼容路由已加载（已废弃）")
-    except Exception as e:
-        logger.info(f"向后兼容路由未加载: {e}")
-
+    logger.info("API路由器初始化完成，已移除所有废弃的向后兼容路由")
+    
     return router
 
 

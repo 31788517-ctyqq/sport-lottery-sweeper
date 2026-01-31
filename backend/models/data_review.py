@@ -81,8 +81,8 @@ class DataReview(BaseFullModel):
     requires_resubmission = Column(Boolean, default=False, nullable=False, index=True)  # 是否需要重新提交
     resubmission_deadline = Column(DateTime(timezone=True), nullable=True)  # 重新提交截止时间
     
-    # 关系
-    reviewer = relationship("User")
+    # 关系 - 暂时移除对User的直接引用
+    # reviewer = relationship("User")
     
     # 索引
     __table_args__ = (
@@ -159,12 +159,12 @@ class ValidationError(BaseFullModel):
     # 状态
     resolved = Column(Boolean, default=False, nullable=False, index=True)  # 是否已解决
     resolved_at = Column(DateTime(timezone=True), nullable=True)  # 解决时间
-    resolved_by = Column(Integer, ForeignKey('users.id', ondelete='SET NULL'), nullable=True, index=True)  # 解决人
+    resolved_by_id = Column(Integer, ForeignKey('users.id', ondelete='SET NULL'), nullable=True, index=True)  # 解决人ID
     
-    # 关系
-    review = relationship("DataReview")
-    rule = relationship("ValidationRule")
-    resolver = relationship("User", foreign_keys=[resolved_by])
+    # 关系 - 暂时移除对User的直接引用
+    # review = relationship("DataReview")
+    # rule = relationship("ValidationRule")
+    # resolver = relationship("User", foreign_keys=[resolved_by])
     
     # 索引
     __table_args__ = (
@@ -174,3 +174,36 @@ class ValidationError(BaseFullModel):
         Index('idx_validation_errors_error_code', 'error_code'),
         {'extend_existing': True}  # 确保支持表扩展
     )
+
+
+# 修复关系映射问题
+def _setup_relationships():
+    """
+    设置模型间的关系，解决循环导入问题
+    """
+    from sqlalchemy import event
+    from sqlalchemy.orm import mapper
+    from .user import User
+
+    @event.listens_for(mapper, 'after_configured', once=True)
+    def setup_data_review_relationships():
+        """在所有模型配置完成后设置关系"""
+        # 为DataReview模型添加到User的关系
+        DataReview.reviewer = relationship(
+            "User", 
+            foreign_keys=[DataReview.reviewer_id],
+            lazy='select'
+        )
+        
+        # 为ValidationError模型添加关系
+        ValidationError.review = relationship("DataReview")
+        ValidationError.rule = relationship("ValidationRule")
+        ValidationError.resolver = relationship(
+            "User",
+            foreign_keys=[ValidationError.resolved_by_id],
+            lazy='select'
+        )
+
+
+# 设置关系
+_setup_relationships()

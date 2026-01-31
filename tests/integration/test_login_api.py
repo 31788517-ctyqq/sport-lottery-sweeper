@@ -20,15 +20,15 @@ try:
     
     if response.status_code == 200:
         data = response.json()
-        print("\n✅ 登录成功!")
+        print("\n[OK] 登录成功!")
         print(f"访问令牌: {data.get('access_token', 'N/A')}")
         print(f"用户信息: {json.dumps(data.get('user', {}), indent=2, ensure_ascii=False)}")
     else:
-        print(f"\n❌ 登录失败: {response.text}")
+        print(f"\n[ERROR] 登录失败: {response.text}")
         
 except requests.exceptions.ConnectionError:
-    print("❌ 无法连接到后端服务，请确保后端正在运行")
+    print("[ERROR] 无法连接到后端服务，请确保后端正在运行")
 except requests.exceptions.Timeout:
-    print("❌ 请求超时")
+    print("[ERROR] 请求超时")
 except Exception as e:
-    print(f"❌ 未知错误: {e}")
+    print(f"[ERROR] 未知错误: {e}")

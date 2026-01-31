@@ -35,16 +35,16 @@ def test():
         if r.status_code == 200:
             resp = r.json()
             if resp.get('code') == 200:
-                print("✅ 登录成功!")
+                print("[OK] 登录成功!")
                 token = resp.get('data', {}).get('access_token', '')
                 if token:
                     print(f"   令牌: {token[:50]}...")
                 else:
                     print(f"   完整响应: {resp}")
             else:
-                print(f"❌ 登录失败: {resp.get('message')}")
+                print(f"[ERROR] 登录失败: {resp.get('message')}")
         else:
-            print(f"❌ HTTP错误: {r.status_code}")
+            print(f"[ERROR] HTTP错误: {r.status_code}")
             
     except Exception as e:
         print(f"请求异常: {e}")

@@ -47,7 +47,8 @@ class AdminUser(BaseAuditModel):
     # 个人信息
     real_name = Column(String(100), nullable=False, index=True)  # 真实姓名（必填）
     phone = Column(String(20), nullable=True, index=True)
-    department = Column(String(100), nullable=True, index=True)  # 所属部门
+    department_id = Column(Integer, ForeignKey("departments.id", ondelete='SET NULL'), nullable=True, index=True)  # 所属部门ID
+    department = Column(String(100), nullable=True, index=True)  # 部门名称（兼容旧字段）
     position = Column(String(100), nullable=True)  # 职位
     
     # 角色和权限
@@ -83,6 +84,7 @@ class AdminUser(BaseAuditModel):
     operation_logs = relationship("AdminOperationLog", back_populates="admin_user", cascade="all, delete-orphan")
     login_logs = relationship("AdminLoginLog", back_populates="admin_user", cascade="all, delete-orphan")
     creator = relationship("AdminUser", remote_side="AdminUser.id", backref="created_admins")
+    department_obj = relationship("Department", foreign_keys=[department_id], back_populates="users")  # 用户所属部门对象
 
 
 class AdminOperationLog(Base):
@@ -105,20 +107,20 @@ class AdminOperationLog(Base):
     # 请求信息
     method = Column(String(10), nullable=False)  # GET, POST, PUT, DELETE
     path = Column(String(500), nullable=False)  # 请求路径
-    query_params = Column(MutableDict.as_mutable(Text), default=lambda: {}, nullable=False)  # 查询参数
-    request_body = Column(MutableDict.as_mutable(Text), nullable=True)  # 请求体（敏感信息需过滤）
+    query_params = Column(JSON, default=lambda: {}, nullable=False)  # 查询参数
+    request_body = Column(JSON, nullable=True)  # 请求体（敏感信息需过滤）
     
     # 响应信息
     status_code = Column(Integer, nullable=False, index=True)  # HTTP状态码
-    response_data = Column(MutableDict.as_mutable(Text), nullable=True)  # 响应数据（敏感信息需过滤）
+    response_data = Column(JSON, nullable=True)  # 响应数据（敏感信息需过滤）
     
     # 环境信息
     ip_address = Column(String(45), nullable=False, index=True)
     user_agent = Column(Text, nullable=True)
     
     # 变更信息（用于审计）
-    changes_before = Column(MutableDict.as_mutable(Text), nullable=True)  # 变更前的数据
-    changes_after = Column(MutableDict.as_mutable(Text), nullable=True)   # 变更后的数据
+    changes_before = Column(JSON, nullable=True)  # 变更前的数据
+    changes_after = Column(JSON, nullable=True)   # 变更后的数据
     
     # 时间信息
     created_at = Column(DateTime(timezone=True), default=func.now(), nullable=False, index=True)

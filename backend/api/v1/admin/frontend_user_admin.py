@@ -7,10 +7,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional, List
 from datetime import datetime
 
-from ....database import get_async_session
-from ....models.user import User, UserStatusEnum, UserTypeEnum
-from ....schemas.user import UserResponse, UserList, UserUpdate
-from ....crud.user import user as crud_user
+from backend.database_utils import get_async_session
+from backend.models.user import User, UserStatus, UserType, UserRole, SocialProvider
+from backend.schemas.user import UserResponse, UserList, UserUpdate
+from backend.crud.user import user as crud_user
 
 router = APIRouter()
 

@@ -40,14 +40,14 @@ async def test_health_check_endpoint():
     data = response.json()
     assert "status" in data
     assert data["status"] == "healthy"
-    print("✅ 健康检查端点测试通过")
+    print("[OK] 健康检查端点测试通过")
 
 
 def test_docs_endpoint():
     """测试API文档端点"""
     response = client.get("/docs")
     assert response.status_code in [200, 307]  # 307是重定向到/docs/
-    print("✅ API文档端点测试通过")
+    print("[OK] API文档端点测试通过")
 
 
 @pytest.mark.asyncio
@@ -61,7 +61,7 @@ async def test_admin_user_endpoints_integration():
     response = client.post("/api/v1/admin/users/")
     assert response.status_code in [401, 422]
     
-    print("✅ 管理员用户API端点集成测试通过")
+    print("[OK] 管理员用户API端点集成测试通过")
 
 
 @pytest.mark.asyncio
@@ -75,7 +75,7 @@ async def test_auth_endpoints_integration():
     response = client.post("/api/v1/auth/register")
     assert response.status_code == 422  # 请求体缺失
     
-    print("✅ 认证API端点集成测试通过")
+    print("[OK] 认证API端点集成测试通过")
 
 
 @pytest.mark.asyncio
@@ -89,7 +89,7 @@ async def test_crawler_endpoints_integration():
     response = client.get("/api/v1/crawlers/tasks/")
     assert response.status_code in [401, 422]
     
-    print("✅ 爬虫API端点集成测试通过")
+    print("[OK] 爬虫API端点集成测试通过")
 
 
 @pytest.mark.asyncio
@@ -100,7 +100,7 @@ async def test_public_endpoints():
     # 公共端点不需要认证，但可能因为数据库中没有数据而返回特定响应
     assert response.status_code in [200, 404, 500]
     
-    print("✅ 公共API端点测试通过")
+    print("[OK] 公共API端点测试通过")
 
 
 @pytest.mark.asyncio
@@ -122,7 +122,7 @@ async def test_api_response_format():
     assert error_response.code == 400
     assert error_response.message == "Test error"
     
-    print("✅ API响应格式一致性测试通过")
+    print("[OK] API响应格式一致性测试通过")
 
 
 if __name__ == "__main__":

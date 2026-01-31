@@ -1,7 +1,7 @@
 import axios from 'axios'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { useUserStore } from '@/store/modules/user'
-import { getToken, getRefreshToken, removeToken } from '@/utils/auth'
+import { useUserStore } from '@/stores/user'
+import { getToken, getRefreshToken, removeToken } from '@/utils/authUtils'
 
 const service = axios.create({
   baseURL: import.meta.env.VITE_API_URL || '/api',

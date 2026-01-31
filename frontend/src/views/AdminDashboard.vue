@@ -119,6 +119,30 @@
             <button class="btn-view" @click="handleViewActivity(activity)">查看</button>
           </div>
         </div>
+        
+        <!-- 如果没有活动，显示空状态 -->
+        <div v-if="recentActivities.length === 0" class="empty-state">
+          <p>暂无最近活动</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 图表展示区域 -->
+    <div class="charts-section">
+      <div class="chart-card">
+        <h3>📊 本周数据增长趋势</h3>
+        <div class="chart-placeholder">
+          <p>数据图表将在此处显示</p>
+          <p>模拟数据：周一 12，周二 18，周三 15，周四 22，周五 19，周六 25，周日 20</p>
+        </div>
+      </div>
+      
+      <div class="chart-card">
+        <h3>📈 数据类型分布</h3>
+        <div class="chart-placeholder">
+          <p>数据类型饼图将在此处显示</p>
+          <p>比赛数据: 45%，情报数据: 30%，预测数据: 25%</p>
+        </div>
       </div>
     </div>
 
@@ -127,7 +151,7 @@
       <div class="status-card">
         <div class="status-header">
           <h3>🔧 系统状态</h3>
-          <span class="status-indicator online"></span>
+          <span class="status-indicator" :class="overallStatusClass"></span>
         </div>
         <div class="status-content">
           <div class="status-item">
@@ -171,7 +195,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
@@ -201,6 +225,13 @@ const filters = reactive({
 // 最近活动
 const recentActivities = ref([])
 
+// 计算属性 - 系统整体状态
+const overallStatusClass = computed(() => {
+  if (stats.active_crawlers > 0) return 'online'
+  if (stats.total_crawlers === 0) return 'offline'
+  return 'warning'
+})
+
 // 导航函数
 const navigateTo = (path) => {
   router.push(path)
@@ -225,6 +256,19 @@ const handleContentTypeChange = () => {
 const handleViewActivity = (activity) => {
   console.log('查看活动:', activity)
   // 根据活动类型跳转到相应页面
+  switch(activity.type) {
+    case 'match':
+      router.push('/admin/matches')
+      break
+    case 'intelligence':
+      router.push('/admin/intelligence')
+      break
+    case 'crawler':
+      router.push('/admin/crawler-config')
+      break
+    default:
+      console.log('未知活动类型')
+  }
 }
 
 // 获取活动图标
@@ -296,16 +340,43 @@ const loadStats = async () => {
         title: '爬虫任务执行',
         description: '足球数据源爬虫成功抓取了最新数据',
         created_at: new Date(Date.now() - 7200000).toISOString()
+      },
+      {
+        id: 4,
+        type: 'user',
+        title: '新用户注册',
+        description: '用户 admin@example.com 注册了账户',
+        created_at: new Date(Date.now() - 10800000).toISOString()
       }
     ]
   } catch (error) {
     console.error('加载统计数据失败:', error)
+    // 错误处理：显示默认值或错误消息
+    Object.assign(stats, {
+      total_matches: 0,
+      new_matches_today: 0,
+      total_intelligence: 0,
+      new_intelligence_today: 0,
+      total_crawlers: 0,
+      active_crawlers: 0,
+      total_users: 0,
+      new_users_today: 0,
+      matches_crawled_today: 0,
+      intelligence_accuracy: 'N/A',
+      system_load: '未知'
+    })
+    recentActivities.value = []
   }
 }
 
-// 组件挂载时加载数据
+// 页面加载时加载数据
 onMounted(() => {
   loadStats()
+  
+  // 设置定时器，每分钟更新一次数据
+  setInterval(() => {
+    loadStats()
+  }, 60000)
 })
 </script>
 
@@ -614,6 +685,11 @@ onMounted(() => {
   color: #2563eb;
 }
 
+.activity-icon.user {
+  background: #d1fae5;
+  color: #065f46;
+}
+
 .activity-content {
   flex: 1;
 }
@@ -655,6 +731,42 @@ onMounted(() => {
   background: #e5e7eb;
 }
 
+/* 图表区域 */
+.charts-section {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.chart-card {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+}
+
+.chart-card h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 16px 0;
+}
+
+.chart-placeholder {
+  height: 200px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 1px dashed #d1d5db;
+  color: #6b7280;
+  text-align: center;
+}
+
 /* 系统状态网格 */
 .system-status-grid {
   display: grid;
@@ -692,6 +804,14 @@ onMounted(() => {
 
 .status-indicator.online {
   background: #10b981;
+}
+
+.status-indicator.warning {
+  background: #f59e0b;
+}
+
+.status-indicator.offline {
+  background: #9ca3af;
 }
 
 .status-content {
@@ -756,8 +876,22 @@ onMounted(() => {
     min-width: auto;
   }
   
+  .charts-section {
+    grid-template-columns: 1fr;
+  }
+  
   .system-status-grid {
     grid-template-columns: 1fr;
+  }
+  
+  .activity-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .activity-actions {
+    align-self: flex-end;
   }
 }
 </style>

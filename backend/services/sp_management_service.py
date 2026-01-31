@@ -3,7 +3,7 @@
 """
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import desc, asc, func, and_, or_
-from typing import List, Optional, Dict, Any, Tuple
+from typing import List, Optional, Dict, Any, Tuple, Generator
 from datetime import datetime, timedelta
 import json
 from fastapi import HTTPException, UploadFile, status
@@ -63,8 +63,19 @@ class SPManagementService:
         offset = (params.page - 1) * params.size
         sources = query.offset(offset).limit(params.size).all()
         
+        # 转换数据源列表，确保config字段是字典格式
+        converted_sources = []
+        for source in sources:
+            source_dict = DataSourceResponse.from_orm(source).dict()
+            if source.config:
+                try:
+                    source_dict['config'] = json.loads(source.config)
+                except:
+                    source_dict['config'] = {}
+            converted_sources.append(DataSourceResponse(**source_dict))
+        
         return PaginatedResponse.create(
-            items=[DataSourceResponse.from_orm(source) for source in sources],
+            items=converted_sources,
             total=total,
             page=params.page,
             size=params.size
@@ -78,7 +89,16 @@ class SPManagementService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="数据源不存在"
             )
-        return DataSourceResponse.from_orm(source)
+        
+        # 确保config字段是字典格式
+        source_dict = DataSourceResponse.from_orm(source).dict()
+        if source.config:
+            try:
+                source_dict['config'] = json.loads(source.config)
+            except:
+                source_dict['config'] = {}
+        
+        return DataSourceResponse(**source_dict)
     
     def create_data_source(self, source_data: DataSourceCreate, created_by: int) -> DataSourceResponse:
         """创建数据源"""
@@ -92,8 +112,11 @@ class SPManagementService:
                 detail="数据源名称已存在"
             )
         
-        # 创建数据源
+        # 创建数据源，将config字典转换为JSON字符串
         source_dict = source_data.dict()
+        if source_dict.get('config'):
+            if isinstance(source_dict['config'], dict):
+                source_dict['config'] = json.dumps(source_dict['config'])
         source_dict['created_by'] = created_by
         
         db_source = DataSource(**source_dict)
@@ -101,7 +124,15 @@ class SPManagementService:
         self.db.commit()
         self.db.refresh(db_source)
         
-        return DataSourceResponse.from_orm(db_source)
+        # 确保返回的响应中config字段是字典格式
+        source_response = DataSourceResponse.from_orm(db_source).dict()
+        if db_source.config:
+            try:
+                source_response['config'] = json.loads(db_source.config)
+            except:
+                source_response['config'] = {}
+        
+        return DataSourceResponse(**source_response)
     
     def update_data_source(self, source_id: int, source_data: DataSourceUpdate) -> DataSourceResponse:
         """更新数据源"""
@@ -126,16 +157,31 @@ class SPManagementService:
                     detail="数据源名称已存在"
                 )
         
-        # 更新字段
+        # 更新字段，处理config字段
         update_data = source_data.dict(exclude_unset=True)
         for field, value in update_data.items():
-            setattr(db_source, field, value)
+            if field == 'config' and value is not None:
+                # 将config字典转换为JSON字符串
+                if isinstance(value, dict):
+                    setattr(db_source, field, json.dumps(value))
+                else:
+                    setattr(db_source, field, value)
+            else:
+                setattr(db_source, field, value)
         
         db_source.updated_at = datetime.now()
         self.db.commit()
         self.db.refresh(db_source)
         
-        return DataSourceResponse.from_orm(db_source)
+        # 确保返回的响应中config字段是字典格式
+        source_response = DataSourceResponse.from_orm(db_source).dict()
+        if db_source.config:
+            try:
+                source_response['config'] = json.loads(db_source.config)
+            except:
+                source_response['config'] = {}
+        
+        return DataSourceResponse(**source_response)
     
     def delete_data_source(self, source_id: int) -> bool:
         """删除数据源"""

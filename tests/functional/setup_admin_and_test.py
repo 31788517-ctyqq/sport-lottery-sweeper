@@ -71,11 +71,11 @@ def create_admin_user():
         sql = f'INSERT INTO users ({columns_str}) VALUES ({placeholders})'
         c.execute(sql, values)
         conn.commit()
-        print("✅ admin用户创建成功!")
+        print("[OK] admin用户创建成功!")
         print(f"   用户名: admin, 密码: {password}")
         return True
     except Exception as e:
-        print(f"❌ 创建admin用户失败: {e}")
+        print(f"[ERROR] 创建admin用户失败: {e}")
         import traceback
         traceback.print_exc()
         conn.rollback()
@@ -132,9 +132,9 @@ def main():
     
     # 测试登录
     if test_login():
-        print("\n✅ 所有测试通过!")
+        print("\n[OK] 所有测试通过!")
     else:
-        print("\n❌ 登录测试失败")
+        print("\n[ERROR] 登录测试失败")
         sys.exit(1)
 
 if __name__ == "__main__":

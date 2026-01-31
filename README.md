@@ -319,6 +319,81 @@ pytest tests/ --cov=backend --cov-report=term-missing
 > **注意**：CI 环境使用独立的临时数据库文件，不会影响本地开发数据。
 > 异步测试之前存在的配置问题已在 CI 中自动修复，建议同步到本地 `pyproject.toml` 以避免差异。
 
+## 测试体系
+
+项目建立了完整的自动化测试集成，覆盖单元测试、集成测试和端到端测试。
+
+### 测试文档
+- [测试集成规划](./TEST_INTEGRATION_PLAN.md) - 完整的测试架构设计
+- [测试环境设置指南](./test-environment-setup.md) - 测试环境配置说明
+- [测试快速开始指南](./TESTING_QUICKSTART.md) - 5分钟内运行测试
+- [测试环境验证指南](./TEST_VALIDATION_GUIDE.md) - 验证测试环境配置
+
+### 测试验证
+```bash
+# 快速测试环境检查 (1分钟内)
+python scripts/quick-test-check.py
+
+# 验证测试环境配置 (3分钟内)
+python scripts/validate-test-environment.py
+
+# 检查覆盖率阈值 (1分钟内)
+python scripts/check-coverage-thresholds.py
+
+# 生成统一测试报告 (2分钟内)
+python scripts/generate-test-report.py
+
+# CI/CD验证检查 (5分钟内)
+python scripts/validate-ci-checks.py
+
+# 运行完整验证套件 (10分钟内)
+python scripts/run-validation-suite.py
+
+# 最终测试集成验证 (15分钟内)
+python scripts/final-verification.py
+```
+
+### 测试命令
+```bash
+# 一键运行所有测试
+./scripts/run-all-tests.sh  # Linux/macOS
+scripts\run-all-tests.bat   # Windows
+
+# 前端测试
+cd frontend
+npm run test:run           # 运行单元测试
+npm run test:coverage      # 带覆盖率报告
+npm run test:e2e           # 运行E2E测试
+
+# 后端测试
+cd backend
+pytest tests/unit/ -v      # 运行单元测试
+pytest tests/integration/  # 运行集成测试
+```
+
+### 覆盖率要求
+| 组件 | 语句 | 分支 | 函数 | 行 |
+|------|------|------|------|-----|
+| 前端 | ≥80% | ≥75% | ≥80% | ≥80% |
+| 后端 | ≥80% | ≥70% | ≥80% | ≥80% |
+
+### 测试报告
+- 单元测试覆盖率: `frontend/coverage/` 和 `backend/htmlcov/`
+- E2E测试报告: `frontend/playwright-report/`
+- 覆盖率阈值检查: `python scripts/check-coverage-thresholds.py`
+
+详细测试实施总结请参考 [自动测试集成总结](./AUTO_TEST_INTEGRATION_SUMMARY.md)
+
+### 🧪 验证实施效果
+项目提供了完整的验证工具套件，可按以下步骤验证测试集成实施效果：
+
+1. **快速检查** (1分钟): `python scripts/quick-test-check.py`
+2. **环境验证** (3分钟): `python scripts/validate-test-environment.py`
+3. **全面验证** (10分钟): `python scripts/run-validation-suite.py`
+4. **最终验证** (15分钟): `python scripts/final-verification.py`
+
+详细验证步骤请参考 [测试集成验证检查清单](./TEST_INTEGRATION_VALIDATION_CHECKLIST.md)
+
 ## 贡献
 
 欢迎提交Issue和Pull Request来帮助改进这个项目。

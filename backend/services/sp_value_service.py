@@ -11,7 +11,7 @@ import logging
 from ..models.matches import Match
 from ..models.odds_companies import OddsCompany
 from ..models.sp_records import SPRecord, SPModificationLog
-from ..models.users import User
+from ..models.user import User
 from ..schemas.sp_record import SPRecordCreate, SPRecordUpdate
 
 logger = logging.getLogger(__name__)

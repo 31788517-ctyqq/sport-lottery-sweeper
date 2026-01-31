@@ -425,8 +425,8 @@ if __name__ == "__main__":
             "http://proxy1.example.com:8080",
             "http://proxy2.example.com:8080"
         ])
-        print("代理池创建成功")
+        logger.debug("代理池创建成功")
         stats = pool.get_stats()
-        print(f"统计信息: {stats}")
+        logger.debug(f"统计信息: {stats}")
     
     asyncio.run(test())

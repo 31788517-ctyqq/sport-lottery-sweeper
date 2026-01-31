@@ -1,0 +1,162 @@
+[
+  {
+    "id": 1,
+    "match_id": "MATCH1000",
+    "league": "英超",
+    "home_team": "球队0A",
+    "away_team": "球队1B",
+    "match_time": "2026-01-29T20:00:00Z",
+    "status": "finished",
+    "home_score": 2,
+    "away_score": 1,
+    "sp_data": {
+      "win": 1.8,
+      "draw": 3.2,
+      "lose": 4.0
+    }
+  },
+  {
+    "id": 2,
+    "match_id": "MATCH1001",
+    "league": "西甲",
+    "home_team": "球队2A",
+    "away_team": "球队3B",
+    "match_time": "2026-01-30T20:00:00Z",
+    "status": "live",
+    "home_score": null,
+    "away_score": null,
+    "sp_data": {
+      "win": 1.9000000000000001,
+      "draw": 3.1500000000000004,
+      "lose": 4.15
+    }
+  },
+  {
+    "id": 3,
+    "match_id": "MATCH1002",
+    "league": "意甲",
+    "home_team": "球队4A",
+    "away_team": "球队5B",
+    "match_time": "2026-01-31T20:00:00Z",
+    "status": "finished",
+    "home_score": null,
+    "away_score": null,
+    "sp_data": {
+      "win": 2.0,
+      "draw": 3.1,
+      "lose": 4.3
+    }
+  },
+  {
+    "id": 4,
+    "match_id": "MATCH1003",
+    "league": "英超",
+    "home_team": "球队6A",
+    "away_team": "球队7B",
+    "match_time": "2026-02-01T20:00:00Z",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null,
+    "sp_data": {
+      "win": 2.1,
+      "draw": 3.0500000000000003,
+      "lose": 4.45
+    }
+  },
+  {
+    "id": 5,
+    "match_id": "MATCH1004",
+    "league": "西甲",
+    "home_team": "球队8A",
+    "away_team": "球队9B",
+    "match_time": "2026-02-02T20:00:00Z",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null,
+    "sp_data": {
+      "win": 2.2,
+      "draw": 3.0,
+      "lose": 4.6
+    }
+  },
+  {
+    "id": 6,
+    "match_id": "MATCH1005",
+    "league": "意甲",
+    "home_team": "球队10A",
+    "away_team": "球队11B",
+    "match_time": "2026-02-03T20:00:00Z",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null,
+    "sp_data": {
+      "win": 2.3,
+      "draw": 2.95,
+      "lose": 4.75
+    }
+  },
+  {
+    "id": 7,
+    "match_id": "MATCH1006",
+    "league": "英超",
+    "home_team": "球队12A",
+    "away_team": "球队13B",
+    "match_time": "2026-02-04T20:00:00Z",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null,
+    "sp_data": {
+      "win": 2.4000000000000004,
+      "draw": 2.9000000000000004,
+      "lose": 4.9
+    }
+  },
+  {
+    "id": 8,
+    "match_id": "MATCH1007",
+    "league": "西甲",
+    "home_team": "球队14A",
+    "away_team": "球队15B",
+    "match_time": "2026-02-05T20:00:00Z",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null,
+    "sp_data": {
+      "win": 2.5,
+      "draw": 2.85,
+      "lose": 5.05
+    }
+  },
+  {
+    "id": 9,
+    "match_id": "MATCH1008",
+    "league": "意甲",
+    "home_team": "球队16A",
+    "away_team": "球队17B",
+    "match_time": "2026-02-06T20:00:00Z",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null,
+    "sp_data": {
+      "win": 2.6,
+      "draw": 2.8000000000000003,
+      "lose": 5.2
+    }
+  },
+  {
+    "id": 10,
+    "match_id": "MATCH1009",
+    "league": "英超",
+    "home_team": "球队18A",
+    "away_team": "球队19B",
+    "match_time": "2026-02-07T20:00:00Z",
+    "status": "scheduled",
+    "home_score": null,
+    "away_score": null,
+    "sp_data": {
+      "win": 2.7,
+      "draw": 2.75,
+      "lose": 5.35
+    }
+  }
+]

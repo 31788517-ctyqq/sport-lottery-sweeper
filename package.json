@@ -1,19 +1,52 @@
 {
-  "dependencies": {
-    "axios": "^1.6.2",
-    "element-plus": "^2.4.4",
-    "express": "^5.2.1",
-    "pinia": "^2.1.7",
-    "vue": "^3.4.0",
-    "vue-router": "^4.6.4"
+  "name": "sport-lottery-sweeper",
+  "version": "1.0.0",
+  "private": true,
+  "description": "体育彩票扫盘系统 - AI协同开发项目",
+  "scripts": {
+    "dev": "concurrently \"npm run backend:dev\" \"npm run frontend:dev\"",
+    "backend:dev": "cd backend && python main.py",
+    "frontend:dev": "cd frontend && npm run dev",
+    "install": "npm run install:backend && npm run install:frontend",
+    "install:backend": "pip install -r requirements.txt",
+    "install:frontend": "cd frontend && npm install",
+    "test": "npm run test:backend && npm run test:frontend",
+    "test:backend": "cd backend && pytest",
+    "test:frontend": "cd frontend && npm run test:run",
+    "lint": "npm run lint:backend && npm run lint:frontend",
+    "lint:backend": "cd backend && flake8 .",
+    "lint:frontend": "cd frontend && npm run lint",
+    "scan": "python scripts/config_scanner.py",
+    "health": "python scripts/project_health_check.py",
+    "compliance": "python scripts/check_ai_compliance.py",
+    "smart-start": "python scripts/smart_start.py",
+    "cleanup": "force_kill_port_8000.bat && npm run install",
+    "reset": "npm run cleanup && npm run dev"
   },
   "devDependencies": {
-    "@testing-library/jest-dom": "^5.17.0",
+    "@playwright/test": "^1.58.0",
     "@testing-library/vue": "^8.1.0",
+    "@types/node": "^25.1.0",
     "@vitejs/plugin-vue": "^6.0.3",
-    "@vue/test-utils": "^2.4.4",
-    "jsdom": "^22.0.0",
-    "vite": "^7.3.1",
-    "vitest": "^1.6.1"
+    "@vitest/ui": "^4.0.18",
+    "@vue/test-utils": "^2.4.6",
+    "concurrently": "^9.2.1",
+    "jsdom": "^27.4.0",
+    "sass": "^1.97.3",
+    "vitest": "^4.0.18",
+    "wait-on": "^9.0.3"
+  },
+  "dependencies": {
+    "@element-plus/icons-vue": "^2.3.2",
+    "echarts": "^6.0.0",
+    "vite-plugin-pwa": "^1.2.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "python": ">=3.9.0"
+  },
+  "volta": {
+    "node": "20.5.1",
+    "npm": "9.8.0"
   }
 }

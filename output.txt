@@ -1,0 +1,16 @@
+Traceback (most recent call last):
+  File "c:\Users\11581\Downloads\sport-lottery-sweeper\scripts\quick-test-check.py", line 229, in main
+    success = run_quick_check()
+              ^^^^^^^^^^^^^^^^^
+  File "c:\Users\11581\Downloads\sport-lottery-sweeper\scripts\quick-test-check.py", line 148, in run_quick_check
+    print("\U0001f680 开始快速测试环境检查")
+UnicodeEncodeError: 'gbk' codec can't encode character '\U0001f680' in position 0: illegal multibyte sequence
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "c:\Users\11581\Downloads\sport-lottery-sweeper\scripts\quick-test-check.py", line 239, in <module>
+    main()
+  File "c:\Users\11581\Downloads\sport-lottery-sweeper\scripts\quick-test-check.py", line 235, in main
+    print(f"\n\u274c 检查过程中发生错误: {e}")
+UnicodeEncodeError: 'gbk' codec can't encode character '\u274c' in position 2: illegal multibyte sequence

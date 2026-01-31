@@ -2,7 +2,8 @@
 足球SP管理模块 - Pydantic数据模型和验证器
 """
 from pydantic import BaseModel, Field, validator, HttpUrl, conint, confloat
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Union
+import json
 from datetime import datetime
 import re
 
@@ -15,7 +16,7 @@ class DataSourceBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=100, description="数据源名称")
     type: str = Field(..., description="数据源类型: api/file")
     url: Optional[str] = Field(None, max_length=500, description="接口地址或文件路径")
-    config: Optional[Dict[str, Any]] = Field(None, description="配置信息(JSON格式)")
+    config: Optional[Union[Dict[str, Any], str]] = Field(None, description="配置信息(JSON格式)")
     status: bool = Field(True, description="启用状态")
 
 class DataSourceCreate(DataSourceBase):
@@ -48,8 +49,17 @@ class DataSourceUpdate(BaseModel):
     """更新数据源请求模型"""
     name: Optional[str] = Field(None, min_length=1, max_length=100)
     url: Optional[str] = Field(None, max_length=500)
-    config: Optional[Dict[str, Any]] = None
+    config: Optional[Union[Dict[str, Any], str]] = None
     status: Optional[bool] = None
+
+    @validator('config', pre=True)
+    def validate_config(cls, v):
+        if isinstance(v, str):
+            try:
+                return json.loads(v)
+            except (ValueError, TypeError):
+                return {}
+        return v
 
 class DataSourceResponse(DataSourceBase):
     """数据源响应模型"""

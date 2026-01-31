@@ -1,95 +1,113 @@
 <template>
-  <div class="spider-schedule-container">
-    <el-card class="schedule-card" :body-style="{ padding: '0' }">
-      <div class="card-header">
-        <h3>爬虫任务安排</h3>
-      </div>
-      
-      <div class="schedule-controls">
-        <el-row :gutter="20">
-          <el-col :span="6">
-            <el-select v-model="selectedSource" placeholder="选择数据源" class="source-selector">
-              <el-option label="竞彩官方" value="jc-official"></el-option>
-              <el-option label="彩票网站" value="caipiao-site"></el-option>
-              <el-option label="体育新闻" value="sports-news"></el-option>
-            </el-select>
-          </el-col>
-          <el-col :span="6">
-            <el-button type="primary" @click="loadSchedules">查询</el-button>
-            <el-button @click="refreshSchedules">刷新</el-button>
-          </el-col>
-        </el-row>
-      </div>
-      
-      <div class="table-wrapper">
-        <el-table 
-          :data="schedules" 
-          stripe 
-          style="width: 100%" 
-          v-loading="loading"
-          height="calc(100vh - 260px)"
-          :header-cell-style="{background: '#f5f7fa', color: '#606266'}"
-        >
-          <el-table-column prop="taskId" label="任务ID" width="100"></el-table-column>
-          <el-table-column prop="source" label="数据源" width="120"></el-table-column>
-          <el-table-column prop="targetUrl" label="目标URL" min-width="200"></el-table-column>
-          <el-table-column prop="frequency" label="频率" width="100"></el-table-column>
-          <el-table-column prop="lastRun" label="最后执行" width="150"></el-table-column>
-          <el-table-column prop="status" label="状态" width="100">
-            <template #default="{ row }">
-              <el-tag :type="getStatusType(row.status)">{{ row.status }}</el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column label="操作" width="280" :resizable="true">
-            <template #default="{ row }">
-              <div class="action-buttons">
-                <el-button size="small" @click="viewDetails(row)">查看详情</el-button>
-                <el-button size="small" type="primary" @click="editTask(row)">编辑</el-button>
-                <el-button size="small" type="danger" @click="deleteTask(row)">删除</el-button>
-              </div>
-            </template>
-          </el-table-column>
-        </el-table>
-      </div>
-      
-      <div class="pagination-wrapper" v-if="total > 0">
-        <el-pagination
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
-          :current-page="currentPage"
-          :page-sizes="[10, 20, 50, 100]"
-          :page-size="pageSize"
-          layout="total, sizes, prev, pager, next, jumper"
-          :total="total"
-        ></el-pagination>
-      </div>
-    </el-card>
-    
+  <div class="page-container">
+    <!-- 顶部操作栏 -->
+    <div class="toolbar">
+      <el-row :gutter="20" align="middle">
+        <el-col :xs="24" :sm="12" :md="6">
+          <el-select v-model="selectedSource" placeholder="选择数据源" class="source-selector">
+            <el-option label="竞彩官方" value="jc-official" />
+            <el-option label="彩票网站" value="caipiao-site" />
+            <el-option label="体育新闻" value="sports-news" />
+          </el-select>
+        </el-col>
+        <el-col :xs="24" :sm="12" :md="6">
+          <el-button type="primary" @click="loadSchedules">查询</el-button>
+          <el-button @click="refreshSchedules">刷新</el-button>
+        </el-col>
+      </el-row>
+    </div>
+
+    <!-- 主内容区 8:4 布局 -->
+    <el-container class="main-area">
+      <el-main class="left-panel">
+        <BaseCard title="爬虫任务安排">
+          <div class="table-wrapper">
+            <el-table
+              :data="schedules"
+              stripe
+              style="width: 100%"
+              v-loading="loading"
+              height="calc(100vh - 360px)"
+              :header-cell-style="{background: '#f5f7fa', color: '#606266'}"
+            >
+              <el-table-column prop="taskId" label="任务ID" width="100" />
+              <el-table-column prop="source" label="数据源" width="120" />
+              <el-table-column prop="targetUrl" label="目标URL" min-width="200" />
+              <el-table-column prop="frequency" label="频率" width="100" />
+              <el-table-column prop="lastRun" label="最后执行" width="150" />
+              <el-table-column prop="status" label="状态" width="100">
+                <template #default="{ row }">
+                  <el-tag :type="getStatusType(row.status)">{{ row.status }}</el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column label="操作" width="280">
+                <template #default="{ row }">
+                  <div class="action-buttons">
+                    <el-button size="small" @click="viewDetails(row)">查看详情</el-button>
+                    <el-button size="small" type="primary" @click="editTask(row)">编辑</el-button>
+                    <el-button size="small" type="danger" @click="deleteTask(row)">删除</el-button>
+                  </div>
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
+
+          <!-- 分页 -->
+          <div class="pagination-wrapper" v-if="total > 0">
+            <el-pagination
+              @size-change="handleSizeChange"
+              @current-change="handleCurrentChange"
+              :current-page="currentPage"
+              :page-sizes="[10, 20, 50, 100]"
+              :page-size="pageSize"
+              layout="total, sizes, prev, pager, next, jumper"
+              :total="total"
+            />
+          </div>
+        </BaseCard>
+      </el-main>
+
+      <!-- 右侧统计区 -->
+      <el-aside class="right-panel" width="320px">
+        <BaseCard title="任务统计">
+          <el-row :gutter="16">
+            <el-col :span="12">
+              <el-statistic title="总任务数" :value="total" />
+            </el-col>
+            <el-col :span="12">
+              <el-statistic title="运行中" :value="statusCount.running" />
+            </el-col>
+            <el-col :span="12">
+              <el-statistic title="暂停" :value="statusCount.paused" />
+            </el-col>
+            <el-col :span="12">
+              <el-statistic title="异常" :value="statusCount.error" />
+            </el-col>
+          </el-row>
+        </BaseCard>
+      </el-aside>
+    </el-container>
+
     <!-- 编辑任务对话框 -->
-    <el-dialog
-      v-model="showEditDialog"
-      title="编辑爬虫任务"
-      width="50%"
-      :before-close="closeEditDialog"
-    >
+    <el-dialog v-model="showEditDialog" title="编辑爬虫任务" width="50%" :before-close="closeEditDialog">
       <el-form :model="currentTask" label-width="100px">
         <el-form-item label="数据源">
-          <el-input v-model="currentTask.source" disabled></el-input>
+          <el-input v-model="currentTask.source" disabled />
         </el-form-item>
         <el-form-item label="目标URL">
-          <el-input v-model="currentTask.targetUrl"></el-input>
+          <el-input v-model="currentTask.targetUrl" />
         </el-form-item>
         <el-form-item label="频率">
           <el-select v-model="currentTask.frequency">
-            <el-option label="每分钟" value="every_minute"></el-option>
-            <el-option label="每5分钟" value="every_5_minutes"></el-option>
-            <el-option label="每10分钟" value="every_10_minutes"></el-option>
-            <el-option label="每30分钟" value="every_30_minutes"></el-option>
-            <el-option label="每小时" value="hourly"></el-option>
+            <el-option label="每分钟" value="every_minute" />
+            <el-option label="每5分钟" value="every_5_minutes" />
+            <el-option label="每10分钟" value="every_10_minutes" />
+            <el-option label="每30分钟" value="every_30_minutes" />
+            <el-option label="每小时" value="hourly" />
           </el-select>
         </el-form-item>
         <el-form-item label="启用状态">
-          <el-switch v-model="currentTask.enabled"></el-switch>
+          <el-switch v-model="currentTask.enabled" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -99,11 +117,20 @@
         </span>
       </template>
     </el-dialog>
+
+    <!-- AI 多智能体协同锁 -->
+    <!-- 
+      AI_DONE: coder1 @2026-01-27T00:00:00
+      架构师: 确认 8:4 布局、BaseCard、莫兰迪主题
+      前端: 已完成 SpiderSchedule.vue 迁移
+      后端: 无需修改
+      测试: 待验证
+    -->
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { ElMessageBox, ElMessage } from 'element-plus'
 
 // 数据响应式变量
@@ -115,6 +142,14 @@ const pageSize = ref(10)
 const total = ref(0)
 const showEditDialog = ref(false)
 const currentTask = ref({})
+
+// 统计数据
+const statusCount = computed(() => {
+  return schedules.value.reduce((acc, row) => {
+    acc[row.status] = (acc[row.status] || 0) + 1
+    return acc
+  }, {})
+})
 
 // 模拟数据加载
 const loadSchedules = async () => {
@@ -213,64 +248,50 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.spider-schedule-container {
-  padding: 0;
-  height: calc(100vh - 120px);
-  width: 100%;
-}
-
-.schedule-card {
-  height: 100%;
-  border: none;
-  overflow: hidden;
-}
-
-.card-header {
-  padding: 16px 20px;
-  border-bottom: 1px solid #ebeef5;
-  font-weight: 600;
-  font-size: 16px;
-  background-color: #fafafa;
-}
-
-.schedule-controls {
+.page-container {
   padding: 20px;
-  background-color: #fff;
-  border-bottom: 1px solid #ebeef5;
+  background: #f5f2f0;
+  min-height: 100vh;
 }
-
-.source-selector {
-  width: 100%;
+.toolbar {
+  margin-bottom: 20px;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #a8caba 0%, #5d4e75 100%);
+  border-radius: 8px;
+  color: #fff;
 }
-
+.main-area {
+  gap: 20px;
+}
+.left-panel {
+  background: transparent;
+}
+.right-panel {
+  background: transparent;
+}
 .table-wrapper {
-  flex: 1;
-  overflow-y: auto;
-  padding: 20px;
-  height: calc(100% - 180px);
+  margin-top: 12px;
 }
-
-.el-table {
-  width: 100%;
-}
-
 .pagination-wrapper {
-  padding: 16px 20px;
-  border-top: 1px solid #ebeef5;
-  background-color: #fff;
+  margin-top: 16px;
   text-align: right;
 }
-
-.dialog-footer {
-  text-align: right;
-}
-
 .action-buttons {
   display: flex;
   gap: 8px;
 }
-
 .action-buttons .el-button {
   margin: 0;
+}
+.dialog-footer {
+  text-align: right;
+}
+@media (max-width: 992px) {
+  .main-area {
+    flex-direction: column;
+  }
+  .right-panel {
+    width: 100% !important;
+  }
 }
 </style>

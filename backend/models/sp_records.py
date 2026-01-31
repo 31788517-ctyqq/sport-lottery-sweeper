@@ -28,7 +28,7 @@ class SPRecord(Base):
     modification_logs = relationship("SPModificationLog", back_populates="sp_record", cascade="all, delete-orphan")
     
     def __repr__(self):
-        return f"<SPRecord(id={self.id}, match_id={self.match_id}, company_id={self.company_id}, sp_value={self.sp_value})"
+        return f"<SPRecord(id={self.id}, match_id={self.match_id}, company_id={self.company_id}, sp_value={self.sp_value})>"
     
     @property
     def handicap_display(self) -> str:

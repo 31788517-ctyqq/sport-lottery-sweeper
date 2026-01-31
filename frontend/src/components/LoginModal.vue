@@ -92,7 +92,7 @@
 
 <script>
 import { ref, computed } from 'vue';
-import { useAppStore } from '../stores';
+import { useAppStore } from '@/stores';
 
 export default {
   name: 'LoginModal',

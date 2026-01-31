@@ -468,3 +468,19 @@ class CRUDAdminLoginLog:
 admin_user = CRUDAdminUser()
 admin_operation_log = CRUDAdminOperationLog()
 admin_login_log = CRUDAdminLoginLog()
+
+# 将CRUD类中的方法导出到模块级别，以便直接导入
+get = admin_user.get
+get_by_username = admin_user.get_by_username
+get_by_email = admin_user.get_by_email
+get_multi = admin_user.get_multi
+create = admin_user.create
+update = admin_user.update
+change_password = admin_user.change_password
+reset_password = admin_user.reset_password
+update_status = admin_user.update_status
+record_login_attempt = admin_user.record_login_attempt
+check_ip_whitelist = admin_user.check_ip_whitelist
+is_locked = admin_user.is_locked
+remove = admin_user.remove
+get_stats = admin_user.get_stats

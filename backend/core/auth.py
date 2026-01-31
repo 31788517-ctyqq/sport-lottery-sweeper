@@ -17,7 +17,6 @@ from sqlalchemy.orm import Session
 from ..models.user import User # Assuming your User model is defined here
 from ..schemas.user import UserResponse as UserSchema # Using the correct schema
 from .database import get_db
-from .security import decode_token, verify_password, get_password_hash, ALGORITHM, create_access_token, create_refresh_token
 from ..config import settings
 
 # 获取settings实例
@@ -52,7 +51,8 @@ def authenticate_user(db: Session, username: str, password: str) -> User | None:
         return None
     
     # Try bcrypt verification first
-    from ..core.security import verify_password, get_password_hash
+    # Import inside the function to avoid circular imports
+    from .security import verify_password, get_password_hash
     import hashlib
     
     if verify_password(password, user.password_hash):
@@ -62,7 +62,6 @@ def authenticate_user(db: Session, username: str, password: str) -> User | None:
     sha256_hash = hashlib.sha256(password.encode('utf-8')).hexdigest()
     if sha256_hash == user.password_hash:
         # Upgrade to bcrypt hash
-        from ..core.security import get_password_hash
         bcrypt_hash = get_password_hash(password)
         user.password_hash = bcrypt_hash
         db.commit()
@@ -74,7 +73,7 @@ def authenticate_user(db: Session, username: str, password: str) -> User | None:
 
 
 def get_current_user_from_token(
-    token_data: dict = Depends(lambda token: decode_token(token))
+    token: str = Depends(oauth2_scheme)
 ) -> UserSchema:
     """
     Dependency to get the current user based on the decoded token payload.
@@ -84,7 +83,7 @@ def get_current_user_from_token(
     Authorization header and passes it to `decode_token`.
 
     Args:
-        token_data: The decoded token payload (dict). This is obtained via the `decode_token` utility.
+        token: The raw JWT token from the Authorization header.
 
     Raises:
         HTTPException: If the token is invalid, expired, missing user ID, or the user doesn't exist.
@@ -92,6 +91,10 @@ def get_current_user_from_token(
     Returns:
         A Pydantic `UserSchema` object representing the authenticated user.
     """
+    # Import inside the function to avoid circular imports
+    from .security import decode_token
+    
+    token_data = decode_token(token)
     if token_data is None:
         raise credentials_exception
 
@@ -135,7 +138,7 @@ def get_current_user(token: str = Depends(oauth2_scheme),
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        payload = jwt.decode(token, settings.secret_key, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, settings.secret_key, algorithms=[settings.ALGORITHM])
         username: str = payload.get("sub")
         if username is None:
             raise credentials_exception
@@ -160,7 +163,7 @@ def verify_websocket_token(websocket_token: str):
     )
     
     try:
-        payload = jwt.decode(websocket_token, settings.SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(websocket_token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         username: str = payload.get("sub")
         if username is None:
             return None
@@ -188,3 +191,112 @@ def get_current_admin_user(current_user: User = Depends(get_current_user)) -> Us
             detail="The user doesn't have enough privileges"
         )
     return current_user
+
+# 为了解决模块导入问题，移除直接从security导入的语句，避免循环导入
+# 通过动态导入的方式使用这些函数
+
+# 添加admin_user相关的认证函数
+from fastapi import Depends
+from jose import JWTError
+from ..config import settings
+from ..models.admin_user import AdminUser, AdminStatusEnum, AdminRoleEnum
+from ..utils.exceptions import AuthenticationError, AuthorizationError
+
+async def get_current_user_admin_security(token: str = Depends(oauth2_scheme)):
+    """
+    获取当前用户的依赖项函数（用于admin_user）
+    """
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    
+    try:
+        # 动态导入decode_token函数以避免循环导入
+        from .security import decode_token
+        payload = decode_token(token)
+        user_id: int = payload.get("sub")
+        if user_id is None:
+            raise credentials_exception
+    except JWTError:
+        raise credentials_exception
+    
+    # 从数据库获取用户信息
+    from ..database_async import get_async_db
+    from ..crud import admin_user
+    async with get_async_db() as db:
+        user = await admin_user.admin_user.get(db, id=user_id)
+        if user is None:
+            raise credentials_exception
+        return user
+
+
+async def get_current_active_user_admin_security(current_user: AdminUser = Depends(get_current_user_admin_security)):
+    """
+    获取当前活跃用户的依赖项函数（用于admin_user）
+    """
+    if not current_user:
+        raise AuthenticationError("Not authenticated")
+    if hasattr(current_user, 'is_active') and not current_user.is_active:
+        raise AuthenticationError("用户账户已被禁用")
+    return current_user
+
+
+async def get_current_active_admin_user(current_user: AdminUser = Depends(get_current_active_user_admin_security)):
+    """
+    获取当前活跃管理员用户的依赖项函数
+    """
+    if not current_user:
+        raise AuthenticationError("Not authenticated")
+    
+    # 检查用户角色
+    if hasattr(current_user, 'role'):
+        if current_user.role not in [AdminRoleEnum.SUPER_ADMIN, AdminRoleEnum.ADMIN, AdminRoleEnum.MODERATOR, AdminRoleEnum.AUDITOR, AdminRoleEnum.OPERATOR]:
+            raise AuthorizationError("需要管理员权限")
+    else:
+        raise AuthorizationError("需要管理员权限")
+    
+    # 检查用户状态
+    if hasattr(current_user, 'status'):
+        if current_user.status != AdminStatusEnum.ACTIVE:
+            raise AuthenticationError("管理员账户未激活或被禁用")
+    
+    return current_user
+
+
+# 重新导出security模块中的函数，使其可以通过auth模块访问
+# 这样其他模块可以从auth模块导入这些函数，而不会导致循环导入
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    from .security import verify_password as _verify_password
+    return _verify_password(plain_password, hashed_password)
+
+
+def get_password_hash(password: str) -> str:
+    from .security import get_password_hash as _get_password_hash
+    return _get_password_hash(password)
+
+
+def create_access_token(data: dict, expires_delta: timedelta = None):
+    from .security import create_access_token as _create_access_token
+    return _create_access_token(data, expires_delta)
+
+
+def create_refresh_token(data: dict, expires_delta: timedelta = None):
+    from .security import create_refresh_token as _create_refresh_token
+    return _create_refresh_token(data, expires_delta)
+
+
+def verify_token(token: str, token_type: str = "access"):
+    from .security import verify_token as _verify_token
+    return _verify_token(token, token_type)
+
+
+def decode_token(token: str):
+    from .security import decode_token as _decode_token
+    return _decode_token(token)
+
+
+def get_token_payload(token: str):
+    from .security import get_token_payload as _get_token_payload
+    return _get_token_payload(token)

@@ -1,5 +1,6 @@
+// AI_WORKING: coder1 @2026-01-29 18:36:01 - 修复导入路径和语法问题
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { matchesAPI } from '@/api/modules/matches.js'
+import { matchesAPI } from '../../api/modules/matches.js'
 
 // 模拟 request 模块
 global.fetch = vi.fn()
@@ -32,7 +33,7 @@ describe('matchesAPI', () => {
           match_time: '2024-01-25T15:00:00Z',
           status: 'upcoming',
           jc_type: 'jczq',
-          odds: { win: 2.1, draw: 3.2, lose: 2.8 }
+          odds
         },
         {
           id: 2,
@@ -42,26 +43,18 @@ describe('matchesAPI', () => {
           match_time: '2024-01-26T20:00:00Z',
           status: 'upcoming',
           jc_type: 'jczq',
-          odds: { win: 2.3, draw: 3.1, lose: 2.9 }
+          odds
         }
       ]
       
-      vi.doMock('@/utils/request.js', () => ({
-        default: {
-          get: vi.fn().mockResolvedValue({
-            success: true,
-            data: mockMatches,
-            pagination: {
-              page: 1,
-              limit: 20,
-              total: 2
-            }
+      vi.doMock('../../utils/request.js', () => ({
+        default
           })
         }
       }))
       
       vi.resetModules()
-      const { matchesAPI: freshMatchesAPI } = await import('@/api/modules/matches.js')
+      const { matchesAPI: freshMatchesAPI } = await import('../../api/modules/matches.js')
       
       const filters = {
         sport_type: 'football',
@@ -79,18 +72,14 @@ describe('matchesAPI', () => {
     })
 
     it('应该支持分页参数', async () => {
-      vi.doMock('@/utils/request.js', () => ({
-        default: {
-          get: vi.fn().mockResolvedValue({
-            success: true,
-            data: [],
-            pagination: { page: 2, limit: 10, total: 25 }
+      vi.doMock('../../utils/request.js', () => ({
+        default
           })
         }
       }))
       
       vi.resetModules()
-      const { matchesAPI: freshMatchesAPI } = await import('@/api/modules/matches.js')
+      const { matchesAPI: freshMatchesAPI } = await import('../../api/modules/matches.js')
       
       await freshMatchesAPI.getMatches({}, { page: 2, limit: 10 })
       
@@ -99,14 +88,12 @@ describe('matchesAPI', () => {
     })
 
     it('应该处理网络错误', async () => {
-      vi.doMock('@/utils/request.js', () => ({
-        default: {
-          get: vi.fn().mockRejectedValue(new Error('Network error'))
-        }
+      vi.doMock('../../utils/request.js', () => ({
+        default
       }))
       
       vi.resetModules()
-      const { matchesAPI: freshMatchesAPI } = await import('@/api/modules/matches.js')
+      const { matchesAPI: freshMatchesAPI } = await import('../../api/modules/matches.js')
       
       try {
         await freshMatchesAPI.getMatches()
@@ -128,31 +115,26 @@ describe('matchesAPI', () => {
         venue: '老特拉福德球场',
         status: 'upcoming',
         jc_type: 'jczq',
-        home_score: null,
-        away_score: null,
+        home_score,
+        away_score,
         weather: '晴朗',
         temperature: '15°C',
         odds_history: [
           { time: '2024-01-20T10:00:00Z', win: 2.1, draw: 3.2, lose: 2.8 },
           { time: '2024-01-21T10:00:00Z', win: 2.0, draw: 3.3, lose: 2.9 }
         ],
-        team_stats: {
-          home: { wins: 15, draws: 5, losses: 2 },
-          away: { wins: 12, draws: 8, losses: 3 }
+        team_stats,
+          away
         }
       }
       
-      vi.doMock('@/utils/request.js', () => ({
-        default: {
-          get: vi.fn().mockResolvedValue({
-            success: true,
-            data: mockMatchDetail
-          })
+      vi.doMock('../../utils/request.js', () => ({
+        default)
         }
       }))
       
       vi.resetModules()
-      const { matchesAPI: freshMatchesAPI } = await import('@/api/modules/matches.js')
+      const { matchesAPI: freshMatchesAPI } = await import('../../api/modules/matches.js')
       
       const result = await freshMatchesAPI.getMatchDetail(1)
       
@@ -164,22 +146,15 @@ describe('matchesAPI', () => {
     })
 
     it('比赛不存在应该返回404错误', async () => {
-      vi.doMock('@/utils/request.js', () => ({
-        default: {
-          get: vi.fn().mockRejectedValue({
-            response: {
-              status: 404,
-              data: {
-                success: false,
-                message: 'Match not found'
-              }
+      vi.doMock('../../utils/request.js', () => ({
+        default
             }
           })
         }
       }))
       
       vi.resetModules()
-      const { matchesAPI: freshMatchesAPI } = await import('@/api/modules/matches.js')
+      const { matchesAPI: freshMatchesAPI } = await import('../../api/modules/matches.js')
       
       try {
         await freshMatchesAPI.getMatchDetail(99999)
@@ -211,17 +186,13 @@ describe('matchesAPI', () => {
         }
       ]
       
-      vi.doMock('@/utils/request.js', () => ({
-        default: {
-          get: vi.fn().mockResolvedValue({
-            success: true,
-            data: mockLiveMatches
-          })
+      vi.doMock('../../utils/request.js', () => ({
+        default)
         }
       }))
       
       vi.resetModules()
-      const { matchesAPI: freshMatchesAPI } = await import('@/api/modules/matches.js')
+      const { matchesAPI: freshMatchesAPI } = await import('../../api/modules/matches.js')
       
       const result = await freshMatchesAPI.getLiveMatches()
       
@@ -241,17 +212,13 @@ describe('matchesAPI', () => {
         { id: 3, name: '德甲', country: 'Germany', season: '2023-24', logo: 'logo-url' }
       ]
       
-      vi.doMock('@/utils/request.js', () => ({
-        default: {
-          get: vi.fn().mockResolvedValue({
-            success: true,
-            data: mockLeagues
-          })
+      vi.doMock('../../utils/request.js', () => ({
+        default)
         }
       }))
       
       vi.resetModules()
-      const { matchesAPI: freshMatchesAPI } = await import('@/api/modules/matches.js')
+      const { matchesAPI: freshMatchesAPI } = await import('../../api/modules/matches.js')
       
       const result = await freshMatchesAPI.getLeagues()
       
@@ -268,17 +235,13 @@ describe('matchesAPI', () => {
         { id: 2, name: '切尔西', short_name: 'CFC', league_id: 1, logo: 'team-logo' }
       ]
       
-      vi.doMock('@/utils/request.js', () => ({
-        default: {
-          get: vi.fn().mockResolvedValue({
-            success: true,
-            data: mockTeams
-          })
+      vi.doMock('../../utils/request.js', () => ({
+        default)
         }
       }))
       
       vi.resetModules()
-      const { matchesAPI: freshMatchesAPI } = await import('@/api/modules/matches.js')
+      const { matchesAPI: freshMatchesAPI } = await import('../../api/modules/matches.js')
       
       const result = await freshMatchesAPI.getTeams({ league_id: 1 })
       
@@ -300,17 +263,13 @@ describe('matchesAPI', () => {
         }
       ]
       
-      vi.doMock('@/utils/request.js', () => ({
-        default: {
-          get: vi.fn().mockResolvedValue({
-            success: true,
-            data: mockResults
-          })
+      vi.doMock('../../utils/request.js', () => ({
+        default)
         }
       }))
       
       vi.resetModules()
-      const { matchesAPI: freshMatchesAPI } = await import('@/api/modules/matches.js')
+      const { matchesAPI: freshMatchesAPI } = await import('../../api/modules/matches.js')
       
       const result = await freshMatchesAPI.searchMatches('曼联')
       
@@ -320,3 +279,4 @@ describe('matchesAPI', () => {
     })
   })
 })
+// AI_DONE: coder1 @2026-01-29 18:36:01

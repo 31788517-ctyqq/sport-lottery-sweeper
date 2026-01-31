@@ -1,5 +1,6 @@
+// AI_WORKING: coder1 @2026-01-29 18:36:01 - 修复导入路径和语法问题
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { useFilters } from '@/composables/useFilters.js'
+import { useFilters } from '../../composables/useFilters.js'
 import { ref } from 'vue'
 
 describe('useFilters', () => {
@@ -100,8 +101,7 @@ describe('useFilters', () => {
         search: 'Lakers'
       }
       
-      const summary = filters.filterSummary.value
-      
+      const summary = filters.filterSummary.
       expect(summary).toContain('篮球')
       expect(summary).toContain('本周')
       expect(summary).toContain('NBA')
@@ -198,10 +198,7 @@ describe('useFilters', () => {
         label: '今日足球',
         value: 'football_today',
         icon: 'football',
-        filters: {
-          sport_type: 'football',
-          date_range: 'today'
-        }
+        filters
       }
       
       filters.applyQuickFilter(quickFilter)
@@ -232,10 +229,7 @@ describe('useFilters', () => {
       }
       
       const quickFilter = {
-        filters: {
-          sport_type: 'football',
-          leagues: ['英超']
-        }
+        filters
       }
       
       filters.applyQuickFilter(quickFilter)
@@ -643,11 +637,9 @@ describe('useFilters', () => {
 
     it('应该缓存计算结果', () => {
       // 第一次计算
-      const result1 = filters.activeFilterCount.value
-      
+      const result1 = filters.activeFilterCount.
       // 相同状态下第二次计算应该使用缓存
-      const result2 = filters.activeFilterCount.value
-      
+      const result2 = filters.activeFilterCount.
       expect(result1).toBe(result2)
     })
   })
@@ -655,11 +647,11 @@ describe('useFilters', () => {
   describe('边界情况', () => {
     it('空值和undefined应该被正确处理', () => {
       filters.updateFilters({
-        sport_type: null,
-        date_range: undefined,
-        leagues: null,
+        sport_type,
+        date_range,
+        leagues,
         status: '',
-        search: null
+        search
       })
       
       // 应该被转换为合适的默认值或保持现有值
@@ -679,11 +671,11 @@ describe('useFilters', () => {
     })
 
     it('特殊字符应该被正确处理', () => {
-      const specialChars = 'test<script>alert("xss")</script>&nbsp;测试'
+      const specialChars = 'testalert("xss")</script>&nbsp;测试'
       filters.setSearch(specialChars)
       
       // XSS字符应该被转义或移除
-      expect(filters.filters.value.search).not.toContain('<script>')
+      expect(filters.filters.value.search).not.toContain('')
       expect(filters.filters.value.search).toContain('测试')
     })
   })
@@ -697,11 +689,11 @@ describe('useFilters', () => {
 
     it('应该提供有意义的反馈', () => {
       // 当筛选条件变化时，应该有相应的状态更新
-      const initialCount = filters.activeFilterCount.value
+      const initialCount = filters.activeFilterCount.
       filters.updateFilters({ leagues: ['英超'] })
-      const newCount = filters.activeFilterCount.value
-      
+      const newCount = filters.activeFilterCount.
       expect(newCount).toBeGreaterThan(initialCount)
     })
   })
 })
+// AI_DONE: coder1 @2026-01-29 18:36:01

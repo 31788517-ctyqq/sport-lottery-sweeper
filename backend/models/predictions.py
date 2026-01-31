@@ -9,6 +9,8 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.sql import func
+from sqlalchemy import event
+from sqlalchemy.orm.mapper import Mapper
 import enum
 
 from sqlalchemy.ext.mutable import MutableDict
@@ -99,7 +101,8 @@ class Prediction(BaseFullModel):
     
     # 关系
     match = relationship("Match", back_populates="predictions")
-    user_predictions = relationship("UserPrediction", back_populates="prediction", cascade="all, delete-orphan")
+    user_predictions = relationship("UserPrediction", back_populates="prediction")
+    # 注意：user_predictions关系现在在user_models.py中的UserPrediction模型里定义
     
     # 索引
     __table_args__ = (
@@ -116,54 +119,4 @@ class Prediction(BaseFullModel):
     
     def __repr__(self) -> str:
         return f"<Prediction(id={self.id}, match_id={self.match_id}, type={self.prediction_type}, confidence={self.confidence_level})>"
-
-
-class UserPrediction(BaseFullModel):
-    """
-    用户预测模型
-    """
-    __tablename__ = "user_predictions"
-    
-    # 关联信息
-    user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'), nullable=False, index=True)
-    match_id = Column(Integer, ForeignKey('matches.id', ondelete='CASCADE'), nullable=False, index=True)
-    prediction_id = Column(Integer, ForeignKey('predictions.id', ondelete='CASCADE'), nullable=False, index=True)
-    
-    # 用户预测内容
-    user_choice = Column(String(100), nullable=False)  # 用户的选择
-    user_confidence = Column(Float, nullable=False, index=True)  # 用户信心指数 (0-1)
-    
-    # 结果
-    is_successful = Column(Boolean, nullable=True, index=True)  # 是否成功
-    profit_loss = Column(Float, default=0.0, nullable=False, index=True)  # 盈亏
-    
-    # 参与信息
-    stake_amount = Column(Float, nullable=True)  # 投注金额
-    odds_offered = Column(Float, nullable=True)  # 提供的赔率
-    
-    # 状态
-    is_active = Column(Boolean, default=True, nullable=False, index=True)
-    
-    # 验证和评价
-    user_evaluation = Column(Integer, nullable=True)  # 用户评价 (1-5星)
-    notes = Column(Text, nullable=True)  # 用户备注
-    
-    # 关系
-    user = relationship("User", back_populates="predictions")
-    match = relationship("Match")
-    prediction = relationship("Prediction", back_populates="user_predictions")
-    
-    # 索引
-    __table_args__ = (
-        Index('idx_user_predictions_user_match', 'user_id', 'match_id'),
-        Index('idx_user_predictions_match_user', 'match_id', 'user_id'),
-        Index('idx_user_predictions_pred_conf', 'prediction_id', 'user_confidence'),
-        Index('idx_user_predictions_success', 'is_successful'),
-        Index('idx_user_predictions_profit', 'profit_loss'),
-        Index('idx_user_predictions_active', 'is_active'),
-        Index('idx_user_predictions_evaluation', 'user_evaluation'),
-        {'extend_existing': True}
-    )
-    
-    def __repr__(self) -> str:
-        return f"<UserPrediction(id={self.id}, user_id={self.user_id}, match_id={self.match_id})>"
+# 注意：UserPrediction模型已移至user_models.py文件中，以解决循环导入问题

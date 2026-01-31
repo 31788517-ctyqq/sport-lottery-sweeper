@@ -1,0 +1,32 @@
+[
+  {
+    "id": 1,
+    "name": "500彩票网API",
+    "type": "api",
+    "url": "https://api.500.com/v1",
+    "status": "enabled",
+    "error_rate": 2.5,
+    "last_checked": "2026-01-28T10:30:00Z",
+    "description": "官方500彩票网API接口，提供实时比赛数据"
+  },
+  {
+    "id": 2,
+    "name": "本地比赛数据",
+    "type": "file",
+    "url": "file:///data/local_matches.json",
+    "status": "enabled",
+    "error_rate": 0.0,
+    "last_checked": "2026-01-28T09:15:00Z",
+    "description": "本地存储的历史比赛数据文件"
+  },
+  {
+    "id": 3,
+    "name": "测试数据源",
+    "type": "test",
+    "url": "test://mock/data",
+    "status": "disabled",
+    "error_rate": 15.0,
+    "last_checked": "2026-01-27T14:20:00Z",
+    "description": "用于测试的模拟数据源"
+  }
+]

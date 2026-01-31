@@ -27,7 +27,7 @@ services:
       dockerfile: Dockerfile.dev
     container_name: soccer-backend
     env_file:
-      - ./config/development/backend.env
+      - .env
     volumes:
       - ./backend:/app
       - ./logs/backend:/app/logs
@@ -50,7 +50,7 @@ services:
       dockerfile: Dockerfile.dev
     container_name: soccer-frontend
     env_file:
-      - ./config/development/frontend.env
+      - .env
     volumes:
       - ./frontend:/app
       - /app/node_modules
@@ -125,7 +125,7 @@ services:
       dockerfile: Dockerfile.dev
     container_name: soccer-celery-worker
     env_file:
-      - ./config/development/backend.env
+      - .env
     volumes:
       - ./backend:/app
       - ./logs/backend:/app/logs
@@ -144,7 +144,7 @@ services:
       dockerfile: Dockerfile.dev
     container_name: soccer-celery-beat
     env_file:
-      - ./config/development/backend.env
+      - .env
     volumes:
       - ./backend:/app
       - ./logs/backend:/app/logs
@@ -163,7 +163,7 @@ services:
       dockerfile: Dockerfile.dev
     container_name: soccer-flower
     env_file:
-      - ./config/development/backend.env
+      - .env
     ports:
       - "5555:5555"
     depends_on:
@@ -181,7 +181,7 @@ services:
       dockerfile: Dockerfile.crawler
     container_name: soccer-crawler
     env_file:
-      - ./config/development/crawler.env
+      - .env
     volumes:
       - ./:/app
       - ./logs/crawler:/app/logs

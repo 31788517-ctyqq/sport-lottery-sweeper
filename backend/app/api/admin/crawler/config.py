@@ -1,7 +1,9 @@
 from flask import Blueprint, request, jsonify
+import logging
+logger = logging.getLogger(__name__)
 from datetime import datetime
 
-bp = Blueprint('crawler_config', __name__, url_prefix='/api/admin/crawler/config')
+bp = Bluelogger.debug('crawler_config', __name__, url_prefix='/api/admin/crawler/config')
 
 @bp.route('', methods=['GET'])
 def get_configs():

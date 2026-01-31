@@ -9,16 +9,18 @@ from typing import List, Optional
 import logging
 from datetime import datetime, timedelta
 
-from ...database import get_db
-from ...services.crawler_alert_service import CrawlerAlertService
-from ...services.enhanced_crawler_service import EnhancedCrawlerService
-from ...models.crawler_config import CrawlerConfig
-from ...models.crawler_logs import CrawlerTaskLog, CrawlerSourceStat
-from ...models.crawler_alert_records import CrawlerAlertRecord
-from ...models.crawler_alert_rules import CrawlerAlertRule
-from ...core.auth import get_current_user
-from ...models.admin_user import AdminUser
-from ...schemas.crawler_monitoring import MonitoringOverview, SourcePerformance, AlertTrends, RealtimeMetrics, TopIssues
+# AI_WORKING: coder1 @2026-01-26 - 修复相对导入块
+from backend.database import get_db
+from backend.services.crawler_alert_service import CrawlerAlertService
+from backend.services.enhanced_crawler_service import EnhancedCrawlerService
+from backend.models.crawler_config import CrawlerConfig
+from backend.models.crawler_logs import CrawlerTaskLog, CrawlerSourceStat
+from backend.models.crawler_alert_records import CrawlerAlertRecord
+from backend.models.crawler_alert_rules import CrawlerAlertRule
+from backend.core.auth import get_current_user
+from backend.models.admin_user import AdminUser
+from backend.schemas.crawler_monitoring import MonitoringOverview, SourcePerformance, AlertTrends, RealtimeMetrics, TopIssues
+# AI_DONE: coder1 @2026-01-26
 
 logger = logging.getLogger(__name__)
 

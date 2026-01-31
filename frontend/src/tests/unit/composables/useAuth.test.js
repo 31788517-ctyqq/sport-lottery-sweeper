@@ -1,11 +1,12 @@
+// AI_WORKING: coder1 @2026-01-29 18:36:01 - 修复导入路径和语法问题
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { useAuth } from '@/composables/useAuth.js'
+import { useAuth } from '../../composables/useAuth.js'
 import { ref } from 'vue'
 
 // 模拟 Vue Router
 global.window = Object.create(window)
 Object.defineProperty(window, 'location', {
-  value: { href: 'http://localhost:3000/' },
+  value,
   writable: true
 })
 
@@ -170,17 +171,14 @@ describe('useAuth', () => {
       
       const mockResponse = {
         success: true,
-        data: {
-          user: { id: 1, username: 'newuser', email: 'newuser@example.com' },
+        data,
           message: 'Registration successful'
         }
       }
       
       // 模拟API调用
-      vi.doMock('@/api/modules/auth.js', () => ({
-        authAPI: {
-          register: vi.fn().mockResolvedValue(mockResponse)
-        }
+      vi.doMock('../../api/modules/auth.js', () => ({
+        authAPI
       }))
       
       await auth.register(userData)
@@ -198,12 +196,8 @@ describe('useAuth', () => {
         email: ['邮箱格式不正确']
       }
       
-      vi.doMock('@/api/modules/auth.js', () => ({
-        authAPI: {
-          register: vi.fn().mockRejectedValue({
-            response: {
-              status: 422,
-              data: { success: false, errors: validationErrors }
+      vi.doMock('../../api/modules/auth.js', () => ({
+        authAPI
             }
           })
         }
@@ -219,10 +213,8 @@ describe('useAuth', () => {
     })
 
     it('注册应该处理网络错误', async () => {
-      vi.doMock('@/api/modules/auth.js', () => ({
-        authAPI: {
-          register: vi.fn().mockRejectedValue(new Error('Network error'))
-        }
+      vi.doMock('../../api/modules/auth.js', () => ({
+        authAPI
       }))
       
       const userData = { username: 'testuser', email: 'test@example.com', password: 'password123' }
@@ -239,10 +231,8 @@ describe('useAuth', () => {
     it('注册时应该设置loading状态', async () => {
       const userData = { username: 'testuser', email: 'test@example.com', password: 'password123' }
       
-      vi.doMock('@/api/modules/auth.js', () => ({
-        authAPI: {
-          register: vi.fn().mockImplementation(() => new Promise(resolve => {
-            setTimeout(() => resolve({ success: true }), 100)
+      vi.doMock('../../api/modules/auth.js', () => ({
+        authAPI), 100)
           }))
         }
       }))
@@ -267,22 +257,14 @@ describe('useAuth', () => {
       
       const mockResponse = {
         success: true,
-        data: {
-          user: {
-            id: 1,
-            username: 'testuser',
-            email: 'test@example.com',
-            balance: 1000.0
-          },
+        data,
           access_token: 'jwt-access-token',
           refresh_token: 'jwt-refresh-token'
         }
       }
       
-      vi.doMock('@/api/modules/auth.js', () => ({
-        authAPI: {
-          login: vi.fn().mockResolvedValue(mockResponse)
-        }
+      vi.doMock('../../api/modules/auth.js', () => ({
+        authAPI
       }))
       
       await auth.login(credentials)
@@ -301,12 +283,8 @@ describe('useAuth', () => {
         password: 'wrongpass'
       }
       
-      vi.doMock('@/api/modules/auth.js', () => ({
-        authAPI: {
-          login: vi.fn().mockRejectedValue({
-            response: {
-              status: 401,
-              data: { success: false, message: 'Invalid credentials' }
+      vi.doMock('../../api/modules/auth.js', () => ({
+        authAPI
             }
           })
         }
@@ -325,12 +303,8 @@ describe('useAuth', () => {
     })
 
     it('账号未激活应该特殊处理', async () => {
-      vi.doMock('@/api/modules/auth.js', () => ({
-        authAPI: {
-          login: vi.fn().mockRejectedValue({
-            response: {
-              status: 403,
-              data: { success: false, code: 'ACCOUNT_NOT_ACTIVATED' }
+      vi.doMock('../../api/modules/auth.js', () => ({
+        authAPI
             }
           })
         }
@@ -350,9 +324,8 @@ describe('useAuth', () => {
       
       const credentials = { username: 'testuser', password: 'password123' }
       
-      vi.doMock('@/api/modules/auth.js', () => ({
-        authAPI: {
-          login: vi.fn().mockResolvedValue({ success: true, data: {} })
+      vi.doMock('../../api/modules/auth.js', () => ({
+        authAPI })
         }
       }))
       
@@ -368,9 +341,8 @@ describe('useAuth', () => {
       auth.token.value = 'fake-token'
       auth.user.value = { id: 1, username: 'testuser' }
       
-      vi.doMock('@/api/modules/auth.js', () => ({
-        authAPI: {
-          logout: vi.fn().mockResolvedValue({ success: true })
+      vi.doMock('../../api/modules/auth.js', () => ({
+        authAPI)
         }
       }))
       
@@ -388,10 +360,8 @@ describe('useAuth', () => {
       auth.token.value = 'fake-token'
       auth.user.value = { id: 1, username: 'testuser' }
       
-      vi.doMock('@/api/modules/auth.js', () => ({
-        authAPI: {
-          logout: vi.fn().mockRejectedValue(new Error('API error'))
-        }
+      vi.doMock('../../api/modules/auth.js', () => ({
+        authAPI
       }))
       
       await auth.logout()
@@ -413,9 +383,8 @@ describe('useAuth', () => {
         balance: 1000.0
       }
       
-      vi.doMock('@/api/modules/auth.js', () => ({
-        authAPI: {
-          getCurrentUser: vi.fn().mockResolvedValue({ success: true, data: mockUser })
+      vi.doMock('../../api/modules/auth.js', () => ({
+        authAPI)
         }
       }))
       
@@ -426,10 +395,8 @@ describe('useAuth', () => {
     })
 
     it('获取用户信息失败应该清除认证状态', async () => {
-      vi.doMock('@/api/modules/auth.js', () => ({
-        authAPI: {
-          getCurrentUser: vi.fn().mockRejectedValue(new Error('API error'))
-        }
+      vi.doMock('../../api/modules/auth.js', () => ({
+        authAPI
       }))
       
       auth.token.value = 'fake-token'
@@ -445,10 +412,8 @@ describe('useAuth', () => {
     it('没有token时不应该发起请求', async () => {
       auth.token.value = null
       
-      vi.doMock('@/api/modules/auth.js', () => ({
-        authAPI: {
-          getCurrentUser: vi.fn()
-        }
+      vi.doMock('../../api/modules/auth.js', () => ({
+        authAPI
       }))
       
       await auth.fetchCurrentUser()
@@ -471,9 +436,8 @@ describe('useAuth', () => {
         email: 'updated@example.com'
       }
       
-      vi.doMock('@/api/modules/auth.js', () => ({
-        authAPI: {
-          updateProfile: vi.fn().mockResolvedValue({ success: true, data: updatedUser })
+      vi.doMock('../../api/modules/auth.js', () => ({
+        authAPI)
         }
       }))
       
@@ -489,10 +453,8 @@ describe('useAuth', () => {
     it('更新失败应该设置错误状态', async () => {
       const profileData = { nickname: 'New Name' }
       
-      vi.doMock('@/api/modules/auth.js', () => ({
-        authAPI: {
-          updateProfile: vi.fn().mockRejectedValue(new Error('Update failed'))
-        }
+      vi.doMock('../../api/modules/auth.js', () => ({
+        authAPI
       }))
       
       try {
@@ -511,9 +473,8 @@ describe('useAuth', () => {
         new_password: 'newpassword123'
       }
       
-      vi.doMock('@/api/modules/auth.js', () => ({
-        authAPI: {
-          changePassword: vi.fn().mockResolvedValue({ success: true, message: 'Password changed' })
+      vi.doMock('../../api/modules/auth.js', () => ({
+        authAPI)
         }
       }))
       
@@ -541,11 +502,8 @@ describe('useAuth', () => {
         new_password: 'newpassword123'
       }
       
-      vi.doMock('@/api/modules/auth.js', () => ({
-        authAPI: {
-          changePassword: vi.fn().mockRejectedValue({
-            response: {
-              data: { message: 'Current password incorrect' }
+      vi.doMock('../../api/modules/auth.js', () => ({
+        authAPI
             }
           })
         }
@@ -665,12 +623,8 @@ describe('useAuth', () => {
       const firstPromise = new Promise(resolve => resolveFirst = resolve)
       const secondPromise = new Promise(resolve => resolveSecond = resolve)
       
-      vi.doMock('@/api/modules/auth.js', () => ({
-        authAPI: {
-          login: vi.fn()
-            .mockReturnValueOnce(firstPromise)
-            .mockReturnValueOnce(secondPromise)
-        }
+      vi.doMock('../../api/modules/auth.js', () => ({
+        authAPI
       }))
       
       // 发起两个并发登录请求
@@ -678,11 +632,11 @@ describe('useAuth', () => {
       const promise2 = auth.login(credentials)
       
       // 第一个请求完成
-      resolveFirst({ success: true, data: { user: {}, access_token: 'token1' } })
+      resolveFirst({ success: true, data, access_token: 'token1' } })
       await promise1
       
       // 第二个请求应该不会覆盖第一个的结果
-      resolveSecond({ success: true, data: { user: {}, access_token: 'token2' } })
+      resolveSecond({ success: true, data, access_token: 'token2' } })
       await promise2
       
       // 最终的token应该是第一个请求的token（取决于具体实现）
@@ -690,3 +644,4 @@ describe('useAuth', () => {
     })
   })
 })
+// AI_DONE: coder1 @2026-01-29 18:36:01

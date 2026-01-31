@@ -3,7 +3,7 @@ import apiClient from './index'
 
 // 创建多个axios实例用于不同场景
 const publicClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL,
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json'
@@ -11,7 +11,7 @@ const publicClient = axios.create({
 })
 
 const uploadClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL,
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000',
   timeout: 60000,
   headers: {
     'Content-Type': 'multipart/form-data'
@@ -19,7 +19,7 @@ const uploadClient = axios.create({
 })
 
 const downloadClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL,
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000',
   timeout: 60000,
   responseType: 'blob'
 })

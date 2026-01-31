@@ -14,8 +14,8 @@ export default [
       // 自定义规则
       'vue/multi-word-component-names': 'off',
       'vue/no-v-html': 'off',
-      'no-console': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
-      'no-debugger': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
+      'no-console': import.meta.env.MODE === 'production' ? 'warn' : 'off',
+      'no-debugger': import.meta.env.MODE === 'production' ? 'warn' : 'off',
       'no-unused-vars': 'warn',
       'vue/no-unused-vars': 'warn',
       'vue/require-default-prop': 'off',

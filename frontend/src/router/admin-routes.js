@@ -1,4 +1,4 @@
-import Layout from './layout/Index.vue'
+import Layout from '@/layout/Index.vue'
 
 const adminRoutes = [
   {
@@ -15,7 +15,7 @@ const adminRoutes = [
       {
         path: 'dashboard',
         name: 'Dashboard',
-        component: () => import('./views/admin/Dashboard.vue'),
+        component: () => import('../views/admin/Dashboard.vue'),
         meta: {
           title: 'Dashboard',
           icon: 'dashboard',
@@ -23,20 +23,89 @@ const adminRoutes = [
         }
       },
       {
+        path: 'logs',
+        name: 'OperationLogDirect',
+        component: () => import('../views/admin/users/OperationLog.vue'),
+        meta: {
+          title: '操作日志',
+          icon: 'Document',
+          roles: ['admin'],
+          keepAlive: true
+        }
+      },
+      {
         path: 'users',
         name: 'UserManagement',
-        component: () => import('../views/admin/users/FrontendUsers.vue'),
+        redirect: '/admin/users/list',
         meta: {
-          title: 'User Management',
-          icon: 'user',
-          roles: ['admin']
-        }
+          title: '用户管理',
+          icon: 'UserFilled',
+          roles: ['admin'],
+          order: 2
+        },
+        children: [
+          {
+            path: 'list',
+            name: 'UserList',
+            component: () => import('../views/admin/users/UserList.vue'),
+            meta: {
+              title: '用户列表',
+              icon: 'User',
+              roles: ['admin', 'manager'],
+              keepAlive: true
+            }
+          },
+          {
+            path: 'roles',
+            name: 'RolePermission',
+            component: () => import('../views/admin/users/RolePermission.vue'),
+            meta: {
+              title: '角色与权限',
+              icon: 'Key',
+              roles: ['admin'],
+              keepAlive: true
+            }
+          },
+          {
+            path: 'departments',
+            name: 'DepartmentManagement',
+            component: () => import('../views/admin/users/DepartmentManagement.vue'),
+            meta: {
+              title: '部门管理',
+              icon: 'OfficeBuilding',
+              roles: ['admin'],
+              keepAlive: true
+            }
+          },
+          {
+            path: 'profile',
+            name: 'UserProfile',
+            component: () => import('../views/admin/users/UserProfile.vue'),
+            meta: {
+              title: '个人中心',
+              icon: 'Avatar',
+              roles: ['admin', 'manager'],
+              keepAlive: false
+            }
+          },
+          {
+            path: 'logs',
+            name: 'OperationLog',
+            component: () => import('../views/admin/users/OperationLog.vue'),
+            meta: {
+              title: '操作日志',
+              icon: 'Document',
+              roles: ['admin'],
+              keepAlive: true
+            }
+          }
+        ]
       },
       // Crawler Management Module
       {
         path: 'crawler',
         name: 'CrawlerManagement',
-        redirect: '/admin/crawler/sources',
+        redirect: '/admin/crawler/data-source-management', // 更新重定向路径
         meta: {
           title: '爬虫管理',
           icon: 'bug',
@@ -58,8 +127,29 @@ const adminRoutes = [
             name: 'DataSource',
             component: () => import('../views/admin/crawler/DataSource.vue'),
             meta: {
+              title: '数据源管理(旧)',
+              icon: 'link',
+              roles: ['admin'],
+              hidden: true // 隐藏旧页面
+            }
+          },
+          {
+            path: 'data-source-management',
+            name: 'DataSourceManagement',
+            component: () => import('../views/admin/crawler/DataSourceManagement.vue'),
+            meta: {
               title: '数据源管理',
               icon: 'link',
+              roles: ['admin', 'manager']
+            }
+          },
+          {
+            path: 'task-console',
+            name: 'TaskConsole',
+            component: () => import('../views/admin/crawler/TaskConsole.vue'),
+            meta: {
+              title: '任务控制台',
+              icon: 'console',
               roles: ['admin', 'manager']
             }
           },
@@ -74,12 +164,42 @@ const adminRoutes = [
             }
           },
           {
+            path: 'data-intelligence',
+            name: 'CrawlerDataIntelligence',
+            component: () => import('../views/admin/crawler/DataIntelligence.vue'),
+            meta: {
+              title: '数据情报',
+              icon: 'data-analysis',
+              roles: ['admin', 'manager']
+            }
+          },
+          {
             path: 'intelligence',
             name: 'DataIntelligence',
             component: () => import('../views/admin/crawler/DataIntelligence.vue'),
             meta: {
               title: '数据情报',
               icon: 'data-analysis',
+              roles: ['admin', 'manager']
+            }
+          },
+          {
+            path: 'data-center',
+            name: 'DataCenter',
+            component: () => import('../views/admin/crawler/DataCenter.vue'),
+            meta: {
+              title: '数据中心',
+              icon: 'data-analysis',
+              roles: ['admin', 'manager']
+            }
+          },
+          {
+            path: 'system-monitor',
+            name: 'SystemMonitor',
+            component: () => import('../views/admin/crawler/SystemMonitor.vue'),
+            meta: {
+              title: '系统监控',
+              icon: 'monitor',
               roles: ['admin', 'manager']
             }
           },
@@ -95,11 +215,11 @@ const adminRoutes = [
           }
         ]
       },
-      // Football SP Management Module (new, same level as crawler management)
+      // Football SP Management Module (using existing SP components)
       {
         path: 'sp',
         name: 'SpManagement',
-        redirect: '/admin/sp/data-sources',
+        redirect: '/admin/sp/data-source',
         meta: {
           title: '足球SP管理',
           icon: 'soccer',
@@ -107,9 +227,9 @@ const adminRoutes = [
         },
         children: [
           {
-            path: 'data-sources',
+            path: 'data-source',
             name: 'SpDataSources',
-            component: () => import('../../views/admin/sp/DataSourceManagement.vue'),
+            component: () => import('../views/admin/sp/DataSourceManagement.vue'),
             meta: {
               title: '数据源管理',
               icon: 'link',
@@ -119,7 +239,7 @@ const adminRoutes = [
           {
             path: 'matches',
             name: 'SpMatches',
-            component: () => import('../../views/admin/sp/MatchManagement.vue'),
+            component: () => import('../views/admin/sp/MatchManagement.vue'),
             meta: {
               title: '比赛信息管理',
               icon: 'calendar',
@@ -129,7 +249,7 @@ const adminRoutes = [
           {
             path: 'records',
             name: 'SpRecords',
-            component: () => import('../../views/admin/sp/SPRecordManagement.vue'),
+            component: () => import('../views/admin/sp/SPRecordManagement.vue'),
             meta: {
               title: 'SP值管理',
               icon: 'trend-charts',
@@ -139,7 +259,7 @@ const adminRoutes = [
           {
             path: 'analysis',
             name: 'SpAnalysis',
-            component: () => import('../../views/admin/sp/DataAnalysisInsight.vue'),
+            component: () => import('../views/admin/sp/DataAnalysisInsight.vue'),
             meta: {
               title: '数据分析与洞察',
               icon: 'pie-chart',
@@ -148,115 +268,69 @@ const adminRoutes = [
           }
         ]
       },
+      // Schedule Management Module (New First-level Menu)
       {
-        path: 'crawler-alert',
-        name: 'CrawlerAlert',
-        redirect: '/admin/crawler-alert/rules',
+        path: 'schedule',
+        name: 'ScheduleManagement',
+        redirect: '/admin/schedule/jingcai',
         meta: {
-          title: '爬虫告警',
-          icon: 'warning',
-          roles: ['admin', 'manager']
+          title: '赛程管理',
+          icon: 'CalendarIcon',
+          roles: ['admin', 'manager'],
+          order: 3
         },
         children: [
           {
-            path: 'rules',
-            name: 'AlertRules',
-            component: () => import('../../views/admin/crawler/AlertRules.vue'),
+            path: 'jingcai',
+            name: 'JingcaiSchedule',
+            component: () => import('../views/admin/match/LotterySchedule.vue'),
             meta: {
-              title: '告警规则管理',
-              icon: 'bell',
+              title: '竞彩赛程',
+              icon: 'calendar',
               roles: ['admin', 'manager']
             }
           },
           {
-            path: 'records',
-            name: 'AlertRecords',
-            component: () => import('../../views/admin/crawler/AlertRecords.vue'),
+            path: 'beidan',
+            name: 'BeidanSchedule',
+            component: () => import('../views/admin/match/BeidanSchedule.vue'),
             meta: {
-              title: '告警记录',
-              icon: 'document',
+              title: '北单赛程',
+              icon: 'clock',
               roles: ['admin', 'manager']
             }
           },
           {
-            path: 'check',
-            name: 'AlertCheck',
-            component: () => import('../../views/admin/crawler/AlertCheck.vue'),
+            path: 'config',
+            name: 'ScheduleConfig',
+            component: () => import('../views/admin/match/LeagueConfigManagement.vue'),
             meta: {
-              title: '告警检查',
-              icon: 'search',
+              title: '赛程配置',
+              icon: 'setting',
               roles: ['admin']
-            }
-          },
-          {
-            path: 'stats',
-            name: 'AlertStats',
-            component: () => import('../../views/admin/crawler/AlertStats.vue'),
-            meta: {
-              title: '告警统计',
-              icon: 'data-board',
-              roles: ['admin', 'manager']
             }
           }
         ]
       },
+      // Monitoring module (using existing DataManagement component)
       {
         path: 'monitoring',
         name: 'MonitoringDashboard',
-        redirect: '/admin/monitoring/dashboard',
+        redirect: '/admin/monitoring/data',
         meta: {
           title: '监控仪表板',
           icon: 'monitor',
-          roles: ['admin', 'manager']
+          roles: ['admin', 'manager'],
+          hidden: true
         },
         children: [
           {
-            path: 'dashboard',
+            path: 'data',
             name: 'MonitoringOverview',
-            component: () => import('../../views/admin/monitoring/Dashboard.vue'),
+            component: () => import('../views/admin/DataManagement.vue'),
             meta: {
-              title: '监控概览',
+              title: '数据监控',
               icon: 'view',
-              roles: ['admin', 'manager']
-            }
-          },
-          {
-            path: 'performance',
-            name: 'SourcePerformance',
-            component: () => import('../../views/admin/monitoring/SourcePerformance.vue'),
-            meta: {
-              title: '数据源性能',
-              icon: 'speed',
-              roles: ['admin', 'manager']
-            }
-          },
-          {
-            path: 'trends',
-            name: 'AlertTrends',
-            component: () => import('../../views/admin/monitoring/AlertTrends.vue'),
-            meta: {
-              title: '告警趋势',
-              icon: 'trend',
-              roles: ['admin', 'manager']
-            }
-          },
-          {
-            path: 'realtime',
-            name: 'RealtimeMetrics',
-            component: () => import('../../views/admin/monitoring/RealtimeMetrics.vue'),
-            meta: {
-              title: '实时指标',
-              icon: 'timer',
-              roles: ['admin', 'manager']
-            }
-          },
-          {
-            path: 'issues',
-            name: 'TopIssues',
-            component: () => import('../../views/admin/monitoring/TopIssues.vue'),
-            meta: {
-              title: '主要问题',
-              icon: 'question',
               roles: ['admin', 'manager']
             }
           }
@@ -314,6 +388,137 @@ const adminRoutes = [
             }
           }
         ]
+      },
+      // Intelligence Management Module
+      {
+        path: 'intelligence',
+        name: 'IntelligenceManagement',
+        redirect: '/admin/intelligence/screening',
+        meta: {
+          title: '情报管理',
+          icon: 'document',
+          roles: ['admin', 'manager']
+        },
+        children: [
+          {
+            path: 'screening',
+            name: 'IntelligenceScreening',
+            component: () => import('../views/admin/intelligence/ScreeningManagement.vue'),
+            meta: {
+              title: '智能筛选',
+              icon: 'document',
+              roles: ['admin', 'manager']
+            }
+          },
+          {
+            path: 'collection',
+            name: 'IntelligenceCollection',
+            component: () => import('../views/admin/intelligence/CollectionManagement.vue'),
+            meta: {
+              title: '采集管理',
+              icon: 'document',
+              roles: ['admin', 'manager']
+            }
+          },
+          {
+            path: 'model',
+            name: 'IntelligenceModel',
+            component: () => import('../views/admin/intelligence/ModelManagement.vue'),
+            meta: {
+              title: '模型管理',
+              icon: 'cpu',
+              roles: ['admin', 'manager']
+            }
+          },
+          {
+            path: 'weight',
+            name: 'IntelligenceWeight',
+            component: () => import('../views/admin/intelligence/WeightManagement.vue'),
+            meta: {
+              title: '权重管理',
+              icon: 'scale',
+              roles: ['admin', 'manager']
+            }
+          },
+          {
+            path: 'graph',
+            name: 'IntelligenceGraph',
+            component: () => import('../views/admin/intelligence/GraphManagement.vue'),
+            meta: {
+              title: '图表管理',
+              icon: 'data-line',
+              roles: ['admin', 'manager']
+            }
+          },
+          {
+            path: 'data-intelligence',
+            name: 'IntelligenceData',
+            component: () => import('../views/admin/intelligence/DataIntelligence.vue'),
+            meta: {
+              title: '数据分析',
+              icon: 'data-analysis',
+              roles: ['admin', 'manager'],
+              hidden: true
+            }
+          },
+          {
+            path: 'system-monitor',
+            name: 'CrawlerSystemMonitor',
+            component: () => import('../views/admin/crawler/SystemMonitor.vue'),
+            meta: {
+              title: '系统监控',
+              icon: 'chart-line',
+              roles: ['admin', 'manager']
+            }
+          }
+        ]
+      },
+      // Match Management Module (redundant with match-schedule, keeping both for completeness)
+      {
+        path: 'match',
+        name: 'MatchManagement',
+        redirect: '/admin/match/lottery',
+        meta: {
+          title: '比赛管理',
+          icon: 'calendar',
+          roles: ['admin', 'manager'],
+          hidden: true
+        },
+        children: [
+          {
+            path: 'lottery',
+            name: 'LotteryMatch',
+            component: () => import('../views/admin/match/LotterySchedule.vue'),
+            meta: {
+              title: '竞彩赛程',
+              icon: 'calendar',
+              roles: ['admin', 'manager']
+            }
+          }
+        ]
+      },
+      // System Settings Module
+      {
+        path: 'system',
+        name: 'SystemManagement',
+        component: () => import('../views/admin/settings/SystemSettings.vue'),
+        meta: {
+          title: '系统设置',
+          icon: 'setting',
+          roles: ['admin']
+        }
+      },
+      // Data Management Module
+      {
+        path: 'data',
+        name: 'DataManagement',
+        component: () => import('../views/admin/Data.vue'),
+        meta: {
+          title: '数据管理',
+          icon: 'data-analysis',
+          roles: ['admin', 'manager'],
+          hidden: true
+        }
       }
     ]
   }

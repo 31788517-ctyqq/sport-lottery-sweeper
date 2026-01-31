@@ -34,7 +34,7 @@ if files:
         for match in monday_matches:
             print(f"  [{match['match_id']}] {match['league']} | {match['home_team']} vs {match['away_team']} | {match['match_time']}")
     else:
-        print("❌ 没有找到周一的比赛！")
+        print("[ERROR] 没有找到周一的比赛！")
         print("\n所有比赛编号:")
         for m in matches[:10]:
             print(f"  - {m.get('match_id')}")

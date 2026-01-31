@@ -1,9 +1,9 @@
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
-import router from '@/router'
 
 const API_CONFIG = {
-  BASE_URL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8001',
+  // 强制使用相对路径，通过 Vite proxy 转发到后端，避免 CORS 和硬编码地址问题
+  BASE_URL: '',
   TIMEOUT: 15000,
   RETRY_TIMES: 3,
   RETRY_DELAY: 1000

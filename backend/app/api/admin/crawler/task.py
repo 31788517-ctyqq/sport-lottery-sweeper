@@ -1,7 +1,9 @@
 from flask import Blueprint, request, jsonify
+import logging
+logger = logging.getLogger(__name__)
 from datetime import datetime, timedelta
 
-bp = Blueprint('crawler_task', __name__, url_prefix='/api/admin/crawler/tasks')
+bp = Bluelogger.debug('crawler_task', __name__, url_prefix='/api/admin/crawler/tasks')
 
 @bp.route('', methods=['GET'])
 def list_tasks():

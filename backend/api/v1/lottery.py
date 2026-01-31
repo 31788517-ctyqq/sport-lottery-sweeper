@@ -7,10 +7,12 @@ import logging
 import json
 import os
 
+# AI_WORKING: coder1 @2026-01-26 - 修复导入路径错误，backend.tasks模块不存在
 # 使用绝对导入路径
 from backend.schemas.response import UnifiedResponse, PageResponse, ErrorResponse
 from backend.core.cache_manager import get_cache_manager
-from backend.tasks import sporttery_scraper
+from backend.scrapers.sporttery_scraper import sporttery_scraper
+# AI_DONE: coder1 @2026-01-26
 
 router = APIRouter(prefix="/lottery", tags=["Sports Lottery"])
 
@@ -51,23 +53,27 @@ def load_500_com_data(filter_day: Optional[str] = None) -> List[Dict[str, Any]]:
         if filter_day:
             matches = [m for m in matches if m.get('match_id', '').startswith(filter_day)]
         
-        # 格式化数据
+        # 格式化数据 - 生成数字ID
         formatted_matches = []
-        for m in matches:
+        for idx, m in enumerate(matches, 1):
+            match_time = m.get("match_time", "")
+            # 从 match_time 提取日期部分
+            match_date = match_time.split(' ')[0] if match_time and ' ' in match_time else match_time
+            
             formatted_matches.append({
-                "id": m.get("match_id"),
+                "id": idx,  # 数字ID，从1开始递增
                 "match_id": m.get("match_id"),
                 "league": m.get("league"),
                 "home_team": m.get("home_team"),
                 "away_team": m.get("away_team"),
-                "match_time": m.get("match_time"),
-                "match_date": m.get("match_time"),
-                "odds_home_win": float(m.get("odds_home_win", 0) or 0),
-                "odds_draw": float(m.get("odds_draw", 0) or 0),
-                "odds_away_win": float(m.get("odds_away_win", 0) or 0),
+                "match_time": match_time,
+                "match_date": match_date,  # 只包含日期部分
+                "odds_home_win": m.get("odds_home_win", 0),
+                "odds_draw": m.get("odds_draw", 0),
+                "odds_away_win": m.get("odds_away_win", 0),
                 "status": m.get("status", "scheduled"),
                 "score": m.get("score", "-:-"),
-                "popularity": 70,
+                "popularity": m.get("popularity", 70),  # 使用原始数据的popularity
                 "source": "500彩票网"
             })
         

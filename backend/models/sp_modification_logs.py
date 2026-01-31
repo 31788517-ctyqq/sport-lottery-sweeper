@@ -25,7 +25,7 @@ class SPModificationLog(Base):
     sp_record = relationship("SPRecord", back_populates="modification_logs")
     
     def __repr__(self):
-        return f"<SPModificationLog(id={self.id}, sp_record_id={self.sp_record_id}, {self.original_value}->{self.modified_value})"
+        return f"<SPModificationLog(id={self.id}, sp_record_id={self.sp_record_id}, {self.original_value}->{self.modified_value})>"
     
     @property
     def change_amount(self) -> float:

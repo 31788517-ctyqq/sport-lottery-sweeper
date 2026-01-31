@@ -7,12 +7,12 @@ from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, Query, Path
 from sqlalchemy.orm import Session
 
-from ...api.deps import get_db, get_current_user
-from ...models.user import User
-from ...services.crawler_service import crawler_service
-from ...schemas.response import UnifiedResponse, PageResponse, ErrorResponse
-from ...schemas.match import MatchResponse
-from ...scrapers.sporttery_scraper import sporttery_scraper
+from backend.api.deps import get_db, get_current_user
+from backend.models.user import User
+from backend.services.crawler_service import crawler_service
+from backend.schemas.response import UnifiedResponse, PageResponse, ErrorResponse
+from backend.schemas.match import MatchResponse
+from backend.scrapers.sporttery_scraper import sporttery_scraper
 
 
 router = APIRouter()

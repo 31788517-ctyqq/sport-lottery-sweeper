@@ -31,7 +31,7 @@ class FootballMatch(Base):
     sp_records = relationship("SPRecord", back_populates="match", cascade="all, delete-orphan")
     
     def __repr__(self):
-        return f"<FootballMatch(id={self.id}, {self.home_team} vs {self.away_team}, {self.match_time})"
+        return f"<FootballMatch(id={self.id}, {self.home_team} vs {self.away_team}, {self.match_time})>"
     
     @property
     def score_display(self) -> str:

@@ -101,133 +101,113 @@
         </el-button>
       </div>
     </div>
-
-    <!-- 数据表格 -->
-    <el-table
-      :data="tableData"
+    
+    <!-- SP记录表格 -->
+    <el-table 
+      :data="tableData" 
       v-loading="loading"
-      style="width: 100%"
       @selection-change="handleSelectionChange"
+      stripe
     >
       <el-table-column type="selection" width="55" />
+      
       <el-table-column prop="id" label="ID" width="80" />
-      <el-table-column label="比赛信息" min-width="200">
-        <template #default="scope">
+      
+      <el-table-column prop="match" label="比赛信息" width="250">
+        <template #default="{ row }">
           <div class="match-info">
-            <div class="match-id">ID: {{ scope.row.match?.match_id }}</div>
+            <div class="match-id">#{{ row.match_id }}</div>
             <div class="teams">
-              <span class="home-team">{{ scope.row.match?.home_team }}</span>
+              <span class="home-team">{{ row.match?.home_team || '-' }}</span>
               <span class="vs">VS</span>
-              <span class="away-team">{{ scope.row.match?.away_team }}</span>
+              <span class="away-team">{{ row.match?.away_team || '-' }}</span>
             </div>
-            <div class="league">{{ scope.row.match?.league }}</div>
+            <div class="league">{{ row.match?.league || '-' }}</div>
           </div>
         </template>
       </el-table-column>
-      <el-table-column label="公司" width="120">
-        <template #default="scope">
-          <el-tag v-if="scope.row.company">{{ scope.row.company.name }}</el-tag>
-          <span v-else>-</span>
+      
+      <el-table-column prop="company" label="公司" width="150">
+        <template #default="{ row }">
+          <span>{{ row.company?.name || '-' }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="盘口" width="100">
-        <template #default="scope">
-          <span v-if="scope.row.handicap_type === 'no_handicap'">不让球</span>
-          <span v-else>{{ scope.row.handicap_value > 0 ? `-${scope.row.handicap_value}` : `+${Math.abs(scope.row.handicap_value)}` }}</span>
+      
+      <el-table-column prop="handicap_type" label="盘口类型" width="100">
+        <template #default="{ row }">
+          <el-tag :type="row.handicap_type === 'no_handicap' ? 'success' : 'warning'">
+            {{ row.handicap_type === 'no_handicap' ? '不让球' : '让球' }}
+          </el-tag>
         </template>
       </el-table-column>
+      
+      <el-table-column prop="handicap_value" label="让球数" width="100">
+        <template #default="{ row }">
+          {{ row.handicap_value ? (row.handicap_value > 0 ? `-${row.handicap_value}` : `+${Math.abs(row.handicap_value)}`) : '-' }}
+        </template>
+      </el-table-column>
+      
       <el-table-column prop="sp_value" label="SP值" width="100">
-        <template #default="scope">
-          <span class="sp-value" :class="{'sp-high': scope.row.sp_value > 3, 'sp-low': scope.row.sp_value < 1.5}">
-            {{ scope.row.sp_value }}
+        <template #default="{ row }">
+          <span :class="['sp-value', row.sp_value > 50 ? 'sp-high' : 'sp-low']">
+            {{ row.sp_value }}%
           </span>
         </template>
       </el-table-column>
+      
       <el-table-column prop="recorded_at" label="记录时间" width="160">
-        <template #default="scope">
-          {{ formatDateTime(scope.row.recorded_at) }}
+        <template #default="{ row }">
+          {{ formatDateTime(row.recorded_at) }}
         </template>
       </el-table-column>
-      <el-table-column label="修改次数" width="100">
-        <template #default="scope">
-          <el-badge :value="scope.row.modification_logs?.length || 0" :hidden="!scope.row.modification_logs?.length">
-            <el-tag type="info" size="small">已修改</el-tag>
-          </el-badge>
-        </template>
-      </el-table-column>
-      <el-table-column label="操作" width="300" fixed="right">
-        <template #default="scope">
-          <el-button size="small" @click="handleViewTrend(scope.row)">
-            走势图
-          </el-button>
-          <el-button size="small" type="primary" @click="handleEdit(scope.row)">
-            编辑
-          </el-button>
-          <el-button 
-            size="small" 
-            type="info" 
-            @click="handleViewLogs(scope.row)"
-          >
-            修改日志
-          </el-button>
-          <el-button 
-            size="small" 
-            type="danger" 
-            @click="handleDelete(scope.row)"
-          >
-            删除
-          </el-button>
+      
+      <el-table-column label="操作" width="220" fixed="right">
+        <template #default="{ row }">
+          <el-button size="small" @click="handleEdit(row)">编辑</el-button>
+          <el-button size="small" type="primary" @click="handleViewTrend(row)">查看走势</el-button>
+          <el-button size="small" type="info" @click="handleViewLogs(row)">修改日志</el-button>
+          <el-button size="small" type="danger" @click="handleDelete(row)">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
-
+    
     <!-- 分页 -->
-    <div class="pagination">
-      <el-pagination
-        v-model:current-page="pagination.page"
-        v-model:page-size="pagination.size"
-        :page-sizes="[10, 20, 50, 100]"
-        :total="pagination.total"
-        layout="total, sizes, prev, pager, next, jumper"
-        @size-change="handleSizeChange"
-        @current-change="handleCurrentChange"
-      />
-    </div>
-
-    <!-- 手动录入对话框 -->
-    <el-dialog
-      title="手动录入SP值"
-      v-model="entryDialogVisible"
+    <el-pagination
+      class="pagination"
+      @size-change="handleSizeChange"
+      @current-change="handleCurrentChange"
+      :current-page="pagination.page"
+      :page-sizes="[10, 20, 50, 100]"
+      :page-size="pagination.size"
+      layout="total, sizes, prev, pager, next, jumper"
+      :total="pagination.total"
+    />
+    
+    <!-- 手动录入弹窗 -->
+    <el-dialog 
+      :title="entryForm.id ? '编辑SP记录' : '手动录入SP值'" 
+      v-model="entryDialogVisible" 
       width="500px"
-      @close="resetEntryForm"
     >
-      <el-form
+      <el-form 
+        :model="entryForm" 
+        :rules="entryRules" 
         ref="entryFormRef"
-        :model="entryForm"
-        :rules="entryRules"
         label-width="100px"
       >
         <el-form-item label="比赛" prop="match_id">
-          <el-select
-            v-model="entryForm.match_id"
-            placeholder="请选择比赛"
-            filterable
-            remote
-            :remote-method="searchMatches"
-            :loading="matchLoading"
-            style="width: 100%"
-          >
+          <el-select v-model="entryForm.match_id" placeholder="请选择比赛" filterable>
             <el-option 
               v-for="match in matchOptions"
               :key="match.id"
-              :label="`${match.home_team} vs ${match.away_team} (${match.match_time})`"
+              :label="`${match.home_team} vs ${match.away_team}`"
               :value="match.id"
             />
           </el-select>
         </el-form-item>
         
         <el-form-item label="公司" prop="company_id">
-          <el-select v-model="entryForm.company_id" placeholder="请选择公司" style="width: 100%">
+          <el-select v-model="entryForm.company_id" placeholder="请选择公司">
             <el-option 
               v-for="company in companyOptions"
               :key="company.id"
@@ -244,26 +224,26 @@
           </el-radio-group>
         </el-form-item>
         
-        <el-form-item label="让球数值" prop="handicap_value" v-if="entryForm.handicap_type === 'handicap'">
+        <el-form-item 
+          v-if="entryForm.handicap_type === 'handicap'" 
+          label="让球数" 
+          prop="handicap_value"
+        >
           <el-input-number 
             v-model="entryForm.handicap_value" 
             :min="-5" 
             :max="5" 
             :step="0.5"
-            style="width: 100%"
-            placeholder="请输入让球数值"
           />
         </el-form-item>
         
-        <el-form-item label="SP值" prop="sp_value">
-          <el-input-number 
+        <el-form-item label="SP值(%)" prop="sp_value">
+          <el-slider 
             v-model="entryForm.sp_value" 
-            :min="0.01" 
+            :min="0" 
             :max="100" 
-            :precision="2"
             :step="0.1"
-            style="width: 100%"
-            placeholder="请输入SP值"
+            show-input
           />
         </el-form-item>
         
@@ -271,378 +251,468 @@
           <el-date-picker
             v-model="entryForm.recorded_at"
             type="datetime"
-            placeholder="请选择记录时间"
             format="YYYY-MM-DD HH:mm:ss"
             value-format="YYYY-MM-DD HH:mm:ss"
-            style="width: 100%"
+            placeholder="选择时间"
           />
         </el-form-item>
       </el-form>
       
       <template #footer>
-        <span class="dialog-footer">
+        <div class="dialog-footer">
           <el-button @click="entryDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleEntrySubmit" :loading="entryLoading">
-            确定
-          </el-button>
-        </span>
+          <el-button type="primary" @click="submitEntryForm">确定</el-button>
+        </div>
       </template>
     </el-dialog>
-
-    <!-- 走势图对话框 -->
-    <el-dialog
-      title="SP值走势图"
-      v-model="trendDialogVisible"
-      width="800px"
+    
+    <!-- SP值走势图弹窗 -->
+    <el-dialog 
+      title="SP值走势图" 
+      v-model="trendDialogVisible" 
+      width="80%"
+      top="5vh"
     >
-      <div v-if="trendData.length > 0" class="trend-chart-container">
-        <div class="chart-info">
-          <h4>{{ trendMatchInfo }}</h4>
-          <p>{{ trendCompanyInfo }}</p>
-          <p>盘口: {{ trendHandicapInfo }}</p>
+      <div class="chart-info">
+        <h4>比赛信息：{{ trendMatchInfo }}</h4>
+        <p>公司：{{ trendCompanyInfo }}</p>
+        <p>盘口类型：{{ trendHandicapInfo }}</p>
+      </div>
+      <div class="trend-chart-container">
+        <div class="chart-container" v-if="trendData && trendData.length > 0" style="height: 400px;"></div>
+        <div class="no-data" v-else>
+          <el-empty description="暂无趋势数据" />
         </div>
-        <div ref="chartContainer" style="height: 400px;"></div>
       </div>
-      <div v-else class="no-data">
-        <el-empty description="暂无走势数据" />
-      </div>
-      <template #footer>
-        <el-button @click="trendDialogVisible = false">关闭</el-button>
-      </template>
     </el-dialog>
   </div>
 </template>
 
-<script setup>
-import { ref, reactive, computed, onMounted, nextTick } from 'vue'
+<script>
+import { ref, reactive, onMounted, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Download, Edit } from '@element-plus/icons-vue'
-import { getSPRecordList, createSPRecord, updateSPRecord, deleteSPRecord, getSPRecordTrend } from '@/api/sp'
 import * as echarts from 'echarts'
+import { Plus, Download, Edit } from '@element-plus/icons-vue'
+import {
+  getSPRecords,
+  createSPRecord,
+  updateSPRecord,
+  getMatches,
+  getOddsCompanies,
+  getSPChartData
+} from '@/api/spManagement'
 
-// 响应式数据
-const loading = ref(false)
-const entryLoading = ref(false)
-const matchLoading = ref(false)
-const entryDialogVisible = ref(false)
-const trendDialogVisible = ref(false)
-const entryFormRef = ref()
-const tableData = ref([])
-const selectedRows = ref([])
-const matchOptions = ref([])
-const companyOptions = ref([])
-let chartInstance = null
+// 从正确的API模块导入deleteSPRecord
+import { deleteSPRecord } from '@/api/spManagement'
 
-// 搜索表单
-const searchForm = reactive({
-  match_search: '',
-  match_id: null,
-  company_id: null,
-  handicap_type: '',
-  sp_min: null,
-  sp_max: null,
-  timeRange: []
-})
-
-// 分页
-const pagination = reactive({
-  page: 1,
-  size: 20,
-  total: 0
-})
-
-// 录入表单
-const entryForm = reactive({
-  match_id: null,
-  company_id: null,
-  handicap_type: 'no_handicap',
-  handicap_value: null,
-  sp_value: null,
-  recorded_at: new Date().toISOString().slice(0, 19).replace('T', ' ')
-})
-
-// 录入表单验证规则
-const entryRules = {
-  match_id: [{ required: true, message: '请选择比赛', trigger: 'change' }],
-  company_id: [{ required: true, message: '请选择公司', trigger: 'change' }],
-  sp_value: [{ required: true, message: '请输入SP值', trigger: 'blur' }],
-  recorded_at: [{ required: true, message: '请选择记录时间', trigger: 'change' }]
-}
-
-// 走势图数据
-const trendData = ref([])
-const trendMatchInfo = ref('')
-const trendCompanyInfo = ref('')
-const trendHandicapInfo = ref('')
-
-// 方法
-const loadData = async () => {
-  loading.value = true
-  try {
-    const params = {
-      ...searchForm,
-      page: pagination.page,
-      size: pagination.size
-    }
-    // 处理时间范围
-    if (params.timeRange && params.timeRange.length === 2) {
-      params.start_time = params.timeRange[0]
-      params.end_time = params.timeRange[1]
-      delete params.timeRange
-    }
+export default {
+  name: 'SPRecordManagement',
+  components: {
+    Plus, Download, Edit
+  },
+  setup() {
+    // 表格数据
+    const tableData = ref([])
+    const loading = ref(false)
     
-    const response = await getSPRecordList(params)
-    tableData.value = response.data.items
-    pagination.total = response.data.total
-  } catch (error) {
-    ElMessage.error('加载数据失败')
-  } finally {
-    loading.value = false
-  }
-}
-
-const loadCompanies = async () => {
-  try {
-    // 这里应该调用获取公司列表的API
-    // const response = await getOddsCompanyList()
-    // companyOptions.value = response.data.items
-    // 模拟数据
-    companyOptions.value = [
-      { id: 1, name: '竞彩官方' },
-      { id: 2, name: '威廉希尔' },
-      { id: 3, name: '立博' },
-      { id: 4, name: 'Bet365' }
-    ]
-  } catch (error) {
-    ElMessage.error('加载公司数据失败')
-  }
-}
-
-const searchMatches = async (query) => {
-  if (!query) {
-    matchOptions.value = []
-    return
-  }
-  
-  matchLoading.value = true
-  try {
-    // 这里应该调用搜索比赛的API
-    // const response = await searchMatchesApi(query)
-    // matchOptions.value = response.data.items
-    // 模拟延迟
-    setTimeout(() => {
-      matchOptions.value = [
-        { id: 1, match_id: 'M001', home_team: '北京国安', away_team: '上海申花', match_time: '2024-01-15 15:30:00' },
-        { id: 2, match_id: 'M002', home_team: '广州恒大', away_team: '山东鲁能', match_time: '2024-01-16 19:00:00' }
-      ].filter(match => 
-        match.match_id.includes(query) ||
-        match.home_team.includes(query) ||
-        match.away_team.includes(query)
-      )
-      matchLoading.value = false
-    }, 500)
-  } catch (error) {
-    ElMessage.error('搜索比赛失败')
-    matchLoading.value = false
-  }
-}
-
-const handleMatchSearch = (value) => {
-  if (!value) {
-    searchForm.match_id = null
-    matchOptions.value = []
-  }
-}
-
-const handleSearch = () => {
-  pagination.page = 1
-  loadData()
-}
-
-const resetSearch = () => {
-  Object.assign(searchForm, {
-    match_search: '',
-    match_id: null,
-    company_id: null,
-    handicap_type: '',
-    sp_min: null,
-    sp_max: null,
-    timeRange: []
-  })
-  matchOptions.value = []
-  handleSearch()
-}
-
-const handleManualEntry = () => {
-  resetEntryForm()
-  entryDialogVisible.value = true
-}
-
-const handleEntrySubmit = async () => {
-  if (!entryFormRef.value) return
-  
-  try {
-    await entryFormRef.value.validate()
-    entryLoading.value = true
-    
-    await createSPRecord(entryForm)
-    ElMessage.success('录入成功')
-    entryDialogVisible.value = false
-    loadData()
-  } catch (error) {
-    ElMessage.error('录入失败')
-  } finally {
-    entryLoading.value = false
-  }
-}
-
-const handleEdit = (row) => {
-  ElMessage.info('编辑功能开发中...')
-}
-
-const handleDelete = async (row) => {
-  try {
-    await ElMessageBox.confirm('确认删除该SP记录吗？', '提示', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning'
+    // 分页数据
+    const pagination = reactive({
+      page: 1,
+      size: 20,
+      total: 0
     })
-    await deleteSPRecord(row.id)
-    ElMessage.success('删除成功')
-    loadData()
-  } catch (error) {
-    if (error !== 'cancel') {
-      ElMessage.error('删除失败')
+    
+    // 搜索表单
+    const searchForm = reactive({
+      match_id: null,
+      match_search: '',
+      company_id: null,
+      handicap_type: '',
+      sp_min: null,
+      sp_max: null,
+      timeRange: []
+    })
+    
+    // 比赛选择选项
+    const matchOptions = ref([])
+    const matchLoading = ref(false)
+    
+    // 公司选择选项
+    const companyOptions = ref([])
+    
+    // 弹窗相关
+    const entryDialogVisible = ref(false)
+    const entryFormRef = ref(null)
+    const entryForm = reactive({
+      id: null,
+      match_id: null,
+      company_id: null,
+      handicap_type: 'no_handicap',
+      handicap_value: null,
+      sp_value: 50,
+      recorded_at: new Date().toISOString().slice(0, 19).replace('T', ' ')
+    })
+    
+    // 表单验证规则
+    const entryRules = {
+      match_id: [{ required: true, message: '请选择比赛', trigger: 'change' }],
+      company_id: [{ required: true, message: '请选择公司', trigger: 'change' }],
+      sp_value: [
+        { required: true, message: '请输入SP值', trigger: 'blur' },
+        { type: 'number', min: 0, max: 100, message: 'SP值必须在0-100之间', trigger: 'blur' }
+      ]
+    }
+    
+    // 趋势图相关
+    const trendDialogVisible = ref(false)
+    const trendData = ref([])
+    const trendMatchInfo = ref('')
+    const trendCompanyInfo = ref('')
+    const trendHandicapInfo = ref('')
+    let chartInstance = null
+    
+    // 选中行
+    const selectedRows = ref([])
+    
+    // 加载数据
+    const loadData = async () => {
+      loading.value = true
+      try {
+        const params = {
+          page: pagination.page,
+          size: pagination.size,
+          match_id: searchForm.match_id || undefined,
+          company_id: searchForm.company_id || undefined,
+          handicap_type: searchForm.handicap_type || undefined,
+          date_from: searchForm.timeRange && searchForm.timeRange[0] ? searchForm.timeRange[0] : undefined,
+          date_to: searchForm.timeRange && searchForm.timeRange[1] ? searchForm.timeRange[1] : undefined
+        }
+        
+        if (searchForm.sp_min !== null) params.sp_min = searchForm.sp_min
+        if (searchForm.sp_max !== null) params.sp_max = searchForm.sp_max
+        
+        const response = await getSPRecords(params)
+        tableData.value = response.data.items || []
+        pagination.total = response.data.total || 0
+      } catch (error) {
+        ElMessage.error('加载数据失败')
+        console.error(error)
+      } finally {
+        loading.value = false
+      }
+    }
+    
+    // 加载比赛数据
+    const loadMatches = async (keyword = '') => {
+      try {
+        const params = { size: 100 } // 获取前100场比赛
+        if(keyword) params.search = keyword
+        const response = await getMatches(params)
+        matchOptions.value = response.data.items || []
+      } catch (error) {
+        console.error('加载比赛数据失败', error)
+      }
+    }
+    
+    // 加载公司数据
+    const loadCompanies = async () => {
+      try {
+        const response = await getOddsCompanies({ active_only: true })
+        companyOptions.value = response || []
+      } catch (error) {
+        console.error('加载公司数据失败', error)
+      }
+    }
+    
+    // 搜索比赛
+    const searchMatches = async (keyword) => {
+      if (!keyword) {
+        loadMatches()
+        return
+      }
+      matchLoading.value = true
+      try {
+        const response = await getMatches({ search: keyword, size: 100 })
+        matchOptions.value = response.data.items || []
+      } catch (error) {
+        console.error('搜索比赛失败', error)
+      } finally {
+        matchLoading.value = false
+      }
+    }
+    
+    // 搜索比赛输入事件
+    const handleMatchSearch = () => {
+      if (searchForm.match_search) {
+        searchMatches(searchForm.match_search)
+      } else {
+        loadMatches()
+      }
+    }
+    
+    // 搜索处理
+    const handleSearch = () => {
+      pagination.page = 1
+      loadData()
+    }
+    
+    // 重置搜索
+    const resetSearch = () => {
+      Object.keys(searchForm).forEach(key => {
+        searchForm[key] = key === 'timeRange' ? [] : null
+      })
+      handleSearch()
+    }
+    
+    // 手动录入
+    const handleManualEntry = () => {
+      resetEntryForm()
+      entryDialogVisible.value = true
+    }
+    
+    // 编辑记录
+    const handleEdit = (row) => {
+      Object.assign(entryForm, {
+        id: row.id,
+        match_id: row.match_id,
+        company_id: row.company_id,
+        handicap_type: row.handicap_type,
+        handicap_value: row.handicap_value,
+        sp_value: row.sp_value,
+        recorded_at: row.recorded_at
+      })
+      entryDialogVisible.value = true
+    }
+    
+    // 提交录入表单
+    const submitEntryForm = async () => {
+      try {
+        if (entryForm.id) {
+          await updateSPRecord(entryForm.id, {
+            match_id: entryForm.match_id,
+            company_id: entryForm.company_id,
+            handicap_type: entryForm.handicap_type,
+            handicap_value: entryForm.handicap_value,
+            sp_value: entryForm.sp_value,
+            recorded_at: entryForm.recorded_at
+          })
+          ElMessage.success('更新成功')
+        } else {
+          await createSPRecord({
+            match_id: entryForm.match_id,
+            company_id: entryForm.company_id,
+            handicap_type: entryForm.handicap_type,
+            handicap_value: entryForm.handicap_value,
+            sp_value: entryForm.sp_value,
+            recorded_at: entryForm.recorded_at
+          })
+          ElMessage.success('录入成功')
+        }
+        
+        entryDialogVisible.value = false
+        loadData()
+      } catch (error) {
+        ElMessage.error('操作失败')
+        console.error(error)
+      }
+    }
+    
+    // 删除记录
+    const handleDelete = async (row) => {
+      try {
+        await ElMessageBox.confirm('确认删除该SP记录吗？', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        })
+        await deleteSPRecord(row.id)
+        ElMessage.success('删除成功')
+        loadData()
+      } catch (error) {
+        if (error !== 'cancel') {
+          ElMessage.error('删除失败')
+        }
+      }
+    }
+
+    // 查看趋势
+    const handleViewTrend = async (row) => {
+      try {
+        const response = await getSPChartData(row.match_id, row.company_id)
+        trendData.value = response.data.trend || []
+        trendMatchInfo.value = `${row.match?.home_team || ''} vs ${row.match?.away_team || ''}`
+        trendCompanyInfo.value = row.company?.name || ''
+        trendHandicapInfo.value = row.handicap_type === 'no_handicap' ? '不让球' : `${row.handicap_value > 0 ? '-' : '+'}${Math.abs(row.handicap_value)}`
+
+        trendDialogVisible.value = true
+
+        await nextTick()
+        initChart()
+      } catch (error) {
+        ElMessage.error('加载走势数据失败')
+      }
+    }
+
+    // 查看修改日志
+    const handleViewLogs = (row) => {
+      ElMessage.info(`查看SP记录 ${row.id} 的修改日志`)
+    }
+
+    // 导出功能
+    const handleExport = () => {
+      ElMessage.info('导出功能开发中...')
+    }
+
+    // 批量修正功能
+    const handleBatchModify = () => {
+      ElMessage.info('批量修正功能开发中...')
+    }
+
+    // 选择变化处理
+    const handleSelectionChange = (selection) => {
+      selectedRows.value = selection
+    }
+
+    // 分页大小变化
+    const handleSizeChange = (size) => {
+      pagination.size = size
+      pagination.page = 1
+      loadData()
+    }
+
+    // 当前页变化
+    const handleCurrentChange = (page) => {
+      pagination.page = page
+      loadData()
+    }
+
+    // 重置录入表单
+    const resetEntryForm = () => {
+      Object.assign(entryForm, {
+        id: null,
+        match_id: null,
+        company_id: null,
+        handicap_type: 'no_handicap',
+        handicap_value: null,
+        sp_value: 50,
+        recorded_at: new Date().toISOString().slice(0, 19).replace('T', ' ')
+      })
+      if (entryFormRef.value) {
+        entryFormRef.value.resetFields()
+      }
+    }
+
+    // 格式化日期时间
+    const formatDateTime = (date) => {
+      if (!date) return '-'
+      return new Date(date).toLocaleString()
+    }
+
+    // 初始化图表
+    const initChart = () => {
+      if (!trendData.value || !trendData.value.length) return
+
+      if (chartInstance) {
+        chartInstance.dispose()
+      }
+
+      const chartDom = document.querySelector('.trend-chart-container .chart-container')
+      if (!chartDom) return
+
+      chartInstance = echarts.init(chartDom)
+
+      const dates = trendData.value.map(item => new Date(item.recorded_at).toLocaleString())
+      const spValues = trendData.value.map(item => parseFloat(item.sp_value))
+
+      const option = {
+        title: {
+          text: 'SP值走势图',
+          left: 'center'
+        },
+        tooltip: {
+          trigger: 'axis',
+          formatter: function(params) {
+            return `${params[0].name}<br/>SP值: ${params[0].value}`
+          }
+        },
+        xAxis: {
+          type: 'category',
+          data: dates,
+          axisLabel: {
+            rotate: 45
+          }
+        },
+        yAxis: {
+          type: 'value',
+          name: 'SP值'
+        },
+        series: [{
+          name: 'SP값',
+          type: 'line',
+          data: spValues,
+          smooth: true,
+          symbol: 'circle',
+          symbolSize: 6,
+          lineStyle: {
+            color: '#409EFF',
+            width: 2
+          },
+          itemStyle: {
+            color: '#409EFF'
+          }
+        }]
+      }
+
+      chartInstance.setOption(option)
+    }
+
+    // 页面挂载时加载数据
+    onMounted(() => {
+      loadData()
+      loadMatches()
+      loadCompanies()
+    })
+
+    return {
+      tableData,
+      loading,
+      pagination,
+      searchForm,
+      matchOptions,
+      matchLoading,
+      companyOptions,
+      entryDialogVisible,
+      entryFormRef,
+      entryForm,
+      entryRules,
+      trendDialogVisible,
+      trendData,
+      trendMatchInfo,
+      trendCompanyInfo,
+      trendHandicapInfo,
+      selectedRows,
+      loadData,
+      handleMatchSearch,
+      searchMatches,
+      handleSearch,
+      resetSearch,
+      handleManualEntry,
+      handleEdit,
+      submitEntryForm,
+      handleDelete,
+      handleViewTrend,
+      handleViewLogs,
+      handleExport,
+      handleBatchModify,
+      handleSelectionChange,
+      handleSizeChange,
+      handleCurrentChange,
+      resetEntryForm,
+      formatDateTime,
+      initChart
     }
   }
 }
-
-const handleViewTrend = async (row) => {
-  try {
-    const response = await getSPRecordTrend(row.match_id, row.company_id, row.handicap_type, row.handicap_value)
-    trendData.value = response.data.trend
-    trendMatchInfo.value = `${row.match?.home_team} vs ${row.match?.away_team}`
-    trendCompanyInfo.value = row.company?.name
-    trendHandicapInfo.value = row.handicap_type === 'no_handicap' ? '不让球' : `${row.handicap_value > 0 ? '-' : '+'}${Math.abs(row.handicap_value)}`
-    
-    trendDialogVisible.value = true
-    
-    await nextTick()
-    initChart()
-  } catch (error) {
-    ElMessage.error('加载走势数据失败')
-  }
-}
-
-const handleViewLogs = (row) => {
-  ElMessage.info(`查看SP记录 ${row.id} 的修改日志`)
-}
-
-const handleExport = () => {
-  ElMessage.info('导出功能开发中...')
-}
-
-const handleBatchModify = () => {
-  ElMessage.info('批量修正功能开发中...')
-}
-
-const handleSelectionChange = (selection) => {
-  selectedRows.value = selection
-}
-
-const handleSizeChange = (size) => {
-  pagination.size = size
-  pagination.page = 1
-  loadData()
-}
-
-const handleCurrentChange = (page) => {
-  pagination.page = page
-  loadData()
-}
-
-const resetEntryForm = () => {
-  Object.assign(entryForm, {
-    match_id: null,
-    company_id: null,
-    handicap_type: 'no_handicap',
-    handicap_value: null,
-    sp_value: null,
-    recorded_at: new Date().toISOString().slice(0, 19).replace('T', ' ')
-  })
-  if (entryFormRef.value) {
-    entryFormRef.value.resetFields()
-  }
-}
-
-const formatDateTime = (date) => {
-  if (!date) return '-'
-  return new Date(date).toLocaleString()
-}
-
-// 图表相关方法
-const initChart = () => {
-  if (!trendData.value.length) return
-  
-  if (chartInstance) {
-    chartInstance.dispose()
-  }
-  
-  const chartDom = document.querySelector('.trend-chart-container .chart-container')
-  if (!chartDom) return
-  
-  chartInstance = echarts.init(chartDom)
-  
-  const dates = trendData.value.map(item => new Date(item.recorded_at).toLocaleString())
-  const spValues = trendData.value.map(item => parseFloat(item.sp_value))
-  
-  const option = {
-    title: {
-      text: 'SP值走势图',
-      left: 'center'
-    },
-    tooltip: {
-      trigger: 'axis',
-      formatter: function(params) {
-        return `${params[0].name}<br/>SP值: ${params[0].value}`
-      }
-    },
-    xAxis: {
-      type: 'category',
-      data: dates,
-      axisLabel: {
-        rotate: 45
-      }
-    },
-    yAxis: {
-      type: 'value',
-      name: 'SP值'
-    },
-    series: [{
-      name: 'SP值',
-      type: 'line',
-      data: spValues,
-      smooth: true,
-      symbol: 'circle',
-      symbolSize: 6,
-      lineStyle: {
-        color: '#409EFF',
-        width: 2
-      },
-      itemStyle: {
-        color: '#409EFF'
-      }
-    }]
-  }
-  
-  chartInstance.setOption(option)
-}
-
-// 生命周期
-onMounted(() => {
-  loadData()
-  loadCompanies()
-})
 </script>
 
 <style scoped>

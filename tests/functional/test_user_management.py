@@ -23,7 +23,7 @@ from backend.database import get_db
 
 def check_user_model_consistency():
     """检查用户模型中字段的一致性问题"""
-    print("\n🔍 检查用户模型字段一致性...")
+    print("\n[INSPECT] 检查用户模型字段一致性...")
     
     engine = create_engine(settings.DATABASE_URL.replace('postgresql+asyncpg://', 'postgresql://'))
     inspector = inspect(engine)
@@ -34,23 +34,23 @@ def check_user_model_consistency():
     print(f"   用户表字段: {column_names}")
     
     if 'password_hash' in column_names and 'hashed_password' not in column_names:
-        print("   ❌ 发现字段不一致: 模型中使用password_hash，但服务中使用hashed_password")
+        print("   [ERROR] 发现字段不一致: 模型中使用password_hash，但服务中使用hashed_password")
         print("   需要修复: auth_service.py中的hashed_password应改为password_hash")
         return False
     else:
-        print("   ✅ 字段一致性检查通过")
+        print("   [OK] 字段一致性检查通过")
         return True
 
 
 def fix_auth_service_field_names():
     """修复认证服务中的字段名错误"""
-    print("\n🔧 修复认证服务中的字段名错误...")
+    print("\n[FIX] 修复认证服务中的字段名错误...")
     
     auth_service_path = "backend/services/auth_service.py"
     
     # 检查文件是否存在
     if not os.path.exists(auth_service_path):
-        print(f"   ❌ 文件不存在: {auth_service_path}")
+        print(f"   [ERROR] 文件不存在: {auth_service_path}")
         return False
     
     # 读取文件
@@ -64,7 +64,7 @@ def fix_auth_service_field_names():
     if content != fixed_content:
         with open(auth_service_path, 'w', encoding='utf-8') as f:
             f.write(fixed_content)
-        print("   ✅ 已修复 auth_service.py 中的字段名错误")
+        print("   [OK] 已修复 auth_service.py 中的字段名错误")
         return True
     else:
         print("   ℹ️  未发现需要修复的字段名错误")
@@ -73,7 +73,7 @@ def fix_auth_service_field_names():
 
 def create_test_admin_user():
     """创建测试管理员用户"""
-    print("\n🔑 创建测试管理员用户...")
+    print("\n[KEY] 创建测试管理员用户...")
     
     try:
         # 使用数据库会话创建测试用户
@@ -108,11 +108,11 @@ def create_test_admin_user():
         db.commit()
         db.refresh(test_admin)
         
-        print(f"   ✅ 测试管理员用户创建成功: {test_admin.username}")
+        print(f"   [OK] 测试管理员用户创建成功: {test_admin.username}")
         return True
         
     except Exception as e:
-        print(f"   ❌ 创建测试管理员用户失败: {str(e)}")
+        print(f"   [ERROR] 创建测试管理员用户失败: {str(e)}")
         return False
     finally:
         db.close()
@@ -120,7 +120,7 @@ def create_test_admin_user():
 
 def test_backend_user_registration():
     """测试后端用户注册功能"""
-    print("\n🧪 开始测试后端用户注册功能...")
+    print("\n[TEST] 开始测试后端用户注册功能...")
     
     # 确定后端URL
     backend_url = settings.BACKEND_CORS_ORIGINS[0] if settings.BACKEND_CORS_ORIGINS else 'http://localhost:8000'
@@ -137,29 +137,29 @@ def test_backend_user_registration():
     
     try:
         response = requests.post(register_url, json=test_user_data)
-        print(f"✅ 注册响应: {response.status_code}")
+        print(f"[OK] 注册响应: {response.status_code}")
         print(f"   响应内容: {response.json()}")
         
         if response.status_code == 200 or response.status_code == 201:
-            print("   ✅ 注册测试成功")
+            print("   [OK] 注册测试成功")
             return True
         else:
-            print(f"   ⚠️  注册未返回成功状态码")
+            print(f"   [WARNING]  注册未返回成功状态码")
             return False
             
     except requests.exceptions.ConnectionError:
-        print(f"   ❌ 无法连接到后端服务，请确保服务正在运行")
+        print(f"   [ERROR] 无法连接到后端服务，请确保服务正在运行")
         print(f"      尝试访问的URL: {register_url}")
         print(f"      提示: 运行 'uvicorn backend.main:app --reload --port 8000' 启动服务")
         return False
     except Exception as e:
-        print(f"❌ 注册测试失败: {str(e)}")
+        print(f"[ERROR] 注册测试失败: {str(e)}")
         return False
 
 
 def test_backend_user_login():
     """测试后端用户登录功能"""
-    print("\n🧪 开始测试后端用户登录功能...")
+    print("\n[TEST] 开始测试后端用户登录功能...")
     
     # 确定后端URL
     backend_url = settings.BACKEND_CORS_ORIGINS[0] if settings.BACKEND_CORS_ORIGINS else 'http://localhost:8000'
@@ -173,7 +173,7 @@ def test_backend_user_login():
     
     try:
         response = requests.post(login_url, data=login_data)  # 注意：登录通常使用表单数据而非JSON
-        print(f"✅ 登录响应: {response.status_code}")
+        print(f"[OK] 登录响应: {response.status_code}")
         if response.status_code == 200:
             print(f"   登录成功: {response.json()}")
             return True
@@ -181,18 +181,18 @@ def test_backend_user_login():
             print(f"   登录失败: {response.json()}")
             return False
     except requests.exceptions.ConnectionError:
-        print(f"   ❌ 无法连接到后端服务，请确保服务正在运行")
+        print(f"   [ERROR] 无法连接到后端服务，请确保服务正在运行")
         print(f"      尝试访问的URL: {login_url}")
         print(f"      提示: 运行 'uvicorn backend.main:app --reload --port 8000' 启动服务")
         return False
     except Exception as e:
-        print(f"❌ 登录测试失败: {str(e)}")
+        print(f"[ERROR] 登录测试失败: {str(e)}")
         return False
 
 
 def run_comprehensive_test():
     """运行综合测试"""
-    print("🚀 开始测试项目用户管理模块")
+    print("[ROCKET] 开始测试项目用户管理模块")
     print("="*60)
     
     results = []
@@ -214,7 +214,7 @@ def run_comprehensive_test():
     results.append(("测试管理员用户创建", admin_created))
     
     # 4. 测试注册和登录功能
-    print("\n📝 API功能测试说明:")
+    print("\n[NOTE] API功能测试说明:")
     print("- 要完整测试注册和登录功能，需要先启动后端服务")
     print("- 启动后端服务命令: uvicorn backend.main:app --reload --port 8000")
     print("- 然后再运行此测试脚本来验证API功能")
@@ -227,21 +227,21 @@ def run_comprehensive_test():
     
     # 输出最终结果
     print("\n" + "="*60)
-    print("📋 测试结果汇总:")
+    print("[LOG] 测试结果汇总:")
     total_passed = 0
     for test_name, result in results:
-        status = "✅ 通过" if result else "❌ 失败"
+        status = "[OK] 通过" if result else "[ERROR] 失败"
         if result:
             total_passed += 1
         print(f"   - {test_name}: {status}")
     
-    print(f"\n📊 总体结果: {total_passed}/{len(results)} 项测试通过")
+    print(f"\n[ANALYTICS] 总体结果: {total_passed}/{len(results)} 项测试通过")
     
     if all(result for _, result in results):
-        print("🎉 所有测试均成功完成！")
+        print("[SUCCESS] 所有测试均成功完成！")
         return True
     else:
-        print("⚠️  存在测试失败，请检查上述错误信息并修复")
+        print("[WARNING]  存在测试失败，请检查上述错误信息并修复")
         return False
 
 

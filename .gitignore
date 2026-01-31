@@ -9,3 +9,44 @@ sport_lottery.db
 *.log
 *.tmp
 .DS_Store
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
+
+# 环境变量文件 - 重要安全措施
+.env
+.env.local
+.env.development.local
+.env.production
+.env.*.local
+backend/.env
+frontend/.env
+
+# Python相关
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+.env
+
+# 数据库
+*.sqlite
+*.db
+
+# 构建产物
+dist/
+build/
+frontend/dist/
+frontend/.vite/
+frontend/.cache/
+
+# 系统文件
+Thumbs.db
+*.swp
+*.swo

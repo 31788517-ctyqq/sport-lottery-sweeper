@@ -8,7 +8,7 @@ from .zqszsc_scraper import zqszsc_scraper
 from .parser import SportteryParser, ZQSZSCParser
 from .coordinator import ScraperCoordinator
 from .core.proxy_pool import ProxyPool
-from .core.config_loader import AntiCrawlerConfig
+from .core.config_loader import get_anti_crawler_config
 from .core.engine_enhanced import EnhancedScraperEngine
 from .sporttery_enhanced import enhanced_sporttery_scraper, EnhancedSportteryScraper
 
@@ -20,7 +20,7 @@ __all__ = [
     'SportteryParser', 
     'ZQSZSCParser',
     'ProxyPool',
-    'AntiCrawlerConfig',
+    'get_anti_crawler_config',
     'EnhancedScraperEngine',
     'enhanced_sporttery_scraper',
     'EnhancedSportteryScraper'

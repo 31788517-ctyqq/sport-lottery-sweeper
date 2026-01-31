@@ -227,13 +227,12 @@ class Intelligence(BaseFullModel):
     popularity_score = Column(Float, default=0.0, nullable=False, index=True)
     trending_score = Column(Float, default=0.0, nullable=False, index=True)  # 趋势得分
     
-    # 关系
-    match = relationship("Match", back_populates="intelligence_items")
+    # 关系 - 延迟导入避免循环依赖
+    match = relationship("Match", back_populates="intelligence_items", overlaps="intelligence")
     team = relationship("Team", back_populates="intelligence_items")
     player = relationship("Player", back_populates="intelligence_items")
     type_info = relationship("IntelligenceType", back_populates="intelligence_items")
     source_info = relationship("IntelligenceSource", back_populates="intelligence_items")
-    reviewer = relationship("User", foreign_keys=[reviewed_by])
     related_intelligence = relationship("IntelligenceRelation", foreign_keys="IntelligenceRelation.intelligence_id", back_populates="intelligence", cascade="all, delete-orphan")
     duplicate_reference = relationship("Intelligence", remote_side="Intelligence.id", foreign_keys=[duplicate_of])
     
@@ -259,7 +258,7 @@ class Intelligence(BaseFullModel):
     )
     
     def __repr__(self) -> str:
-        return f"<Intelligence(id={self.id}, match_id={self.match_id}, type={self.type})>"
+        return f"<Intelligence(id={self.id}, match_id={self.match_id}, type={self.type if hasattr(self, 'type') else 'unknown'})>"
     
     def calculate_weight(self) -> float:
         """
@@ -359,10 +358,9 @@ class IntelligenceRelation(Base):
     created_at = Column(DateTime(timezone=True), default=func.now(), nullable=False, index=True)
     created_by = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
     
-    # 关系
+    # 关系 - 延迟导入避免循环依赖
     intelligence = relationship("Intelligence", foreign_keys=[intelligence_id], back_populates="related_intelligence")
     related_intelligence = relationship("Intelligence", foreign_keys=[related_intelligence_id])
-    creator = relationship("User", foreign_keys=[created_by])
     
     # 索引
     __table_args__ = (

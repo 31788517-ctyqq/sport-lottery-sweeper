@@ -22,9 +22,9 @@ app.use('/src', express.static(path.join(__dirname, 'src')));
 
 // 主页路由 - 重定向到前端管理页面
 app.get('/', (req, res) => {
-  console.log('🏠 访问主页，重定向到前端管理页面');
-  // 重定向到前端Vue应用的管理仪表板
-  res.redirect('http://localhost:5173/admin/dashboard');
+  console.log('🏠 访问主页，重定向到竞彩赛程页面');
+  // 直接重定向到竞彩赛程页面查看数据
+  res.redirect('/jczq-schedule.html');
 });
 
 // 处理所有其他路由，返回主页面（SPA支持）
@@ -50,6 +50,6 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`\n🎉 前端服务器启动成功！`);
   console.log(`📍 本地访问: http://localhost:${PORT}`);
   console.log(`🌐 网络访问: http://192.168.1.119:${PORT}`);
-  console.log(`🔗 后端API: http://localhost:8001/api`);
+  console.log(`🔗 后端API: http://localhost:8000/api`);
   console.log(`\n按 Ctrl+C 停止服务器\n`);
 });

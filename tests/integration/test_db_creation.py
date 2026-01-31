@@ -24,13 +24,13 @@ def check_tables():
 if __name__ == "__main__":
     print("Checking if tables exist...")
     if check_tables():
-        print("✅ Users table exists!")
+        print("[OK] Users table exists!")
     else:
-        print("❌ Users table does not exist!")
+        print("[ERROR] Users table does not exist!")
         # 尝试手动创建表
         print("Creating tables manually...")
         Base.metadata.create_all(bind=engine)
         if check_tables():
-            print("✅ Tables created successfully!")
+            print("[OK] Tables created successfully!")
         else:
-            print("❌ Failed to create tables!")
+            print("[ERROR] Failed to create tables!")

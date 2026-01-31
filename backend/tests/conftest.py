@@ -1,100 +1,350 @@
+#!/usr/bin/env python3
 """
-pytest configuration and fixtures.
+测试配置文件
+包含测试夹具、模拟对象和测试配置
+"""
 
-This file is automatically discovered by pytest and is used to define
-fixtures, hooks, and general configuration for the entire test suite.
-"""
 import pytest
 import asyncio
-from unittest.mock import AsyncMock, patch
+from unittest.mock import Mock, MagicMock, patch, AsyncMock
+from datetime import datetime, timedelta
 from fastapi.testclient import TestClient
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from ..main import app  # Import your main FastAPI app instance
-from ..database import get_db  # Import the dependency to override
-from ..models import Base  # Import your declarative base
+# 导入应用模块
+from backend.main import app
+from backend.core.security import get_password_hash, verify_password
+from backend.database import Base
 
-# Use an in-memory SQLite database for testing, which is fast and isolated.
-TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
+# 测试数据库配置 (使用SQLite内存数据库)
+SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
 
+# 创建测试引擎
+engine = create_engine(
+    SQLALCHEMY_DATABASE_URL,
+    connect_args={"check_same_thread": False},
+    poolclass=StaticPool,
+    echo=False
+)
+
+# 创建测试会话
+TestingSessionLocal = sessionmaker(
+    autocommit=False,
+    autoflush=False,
+    bind=engine
+)
+
+class MockQueryResult:
+    """模拟SQLAlchemy查询结果"""
+    def __init__(self, items=None):
+        self.items = items or []
+    
+    def first(self):
+        return self.items[0] if self.items else None
+    
+    def all(self):
+        return self.items
+    
+    def filter(self, *args, **kwargs):
+        return self
+    
+    def filter_by(self, **kwargs):
+        return self
+    
+    def order_by(self, *args, **kwargs):
+        return self
+    
+    def limit(self, limit):
+        return MockQueryResult(self.items[:limit])
+    
+    def offset(self, offset):
+        return MockQueryResult(self.items[offset:])
+    
+    def count(self):
+        return len(self.items)
+    
+    def scalar(self):
+        return self.items[0] if self.items else None
+
+class MockDBSession:
+    """模拟数据库会话"""
+    def __init__(self):
+        self.query_results = []
+        self.added_objects = []
+        self.deleted_objects = []
+        self.committed = False
+        self.rolled_back = False
+    
+    def query(self, model):
+        return MockQueryResult(self.query_results)
+    
+    def add(self, obj):
+        self.added_objects.append(obj)
+    
+    def delete(self, obj):
+        self.deleted_objects.append(obj)
+    
+    def commit(self):
+        self.committed = True
+    
+    def rollback(self):
+        self.rolled_back = True
+    
+    def close(self):
+        pass
+    
+    def flush(self):
+        pass
+    
+    def refresh(self, obj):
+        pass
+    
+    def execute(self, stmt):
+        return Mock()
+    
+    @property
+    def is_active(self):
+        return True
 
 @pytest.fixture(scope="session")
+def test_app():
+    """测试应用实例"""
+    return app
+
+@pytest.fixture(scope="session")
+def test_client(test_app):
+    """测试客户端"""
+    return TestClient(test_app)
+
+@pytest.fixture(scope="function")
+def db_session():
+    """数据库会话夹具"""
+    # 创建测试表
+    Base.metadata.create_all(bind=engine)
+    
+    # 创建会话
+    session = TestingSessionLocal()
+    
+    try:
+        yield session
+    finally:
+        session.close()
+        # 清理测试数据
+        Base.metadata.drop_all(bind=engine)
+
+@pytest.fixture
+def mock_db_session():
+    """模拟数据库会话"""
+    return MockDBSession()
+
+@pytest.fixture
+def sample_user_data():
+    """示例用户数据"""
+    return {
+        "username": "testuser",
+        "email": "test@example.com",
+        "password": "testpass123",
+        "confirm_password": "testpass123"
+    }
+
+@pytest.fixture
+def sample_login_data():
+    """示例登录数据"""
+    return {
+        "username": "testuser",
+        "password": "testpass123"
+    }
+
+@pytest.fixture
+def sample_user_object():
+    """示例用户对象"""
+    user = Mock()
+    user.id = 1
+    user.username = "testuser"
+    user.email = "test@example.com"
+    user.hashed_password = get_password_hash("testpass123")
+    user.is_active = True
+    user.status = "active"
+    user.roles = ["user"]
+    user.avatar = None
+    user.last_login_time = datetime.utcnow()
+    user.created_at = datetime.utcnow()
+    user.updated_at = datetime.utcnow()
+    
+    # 添加角色属性
+    role_mock = Mock()
+    role_mock.name = "user"
+    user.roles = [role_mock]
+    
+    return user
+
+@pytest.fixture
+def sample_admin_user():
+    """示例管理员用户对象"""
+    user = Mock()
+    user.id = 2
+    user.username = "admin"
+    user.email = "admin@example.com"
+    user.hashed_password = get_password_hash("adminpass123")
+    user.is_active = True
+    user.status = "active"
+    user.roles = ["admin", "user"]
+    user.avatar = "https://example.com/admin.jpg"
+    user.last_login_time = datetime.utcnow()
+    user.created_at = datetime.utcnow()
+    user.updated_at = datetime.utcnow()
+    
+    # 添加角色属性
+    admin_role = Mock()
+    admin_role.name = "admin"
+    user_role = Mock()
+    user_role.name = "user"
+    user.roles = [admin_role, user_role]
+    
+    return user
+
+@pytest.fixture
+def inactive_user():
+    """示例非活跃用户对象"""
+    user = Mock()
+    user.id = 3
+    user.username = "inactiveuser"
+    user.email = "inactive@example.com"
+    user.hashed_password = get_password_hash("testpass123")
+    user.is_active = False  # 非活跃
+    user.status = "inactive"
+    user.roles = ["user"]
+    user.avatar = None
+    user.last_login_time = None
+    user.created_at = datetime.utcnow()
+    user.updated_at = datetime.utcnow()
+    
+    return user
+
+@pytest.fixture
+def mock_async_db():
+    """模拟异步数据库"""
+    mock_db = AsyncMock()
+    mock_db.execute = AsyncMock()
+    mock_db.commit = AsyncMock()
+    mock_db.rollback = AsyncMock()
+    mock_db.close = AsyncMock()
+    mock_db.get = AsyncMock()
+    mock_db.scalar = AsyncMock()
+    mock_db.scalars = AsyncMock()
+    return mock_db
+
+@pytest.fixture
+def mock_user_repository():
+    """模拟用户仓储"""
+    mock_repo = Mock()
+    mock_repo.get_by_username = Mock(return_value=None)
+    mock_repo.get_by_email = Mock(return_value=None)
+    mock_repo.create_user = Mock(return_value=sample_user_object())
+    mock_repo.get_user_by_id = Mock(return_value=sample_user_object())
+    return mock_repo
+
+@pytest.fixture
+def mock_auth_service(sample_user_object, mock_db_session):
+    """模拟认证服务"""
+    with patch('backend.services.auth_service.AuthenticationService') as mock_class:
+        mock_instance = mock_class.return_value
+        mock_instance.register_user = Mock(return_value=(True, sample_user_object, "注册成功"))
+        mock_instance.authenticate_user = Mock(return_value=sample_user_object)
+        mock_instance.get_user_by_id = Mock(return_value=sample_user_object)
+        mock_instance.update_last_login = Mock()
+        yield mock_instance
+
+@pytest.fixture
+def mock_jwt_encode():
+    """模拟JWT编码"""
+    with patch('backend.api.v1.auth.jwt.encode') as mock:
+        mock.return_value = "test-jwt-token"
+        yield mock
+
+@pytest.fixture
+def mock_jwt_decode():
+    """模拟JWT解码"""
+    with patch('backend.api.v1.auth.jwt.decode') as mock:
+        mock.return_value = {
+            "sub": "1",
+            "username": "testuser",
+            "email": "test@example.com",
+            "roles": ["user"],
+            "exp": datetime.utcnow() + timedelta(hours=1),
+            "iat": datetime.utcnow(),
+            "type": "access"
+        }
+        yield mock
+
+@pytest.fixture
+def mock_datetime():
+    """模拟datetime"""
+    with patch('backend.api.v1.auth.datetime') as mock:
+        mock_now = datetime(2024, 1, 1, 12, 0, 0)
+        mock.utcnow.return_value = mock_now
+        mock.return_value = mock_now
+        yield mock
+
+@pytest.fixture
+def password_utils_test_data():
+    """密码工具测试数据"""
+    return {
+        "valid_password": "StrongPass123!",
+        "weak_password": "123",
+        "empty_password": "",
+        "common_password": "password123",
+        "special_chars_only": "!!!@@@###",
+        "numbers_only": "12345678",
+        "letters_only": "abcdefgh",
+        "with_spaces": "pass word 123"
+    }
+
+@pytest.fixture
+def token_test_data():
+    """令牌测试数据"""
+    return {
+        "valid_user_id": "1",
+        "valid_subject": "testuser",
+        "invalid_token": "invalid.jwt.token",
+        "expired_timestamp": datetime.utcnow() - timedelta(hours=2),
+        "future_timestamp": datetime.utcnow() + timedelta(hours=1)
+    }
+
+# 异步测试支持
+@pytest.fixture(scope="session")
 def event_loop():
-    """
-    Creates an instance of the default event loop for each test session.
-    This is often required for async tests.
-    """
+    """事件循环夹具"""
     loop = asyncio.get_event_loop_policy().new_event_loop()
     yield loop
     loop.close()
 
-
-@pytest.fixture(scope="session")
-async def db_engine():
-    """
-    Creates a test database engine.
-    """
-    engine = create_async_engine(
-        TEST_DATABASE_URL,
-        # connect_args={"check_same_thread": False}, # For SQLite
-        poolclass=StaticPool, # Use StaticPool for in-memory DB
+# 测试标记
+def pytest_configure(config):
+    """pytest配置"""
+    config.addinivalue_line(
+        "markers", "slow: marks tests as slow (deselect with '-m \"not slow\"')"
     )
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-
-    yield engine
-
-    await engine.dispose()
-
-
-@pytest.fixture(scope="function")
-async def db_session(db_engine):
-    """
-    Creates a new database session for a test, ensuring isolation.
-    """
-    async_session = sessionmaker(
-        bind=db_engine, class_=AsyncSession, expire_on_commit=False
+    config.addinivalue_line(
+        "markers", "integration: marks tests as integration tests"
     )
-    async with async_session() as session:
-        # Begin a transaction
-        await session.begin()
-        try:
-            yield session
-        finally:
-            # Rollback the transaction after the test finishes
-            await session.rollback()
+    config.addinivalue_line(
+        "markers", "unit: marks tests as unit tests"
+    )
+    config.addinivalue_line(
+        "markers", "security: marks tests as security tests"
+    )
+    config.addinivalue_line(
+        "markers", "api: marks tests as API tests"
+    )
 
-
-@pytest.fixture(scope="function")
-def override_get_db_session(db_session):
-    """
-    Overrides the get_db_session dependency with the test session.
-    """
-    async def _get_db_override():
-        yield db_session
-
-    app.dependency_overrides[get_db] = _get_db_override
+# 测试数据清理
+@pytest.fixture(autouse=True)
+def setup_test_data():
+    """自动使用的测试数据设置"""
+    # 在每个测试前执行
     yield
-    # Clean up the override after the test
-    app.dependency_overrides.clear()
-
-
-@pytest.fixture(scope="function")
-def client(override_get_db_session):
-    """
-    Provides a FastAPI TestClient instance with overridden dependencies.
-    """
-    with TestClient(app) as c:
-        yield c
-
-
-# Example of mocking an async external call (e.g., in a processor or scraper)
-@pytest.fixture
-def mock_aiohttp_get():
-    """
-    Fixture to mock aiohttp.ClientSession.get
-    """
-    with patch("aiohttp.ClientSession.get", new_callable=AsyncMock) as mock_get:
-        yield mock_get
+    # 在每个测试后执行清理
+    pass

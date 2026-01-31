@@ -24,14 +24,21 @@
     </div>
     
     <div class="profile-section">
-      <h4 class="section-title">
-        <i class="fas fa-user-circle"></i>
-        账户信息
-      </h4>
+      <div class="section-header">
+        <h4 class="section-title">
+          <i class="fas fa-user-circle"></i>
+          账户信息
+        </h4>
+        <el-button type="primary" size="small" @click="openEditDialog">编辑资料</el-button>
+      </div>
       <div class="info-grid">
         <div class="info-item">
           <span class="info-label">会员ID</span>
           <span class="info-value">{{ userData.userId }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">昵称</span>
+          <span class="info-value">{{ userData.nickname || userData.username }}</span>
         </div>
         <div class="info-item">
           <span class="info-label">注册时间</span>
@@ -40,6 +47,26 @@
         <div class="info-item">
           <span class="info-label">使用时长</span>
           <span class="info-value">{{ userData.usageDuration }}天</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">邮箱</span>
+          <span class="info-value">{{ userData.email || '未设置' }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">手机号</span>
+          <span class="info-value">{{ userData.phone || '未设置' }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">性别</span>
+          <span class="info-value">{{ getGenderText(userData.gender) }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">生日</span>
+          <span class="info-value">{{ userData.birthday || '未设置' }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">个人简介</span>
+          <span class="info-value">{{ userData.bio || userData.description || '未填写' }}</span>
         </div>
         <div class="info-item">
           <span class="info-label">账户状态</span>
@@ -142,17 +169,29 @@
         </div>
       </div>
     </div>
+    
+    <!-- 编辑个人信息对话框 -->
+    <UserProfileEditDialog
+      v-model="editDialogVisible"
+      :userData="userData"
+      @updated="onProfileUpdated"
+    />
   </div>
 </template>
 
 <script>
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { useAppStore } from '../stores';
+import UserProfileEditDialog from './UserProfileEditDialog.vue';
 
 export default {
   name: 'ProfilePanel',
+  components: {
+    UserProfileEditDialog
+  },
   setup() {
     const store = useAppStore();
+    const editDialogVisible = ref(false);
     
     const userData = computed(() => store.userData);
     
@@ -194,6 +233,28 @@ export default {
       }
     };
     
+    const openEditDialog = () => {
+      editDialogVisible.value = true;
+    };
+    
+    const onProfileUpdated = (updatedData) => {
+      // 更新本地存储的用户数据
+      store.updateUserData({
+        ...store.userData,
+        ...updatedData,
+        nickname: updatedData.nickname || updatedData.username
+      });
+    };
+    
+    const getGenderText = (gender) => {
+      switch(gender) {
+        case 1: return '男';
+        case 2: return '女';
+        case 0: return '保密';
+        default: return '未设置';
+      }
+    };
+    
     return {
       userData,
       avatarUrl,
@@ -201,7 +262,11 @@ export default {
       toggleSetting,
       updateSetting,
       openLoginModal,
-      clearCache
+      clearCache,
+      openEditDialog,
+      editDialogVisible,
+      onProfileUpdated,
+      getGenderText
     };
   }
 };
@@ -307,10 +372,17 @@ export default {
   border: 1px solid var(--border-color);
 }
 
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
 .section-title {
   font-size: 16px;
   color: var(--text-main);
-  margin-bottom: 16px;
+  margin: 0;
   display: flex;
   align-items: center;
   gap: 10px;

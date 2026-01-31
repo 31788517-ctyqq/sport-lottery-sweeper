@@ -26,7 +26,7 @@ try:
     
     if response.status_code == 200:
         result = response.json()
-        print("\n✅ 登录成功!")
+        print("\n[OK] 登录成功!")
         print(f"代码: {result.get('code')}")
         print(f"消息: {result.get('message')}")
         data = result.get('data', {})
@@ -37,9 +37,9 @@ try:
             for key, value in user.items():
                 print(f"  {key}: {value}")
     else:
-        print(f"\n❌ 登录失败: {response.text}")
+        print(f"\n[ERROR] 登录失败: {response.text}")
         
 except Exception as e:
-    print(f"❌ 请求异常: {e}")
+    print(f"[ERROR] 请求异常: {e}")
     import traceback
     traceback.print_exc()

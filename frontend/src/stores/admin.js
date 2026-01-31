@@ -1,21 +1,17 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import request from '@/utils/request';
-import { useUserStore } from '@/store/user';
+import { useUserStore } from '@/stores/user';
 
 export const useAdminStore = defineStore('admin', () => {
-  // 状态 - 从 localStorage 初始化
-  const storedToken = localStorage.getItem('admin_token');
-  const storedUser = localStorage.getItem('admin_user');
-  const storedRemember = localStorage.getItem('admin_remember');
-  
-  const token = ref(storedToken || '');
-  const user = ref(storedUser ? JSON.parse(storedUser) : null);
-  const isAuthenticated = ref(!!storedToken);
+  // 状态 - 不再使用持久化存储，仅内存存储
+  const token = ref('');
+  const user = ref(null);
+  const isAuthenticated = ref(false);
   const rememberMe = ref(false);
 
   console.log('[Admin Store] 初始化状态:', {
-    hasToken: !!storedToken,
+    hasToken: !!token.value,
     isAuthenticated: isAuthenticated.value,
     user: user.value
   });
@@ -66,20 +62,7 @@ export const useAdminStore = defineStore('admin', () => {
           user: user.value
         });
         
-        // 处理记住密码逻辑
-        if (credentials.rememberMe) {
-          // 保存记住的用户名和密码（实际项目中密码应该加密存储）
-          localStorage.setItem('admin_remember', JSON.stringify({
-            username: credentials.username,
-            // 注意：这里仅作演示，实际项目中密码需要加密
-            password: credentials.password
-          }));
-          rememberMe.value = true;
-        } else {
-          // 清除记住的登录信息
-          localStorage.removeItem('admin_remember');
-          rememberMe.value = false;
-        }
+        // 自动登录功能已移除，不保存任何登录凭据
 
         return { success: true };
       } else {
@@ -128,6 +111,9 @@ export const useAdminStore = defineStore('admin', () => {
     } catch (err) {
       console.warn('[Admin Store] 清除user store时出错:', err);
     }
+    
+    // 跳转到登录页面
+    window.location.href = '/admin/login';
   };
 
   const initializeAuth = () => {

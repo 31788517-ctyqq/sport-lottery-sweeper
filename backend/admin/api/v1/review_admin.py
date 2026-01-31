@@ -7,9 +7,9 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime
 
 from ....api.deps import get_db
-from ....models.data_review import DataReview
+from ....models.data_review import DataReview, DataTypeEnum, ReviewStatusEnum
 from ....models.user import User
-from ....models.data_review import DataTypeEnum, ReviewStatusEnum
+from ...deps import get_current_admin
 
 # 临时定义UnifiedResponse和PageResponse，因为可能不存在
 from pydantic import BaseModel
@@ -34,7 +34,7 @@ class PageResponse(BaseModel):
     page: int
     size: int
 
-router = APIRouter()
+router = APIRouter(prefix="/reviews", tags=["admin-reviews"])
 
 
 @router.get("/", response_model=UnifiedResponse)

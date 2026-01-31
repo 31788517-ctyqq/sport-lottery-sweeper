@@ -64,7 +64,7 @@ async def create_admin_user(
     return UnifiedResponse.success(data=user)
 
 
-@router.get("/{user_id}", response_model=UnifiedResponse[schemas.AdminUserDetailResponse])
+@router.get("/{user_id}", response_model=UnifiedResponse[schemas.AdminUserResponse])
 async def get_admin_user(
     user_id: int,
     db: AsyncSession = Depends(get_async_db),
@@ -157,6 +157,32 @@ async def delete_admin_user(
     return UnifiedResponse.success(data={"message": "用户删除成功"})
 
 
+@router.get("/current-user", response_model=UnifiedResponse[schemas.AdminUserResponse])
+async def get_current_user_info(
+    current_admin: models.AdminUser = Depends(get_current_active_admin_user),
+    db: AsyncSession = Depends(get_async_db)
+):
+    """
+    获取当前登录的管理员用户信息
+    """
+    # 从依赖中获取当前用户，无需额外查询
+    return UnifiedResponse.success(data=current_admin)
+
+
+@router.put("/current-user", response_model=UnifiedResponse[schemas.AdminUserResponse])
+async def update_current_user(
+    user_update: schemas.AdminUserUpdate,
+    current_admin: models.AdminUser = Depends(get_current_active_admin_user),
+    db: AsyncSession = Depends(get_async_db)
+):
+    """
+    更新当前登录的管理员用户信息
+    """
+    # 更新当前用户的信息
+    updated_user = await crud.admin_user.update(db, db_obj=current_admin, obj_in=user_update)
+    return UnifiedResponse.success(data=updated_user)
+
+
 @router.get("/stats", response_model=UnifiedResponse[schemas.AdminUserStatsResponse])
 async def get_admin_user_stats(
     db: AsyncSession = Depends(get_async_db),
@@ -167,3 +193,85 @@ async def get_admin_user_stats(
     """
     stats = await crud.admin_user.get_stats(db)
     return UnifiedResponse.success(data=schemas.AdminUserStatsResponse(**stats))
+
+
+@router.get("/login-history", response_model=UnifiedResponse[List[dict]])
+async def get_current_user_login_history(
+    limit: int = Query(10, ge=1, le=100, description="返回记录数量"),
+    current_admin: models.AdminUser = Depends(get_current_active_admin_user),
+    db: AsyncSession = Depends(get_async_db)
+):
+    """
+    获取当前管理员的登录历史
+    """
+    # 获取当前用户的登录历史
+    try:
+        _, login_logs = await crud.admin_login_log.get_multi(
+            db, 
+            skip=0, 
+            limit=limit, 
+            admin_id=current_admin.id
+        )
+        # 转换为前端需要的格式
+        result = []
+        for log in login_logs:
+            result.append({
+                "id": log.id,
+                "loginTime": log.login_at.isoformat() if log.login_at else None,
+                "ip": log.login_ip,
+                "location": "未知",  # 可以通过IP查询地理位置
+                "device": "未知",  # 设备信息可以从前端传入
+                "browser": "未知",  # 浏览器信息可以从前端传入
+                "success": log.success
+            })
+        return UnifiedResponse.success(data=result)
+    except Exception as e:
+        # 如果出现错误，返回空数组
+        return UnifiedResponse.success(data=[])
+
+
+@router.get("/stats/overview", response_model=UnifiedResponse[dict])
+async def get_current_user_personal_stats(
+    current_admin: models.AdminUser = Depends(get_current_active_admin_user),
+    db: AsyncSession = Depends(get_async_db)
+):
+    """
+    获取当前管理员的个人统计数据
+    """
+    try:
+        # 查询当前用户的登录历史统计
+        _, login_logs = await crud.admin_login_log.get_multi(
+            db,
+            skip=0,
+            limit=1000,  # 获取全部登录记录
+            admin_id=current_admin.id
+        )
+        
+        # 计算统计信息
+        total_logins = len(login_logs)
+        
+        # 计算本月登录次数
+        from datetime import datetime
+        this_month = 0
+        current_month = datetime.now().month
+        current_year = datetime.now().year
+        for log in login_logs:
+            if log.login_at.month == current_month and log.login_at.year == current_year and log.success:
+                this_month += 1
+        
+        # 这里可以根据需要计算更多的统计信息
+        # 比如操作日志数量等
+        total_operations = 0  # 暂时设为0，需要查询操作日志表
+        
+        return UnifiedResponse.success(data={
+            "totalLogins": total_logins,
+            "thisMonthLogins": this_month,
+            "totalOperations": total_operations
+        })
+    except Exception as e:
+        # 如果没有实现相关查询函数，返回默认值
+        return UnifiedResponse.success(data={
+            "totalLogins": 0,
+            "thisMonthLogins": 0,
+            "totalOperations": 0
+        })

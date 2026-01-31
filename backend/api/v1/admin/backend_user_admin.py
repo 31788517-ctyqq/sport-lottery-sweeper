@@ -7,14 +7,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional
 from datetime import datetime
 
-from ....database import get_async_session
-from ....models.admin_user import AdminUser, AdminRoleEnum, AdminStatusEnum
-from ....schemas.admin_user import (
+from backend.database import get_async_session
+from backend.models.admin_user import AdminUser, AdminRoleEnum, AdminStatusEnum
+from backend.schemas.admin_user import (
     AdminUserCreate, AdminUserUpdate, AdminUserResponse, AdminUserListResponse,
     AdminUserDetailResponse, AdminUserChangePassword, AdminUserResetPassword,
     AdminUserStatsResponse, AdminOperationLogListResponse, AdminLoginLogListResponse
 )
-from ....crud.admin_user import admin_user, admin_operation_log, admin_login_log
+from backend.crud.admin_user import admin_user, admin_operation_log, admin_login_log
 
 router = APIRouter()
 

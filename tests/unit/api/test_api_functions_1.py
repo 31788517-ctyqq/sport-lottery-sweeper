@@ -88,8 +88,8 @@ def test_auth_login():
 if __name__ == "__main__":
     success = test_auth_login()
     if success:
-        print("\n✅ 所有测试通过!")
+        print("\n[OK] 所有测试通过!")
         sys.exit(0)
     else:
-        print("\n❌ 测试失败!")
+        print("\n[ERROR] 测试失败!")
         sys.exit(1)

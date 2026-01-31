@@ -7,7 +7,8 @@ from abc import ABC, abstractmethod
 from typing import Dict, List, Optional, Any
 from datetime import datetime
 
-from .engine import ScraperEngine
+# 修改导入，使用增强型引擎
+from .enhanced_engine import EnhancedScraperEngine as ScraperEngine
 
 logger = logging.getLogger(__name__)
 

@@ -9,9 +9,8 @@ from ...deps import get_current_admin
 from .... import crud
 from ....schemas.match import MatchResponse
 from ....api.deps import get_db
-from ....models.match import Match
 
-router = APIRouter()
+router = APIRouter(prefix="/data", tags=["admin-data"])
 
 
 @router.get("/matches/", response_model=list[MatchResponse])

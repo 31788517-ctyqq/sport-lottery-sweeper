@@ -1,10 +1,10 @@
 import axios from 'axios'
-import { useAuthStore } from '@/store/modules/user'
+import { useUserStore } from '@/stores/user'
 import router from '@/router'
 
 // 创建axios实例
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL,
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api',
   timeout: parseInt(import.meta.env.VITE_API_TIMEOUT) || 30000,
   headers: {
     'Content-Type': 'application/json',
@@ -16,8 +16,8 @@ const apiClient = axios.create({
 apiClient.interceptors.request.use(
   (config) => {
     // 从store获取token
-    const authStore = useAuthStore()
-    const token = authStore.token
+    const userStore = useUserStore()
+    const token = userStore.token
     
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
@@ -55,14 +55,14 @@ apiClient.interceptors.response.use(
       originalRequest._retry = true
       
       try {
-        const authStore = useAuthStore()
-        await authStore.refreshAuthToken()
+        const userStore = useUserStore()
+        await userStore.refreshTokenAction()
         
         // 重试原始请求
         return apiClient(originalRequest)
       } catch (refreshError) {
         // 刷新失败，跳转到登录页
-        authStore.clearAuth()
+        userStore.logout()
         router.push({ name: 'Login' })
         return Promise.reject(refreshError)
       }

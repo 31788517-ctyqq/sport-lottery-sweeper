@@ -24,11 +24,11 @@ async def main():
         # 获取比赛数据
         matches = await scraper.get_matches(days=3)
         
-        print(f"\n✅ 获取到 {len(matches)} 场比赛")
+        print(f"\n[OK] 获取到 {len(matches)} 场比赛")
         
         # 检查是否是模拟数据
         if matches and matches[0].get('is_mock'):
-            print("⚠️  当前使用模拟数据 (真实API未配置)")
+            print("[WARNING]  当前使用模拟数据 (真实API未配置)")
         
         # 显示前5场比赛
         print("\n" + "-"*80)
@@ -70,6 +70,6 @@ if __name__ == "__main__":
     try:
         asyncio.run(main())
     except Exception as e:
-        print(f"\n❌ 错误: {e}")
+        print(f"\n[ERROR] 错误: {e}")
         import traceback
         traceback.print_exc()

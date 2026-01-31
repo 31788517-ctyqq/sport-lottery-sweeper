@@ -47,6 +47,24 @@ export const matchesAPI = {
   getPopularMatches() {
     return client.get('/api/v1/matches/popular');
   },
+
+  /**
+   * 获取比赛列表（兼容别名）
+   * @param {Object} params - 查询参数
+   * @returns {Promise<Object>} - 包含分页信息和数据列表
+   */
+  getMatchesList(params = {}) {
+    return this.getMatches(params);
+  },
+
+  /**
+   * 获取比赛详情（兼容别名）
+   * @param {number} id - 比赛ID
+   * @returns {Promise<Object>}
+   */
+  getMatchDetail(id) {
+    return this.getMatchById(id);
+  },
 };
 
-export const { getMatches, getMatchById, getOddsByMatchId, getStatsByMatchId, getPopularMatches } = matchesAPI;
+export const { getMatches, getMatchById, getOddsByMatchId, getStatsByMatchId, getPopularMatches, getMatchesList, getMatchDetail } = matchesAPI;

@@ -1,10 +1,12 @@
 <template>
   <div class="frontend-users-container">
-    <el-card class="users-card" :body-style="{ padding: '0' }">
-      <div class="card-header">
-        <h3>前台用户管理</h3>
-      </div>
-      
+    <el-card class="users-card">
+      <template #header>
+        <div class="card-header">
+          <h3>前台用户管理</h3>
+        </div>
+      </template>
+
       <!-- 搜索和控制区域 -->
       <div class="users-controls">
         <el-row :gutter="20">
@@ -56,17 +58,17 @@
           </el-col>
         </el-row>
       </div>
-      
+
       <!-- 操作按钮区域 -->
       <div class="action-bar">
-    <el-button type="primary" @click="handleCreate">
-      新建用户
-    </el-button>
-    <el-button 
-      v-if="selectedUsers.length > 0"
-      type="danger" 
-      @click="handleBatchDelete"
-    >
+        <el-button type="primary" @click="handleCreate">
+          新建用户
+        </el-button>
+        <el-button 
+          v-if="selectedUsers.length > 0"
+          type="danger" 
+          @click="handleBatchDelete"
+        >
           批量删除 ({{ selectedUsers.length }})
         </el-button>
       </div>
@@ -97,8 +99,10 @@
             </template>
           </el-table-column>
           <el-table-column prop="status" label="状态" width="100">
-            <template #default="scope">
-              {{ getStatusText(scope.row.status) }}
+            <template #default="{ row }">
+              <el-tag :type="getStatusTagType(row.status)">
+                {{ getStatusText(row.status) }}
+              </el-tag>
             </template>
           </el-table-column>
           <el-table-column prop="created_at" label="注册时间" width="160">
@@ -154,28 +158,28 @@
         </div>
         <div class="dialog-body">
           <div class="form-group">
-            <label>用户名</label>
-            <input v-model="currentUser.username" :disabled="dialogMode === 'view'" />
+            <label for="username">用户名</label>
+            <input id="username" name="username" v-model="currentUser.username" :disabled="dialogMode === 'view'" />
           </div>
           <div class="form-group">
-            <label>邮箱</label>
-            <input v-model="currentUser.email" :disabled="dialogMode === 'view'" />
+            <label for="email">邮箱</label>
+            <input id="email" name="email" v-model="currentUser.email" :disabled="dialogMode === 'view'" />
           </div>
           <div class="form-group">
-            <label>昵称</label>
-            <input v-model="currentUser.nickname" :disabled="dialogMode === 'view'" />
+            <label for="nickname">昵称</label>
+            <input id="nickname" name="nickname" v-model="currentUser.nickname" :disabled="dialogMode === 'view'" />
           </div>
           <div class="form-group">
-            <label>用户类型</label>
-            <select v-model="currentUser.user_type" :disabled="dialogMode === 'view'">
+            <label for="user-type">用户类型</label>
+            <select id="user-type" name="user_type" v-model="currentUser.user_type" :disabled="dialogMode === 'view'">
               <option value="normal">普通用户</option>
               <option value="premium">高级用户</option>
               <option value="analyst">分析师</option>
             </select>
           </div>
           <div class="form-group">
-            <label>状态</label>
-            <select v-model="currentUser.status" :disabled="dialogMode === 'view'">
+            <label for="status">状态</label>
+            <select id="status" name="status" v-model="currentUser.status" :disabled="dialogMode === 'view'">
               <option value="active">活跃</option>
               <option value="inactive">未激活</option>
               <option value="suspended">暂停</option>
@@ -213,6 +217,7 @@ export default {
     const loading = ref(false)
     const searchKeyword = ref('')
     const selectedUsers = ref([])
+    const showBatchActions = ref(false)
     const showUserDialog = ref(false)
     const dialogMode = ref('view') // 'view' | 'edit'
     const currentUser = ref({})
@@ -268,19 +273,19 @@ export default {
     // 加载统计信息
     const loadStats = async () => {
       try {
-    const response = await getFrontendUserStats()
-    // 注意：由于响应拦截器的处理，response已经是data对象
-    if (response) {
-      // 检查是否是我们的模拟数据格式 { data: { data: {...} } }
-      if (response.data && response.data.data) {
-        stats.value = response.data.data
-      } else if (response.data) {
-        // 兼容其他可能的响应格式
-        stats.value = response.data
-      } else {
-        stats.value = response
-      }
-    }
+        const response = await getFrontendUserStats()
+        // 注意：由于响应拦截器的处理，response已经是data对象
+        if (response) {
+          // 检查是否是我们的模拟数据格式 { data: { data: {...} } }
+          if (response.data && response.data.data) {
+            stats.value = response.data.data
+          } else if (response.data) {
+            // 兼容其他可能的响应格式
+            stats.value = response.data
+          } else {
+            stats.value = response
+          }
+        }
       } catch (error) {
         console.error('加载统计信息失败:', error)
       }
@@ -464,6 +469,17 @@ export default {
       return statusMap[status] || status
     }
 
+    // 获取状态标签类型
+    const getStatusTagType = (status) => {
+      const tagTypeMap = {
+        active: 'success',
+        inactive: 'info',
+        suspended: 'warning',
+        banned: 'danger'
+      }
+      return tagTypeMap[status] || 'info'
+    }
+
     onMounted(() => {
       loadUsers()
       loadStats()
@@ -476,6 +492,7 @@ export default {
       filters,
       pagination,
       selectedUsers,
+      showBatchActions,
       showUserDialog,
       dialogMode,
       currentUser,
@@ -493,7 +510,8 @@ export default {
       closeDialog,
       formatDate,
       getUserTypeText,
-      getStatusText
+      getStatusText,
+      getStatusTagType
     }
   }
 }
@@ -509,18 +527,6 @@ export default {
 .users-card {
   border-radius: 8px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-}
-
-.card-header {
-  padding: 20px;
-  border-bottom: 1px solid #ebeef5;
-}
-
-.card-header h3 {
-  margin: 0;
-  color: #303133;
-  font-size: 18px;
-  font-weight: 600;
 }
 
 .users-controls {

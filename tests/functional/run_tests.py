@@ -10,7 +10,7 @@ from pathlib import Path
 
 def run_unit_tests():
     """运行单元测试"""
-    print("🧪 开始运行单元测试...")
+    print("[TEST] 开始运行单元测试...")
     cmd = [sys.executable, "-m", "pytest", "tests/backend/unit/", "-v", "--tb=short"]
     result = subprocess.run(cmd, capture_output=True, text=True)
     
@@ -23,7 +23,7 @@ def run_unit_tests():
 
 def run_integration_tests():
     """运行集成测试"""
-    print("🔗 开始运行集成测试...")
+    print("[LINK] 开始运行集成测试...")
     cmd = [sys.executable, "-m", "pytest", "tests/backend/integration/", "-v", "--tb=short"]
     result = subprocess.run(cmd, capture_output=True, text=True)
     
@@ -36,7 +36,7 @@ def run_integration_tests():
 
 def run_e2e_tests():
     """运行端到端测试"""
-    print("🌐 开始运行端到端测试...")
+    print("[WEB] 开始运行端到端测试...")
     cmd = [sys.executable, "-m", "pytest", "tests/backend/e2e/", "-v", "--tb=short"]
     result = subprocess.run(cmd, capture_output=True, text=True)
     
@@ -49,28 +49,28 @@ def run_e2e_tests():
 
 def run_all_tests():
     """运行所有测试"""
-    print("🚀 开始运行所有测试...")
+    print("[ROCKET] 开始运行所有测试...")
     
     results = {}
     results['unit'] = run_unit_tests()
     results['integration'] = run_integration_tests()
     results['e2e'] = run_e2e_tests()
     
-    print("\n📊 测试结果汇总:")
+    print("\n[ANALYTICS] 测试结果汇总:")
     for test_type, success in results.items():
-        status = "✅ 通过" if success else "❌ 失败"
+        status = "[OK] 通过" if success else "[ERROR] 失败"
         print(f"  {test_type.capitalize()} 测试: {status}")
     
     all_passed = all(results.values())
-    overall_status = "✅ 全部测试通过" if all_passed else "❌ 部分测试失败"
-    print(f"\n🎉 总体结果: {overall_status}")
+    overall_status = "[OK] 全部测试通过" if all_passed else "[ERROR] 部分测试失败"
+    print(f"\n[SUCCESS] 总体结果: {overall_status}")
     
     return all_passed
 
 
 def run_tests_with_coverage():
     """运行带覆盖率的测试"""
-    print("📏 开始运行带覆盖率的测试...")
+    print("[RULER] 开始运行带覆盖率的测试...")
     
     # 安装 coverage，如果尚未安装
     try:
@@ -90,7 +90,7 @@ def run_tests_with_coverage():
         print("STDERR:", result.stderr)
     
     if result.returncode != 0:
-        print("❌ 测试执行失败")
+        print("[ERROR] 测试执行失败")
         return False
     
     # 生成覆盖率报告
@@ -107,7 +107,7 @@ def run_tests_with_coverage():
     if html_result.stderr:
         print("HTML报告生成错误:", html_result.stderr)
     
-    print("📊 HTML覆盖率报告已生成到 htmlcov/ 目录")
+    print("[ANALYTICS] HTML覆盖率报告已生成到 htmlcov/ 目录")
     
     return True
 
@@ -124,7 +124,7 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
     
-    print(f"🎯 正在运行 {args.test_type} 测试...")
+    print(f"[TARGET] 正在运行 {args.test_type} 测试...")
     
     if args.test_type == "unit":
         success = run_unit_tests()

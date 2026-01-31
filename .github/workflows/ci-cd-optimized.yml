@@ -1,0 +1,630 @@
+# AI_WORKING: coder1 @2026-01-28T14:30:00 - 创建优化后的CI/CD配置，提高并行度和执行效率
+name: CI/CD Pipeline (Optimized)
+
+on:
+  push:
+    branches: [ main, develop, stable-base ]
+    paths-ignore:
+      - '**/*.md'
+      - '**/*.txt'
+      - '**/*.json'
+      - '**/*.yml'
+      - '**/*.yaml'
+      - '**/*.log'
+      - '**/*.png'
+      - '**/*.jpg'
+      - '**/*.gif'
+      - '.github/**'
+      - 'docs/**'
+      - 'logs/**'
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:  # 允许手动触发
+
+env:
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '20'
+  DOCKER_BUILDKIT: 1
+  CI: true
+
+# 缓存配置
+cache:
+  # Node模块缓存
+  - key: ${{ runner.os }}-node-modules-${{ hashFiles('frontend/package-lock.json') }}
+    path: frontend/node_modules
+    restore-keys: |
+      ${{ runner.os }}-node-modules-
+  
+  # Python包缓存
+  - key: ${{ runner.os }}-python-packages-${{ hashFiles('backend/requirements*.txt') }}
+    path: ~/.cache/pip
+    restore-keys: |
+      ${{ runner.os }}-python-packages-
+  
+  # Playwright浏览器缓存
+  - key: ${{ runner.os }}-playwright-${{ hashFiles('frontend/package-lock.json') }}
+    path: ~/.cache/ms-playwright
+    restore-keys: |
+      ${{ runner.os }}-playwright-
+
+jobs:
+  # ============================================================================
+  # 1. 代码质量检查（并行执行Python和JS检查）
+  # ============================================================================
+  python-quality:
+    name: Python Code Quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Cache Python dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('backend/requirements-dev.txt', 'backend/requirements.txt') }}
+    
+    - name: Install Python dependencies
+      run: |
+        cd backend
+        pip install -r requirements-dev.txt
+        pip install -r requirements.txt
+    
+    - name: Run Python linting
+      run: |
+        cd backend
+        echo "🔍 Running Python linting..."
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        black --check --diff .
+        isort --check-only --diff .
+    
+    - name: Run Python security scan
+      run: |
+        cd backend
+        echo "🔒 Running Python security scan..."
+        pip install bandit safety
+        bandit -r . -f json -o bandit-report.json || true
+        safety check --json --output safety-report.json || true
+
+  javascript-quality:
+    name: JavaScript/TypeScript Code Quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+    
+    - name: Install dependencies
+      run: |
+        cd frontend
+        npm ci
+    
+    - name: Run JavaScript/TypeScript linting
+      run: |
+        cd frontend
+        echo "🔍 Running JavaScript/TypeScript linting..."
+        npm run lint || echo "Lint warnings found"
+    
+    - name: Check code formatting
+      run: |
+        cd frontend
+        echo "🎨 Checking code formatting..."
+        npm run format:check || echo "Formatting issues found"
+    
+    - name: Run npm audit
+      run: |
+        cd frontend
+        echo "🔒 Running npm audit..."
+        npm audit --audit-level moderate || true
+
+  # ============================================================================
+  # 2. 单元测试（前后端并行执行）
+  # ============================================================================
+  frontend-unit-tests:
+    name: Frontend Unit Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [javascript-quality]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+    
+    - name: Install dependencies
+      run: |
+        cd frontend
+        npm ci
+    
+    - name: Run unit tests with coverage
+      run: |
+        cd frontend
+        echo "🧪 Running frontend unit tests with coverage..."
+        npm run test:unit -- --run --coverage --reporter=verbose
+    
+    - name: Upload coverage report
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./frontend/coverage/lcov.info
+        flags: frontend
+        name: frontend-coverage
+    
+    - name: Upload test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: frontend-unit-test-results
+        path: |
+          frontend/coverage/
+          frontend/test-results/
+        retention-days: 7
+
+  backend-unit-tests:
+    name: Backend Unit Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [python-quality]
+    
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_sport_lottery
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:6-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Cache Python dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('backend/requirements-dev.txt', 'backend/requirements.txt') }}
+    
+    - name: Install dependencies
+      run: |
+        cd backend
+        pip install -r requirements-dev.txt
+        pip install -r requirements.txt
+    
+    - name: Setup test environment
+      run: |
+        cd backend
+        echo "🔧 Setting up test environment..."
+        cat > .env.test << EOF
+        DATABASE_URL=postgresql://postgres:postgres@localhost:5432/test_sport_lottery
+        REDIS_URL=redis://localhost:6379/0
+        SECRET_KEY=test-secret-key-for-ci
+        ENVIRONMENT=testing
+        DEBUG=false
+        LOG_LEVEL=INFO
+        EOF
+        cp .env.test .env
+    
+    - name: Run database migrations
+      run: |
+        cd backend
+        echo "🗄️ Running database migrations..."
+        alembic upgrade head
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_sport_lottery
+    
+    - name: Run unit tests with coverage
+      run: |
+        cd backend
+        echo "🧪 Running backend unit tests with coverage..."
+        pytest tests/unit/ -v --cov=. --cov-report=xml --cov-report=html --cov-report=term-missing --cov-fail-under=80
+    
+    - name: Upload coverage report
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./backend/coverage.xml
+        flags: backend
+        name: backend-coverage
+    
+    - name: Upload test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: backend-unit-test-results
+        path: |
+          backend/htmlcov/
+          backend/coverage.xml
+          backend/.pytest_cache/
+        retention-days: 7
+
+  # ============================================================================
+  # 3. 集成测试（依赖单元测试）
+  # ============================================================================
+  backend-integration-tests:
+    name: Backend Integration Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [backend-unit-tests]
+    
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_sport_lottery
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:6-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          health-interval: 10s
+          health-timeout: 5s
+          health-retries: 5
+        ports:
+          - 6379:6379
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install dependencies
+      run: |
+        cd backend
+        pip install -r requirements-dev.txt
+    
+    - name: Setup test environment
+      run: |
+        cd backend
+        cat > .env.test << EOF
+        DATABASE_URL=postgresql://postgres:postgres@localhost:5432/test_sport_lottery
+        REDIS_URL=redis://localhost:6379/0
+        SECRET_KEY=test-secret-key-for-ci
+        ENVIRONMENT=testing
+        DEBUG=false
+        LOG_LEVEL=INFO
+        EOF
+        cp .env.test .env
+    
+    - name: Run database migrations
+      run: |
+        cd backend
+        alembic upgrade head
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_sport_lottery
+    
+    - name: Run integration tests
+      run: |
+        cd backend
+        echo "🔗 Running backend integration tests..."
+        pytest tests/integration/ -v --tb=short --junitxml=integration-test-results.xml
+    
+    - name: Upload integration test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: backend-integration-test-results
+        path: |
+          backend/integration-test-results.xml
+        retention-days: 7
+
+  # ============================================================================
+  # 4. 端到端测试（依赖前后端单元测试）
+  # ============================================================================
+  e2e-tests:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    needs: [frontend-unit-tests, backend-unit-tests]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+    
+    - name: Install dependencies
+      run: |
+        cd frontend
+        npm ci
+    
+    - name: Cache Playwright browsers
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/ms-playwright
+        key: ${{ runner.os }}-playwright-${{ hashFiles('frontend/package-lock.json') }}
+    
+    - name: Install Playwright browsers
+      run: |
+        cd frontend
+        npx playwright install chromium
+    
+    - name: Start backend service
+      run: |
+        cd backend
+        echo "🚀 Starting backend service for E2E tests..."
+        # 使用测试配置启动后端
+        cat > .env.test << EOF
+        DATABASE_URL=sqlite:///./test_e2e.db
+        REDIS_URL=redis://localhost:6379/0
+        SECRET_KEY=e2e-test-secret-key
+        ENVIRONMENT=testing
+        DEBUG=true
+        LOG_LEVEL=INFO
+        EOF
+        cp .env.test .env
+        
+        # 在后台启动服务
+        python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload &
+        sleep 10  # 等待服务启动
+    
+    - name: Run E2E tests
+      run: |
+        cd frontend
+        echo "🧪 Running E2E tests..."
+        npx playwright test tests/e2e/ --reporter=html,line
+    
+    - name: Upload E2E test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: e2e-test-results
+        path: |
+          frontend/playwright-report/
+          frontend/test-results/
+        retention-days: 7
+
+  # ============================================================================
+  # 5. 测试汇总和报告
+  # ============================================================================
+  test-summary:
+    name: Test Summary
+    runs-on: ubuntu-latest
+    needs: [frontend-unit-tests, backend-unit-tests, backend-integration-tests, e2e-tests]
+    if: always()
+    
+    steps:
+    - name: Generate test summary
+      run: |
+        echo "📊 ========================================="
+        echo "📊 测试执行完成汇总"
+        echo "📊 ========================================="
+        echo "📊 前端单元测试: ${{ needs.frontend-unit-tests.result }}"
+        echo "📊 后端单元测试: ${{ needs.backend-unit-tests.result }}"
+        echo "📊 后端集成测试: ${{ needs.backend-integration-tests.result }}"
+        echo "📊 端到端测试: ${{ needs.e2e-tests.result }}"
+        echo "📊 ========================================="
+        
+        # 检查是否有失败的测试
+        FAILED_COUNT=0
+        if [[ "${{ needs.frontend-unit-tests.result }}" != "success" ]]; then ((FAILED_COUNT++)); fi
+        if [[ "${{ needs.backend-unit-tests.result }}" != "success" ]]; then ((FAILED_COUNT++)); fi
+        if [[ "${{ needs.backend-integration-tests.result }}" != "success" ]]; then ((FAILED_COUNT++)); fi
+        if [[ "${{ needs.e2e-tests.result }}" != "success" ]]; then ((FAILED_COUNT++)); fi
+        
+        if [[ $FAILED_COUNT -gt 0 ]]; then
+          echo "❌ $FAILED_COUNT 个测试失败"
+          exit 1
+        else
+          echo "✅ 所有测试通过"
+        exit 0
+        fi
+    
+    - name: Notify test completion
+      if: always()
+      uses: 8398a7/action-slack@v3
+      with:
+        status: ${{ job.status }}
+        channel: '#ci-cd'
+        text: |
+          🧪 测试执行完成: ${{ job.status }}
+          - 前端单元测试: ${{ needs.frontend-unit-tests.result }}
+          - 后端单元测试: ${{ needs.backend-unit-tests.result }}
+          - 后端集成测试: ${{ needs.backend-integration-tests.result }}
+          - 端到端测试: ${{ needs.e2e-tests.result }}
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  # ============================================================================
+  # 6. 构建和部署（仅在main/develop分支且测试通过时执行）
+  # ============================================================================
+  build-images:
+    name: Build Docker Images
+    runs-on: ubuntu-latest
+    needs: [test-summary]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+    
+    strategy:
+      matrix:
+        service: [backend, frontend]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ghcr.io/${{ github.repository }}/${{ matrix.service }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=sha,prefix={{branch}}-
+          type=raw,value=latest,enable={{is_default_branch}}
+    
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./Dockerfile.${{ matrix.service }}
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        build-args: |
+          BUILD_DATE=${{ github.event.head_commit.timestamp }}
+          VERSION=${{ github.sha }}
+          VCS_REF=${{ github.sha }}
+
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [build-images]
+    if: github.ref == 'refs/heads/develop'
+    environment:
+      name: staging
+      url: https://staging.sport-lottery-sweeper.com
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Deploy to staging server
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.STAGING_HOST }}
+        username: ${{ secrets.STAGING_USERNAME }}
+        key: ${{ secrets.STAGING_SSH_KEY }}
+        script: |
+          cd /opt/sport-lottery-sweeper
+          git pull origin develop
+          docker-compose -f docker-compose.staging.yml pull
+          docker-compose -f docker-compose.staging.yml up -d --build
+          docker system prune -f
+          echo "✅ Staging deployment completed"
+    
+    - name: Run smoke tests
+      run: |
+        echo "🧪 Running smoke tests against staging..."
+        sleep 30  # 等待服务启动
+        curl -f https://staging.sport-lottery-sweeper.com/health || exit 1
+
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [build-images]
+    if: github.ref == 'refs/heads/main'
+    environment:
+      name: production
+      url: https://sport-lottery-sweeper.com
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Create deployment tag
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git tag -a "deploy-$(date +'%Y%m%d-%H%M%S')" -m "Production deployment $(date +'%Y-%m-%d %H:%M:%S')"
+        git push origin --tags
+    
+    - name: Deploy to production server
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.PRODUCTION_HOST }}
+        username: ${{ secrets.PRODUCTION_USERNAME }}
+        key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        script: |
+          cd /opt/sport-lottery-sweeper
+          git pull origin main
+          docker-compose -f docker-compose.prod.yml pull
+          docker-compose -f docker-compose.prod.yml up -d --build
+          docker system prune -af
+          echo "✅ Production deployment completed"
+    
+    - name: Post-deployment verification
+      run: |
+        echo "🔍 Running post-deployment verification..."
+        sleep 60  # 等待服务完全启动
+        
+        # 健康检查
+        curl -f https://sport-lottery-sweeper.com/health/live || exit 1
+        curl -f https://sport-lottery-sweeper.com/health/ready || exit 1
+        
+        # API端点测试
+        curl -f https://sport-lottery-sweeper.com/api/v1/health || exit 1
+        
+        echo "✅ Post-deployment verification passed"
+    
+    - name: Notify deployment success
+      uses: 8398a7/action-slack@v3
+      with:
+        status: success
+        channel: '#deployments'
+        text: '🚀 Sport Lottery Sweeper deployed successfully to production!'
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+# AI_DONE: coder1 @2026-01-28T14:30:00

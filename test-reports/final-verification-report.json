@@ -1,0 +1,188 @@
+{
+  "project": "sport-lottery-sweeper",
+  "verification_type": "final_test_integration_verification",
+  "timestamp": "2026-01-29T01:10:29.933963",
+  "duration_seconds": 3.44,
+  "summary": {
+    "total_checks": 24,
+    "passed_checks": 22,
+    "failed_checks": 0,
+    "warning_checks": 2,
+    "error_checks": 0,
+    "pass_rate_percent": 91.7,
+    "overall_status": "PASS"
+  },
+  "check_results": [
+    {
+      "name": "文档检查 - 测试集成规划",
+      "status": "pass",
+      "message": "存在",
+      "details": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\TEST_INTEGRATION_PLAN.md",
+      "timestamp": "2026-01-29T01:10:26.490132"
+    },
+    {
+      "name": "文档检查 - 测试快速开始指南",
+      "status": "pass",
+      "message": "存在",
+      "details": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\TESTING_QUICKSTART.md",
+      "timestamp": "2026-01-29T01:10:26.490132"
+    },
+    {
+      "name": "文档检查 - 测试环境设置指南",
+      "status": "pass",
+      "message": "存在",
+      "details": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\test-environment-setup.md",
+      "timestamp": "2026-01-29T01:10:26.490132"
+    },
+    {
+      "name": "文档检查 - 测试环境验证指南",
+      "status": "pass",
+      "message": "存在",
+      "details": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\TEST_VALIDATION_GUIDE.md",
+      "timestamp": "2026-01-29T01:10:26.491154"
+    },
+    {
+      "name": "文档检查 - 自动测试集成总结",
+      "status": "pass",
+      "message": "存在",
+      "details": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\AUTO_TEST_INTEGRATION_SUMMARY.md",
+      "timestamp": "2026-01-29T01:10:26.491154"
+    },
+    {
+      "name": "脚本检查 - Linux/macOS完整测试脚本",
+      "status": "pass",
+      "message": "存在",
+      "details": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\scripts\\run-all-tests.sh",
+      "timestamp": "2026-01-29T01:10:26.491154"
+    },
+    {
+      "name": "脚本检查 - Windows完整测试脚本",
+      "status": "pass",
+      "message": "存在",
+      "details": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\scripts\\run-all-tests.bat",
+      "timestamp": "2026-01-29T01:10:26.492150"
+    },
+    {
+      "name": "脚本检查 - 覆盖率检查脚本",
+      "status": "pass",
+      "message": "存在",
+      "details": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\scripts\\check-coverage-thresholds.py",
+      "timestamp": "2026-01-29T01:10:26.492150"
+    },
+    {
+      "name": "脚本检查 - 测试数据初始化脚本",
+      "status": "pass",
+      "message": "存在",
+      "details": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\scripts\\init-test-data.py",
+      "timestamp": "2026-01-29T01:10:26.492150"
+    },
+    {
+      "name": "脚本检查 - 测试报告生成脚本",
+      "status": "pass",
+      "message": "存在",
+      "details": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\scripts\\generate-test-report.py",
+      "timestamp": "2026-01-29T01:10:26.492150"
+    },
+    {
+      "name": "脚本检查 - 测试环境验证脚本",
+      "status": "pass",
+      "message": "存在",
+      "details": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\scripts\\validate-test-environment.py",
+      "timestamp": "2026-01-29T01:10:26.492150"
+    },
+    {
+      "name": "脚本检查 - CI/CD验证脚本",
+      "status": "pass",
+      "message": "存在",
+      "details": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\scripts\\validate-ci-checks.py",
+      "timestamp": "2026-01-29T01:10:26.492150"
+    },
+    {
+      "name": "脚本检查 - 验证套件脚本",
+      "status": "pass",
+      "message": "存在",
+      "details": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\scripts\\run-validation-suite.py",
+      "timestamp": "2026-01-29T01:10:26.492150"
+    },
+    {
+      "name": "脚本检查 - 快速测试检查脚本",
+      "status": "pass",
+      "message": "存在",
+      "details": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\scripts\\quick-test-check.py",
+      "timestamp": "2026-01-29T01:10:26.493149"
+    },
+    {
+      "name": "配置检查 - Vitest配置文件",
+      "status": "pass",
+      "message": "配置正确",
+      "details": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\frontend\\vitest.config.js",
+      "timestamp": "2026-01-29T01:10:26.493149"
+    },
+    {
+      "name": "配置检查 - pytest配置",
+      "status": "pass",
+      "message": "配置正确",
+      "details": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\pyproject.toml",
+      "timestamp": "2026-01-29T01:10:26.494132"
+    },
+    {
+      "name": "配置检查 - CI/CD配置",
+      "status": "pass",
+      "message": "配置正确",
+      "details": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\.github\\workflows\\ci-cd-optimized.yml",
+      "timestamp": "2026-01-29T01:10:26.494132"
+    },
+    {
+      "name": "目录检查 - 前端组件测试目录",
+      "status": "pass",
+      "message": "包含 6 个测试文件",
+      "details": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\frontend\\src\\tests\\unit\\components",
+      "timestamp": "2026-01-29T01:10:26.495148"
+    },
+    {
+      "name": "目录检查 - 前端组合式函数测试目录",
+      "status": "pass",
+      "message": "包含 7 个测试文件",
+      "details": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\frontend\\src\\tests\\unit\\composables",
+      "timestamp": "2026-01-29T01:10:26.496148"
+    },
+    {
+      "name": "目录检查 - 前端工具函数测试目录",
+      "status": "pass",
+      "message": "包含 3 个测试文件",
+      "details": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\frontend\\src\\tests\\unit\\utils",
+      "timestamp": "2026-01-29T01:10:26.496148"
+    },
+    {
+      "name": "目录检查 - 后端API测试目录",
+      "status": "pass",
+      "message": "包含 2 个测试文件",
+      "details": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\tests\\unit\\api",
+      "timestamp": "2026-01-29T01:10:26.497148"
+    },
+    {
+      "name": "目录检查 - 后端模型测试目录",
+      "status": "warning",
+      "message": "目录为空",
+      "details": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\tests\\unit\\models",
+      "timestamp": "2026-01-29T01:10:26.497148"
+    },
+    {
+      "name": "目录检查 - 后端服务测试目录",
+      "status": "warning",
+      "message": "目录为空",
+      "details": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\tests\\unit\\services",
+      "timestamp": "2026-01-29T01:10:26.497148"
+    },
+    {
+      "name": "示例测试 - 后端单元测试",
+      "status": "pass",
+      "message": "所有测试通过",
+      "details": "运行 0 个测试",
+      "timestamp": "2026-01-29T01:10:29.933963"
+    }
+  ],
+  "recommendations": [
+    "处理警告项目，优化配置"
+  ]
+}

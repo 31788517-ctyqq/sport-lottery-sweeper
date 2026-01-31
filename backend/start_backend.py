@@ -1,10 +1,12 @@
 import subprocess
+import logging
+logger = logging.getLogger(__name__)
 import sys
 import os
 
 def start_backend():
     """启动后端服务"""
-    print("启动后端服务...")
+    logger.debug("启动后端服务...")
     
     # 切换到backend目录（使用当前脚本所在目录）
     backend_path = os.path.dirname(os.path.abspath(__file__))
@@ -22,10 +24,10 @@ def start_backend():
     try:
         subprocess.run(cmd, check=True)
     except subprocess.CalledProcessError as e:
-        print(f"启动后端服务失败: {e}")
+        logger.debug(f"启动后端服务失败: {e}")
         sys.exit(1)
     except KeyboardInterrupt:
-        print("\n后端服务已停止")
+        logger.debug("\n后端服务已停止")
         sys.exit(0)
 
 if __name__ == "__main__":

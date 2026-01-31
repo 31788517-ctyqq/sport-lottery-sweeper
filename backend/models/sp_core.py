@@ -4,31 +4,40 @@
 """
 
 from sqlalchemy import Column, Integer, String, Float, DateTime, Boolean, Text, JSON, ForeignKey, Index
-from sqlalchemy.ext.declarative import declarative_base
+from .base import Base
 from sqlalchemy.orm import relationship
 from datetime import datetime
 import json
-
-Base = declarative_base()
+import uuid
 
 
 class DataSource(Base):
     """数据源配置表 - 保留核心的数据源管理"""
     
     __tablename__ = 'data_sources'
+    __table_args__ = {'extend_existing': True}  # 解决表重复定义问题
     
     id = Column(Integer, primary_key=True, index=True)
+    source_id = Column(String(10), unique=True, comment="源ID")  # 新增源ID字段
     name = Column(String(100), nullable=False, unique=True, comment="数据源名称")
+    category = Column(String(50), default="match_data", comment="内容分类")
     source_type = Column(String(20), nullable=False, default='api', comment="类型: api/file")
     api_url = Column(Text, comment="接口地址")
+    method = Column(String(10), default='GET', comment="请求方法")
+    timeout = Column(Integer, default=30, comment="超时时间(秒)")
+    headers = Column(JSON, comment="请求头配置")
+    params = Column(JSON, comment="请求参数")
+    description = Column(Text, comment="描述")
     api_key = Column(String(200), comment="API密钥")
     file_path = Column(String(500), comment="文件路径")
     config = Column(JSON, comment="配置信息(JSON格式)")
     is_active = Column(Boolean, default=True, comment="启用状态")
+    status = Column(String(20), default='online', comment="状态: online/offline/maintenance")
     test_status = Column(String(20), default='untested', comment="测试状态")
     last_test_at = Column(DateTime, comment="最后测试时间")
     success_rate = Column(Float, default=0, comment="成功率")
     avg_response_time = Column(Float, comment="平均响应时间")
+    last_update_time = Column(DateTime, comment="最后更新时间")
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -38,53 +47,37 @@ class DataSource(Base):
     def to_dict(self):
         return {
             'id': self.id,
+            'sourceId': self.source_id or f"DS{self.id:03d}",  # 自动生成源ID
             'name': self.name,
+            'category': self.category,
             'source_type': self.source_type,
-            'api_url': self.api_url,
+            'url': self.api_url,
+            'method': self.method,
+            'timeout': self.timeout,
+            'headers': self.headers,
+            'params': self.params,
+            'description': self.description,
+            'status': self.status,
+            'success_rate': self.success_rate or 0,
+            'avgResponseTime': self.avg_response_time or 0,
+            'lastUpdateTime': self.last_update_time.isoformat() if self.last_update_time else None,
             'is_active': self.is_active,
             'test_status': self.test_status,
-            'success_rate': self.success_rate,
-            'avg_response_time': self.avg_response_time,
+            'last_test_at': self.last_test_at.isoformat() if self.last_test_at else None,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }
 
 
-class OddsCompany(Base):
-    """赔率公司表 - 独立的公司管理"""
-    
-    __tablename__ = 'odds_companies'
-    
-    id = Column(Integer, primary_key=True, index=True)
-    company_code = Column(String(20), nullable=False, unique=True, comment="公司代码")
-    company_name = Column(String(100), nullable=False, comment="公司名称")
-    country = Column(String(50), comment="国家")
-    website = Column(String(200), comment="官网")
-    is_active = Column(Boolean, default=True, comment="启用状态")
-    reliability_score = Column(Float, default=0.8, comment="可靠性评分")
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
-    # 关联关系
-    sp_records = relationship("SPRecord", back_populates="company")
-    
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'company_code': self.company_code,
-            'company_name': self.company_name,
-            'country': self.country,
-            'website': self.website,
-            'is_active': self.is_active,
-            'reliability_score': self.reliability_score,
-            'created_at': self.created_at.isoformat() if self.created_at else None
-        }
+# 导入OddsCompany模型而不是重新定义
+from .odds_companies import OddsCompany
 
 
 class SPRecord(Base):
     """SP值记录表 - 核心SP值管理"""
     
     __tablename__ = 'sp_records'
+    __table_args__ = {'extend_existing': True}  # 解决表重复定义问题
     
     id = Column(Integer, primary_key=True, index=True)
     # 关联到现有的matches表，但不管理比赛信息
@@ -135,6 +128,7 @@ class SPModificationLog(Base):
     """SP值修改日志表"""
     
     __tablename__ = 'sp_modification_logs'
+    __table_args__ = {'extend_existing': True}  # 解决表重复定义问题
     
     id = Column(Integer, primary_key=True, index=True)
     sp_record_id = Column(Integer, ForeignKey('sp_records.id'), nullable=False)

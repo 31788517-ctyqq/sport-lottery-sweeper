@@ -4,7 +4,8 @@
  * Here, we create a reactive state object that can be managed centrally.
  */
 
-import { ref, reactive, computed } from 'vue';
+// AI_WORKING: coder1 @2026-01-29 - 添加 watch 导入，修复未定义错误
+import { ref, reactive, computed, watch } from 'vue';
 import { filtersAPI } from '@/api/modules/filters';
 
 // Centralized filter state object

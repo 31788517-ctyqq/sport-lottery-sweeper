@@ -6,15 +6,15 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 import logging
 
-from ...database import get_db
-from ...services.crawler_alert_service import CrawlerAlertService
-from ...schemas.crawler_alert import (
+from backend.database import get_db
+from backend.services.crawler_alert_service import CrawlerAlertService
+from backend.schemas.crawler_alert import (
     AlertRuleCreate, AlertRuleUpdate, AlertRuleResponse,
     AlertRecordResponse, AlertCheckResult, MetricRecordRequest,
     AlertStats
 )
-from ...core.auth import get_current_user
-from ...models.admin_user import AdminUser
+from backend.core.auth import get_current_user
+from backend.models.admin_user import AdminUser
 
 logger = logging.getLogger(__name__)
 

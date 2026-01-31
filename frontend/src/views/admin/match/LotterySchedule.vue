@@ -1,35 +1,113 @@
 <template>
-  <div class="lottery-schedule-container">
-    <el-card class="schedule-card" :body-style="{ padding: '0' }">
-      <div class="card-header">
-        <h3>竞彩赛程管理</h3>
-      </div>
-      
-      <!-- 搜索和控制区域 -->
-      <div class="schedule-controls">
-        <el-row :gutter="20">
-          <el-col :span="6">
+  <div class="lottery-schedule">
+    <!-- 页面标题 -->
+    <div class="page-header">
+      <h2>竞彩赛程管理</h2>
+      <p>管理和监控所有竞彩赛程的执行状态</p>
+    </div>
+
+    <!-- 统计卡片区域 -->
+    <div class="stats-section">
+      <el-row :gutter="20">
+        <el-col :span="6">
+          <el-card class="stat-card">
+            <el-statistic
+              title="总赛程数"
+              :value="matchStats.totalMatches"
+              :precision="0"
+            >
+              <template #prefix>
+                <el-icon><Document /></el-icon>
+              </template>
+            </el-statistic>
+          </el-card>
+        </el-col>
+        <el-col :span="6">
+          <el-card class="stat-card">
+            <el-statistic
+              title="未开始"
+              :value="matchStats.pendingMatches"
+              :precision="0"
+              style="color: #e6a23c"
+            >
+              <template #prefix>
+                <el-icon><Clock /></el-icon>
+              </template>
+            </el-statistic>
+          </el-card>
+        </el-col>
+        <el-col :span="6">
+          <el-card class="stat-card">
+            <el-statistic
+              title="进行中"
+              :value="matchStats.runningMatches"
+              :precision="0"
+              style="color: #409eff"
+            >
+              <template #prefix>
+                <el-icon><VideoPlay /></el-icon>
+              </template>
+            </el-statistic>
+          </el-card>
+        </el-col>
+        <el-col :span="6">
+          <el-card class="stat-card">
+            <el-statistic
+              title="已结束"
+              :value="matchStats.finishedMatches"
+              :precision="0"
+              style="color: #67c23a"
+            >
+              <template #prefix>
+                <el-icon><CircleCheck /></el-icon>
+              </template>
+            </el-statistic>
+          </el-card>
+        </el-col>
+      </el-row>
+    </div>
+
+    <!-- 操作栏 -->
+    <div class="operation-bar">
+      <el-button type="primary" :icon="Plus" @click="handleAdd">
+        新增赛程
+      </el-button>
+      <el-button type="danger" @click="batchDeleteMatches" :disabled="selectedMatches.length === 0">
+        <el-icon><Delete /></el-icon>
+        批量删除
+      </el-button>
+      <el-button @click="refreshData">
+        <el-icon><Refresh /></el-icon>
+        刷新
+      </el-button>
+    </div>
+
+    <!-- 筛选栏 -->
+    <div class="filter-section">
+      <el-card>
+        <el-form :model="searchForm" inline>
+          <el-form-item label="联赛名称">
             <el-input
               v-model="searchForm.league_name"
               placeholder="请输入联赛名称"
               clearable
-              class="search-input"
+              style="width: 200px"
             />
-          </el-col>
-          <el-col :span="4">
+          </el-form-item>
+          <el-form-item label="状态">
             <el-select
               v-model="searchForm.status"
               placeholder="请选择状态"
               clearable
-              class="status-selector"
+              style="width: 120px"
             >
               <el-option label="未开始" value="pending" />
               <el-option label="进行中" value="running" />
               <el-option label="已结束" value="finished" />
               <el-option label="已取消" value="cancelled" />
             </el-select>
-          </el-col>
-          <el-col :span="8">
+          </el-form-item>
+          <el-form-item label="日期范围">
             <el-date-picker
               v-model="searchForm.date_range"
               type="daterange"
@@ -38,119 +116,103 @@
               end-placeholder="结束日期"
               format="YYYY-MM-DD"
               value-format="YYYY-MM-DD"
-              style="width: 100%"
+              style="width: 240px"
             />
-          </el-col>
-          <el-col :span="6">
-            <el-button type="primary" @click="handleSearch" class="action-btn">
-              查询
-            </el-button>
-            <el-button @click="resetSearch" class="action-btn">
-              重置
-            </el-button>
-            <el-button type="success" @click="refreshData" class="action-btn">
-              刷新
-            </el-button>
-          </el-col>
-        </el-row>
-      </div>
-      
-      <!-- 操作按钮区域 -->
-      <div class="action-bar">
-        <el-button type="primary" :icon="Plus" @click="handleAdd">
-          新增赛程
-        </el-button>
-      </div>
-      
-      <!-- 表格区域 -->
-      <div class="table-wrapper">
-        <el-table
-          :data="tableData" 
-          stripe 
-          style="width: 100%" 
-          v-loading="loading"
-          height="calc(100vh - 320px)"
-          :header-cell-style="{background: '#f5f7fa', color: '#606266'}"
-          class="modern-table"
-        >
-          <el-table-column label="场次编号" width="100">
-            <template #default="scope">
-              {{ String(scope.row.id).padStart(3, '0') }}
-            </template>
-          </el-table-column>
-          <el-table-column prop="league_name" label="联赛名称" min-width="140" show-overflow-tooltip />
-          <el-table-column prop="home_team" label="主队" min-width="100" show-overflow-tooltip />
-          <el-table-column prop="away_team" label="客队" min-width="100" show-overflow-tooltip />
-          <el-table-column prop="match_time" label="比赛时间" width="170" />
-          <el-table-column prop="status" label="状态" width="100">
-            <template #default="scope">
-              <el-tag
-                :type="getStatusType(scope.row.status)"
-                size="small"
-              >
-                {{ getStatusText(scope.row.status) }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column prop="score" label="比分" width="100" />
-          <el-table-column label="操作" width="240" fixed="right">
-            <template #default="scope">
-              <div class="action-buttons">
-                <el-button
-                  type="primary"
-                  size="small"
-                  @click="handleEdit(scope.row)"
-                >
-                  编辑
-                </el-button>
-                <el-button
-                  type="success"
-                  size="small"
-                  @click="handleView(scope.row)"
-                >
-                  查看
-                </el-button>
-                <el-button
-                  type="danger"
-                  size="small"
-                  @click="handleDelete(scope.row)"
-                >
-                  删除
-                </el-button>
-              </div>
-            </template>
-          </el-table-column>
-        </el-table>
-      </div>
-      
-      <!-- 分页区域 -->
-      <div class="pagination-wrapper" v-if="pagination.total > 0">
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" @click="handleSearch">查询</el-button>
+            <el-button @click="resetSearch">重置</el-button>
+          </el-form-item>
+        </el-form>
+      </el-card>
+    </div>
+
+    <!-- 任务列表 -->
+    <div class="table-section">
+      <el-table
+        :data="tableData"
+        v-loading="loading"
+        @selection-change="handleSelectionChange"
+        stripe
+        border
+      >
+        <el-table-column type="selection" width="55" />
+        <el-table-column label="场次编号" width="110">
+          <template #default="scope">
+            <div class="match-number">{{ formatMatchNumber(scope.row.id, scope.row.match_time) }}</div>
+          </template>
+        </el-table-column>
+        <el-table-column label="联赛" width="80" show-overflow-tooltip>
+          <template #default="scope">
+            <div class="league-name-simple">{{ simplifyLeagueName(scope.row.league_name) }}</div>
+          </template>
+        </el-table-column>
+        <el-table-column prop="home_team" label="主队" min-width="100" show-overflow-tooltip />
+        <el-table-column prop="away_team" label="客队" min-width="100" show-overflow-tooltip />
+        <el-table-column prop="match_time" label="比赛时间" width="190">
+          <template #default="scope">
+            <div class="match-time-compact">{{ scope.row.match_time }}</div>
+          </template>
+        </el-table-column>
+        <el-table-column label="状态" width="110">
+          <template #default="scope">
+            <el-tag
+              :type="getStatusType(scope.row.status)"
+              size="small"
+            >
+              {{ getStatusText(scope.row.status) }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="score" label="比分" width="80" />
+        <el-table-column label="操作" width="190" fixed="right">
+          <template #default="scope">
+            <div class="action-buttons-compact">
+              <el-button 
+                type="primary" 
+                size="small" 
+                @click="handleView(scope.row)"
+                class="compact-btn">
+                查看
+              </el-button>
+              <el-button 
+                type="warning" 
+                size="small" 
+                @click="handleEdit(scope.row)"
+                :disabled="['finished', 'cancelled'].includes(scope.row.status)"
+                class="compact-btn">
+                编辑
+              </el-button>
+              <el-button 
+                type="danger" 
+                size="small" 
+                @click="handleDelete(scope.row)"
+                :disabled="scope.row.status === 'running'"
+                class="compact-btn">
+                删除
+              </el-button>
+            </div>
+          </template>
+        </el-table-column>
+      </el-table>
+
+      <!-- 分页 -->
+      <div class="pagination-wrapper">
         <el-pagination
+          v-model:current-page="pagination.page"
+          v-model:page-size="pagination.size"
+          :total="pagination.total"
+          :page-sizes="[10, 20, 50, 100]"
+          layout="total, sizes, prev, pager, next, jumper"
           @size-change="handleSizeChange"
           @current-change="handleCurrentChange"
-          :current-page="pagination.page"
-          :page-sizes="[10, 20, 50, 100]"
-          :page-size="pagination.size"
-          layout="total, sizes, prev, pager, next, jumper"
-          :total="pagination.total"
-        ></el-pagination>
+        />
       </div>
-    </el-card>
-    
+    </div>
+
     <!-- 新增/编辑对话框 -->
-    <el-dialog
-      :title="dialogTitle"
-      v-model="dialogVisible"
-      width="600px"
-      @close="resetForm"
-    >
-      <el-form
-        ref="formRef"
-        :model="form"
-        :rules="formRules"
-        label-width="100px"
-        class="dialog-form"
-      >
+    <el-dialog :title="dialogTitle" v-model="dialogVisible" width="600px" @close="resetForm">
+      <el-form ref="formRef" :model="form" :rules="formRules" label-width="100px" class="dialog-form">
         <el-form-item label="联赛名称" prop="league_name">
           <el-input v-model="form.league_name" placeholder="请输入联赛名称" />
         </el-form-item>
@@ -179,27 +241,28 @@
           </el-select>
         </el-form-item>
         <el-form-item label="比分" prop="score">
-          <el-input v-model="form.score" placeholder="请输入比分" />
+          <el-input v-model="form.score" placeholder="请输入比分，格式如：2-1" />
         </el-form-item>
       </el-form>
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="dialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleSubmit" :loading="submitLoading">
-            确定
-          </el-button>
+          <el-button type="primary" @click="handleSubmit" :loading="submitLoading">确定</el-button>
         </span>
       </template>
     </el-dialog>
+
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus } from '@element-plus/icons-vue'
-// 临时注释掉 API 导入，使用模拟数据
-// import { getLotterySchedules, createLotterySchedule, updateLotterySchedule, deleteLotterySchedule } from '@/api/lottery'
+import { 
+  Plus, Refresh, Document, Clock, 
+  VideoPlay, CircleCheck, Delete 
+} from '@element-plus/icons-vue'
+import axios from 'axios'
 
 // 响应式数据
 const loading = ref(false)
@@ -215,12 +278,15 @@ const searchForm = reactive({
   date_range: []
 })
 
-// 分页数据
+// 分页信息
 const pagination = reactive({
   page: 1,
   size: 20,
   total: 0
 })
+
+// 选中的赛程
+const selectedMatches = ref([])
 
 // 表单数据
 const form = reactive({
@@ -267,78 +333,108 @@ const getStatusText = (status) => {
   return statusMap[status] || status
 }
 
-// 获取结果类型
-const getResultType = (result) => {
-  const resultMap = {
-    '主胜': 'success',
-    '客胜': 'danger',
-    '平局': 'warning',
-    '取消': 'info'
-  }
-  return resultMap[result] || 'info'
+// 获取星期几的中文表示
+const getWeekdayText = (matchTime) => {
+  if (!matchTime) return ''
+  const date = new Date(matchTime)
+  const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
+  return weekdays[date.getDay()]
 }
 
-// 获取数据 - 使用模拟数据确保页面正常显示
+// 格式化场次编号为 "周一 001" 格式
+const formatMatchNumber = (id, matchTime) => {
+  const weekday = getWeekdayText(matchTime)
+  const sequence = String(id).padStart(3, '0')
+  return `${weekday} ${sequence}`
+}
+
+// 简化联赛名称，如"西甲联赛"->"西甲"
+const simplifyLeagueName = (leagueName) => {
+  if (!leagueName) return ''
+  // 移除常见的后缀：联赛、杯赛、锦标赛等
+  return leagueName.replace(/(联赛|杯赛|锦标赛|超级联赛)$/, '')
+}
+
+// 统计数据计算
+const matchStats = computed(() => {
+  const stats = {
+    totalMatches: tableData.value.length,
+    pendingMatches: 0,
+    runningMatches: 0,
+    finishedMatches: 0
+  }
+  
+  tableData.value.forEach(row => {
+    switch(row.status) {
+      case 'pending':
+        stats.pendingMatches++
+        break
+      case 'running':
+        stats.runningMatches++
+        break
+      case 'finished':
+        stats.finishedMatches++
+        break
+    }
+  })
+  
+  return stats
+})
+
+// 获取数据
 const fetchData = async () => {
   loading.value = true
-  
-  // 模拟API请求延迟
-  setTimeout(() => {
-    tableData.value = [
-      {
-        id: 1,
-        league_name: '英超联赛',
-        home_team: '曼城',
-        away_team: '阿森纳',
-        match_time: '2026-01-25 20:00:00',
-        status: 'pending',
-        score: '',
-        result: ''
-      },
-      {
-        id: 2,
-        league_name: '西甲联赛',
-        home_team: '皇家马德里',
-        away_team: '巴塞罗那',
-        match_time: '2026-01-26 22:00:00',
-        status: 'running',
-        score: '2-1',
-        result: '主胜'
-      },
-      {
-        id: 3,
-        league_name: '德甲联赛',
-        home_team: '拜仁慕尼黑',
-        away_team: '多特蒙德',
-        match_time: '2026-01-24 21:30:00',
-        status: 'finished',
-        score: '3-0',
-        result: '主胜'
-      },
-      {
-        id: 4,
-        league_name: '意甲联赛',
-        home_team: 'AC米兰',
-        away_team: '国际米兰',
-        match_time: '2026-01-27 19:45:00',
-        status: 'cancelled',
-        score: '',
-        result: '取消'
-      },
-      {
-        id: 5,
-        league_name: '法甲联赛',
-        home_team: '巴黎圣日耳曼',
-        away_team: '马赛',
-        match_time: '2026-01-28 20:00:00',
-        status: 'pending',
-        score: '',
-        result: ''
-      }
-    ]
-    pagination.total = tableData.value.length
+  try {
+    const params = {
+      page: pagination.page,
+      size: pagination.size
+    }
+    
+    if (searchForm.league_name) {
+      params.league_name = searchForm.league_name
+    }
+    
+    if (searchForm.status) {
+      params.status = searchForm.status
+    }
+    
+    if (searchForm.date_range && searchForm.date_range.length === 2) {
+      params.date_from = searchForm.date_range[0]
+      params.date_to = searchForm.date_range[1]
+    }
+    
+    const response = await axios.get('/api/admin/v1/lottery-schedules/', { params })
+    
+    if (response.data.success) {
+      tableData.value = response.data.data.items
+      pagination.total = response.data.data.total
+    } else {
+      ElMessage.error(response.data.message || '获取赛程数据失败')
+    }
+  } catch (error) {
+    console.error('获取赛程数据失败:', error)
+    ElMessage.error('获取赛程数据失败')
+  } finally {
     loading.value = false
-  }, 500)
+  }
+}
+
+// 获取统计数据
+const fetchStats = async () => {
+  try {
+    const response = await axios.get('/api/admin/v1/lottery-schedules/stats')
+    
+    if (response.data.success) {
+      // 更新全局统计数据
+      const stats = response.data.data
+      // 直接修改响应式对象
+      Object.assign(matchStats.value, stats)
+    } else {
+      console.error('获取统计数据失败:', response.data.message)
+    }
+  } catch (error) {
+    console.error('获取统计数据失败:', error)
+  }
 }
 
 // 搜索
@@ -361,7 +457,40 @@ const resetSearch = () => {
 // 刷新数据
 const refreshData = () => {
   fetchData()
+  fetchStats()
   ElMessage.success('数据已刷新')
+}
+
+// 表格多选事件
+const handleSelectionChange = (selection) => {
+  selectedMatches.value = selection
+}
+
+// 批量删除赛程
+const batchDeleteMatches = async () => {
+  if (selectedMatches.value.length === 0) return
+  
+  try {
+    await ElMessageBox.confirm(
+      `确定要删除选中的 ${selectedMatches.value.length} 个赛程吗？`,
+      '确认批量删除',
+      { type: 'warning' }
+    )
+    
+    const promises = selectedMatches.value.map(async (selected) => {
+      await axios.delete(`/api/admin/v1/lottery-schedules/${selected.id}`)
+    })
+    
+    await Promise.all(promises)
+    await fetchData()
+    selectedMatches.value = []
+    ElMessage.success('批量删除成功')
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('批量删除失败:', error)
+      ElMessage.error('批量删除失败')
+    }
+  }
 }
 
 // 新增
@@ -394,15 +523,9 @@ const handleDelete = async (row) => {
       }
     )
     
-    // 模拟删除操作
-    setTimeout(() => {
-      const index = tableData.value.findIndex(item => item.id === row.id)
-      if (index !== -1) {
-        tableData.value.splice(index, 1)
-        pagination.total = tableData.value.length
-        ElMessage.success('删除成功')
-      }
-    }, 300)
+    await axios.delete(`/api/admin/v1/lottery-schedules/${row.id}`)
+    await fetchData()
+    ElMessage.success('删除成功')
   } catch (error) {
     if (error !== 'cancel') {
       console.error('删除失败:', error)
@@ -419,31 +542,47 @@ const handleSubmit = async () => {
     await formRef.value.validate()
     submitLoading.value = true
     
-    // 模拟API提交
-    setTimeout(() => {
-      if (form.id) {
-        // 编辑模式：更新现有数据
-        const index = tableData.value.findIndex(item => item.id === form.id)
-        if (index !== -1) {
-          tableData.value[index] = { ...form }
-        }
+    if (form.id) {
+      // 编辑模式：更新现有数据
+      const response = await axios.put(`/api/admin/v1/lottery-schedules/${form.id}`, {
+        league_name: form.league_name,
+        home_team: form.home_team,
+        away_team: form.away_team,
+        match_time: form.match_time,
+        status: form.status,
+        score: form.score
+      })
+      
+      if (response.data.success) {
+        await fetchData()
+        dialogVisible.value = false
         ElMessage.success('更新成功')
       } else {
-        // 新增模式：添加新数据
-        const newItem = {
-          ...form,
-          id: Date.now() // 简单的ID生成
-        }
-        tableData.value.unshift(newItem)
-        pagination.total = tableData.value.length
-        ElMessage.success('创建成功')
+        ElMessage.error(response.data.message || '更新失败')
       }
-      dialogVisible.value = false
-      submitLoading.value = false
-    }, 500)
+    } else {
+      // 新增模式：添加新数据
+      const response = await axios.post('/api/admin/v1/lottery-schedules/', {
+        league_name: form.league_name,
+        home_team: form.home_team,
+        away_team: form.away_team,
+        match_time: form.match_time,
+        status: form.status,
+        score: form.score
+      })
+      
+      if (response.data.success) {
+        await fetchData()
+        dialogVisible.value = false
+        ElMessage.success('创建成功')
+      } else {
+        ElMessage.error(response.data.message || '创建失败')
+      }
+    }
   } catch (error) {
     console.error('提交失败:', error)
     ElMessage.error('操作失败')
+  } finally {
     submitLoading.value = false
   }
 }
@@ -480,101 +619,112 @@ const handleCurrentChange = (val) => {
 // 初始化
 onMounted(() => {
   fetchData()
+  fetchStats()
 })
 </script>
 
 <style scoped>
-.lottery-schedule-container {
-  padding: 0;
-  height: calc(100vh - 120px);
-  width: 100%;
-}
-
-.schedule-card {
-  height: 100%;
-  border: none;
-  overflow: hidden;
-}
-
-.card-header {
-  padding: 16px 20px;
-  border-bottom: 1px solid #ebeef5;
-  font-weight: 600;
-  font-size: 16px;
-  background-color: #fafafa;
-}
-
-.schedule-controls {
+.lottery-schedule {
   padding: 20px;
-  background-color: #fff;
-  border-bottom: 1px solid #ebeef5;
 }
 
-.search-input {
-  width: 100%;
+.page-header {
+  margin-bottom: 20px;
 }
 
-.status-selector {
-  width: 100%;
+.page-header h2 {
+  margin: 0 0 8px 0;
+  color: #303133;
 }
 
-.action-btn {
-  margin-left: 8px;
-}
-
-.action-bar {
-  padding: 16px 20px;
-  background-color: #fff;
-  border-bottom: 1px solid #ebeef5;
-}
-
-.table-wrapper {
-  flex: 1;
-  overflow-y: auto;
-  padding: 20px;
-  height: calc(100% - 180px);
-}
-
-.modern-table {
-  width: 100%;
-}
-
-.pagination-wrapper {
-  padding: 16px 20px;
-  border-top: 1px solid #ebeef5;
-  background-color: #fff;
-  text-align: right;
-}
-
-.dialog-form .el-form-item {
-  margin-bottom: 22px;
-}
-
-.text-muted {
+.page-header p {
+  margin: 0;
   color: #909399;
 }
 
-.action-buttons {
-  display: flex;
-  gap: 8px;
+.match-number {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+  line-height: 1.2;
 }
 
-.action-buttons .el-button {
-  margin: 0;
+.match-time-compact {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+}
+
+.action-buttons-compact {
+  display: flex;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.action-buttons-compact .compact-btn {
+  padding: 4px 8px;
+  min-height: 28px;
+  font-size: 12px;
+}
+
+.action-buttons-compact .el-button + .el-button {
+  margin-left: 0;
+}
+
+.stats-section {
+  margin-bottom: 20px;
+}
+
+.stat-card {
+  text-align: center;
+}
+
+.operation-bar {
+  margin-bottom: 20px;
+  display: flex;
+  gap: 10px;
+}
+
+.filter-section {
+  margin-bottom: 20px;
+}
+
+.table-section {
+  background: white;
+  border-radius: 4px;
+}
+
+.pagination-wrapper {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.dialog-form .el-form-item {
+  margin-bottom: 18px;
 }
 
 /* 响应式设计 */
 @media (max-width: 768px) {
-  .schedule-controls .el-col {
-    margin-bottom: 12px;
+  .lottery-schedule {
+    padding: 10px;
   }
   
-  .action-bar {
-    padding: 12px 16px;
+  .operation-bar {
+    flex-direction: column;
   }
   
-  .table-wrapper {
-    padding: 16px;
+  .filter-section :deep(.el-form-item) {
+    display: block;
+    margin-right: 0;
   }
 }
 </style>

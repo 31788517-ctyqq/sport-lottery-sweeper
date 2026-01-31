@@ -62,17 +62,30 @@ const isMobile = ref(false)
 const touchStartX = ref(0)
 const SWIPE_THRESHOLD = 50 // 最小滑动距离
 
-const menuItems = [
-  { path: '/admin/dashboard', text: '仪表盘', icon: 'fas fa-tachometer-alt' },
-  { path: '/admin/users/all', text: '用户管理', icon: 'fas fa-users' },
-  { path: '/admin/match/all', text: '比赛管理', icon: 'fas fa-futbol' },
-  { path: '/admin/intelligence', text: '情报中心', icon: 'fas fa-newspaper' },
-  { path: '/admin/data', text: '数据管理', icon: 'fas fa-database' },
-  { path: '/admin/crawler/logs', text: '爬虫管理', icon: 'fas fa-spider' },
-  { path: '/admin/sp/all', text: 'SP管理', icon: 'fas fa-percentage' },
-  { path: '/admin/draw-prediction/all', text: '平局预测', icon: 'fas fa-balance-scale' },
-  { path: '/admin/system', text: '系统设置', icon: 'fas fa-cog' }
-]
+  const menuItems = [
+    { path: '/admin/dashboard', text: '仪表盘', icon: 'fas fa-tachometer-alt' },
+    { 
+      path: '/admin/users/list', 
+      text: '用户管理', 
+      icon: 'fas fa-users',
+      children: [
+        { path: '/admin/users/list', text: '用户列表' },
+        { path: '/admin/users/roles', text: '角色与权限' },
+        { path: '/admin/users/departments', text: '部门管理' },
+        { path: '/admin/users/profile', text: '个人中心' },
+        { path: '/admin/users/logs', text: '操作日志' }
+      ]
+    },
+    { path: '/admin/match/all', text: '比赛管理', icon: 'fas fa-futbol' },
+    // 情报中心菜单已隐藏
+    // { path: '/admin/intelligence', text: '情报中心', icon: 'fas fa-newspaper' },
+    // 数据管理菜单已隐藏
+    // { path: '/admin/data', text: '数据管理', icon: 'fas fa-database' },
+    { path: '/admin/crawler/data-source-management', text: '数据源管理', icon: 'fas fa-link' },
+    { path: '/admin/sp/all', text: 'SP管理', icon: 'fas fa-percentage' },
+    { path: '/admin/draw-prediction/all', text: '平局预测', icon: 'fas fa-balance-scale' },
+    { path: '/admin/system', text: '系统设置', icon: 'fas fa-cog' }
+  ]
 
 const navigateTo = (path) => {
   router.push(path)
@@ -363,4 +376,3 @@ defineExpose({ openMenu, closeMenu })
     width: 260px;
   }
 }
-</style>

@@ -2,64 +2,135 @@
 version: '3.8'
 
 services:
-  # FastAPI后端
-  backend:
-    build:
-      context: .
-      dockerfile: Dockerfile.production
-    container_name: sport-lottery-backend
-    ports:
-      - "8000:8000"
-    environment:
-      - REDIS_URL=redis://redis:6379
-      - LOG_LEVEL=INFO
-      - WORKERS=4
-    depends_on:
-      - redis
-    volumes:
-      - ./backend:/app
-      - ./logs:/app/logs
-    restart: always
-    networks:
-      - sport-lottery-network
-
-  # Redis缓存
-  redis:
-    image: redis:7-alpine
-    container_name: sport-lottery-redis
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    command: redis-server --appendonly yes --requirepass ""
-    restart: always
-    networks:
-      - sport-lottery-network
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-
-  # Nginx反向代理（可选）
+  # 反向代理
   nginx:
     image: nginx:alpine
-    container_name: sport-lottery-nginx
+    container_name: soccer-nginx-prod
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./certs:/etc/nginx/certs:ro
+      - ./infrastructure/docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./infrastructure/docker/nginx/sites-enabled:/etc/nginx/sites-enabled:ro
+      - ./infrastructure/docker/nginx/ssl:/etc/nginx/ssl:ro
+      - ./logs/nginx:/var/log/nginx
     depends_on:
       - backend
-    restart: always
     networks:
-      - sport-lottery-network
+      - soccer-network
+    restart: unless-stopped
+    environment:
+      - NGINX_HOST=localhost
+      - NGINX_PORT=80
 
-volumes:
-  redis_data:
+  # 后端API服务 - 生产环境
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: soccer-backend-prod
+    env_file:
+      - .env.production
+    volumes:
+      - ./logs/backend:/app/logs
+      - ./sport_lottery.db:/app/sport_lottery.db  # 如果使用SQLite
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - soccer-network
+    restart: unless-stopped
+    command: >
+      sh -c "python init_db.py &&
+             uvicorn main:app --host 0.0.0.0 --port 8000 --workers 4 --worker-class uvicorn.workers.UvicornWorker"
+
+  # PostgreSQL数据库 - 生产环境
+  postgres:
+    image: postgres:15-alpine
+    container_name: soccer-postgres-prod
+    environment:
+      POSTGRES_USER: ${DB_USER:-soccer_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-soccer_password}
+      POSTGRES_DB: ${DB_NAME:-soccer_db}
+    volumes:
+      - postgres_data_prod:/var/lib/postgresql/data
+      - ./infrastructure/docker/postgres/initdb.d:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    networks:
+      - soccer-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${DB_USER:-soccer_user} -d $${DB_NAME:-soccer_db}"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Redis缓存 - 生产环境
+  redis:
+    image: redis:7-alpine
+    container_name: soccer-redis-prod
+    command: redis-server /usr/local/etc/redis/redis.conf --requirepass ${REDIS_PASSWORD:-}
+    volumes:
+      - redis_data_prod:/data
+      - ./infrastructure/docker/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    ports:
+      - "6379:6379"
+    networks:
+      - soccer-network
+    restart: unless-stopped
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # Celery Worker - 生产环境
+  celery_worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: soccer-celery-worker-prod
+    env_file:
+      - .env.production
+    volumes:
+      - ./logs/backend:/app/logs
+    depends_on:
+      - redis
+      - postgres
+    networks:
+      - soccer-network
+    restart: unless-stopped
+    command: celery -A main.celery_app worker --loglevel=info --concurrency=2
+
+  # Celery Beat (定时任务) - 生产环境
+  celery_beat:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: soccer-celery-beat-prod
+    env_file:
+      - .env.production
+    volumes:
+      - ./logs/backend:/app/logs
+    depends_on:
+      - redis
+      - postgres
+    networks:
+      - soccer-network
+    restart: unless-stopped
+    command: celery -A main.celery_app beat --loglevel=info
 
 networks:
-  sport-lottery-network:
+  soccer-network:
     driver: bridge
+
+volumes:
+  postgres_data_prod:
+  redis_data_prod:

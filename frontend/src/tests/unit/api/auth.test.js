@@ -1,3 +1,4 @@
+// AI_WORKING: coder1 @2026-01-29 18:36:01 - 修复导入路径和语法问题
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { authAPI } from '@/api/modules/auth.js'
 
@@ -15,7 +16,7 @@ global.localStorage = {
 // 模拟 router
 global.window = Object.create(window)
 Object.defineProperty(window, 'location', {
-  value: { href: 'http://localhost:3000/' },
+  value,
   writable: true
 })
 
@@ -33,27 +34,18 @@ describe('authAPI', () => {
     it('应该成功注册用户', async () => {
       const mockResponse = {
         success: true,
-        data: {
-          user: {
-            id: 1,
-            username: 'testuser',
-            email: 'test@example.com',
-            phone: '13800138000',
-            is_active: false
-          },
+        data,
           message: '注册成功，请等待管理员审核'
         }
       }
       
       // Mock the actual API call
-      vi.doMock('@/utils/request.js', () => ({
-        default: {
-          post: vi.fn().mockResolvedValue(mockResponse)
-        }
+      vi.doMock('../../utils/request.js', () => ({
+        default
       }))
       
       vi.resetModules()
-      const { authAPI: freshAuthAPI } = await import('@/api/modules/auth.js')
+      const { authAPI: freshAuthAPI } = await import('../../api/modules/auth.js')
       
       const userData = {
         username: 'testuser',
@@ -76,23 +68,15 @@ describe('authAPI', () => {
         email: ['邮箱格式不正确']
       }
       
-      vi.doMock('@/utils/request.js', () => ({
-        default: {
-          post: vi.fn().mockRejectedValue({
-            response: {
-              status: 422,
-              data: {
-                success: false,
-                message: 'Validation failed',
-                errors: validationErrors
-              }
+      vi.doMock('../../utils/request.js', () => ({
+        default
             }
           })
         }
       }))
       
       vi.resetModules()
-      const { authAPI: freshAuthAPI } = await import('@/api/modules/auth.js')
+      const { authAPI: freshAuthAPI } = await import('../../api/modules/auth.js')
       
       try {
         await freshAuthAPI.register({})
@@ -108,26 +92,18 @@ describe('authAPI', () => {
     it('应该成功登录并返回用户信息和token', async () => {
       const mockResponse = {
         success: true,
-        data: {
-          user: {
-            id: 1,
-            username: 'testuser',
-            email: 'test@example.com',
-            balance: 1000.0
-          },
+        data,
           access_token: 'jwt-access-token',
           refresh_token: 'jwt-refresh-token'
         }
       }
       
-      vi.doMock('@/utils/request.js', () => ({
-        default: {
-          post: vi.fn().mockResolvedValue(mockResponse)
-        }
+      vi.doMock('../../utils/request.js', () => ({
+        default
       }))
       
       vi.resetModules()
-      const { authAPI: freshAuthAPI } = await import('@/api/modules/auth.js')
+      const { authAPI: freshAuthAPI } = await import('../../api/modules/auth.js')
       
       const credentials = {
         username: 'testuser',
@@ -142,22 +118,15 @@ describe('authAPI', () => {
     })
 
     it('登录失败应该返回错误信息', async () => {
-      vi.doMock('@/utils/request.js', () => ({
-        default: {
-          post: vi.fn().mockRejectedValue({
-            response: {
-              status: 401,
-              data: {
-                success: false,
-                message: 'Invalid credentials'
-              }
+      vi.doMock('../../utils/request.js', () => ({
+        default
             }
           })
         }
       }))
       
       vi.resetModules()
-      const { authAPI: freshAuthAPI } = await import('@/api/modules/auth.js')
+      const { authAPI: freshAuthAPI } = await import('../../api/modules/auth.js')
       
       try {
         await freshAuthAPI.login({
@@ -178,14 +147,12 @@ describe('authAPI', () => {
         message: 'Logout successful'
       }
       
-      vi.doMock('@/utils/request.js', () => ({
-        default: {
-          post: vi.fn().mockResolvedValue(mockResponse)
-        }
+      vi.doMock('../../utils/request.js', () => ({
+        default
       }))
       
       vi.resetModules()
-      const { authAPI: freshAuthAPI } = await import('@/api/modules/auth.js')
+      const { authAPI: freshAuthAPI } = await import('../../api/modules/auth.js')
       
       const result = await freshAuthAPI.logout()
       
@@ -203,17 +170,13 @@ describe('authAPI', () => {
         balance: 1000.0
       }
       
-      vi.doMock('@/utils/request.js', () => ({
-        default: {
-          get: vi.fn().mockResolvedValue({
-            success: true,
-            data: mockUser
-          })
+      vi.doMock('../../utils/request.js', () => ({
+        default)
         }
       }))
       
       vi.resetModules()
-      const { authAPI: freshAuthAPI } = await import('@/api/modules/auth.js')
+      const { authAPI: freshAuthAPI } = await import('../../api/modules/auth.js')
       
       const result = await freshAuthAPI.getCurrentUser()
       
@@ -231,17 +194,13 @@ describe('authAPI', () => {
         phone: '13900139000'
       }
       
-      vi.doMock('@/utils/request.js', () => ({
-        default: {
-          put: vi.fn().mockResolvedValue({
-            success: true,
-            data: updatedUser
-          })
+      vi.doMock('../../utils/request.js', () => ({
+        default)
         }
       }))
       
       vi.resetModules()
-      const { authAPI: freshAuthAPI } = await import('@/api/modules/auth.js')
+      const { authAPI: freshAuthAPI } = await import('../../api/modules/auth.js')
       
       const profileData = {
         email: 'newemail@example.com',
@@ -257,17 +216,13 @@ describe('authAPI', () => {
 
   describe('changePassword', () => {
     it('应该成功修改密码', async () => {
-      vi.doMock('@/utils/request.js', () => ({
-        default: {
-          post: vi.fn().mockResolvedValue({
-            success: true,
-            message: 'Password changed successfully'
-          })
+      vi.doMock('../../utils/request.js', () => ({
+        default)
         }
       }))
       
       vi.resetModules()
-      const { authAPI: freshAuthAPI } = await import('@/api/modules/auth.js')
+      const { authAPI: freshAuthAPI } = await import('../../api/modules/auth.js')
       
       const passwordData = {
         current_password: 'oldpassword123',
@@ -280,3 +235,4 @@ describe('authAPI', () => {
     })
   })
 })
+// AI_DONE: coder1 @2026-01-29 18:36:01

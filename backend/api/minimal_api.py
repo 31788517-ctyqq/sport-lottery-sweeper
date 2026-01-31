@@ -3,6 +3,9 @@
 """
 from fastapi import APIRouter
 from typing import Dict, Any
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def create_minimal_api_router():
@@ -15,14 +18,9 @@ def create_minimal_api_router():
         """健康检查端点"""
         return {"status": "healthy", "service": "sport-lottery-sweeper"}
 
-    # 包含jczq_routes，这是核心功能
-    try:
-        from .jczq_routes import router as jczq_router
-        router.include_router(jczq_router, prefix="", tags=["jczq"])
-    except ImportError as e:
-        import logging
-        logger = logging.getLogger(__name__)
-        logger.error(f"Failed to import jczq_routes: {e}")
+    # 注意：jczq_routes已废弃，不再包含在此版本中
+    # 使用新版API: /api/v1/jczq/*
+    logger.info("精简版API已加载，使用新版API端点")
 
     return router
 

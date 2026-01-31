@@ -266,12 +266,12 @@ class Match(BaseFullModel):
     home_team = relationship("Team", foreign_keys=[home_team_id], back_populates="home_matches")
     away_team = relationship("Team", foreign_keys=[away_team_id], back_populates="away_matches")
     venue = relationship("Venue", back_populates="matches")
-    intelligence = relationship("Intelligence", back_populates="match", cascade="all, delete-orphan")
+    intelligence_items = relationship("Intelligence", back_populates="match", cascade="all, delete-orphan", overlaps="intelligence")
     odds = relationship("Odds", back_populates="match", cascade="all, delete-orphan")
     predictions = relationship("Prediction", back_populates="match", cascade="all, delete-orphan")
     lineups = relationship("MatchLineup", back_populates="match", cascade="all, delete-orphan")
     events = relationship("MatchEvent", back_populates="match", cascade="all, delete-orphan")
-    intelligence_items = relationship("Intelligence", back_populates="match", cascade="all, delete-orphan")
+    intelligence = relationship("Intelligence", back_populates="match", cascade="all, delete-orphan", viewonly=True)
 
     # 索引
     __table_args__ = (

@@ -1,74 +1,63 @@
 <template>
   <div class="match-management">
-    <h1>比赛管理</h1>
-    <el-button type="primary" @click="handleCreate">创建比赛</el-button>
-    <el-table :data="matches" style="width: 100%; margin-top: 20px;">
-      <el-table-column prop="id" label="ID" width="180"></el-table-column>
-      <el-table-column prop="name" label="比赛名称" width="250"></el-table-column>
-      <el-table-column prop="startDate" label="开始日期"></el-table-column>
-      <el-table-column prop="endDate" label="结束日期"></el-table-column>
-      <el-table-column prop="status" label="状态">
-         <template slot-scope="scope">
-          <el-tag :type="getStatusTagType(scope.row.status)">{{ scope.row.status }}</el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column label="操作">
-        <template slot-scope="scope">
-          <el-button size="mini" @click="handleView(scope.row)">查看</el-button>
-          <el-button size="mini" @click="handleEdit(scope.row)">编辑</el-button>
-          <el-button size="mini" type="danger" @click="handleDelete(scope.row)">删除</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
+    <el-card>
+      <el-tabs v-model="activeTab" type="card" @tab-click="handleTabClick">
+        <el-tab-pane label="竞彩赛程管理" name="jingcai">
+          <JingcaiMatchManagement ref="jingcaiRef" />
+        </el-tab-pane>
+        <el-tab-pane label="北单赛程管理" name="beidan">
+          <BeidanMatchManagement ref="beidanRef" />
+        </el-tab-pane>
+        <el-tab-pane label="赛程配置管理" name="config">
+          <LeagueConfigManagement ref="configRef" />
+        </el-tab-pane>
+      </el-tabs>
+    </el-card>
   </div>
 </template>
 
 <script>
-const mockMatches = [
-  { id: 1, name: '全国大学生程序设计竞赛', startDate: '2023-10-01', endDate: '2023-10-03', status: '已结束' },
-  { id: 2, name: '国际人工智能挑战赛', startDate: '2024-05-15', endDate: '2024-05-17', status: '进行中' },
-  { id: 3, name: '未来科技黑客马拉松', startDate: '2024-08-20', endDate: '2024-08-22', status: '未开始' }
-];
+import { ref, defineAsyncComponent } from 'vue'
 
+// 异步加载子组件，优化初始加载性能
 export default {
   name: 'MatchManagement',
-  data() {
+  components: {
+    JingcaiMatchManagement: defineAsyncComponent(() => import('./JingcaiMatchManagement.vue')),
+    BeidanMatchManagement: defineAsyncComponent(() => import('./BeidanMatchManagement.vue')),
+    LeagueConfigManagement: defineAsyncComponent(() => import('./LeagueConfigManagement.vue'))
+  },
+  setup() {
+    const activeTab = ref('jingcai')
+    const jingcaiRef = ref(null)
+    const beidanRef = ref(null)
+    const configRef = ref(null)
+    
+    const handleTabClick = (tab) => {
+      console.log('切换到标签页:', tab.name)
+    }
+    
     return {
-      matches: []
-    };
-  },
-  mounted() {
-    this.fetchData();
-  },
-  methods: {
-    fetchData() {
-      this.matches = [...mockMatches];
-    },
-    getStatusTagType(status) {
-        if (status === '进行中') return 'success';
-        if (status === '未开始') return 'info';
-        if (status === '已结束') return 'warning';
-        return 'danger';
-    },
-    handleCreate() {
-      console.log('Create new match');
-    },
-    handleView(row) {
-      console.log('View match details:', row);
-    },
-    handleEdit(row) {
-      console.log('Edit match:', row);
-    },
-    handleDelete(row) {
-      console.log('Delete match:', row);
-      this.matches = this.matches.filter(m => m.id !== row.id);
+      activeTab,
+      jingcaiRef,
+      beidanRef,
+      configRef,
+      handleTabClick
     }
   }
-};
+}
 </script>
 
 <style scoped>
 .match-management {
   padding: 20px;
+}
+
+.el-card {
+  min-height: 600px;
+}
+
+.el-tabs--card >>> .el-tabs__content {
+  padding: 20px 0;
 }
 </style>

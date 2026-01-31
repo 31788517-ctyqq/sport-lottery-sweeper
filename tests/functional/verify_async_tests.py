@@ -7,21 +7,21 @@ import os
 
 def run_tests():
     """运行异步测试验证"""
-    print("🔍 验证异步测试配置...")
+    print("[INSPECT] 验证异步测试配置...")
     
     # 首先检查pytest是否已安装
     try:
         import pytest
-        print("✅ pytest 已安装")
+        print("[OK] pytest 已安装")
     except ImportError:
-        print("❌ pytest 未安装，请先运行: pip install pytest pytest-asyncio")
+        print("[ERROR] pytest 未安装，请先运行: pip install pytest pytest-asyncio")
         return False
     
     try:
         import pytest_asyncio
-        print("✅ pytest-asyncio 已安装")
+        print("[OK] pytest-asyncio 已安装")
     except ImportError:
-        print("❌ pytest-asyncio 未安装，请运行: pip install pytest-asyncio")
+        print("[ERROR] pytest-asyncio 未安装，请运行: pip install pytest-asyncio")
         return False
     
     # 尝试运行一个简单的异步测试
@@ -51,10 +51,10 @@ if __name__ == "__main__":
         ], capture_output=True, text=True, cwd=os.getcwd())
         
         if result.returncode == 0:
-            print("✅ 异步测试配置验证成功！")
+            print("[OK] 异步测试配置验证成功！")
             print("输出:", result.stdout.strip())
         else:
-            print("❌ 异步测试配置有问题")
+            print("[ERROR] 异步测试配置有问题")
             print("错误输出:", result.stderr.strip())
             return False
             
@@ -63,7 +63,7 @@ if __name__ == "__main__":
         if os.path.exists("temp_async_test.py"):
             os.remove("temp_async_test.py")
     
-    print("\n✅ 所有异步测试配置检查完成！")
+    print("\n[OK] 所有异步测试配置检查完成！")
     print("现在您的测试环境已准备好运行异步测试。")
     return True
 

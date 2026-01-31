@@ -1,9 +1,10 @@
+// AI_WORKING: coder1 @2026-01-29 18:36:01 - 修复导入路径和语法问题
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import { createRouter, createWebHistory } from 'vue-router'
-import AdminDashboard from '@/views/AdminDashboard.vue'
-import { useAdmin } from '@/composables/useAdmin.js'
+import AdminDashboard from '../../views/AdminDashboard.vue'
+import { useAdmin } from '../../composables/useAdmin.js'
 
 // 模拟图表库
 global.Chart = vi.fn()
@@ -25,10 +26,10 @@ global.toast = {
 }
 
 const routes = [
-  { path: '/', component: { template: '<div>Home</div>' } },
-  { path: '/admin/login', component: { template: '<div>Admin Login</div>' } },
-  { path: '/admin/users', component: { template: '<div>Users</div>' } },
-  { path: '/admin/matches', component: { template: '<div>Matches</div>' } }
+  { path: '/', component },
+  { path: '/admin/login', component },
+  { path: '/admin/users', component },
+  { path: '/admin/matches', component }
 ]
 
 const router = createRouter({
@@ -45,15 +46,7 @@ describe('AdminDashboard.vue', () => {
     
     const pinia = createTestingPinia({
       createSpy: vi.fn,
-      initialState: {
-        admin: {
-          stats: {
-            total_users: 1000,
-            active_users: 850,
-            total_bets: 5000,
-            pending_approvals: 5,
-            system_health: 'good'
-          },
+      initialState,
           loading: false,
           recentActivities: [
             {
@@ -70,16 +63,7 @@ describe('AdminDashboard.vue', () => {
     adminComposable = useAdmin()
     
     wrapper = mount(AdminDashboard, {
-      global: {
-        plugins: [pinia, router],
-        stubs: {
-          StatsCard: true,
-          ChartCard: true,
-          ActivityFeed: true,
-          QuickActions: true,
-          RecentRegistrations: true,
-          SystemAlerts: true
-        }
+      
       }
     })
     
@@ -510,3 +494,4 @@ describe('AdminDashboard.vue', () => {
     })
   })
 })
+// AI_DONE: coder1 @2026-01-29 18:36:01

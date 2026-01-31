@@ -1,3 +1,4 @@
+// AI_WORKING: coder1 @2026-01-29 18:36:01 - 修复导入路径和语法问题
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { adminAPI } from '@/api/modules/admin.js'
 
@@ -25,27 +26,18 @@ describe('adminAPI', () => {
     it('管理员应该成功登录', async () => {
       const mockResponse = {
         success: true,
-        data: {
-          admin: {
-            id: 1,
-            username: 'admin',
-            email: 'admin@example.com',
-            role: 'super_admin',
-            permissions: ['*']
-          },
+        data,
           token: 'admin-jwt-token',
           expires_in: 7200
         }
       }
       
-      vi.doMock('@/utils/request.js', () => ({
-        default: {
-          post: vi.fn().mockResolvedValue(mockResponse)
-        }
+      vi.doMock('../../utils/request.js', () => ({
+        default
       }))
       
       vi.resetModules()
-      const { adminAPI: freshAdminAPI } = await import('@/api/modules/admin.js')
+      const { adminAPI: freshAdminAPI } = await import('../../api/modules/admin.js')
       
       const credentials = {
         username: 'admin',
@@ -61,22 +53,15 @@ describe('adminAPI', () => {
     })
 
     it('普通用户不能管理员登录', async () => {
-      vi.doMock('@/utils/request.js', () => ({
-        default: {
-          post: vi.fn().mockRejectedValue({
-            response: {
-              status: 403,
-              data: {
-                success: false,
-                message: 'Access denied: admin privileges required'
-              }
+      vi.doMock('../../utils/request.js', () => ({
+        default
             }
           })
         }
       }))
       
       vi.resetModules()
-      const { adminAPI: freshAdminAPI } = await import('@/api/modules/admin.js')
+      const { adminAPI: freshAdminAPI } = await import('../../api/modules/admin.js')
       
       try {
         await freshAdminAPI.login({
@@ -112,22 +97,14 @@ describe('adminAPI', () => {
         }
       ]
       
-      vi.doMock('@/utils/request.js', () => ({
-        default: {
-          get: vi.fn().mockResolvedValue({
-            success: true,
-            data: mockUsers,
-            pagination: {
-              page: 1,
-              limit: 20,
-              total: 2
-            }
+      vi.doMock('../../utils/request.js', () => ({
+        default
           })
         }
       }))
       
       vi.resetModules()
-      const { adminAPI: freshAdminAPI } = await import('@/api/modules/admin.js')
+      const { adminAPI: freshAdminAPI } = await import('../../api/modules/admin.js')
       
       const result = await freshAdminAPI.getPendingApprovals()
       
@@ -140,17 +117,13 @@ describe('adminAPI', () => {
 
   describe('approveUser', () => {
     it('应该批准用户注册申请', async () => {
-      vi.doMock('@/utils/request.js', () => ({
-        default: {
-          post: vi.fn().mockResolvedValue({
-            success: true,
-            message: '用户已批准'
-          })
+      vi.doMock('../../utils/request.js', () => ({
+        default)
         }
       }))
       
       vi.resetModules()
-      const { adminAPI: freshAdminAPI } = await import('@/api/modules/admin.js')
+      const { adminAPI: freshAdminAPI } = await import('../../api/modules/admin.js')
       
       const result = await freshAdminAPI.approveUser(1, '欢迎加入平台！')
       
@@ -159,17 +132,13 @@ describe('adminAPI', () => {
     })
 
     it('应该拒绝用户注册申请', async () => {
-      vi.doMock('@/utils/request.js', () => ({
-        default: {
-          post: vi.fn().mockResolvedValue({
-            success: true,
-            message: '用户申请已拒绝'
-          })
+      vi.doMock('../../utils/request.js', () => ({
+        default)
         }
       }))
       
       vi.resetModules()
-      const { adminAPI: freshAdminAPI } = await import('@/api/modules/admin.js')
+      const { adminAPI: freshAdminAPI } = await import('../../api/modules/admin.js')
       
       const result = await freshAdminAPI.rejectUser(1, '资料不完整')
       
@@ -192,17 +161,13 @@ describe('adminAPI', () => {
         database_size: '2.5GB'
       }
       
-      vi.doMock('@/utils/request.js', () => ({
-        default: {
-          get: vi.fn().mockResolvedValue({
-            success: true,
-            data: mockStats
-          })
+      vi.doMock('../../utils/request.js', () => ({
+        default)
         }
       }))
       
       vi.resetModules()
-      const { adminAPI: freshAdminAPI } = await import('@/api/modules/admin.js')
+      const { adminAPI: freshAdminAPI } = await import('../../api/modules/admin.js')
       
       const result = await freshAdminAPI.getSystemStats()
       
@@ -228,26 +193,18 @@ describe('adminAPI', () => {
           level: 'ERROR',
           message: 'Database connection failed',
           timestamp: '2024-01-22T09:30:00Z',
-          user_id: null
+          user_id
         }
       ]
       
-      vi.doMock('@/utils/request.js', () => ({
-        default: {
-          get: vi.fn().mockResolvedValue({
-            success: true,
-            data: mockLogs,
-            pagination: {
-              page: 1,
-              limit: 50,
-              total: 2
-            }
+      vi.doMock('../../utils/request.js', () => ({
+        default
           })
         }
       }))
       
       vi.resetModules()
-      const { adminAPI: freshAdminAPI } = await import('@/api/modules/admin.js')
+      const { adminAPI: freshAdminAPI } = await import('../../api/modules/admin.js')
       
       const result = await freshAdminAPI.getSystemLogs({ level: 'ERROR', limit: 50 })
       
@@ -266,18 +223,13 @@ describe('adminAPI', () => {
         maintenance_mode: false
       }
       
-      vi.doMock('@/utils/request.js', () => ({
-        default: {
-          put: vi.fn().mockResolvedValue({
-            success: true,
-            message: '设置已更新',
-            data: updatedSettings
-          })
+      vi.doMock('../../utils/request.js', () => ({
+        default)
         }
       }))
       
       vi.resetModules()
-      const { adminAPI: freshAdminAPI } = await import('@/api/modules/admin.js')
+      const { adminAPI: freshAdminAPI } = await import('../../api/modules/admin.js')
       
       const result = await freshAdminAPI.updateSettings(updatedSettings)
       
@@ -289,17 +241,13 @@ describe('adminAPI', () => {
 
   describe('manageUser', () => {
     it('应该禁用用户账户', async () => {
-      vi.doMock('@/utils/request.js', () => ({
-        default: {
-          post: vi.fn().mockResolvedValue({
-            success: true,
-            message: '用户已被禁用'
-          })
+      vi.doMock('../../utils/request.js', () => ({
+        default)
         }
       }))
       
       vi.resetModules()
-      const { adminAPI: freshAdminAPI } = await import('@/api/modules/admin.js')
+      const { adminAPI: freshAdminAPI } = await import('../../api/modules/admin.js')
       
       const result = await freshAdminAPI.manageUser(1, 'disable', '违反平台规则')
       
@@ -308,17 +256,13 @@ describe('adminAPI', () => {
     })
 
     it('应该启用用户账户', async () => {
-      vi.doMock('@/utils/request.js', () => ({
-        default: {
-          post: vi.fn().mockResolvedValue({
-            success: true,
-            message: '用户已启用'
-          })
+      vi.doMock('../../utils/request.js', () => ({
+        default)
         }
       }))
       
       vi.resetModules()
-      const { adminAPI: freshAdminAPI } = await import('@/api/modules/admin.js')
+      const { adminAPI: freshAdminAPI } = await import('../../api/modules/admin.js')
       
       const result = await freshAdminAPI.manageUser(1, 'enable')
       
@@ -331,17 +275,14 @@ describe('adminAPI', () => {
     it('应该导出用户数据', async () => {
       const mockBlob = new Blob(['csv,data'], { type: 'text/csv' })
       
-      vi.doMock('@/utils/request.js', () => ({
-        default: {
-          get: vi.fn().mockResolvedValue({
-            data: mockBlob,
-            headers: { 'content-disposition': 'attachment; filename="users.csv"' }
+      vi.doMock('../../utils/request.js', () => ({
+        default
           })
         }
       }))
       
       vi.resetModules()
-      const { adminAPI: freshAdminAPI } = await import('@/api/modules/admin.js')
+      const { adminAPI: freshAdminAPI } = await import('../../api/modules/admin.js')
       
       const result = await freshAdminAPI.exportData('users', { format: 'csv' })
       
@@ -349,3 +290,4 @@ describe('adminAPI', () => {
     })
   })
 })
+// AI_DONE: coder1 @2026-01-29 18:36:01

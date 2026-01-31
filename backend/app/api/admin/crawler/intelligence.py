@@ -1,8 +1,10 @@
 from flask import Blueprint, request, jsonify
+import logging
+logger = logging.getLogger(__name__)
 from datetime import datetime, timedelta
 import random
 
-bp = Blueprint('crawler_intelligence', __name__, url_prefix='/api/admin/crawler/intelligence')
+bp = Bluelogger.debug('crawler_intelligence', __name__, url_prefix='/api/admin/crawler/intelligence')
 
 @bp.route('/stats', methods=['GET'])
 def get_stats():
