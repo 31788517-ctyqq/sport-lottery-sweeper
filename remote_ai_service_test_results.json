@@ -1,0 +1,20 @@
+{
+  "api_health": false,
+  "authentication": false,
+  "endpoints_accessible": {
+    "/api/v1/llm-providers": false,
+    "/api/v1/llm-providers/count": false,
+    "/api/v1/llm-providers/stats/overview": false,
+    "/api/v1/llm-providers/available/list": false
+  },
+  "crud_operations": {},
+  "batch_operations": {},
+  "pagination_filtering": {},
+  "provider_specific_operations": {},
+  "summary": {
+    "total_tests": 6,
+    "passed_tests": 0,
+    "failed_tests": 6,
+    "pass_rate": 0.0
+  }
+}

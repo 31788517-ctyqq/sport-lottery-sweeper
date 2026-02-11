@@ -113,9 +113,9 @@
               <div class="chart-header">
                 <span>📈 活动趋势图</span>
                 <el-radio-group v-model="trendPeriod" size="small">
-                  <el-radio-button label="day">日</el-radio-button>
-                  <el-radio-button label="week">周</el-radio-button>
-                  <el-radio-button label="month">月</el-radio-button>
+                  <el-radio-button value="day">日</el-radio-button>
+                  <el-radio-button value="week">周</el-radio-button>
+                  <el-radio-button value="month">月</el-radio-button>
                 </el-radio-group>
               </div>
             </template>
@@ -300,10 +300,53 @@ const updateCharts = async () => {
         }
       ]
     })
-    window.addEventListener('resize', () => chart.resize())
+    // 添加防抖功能以避免过多的resize事件
+    let resizeTimeout = null;
+    const debouncedResize = () => {
+      if (resizeTimeout) {
+        clearTimeout(resizeTimeout);
+      }
+      resizeTimeout = setTimeout(() => {
+        chart?.resize();
+      }, 100);
+    };
+    window.addEventListener('resize', debouncedResize)
+    // 第二个resize事件的修复
+    let resizeTimeout2 = null;
+    const debouncedResize2 = () => {
+      if (resizeTimeout2) {
+        clearTimeout(resizeTimeout2);
+      }
+      resizeTimeout2 = setTimeout(() => {
+        chart?.resize();
+      }, 100);
+    };
+    window.addEventListener('resize', debouncedResize2)
+    // 第三个resize事件的修复
+    let resizeTimeout3 = null;
+    const debouncedResize3 = () => {
+      if (resizeTimeout3) {
+        clearTimeout(resizeTimeout3);
+      }
+      resizeTimeout3 = setTimeout(() => {
+        chart?.resize();
+      }, 100);
+    };
+    window.addEventListener('resize', debouncedResize3)
+    // 第四个resize事件的修复
+    let resizeTimeout4 = null;
+    const debouncedResize4 = () => {
+      if (resizeTimeout4) {
+        clearTimeout(resizeTimeout4);
+      }
+      resizeTimeout4 = setTimeout(() => {
+        chart?.resize();
+      }, 100);
+    };
+    window.addEventListener('resize', debouncedResize4)
   }
 
-  // 预测准确率图（环形图）
+  // 任务执行效率图（散点图）
   if (accuracyChart.value) {
     const chart = echarts.init(accuracyChart.value)
     chart.setOption({

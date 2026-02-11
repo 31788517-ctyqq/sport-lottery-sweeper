@@ -8,36 +8,53 @@
             <p class="subtitle">{{ subtitle }}</p>
           </div>
           <div class="header-actions">
-            <el-button @click="refreshData">刷新</el-button>
-            <el-button type="primary" @click="importSchedule">导入赛程</el-button>
-            <el-button @click="exportSchedule">导出</el-button>
+            <el-button @click="refreshData" :icon="Refresh">刷新</el-button>
+            <el-button type="primary" @click="importSchedule" :icon="Upload">导入赛程</el-button>
+            <el-button @click="exportSchedule" :icon="Download">导出</el-button>
           </div>
         </div>
       </template>
 
       <!-- 搜索栏 -->
       <el-form :model="queryParams" inline class="search-form">
-        <el-form-item label="联赛名称">
-          <el-input v-model="queryParams.leagueName" placeholder="请输入联赛名称" clearable />
-        </el-form-item>
-        <el-form-item label="比赛日期">
-          <el-date-picker
-            v-model="queryParams.matchDate"
-            type="date"
-            placeholder="选择日期"
-            format="YYYY-MM-DD"
-            value-format="YYYY-MM-DD"
-          />
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="handleQuery">查询</el-button>
-          <el-button @click="resetQuery">重置</el-button>
-        </el-form-item>
+        <el-row :gutter="10">
+          <el-col :xs="24" :sm="12" :md="6">
+            <el-form-item label="联赛名称">
+              <el-input v-model="queryParams.leagueName" placeholder="请输入联赛名称" clearable />
+            </el-form-item>
+          </el-col>
+          <el-col :xs="24" :sm="12" :md="6">
+            <el-form-item label="比赛日期">
+              <el-date-picker
+                v-model="queryParams.matchDate"
+                type="date"
+                placeholder="选择日期"
+                format="YYYY-MM-DD"
+                value-format="YYYY-MM-DD"
+                style="width: 100%"
+              />
+            </el-form-item>
+          </el-col>
+          <el-col :xs="24" :sm="24" :md="12">
+            <el-form-item>
+              <el-button type="primary" @click="handleQuery" :icon="Search">查询</el-button>
+              <el-button @click="resetQuery" :icon="Delete">重置</el-button>
+            </el-form-item>
+          </el-col>
+        </el-row>
       </el-form>
 
       <!-- 数据表格 -->
-      <el-table :data="scheduleList" v-loading="loading" style="width: 100%">
-        <el-table-column prop="matchId" label="比赛ID" width="120" />
+      <el-table 
+        :data="scheduleList" 
+        v-loading="loading" 
+        style="width: 100%" 
+        stripe
+        height="500"
+        @selection-change="handleSelectionChange">
+        <el-table-column type="selection" width="55" />
+        <el-table-column prop="matchId" label="比赛ID" width="120" fixed="left" />
+        <el-table-column prop="leagueName" label="联赛" width="120" />
         <el-table-column prop="homeTeam" label="主队" width="120">
           <template #default="scope">
             <span class="team-name">{{ scope.row.homeTeam }}</span>
@@ -48,21 +65,20 @@
             <span class="team-name">{{ scope.row.awayTeam }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="leagueName" label="联赛" width="120" />
         <el-table-column prop="matchDate" label="比赛日期" width="150" />
         <el-table-column prop="matchTime" label="比赛时间" width="120" />
+        <el-table-column prop="round" label="轮次" width="80" />
+        <el-table-column prop="group" label="分组" width="80" />
         <el-table-column prop="status" label="状态" width="100">
           <template #default="scope">
             <el-tag :type="getStatusType(scope.row.status)">{{ scope.row.status }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="round" label="轮次" width="80" />
-        <el-table-column prop="group" label="分组" width="80" />
-        <el-table-column label="操作" width="200">
+        <el-table-column label="操作" width="220" fixed="right">
           <template #default="scope">
-            <el-button size="small" @click="editSchedule(scope.row)">编辑</el-button>
-            <el-button size="small" type="primary" @click="viewDetails(scope.row)">详情</el-button>
-            <el-button size="small" type="danger" @click="deleteSchedule(scope.row)">删除</el-button>
+            <el-button size="small" @click="editSchedule(scope.row)" :icon="Edit">编辑</el-button>
+            <el-button size="small" type="primary" @click="viewDetails(scope.row)" :icon="View">详情</el-button>
+            <el-button size="small" type="danger" @click="deleteSchedule(scope.row)" :icon="Delete">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -75,61 +91,87 @@
         :background="true"
         layout="total, sizes, prev, pager, next, jumper"
         :total="total"
-        style="margin-top: 20px; justify-content: center;"
+        style="margin-top: 20px; text-align: center;"
         @size-change="handleSizeChange"
         @current-change="handleCurrentChange"
       />
     </el-card>
 
     <!-- 编辑对话框 -->
-    <el-dialog :title="dialogTitle" v-model="dialogVisible" width="600px">
+    <el-dialog :title="dialogTitle" v-model="dialogVisible" width="600px" :destroy-on-close="true">
       <el-form :model="currentSchedule" :rules="scheduleRules" ref="scheduleFormRef" label-width="100px">
-        <el-form-item label="主队" prop="homeTeam">
-          <el-input v-model="currentSchedule.homeTeam" placeholder="请输入主队名称" />
-        </el-form-item>
-        <el-form-item label="客队" prop="awayTeam">
-          <el-input v-model="currentSchedule.awayTeam" placeholder="请输入客队名称" />
-        </el-form-item>
-        <el-form-item label="联赛" prop="leagueName">
-          <el-input v-model="currentSchedule.leagueName" placeholder="请输入联赛名称" />
-        </el-form-item>
-        <el-form-item label="比赛日期" prop="matchDate">
-          <el-date-picker
-            v-model="currentSchedule.matchDate"
-            type="date"
-            placeholder="选择日期"
-            format="YYYY-MM-DD"
-            value-format="YYYY-MM-DD"
-            style="width: 100%"
-          />
-        </el-form-item>
-        <el-form-item label="比赛时间" prop="matchTime">
-          <el-time-picker
-            v-model="currentSchedule.matchTime"
-            placeholder="选择时间"
-            format="HH:mm"
-            style="width: 100%"
-          />
-        </el-form-item>
-        <el-form-item label="状态" prop="status">
-          <el-select v-model="currentSchedule.status" placeholder="请选择状态" style="width: 100%">
-            <el-option label="未开始" value="未开始" />
-            <el-option label="进行中" value="进行中" />
-            <el-option label="已结束" value="已结束" />
-            <el-option label="延期" value="延期" />
-            <el-option label="取消" value="取消" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="轮次">
-          <el-input v-model="currentSchedule.round" placeholder="请输入轮次" />
-        </el-form-item>
-        <el-form-item label="分组">
-          <el-input v-model="currentSchedule.group" placeholder="请输入分组" />
-        </el-form-item>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="主队" prop="homeTeam">
+              <el-input v-model="currentSchedule.homeTeam" placeholder="请输入主队名称" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="客队" prop="awayTeam">
+              <el-input v-model="currentSchedule.awayTeam" placeholder="请输入客队名称" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="联赛" prop="leagueName">
+              <el-input v-model="currentSchedule.leagueName" placeholder="请输入联赛名称" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="轮次">
+              <el-input v-model="currentSchedule.round" placeholder="请输入轮次" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="比赛日期" prop="matchDate">
+              <el-date-picker
+                v-model="currentSchedule.matchDate"
+                type="date"
+                placeholder="选择日期"
+                format="YYYY-MM-DD"
+                value-format="YYYY-MM-DD"
+                style="width: 100%"
+              />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="比赛时间" prop="matchTime">
+              <el-time-picker
+                v-model="currentSchedule.matchTime"
+                placeholder="选择时间"
+                format="HH:mm"
+                style="width: 100%"
+              />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="状态" prop="status">
+              <el-select v-model="currentSchedule.status" placeholder="请选择状态" style="width: 100%">
+                <el-option label="未开始" value="未开始" />
+                <el-option label="进行中" value="进行中" />
+                <el-option label="已结束" value="已结束" />
+                <el-option label="延期" value="延期" />
+                <el-option label="取消" value="取消" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="分组">
+              <el-input v-model="currentSchedule.group" placeholder="请输入分组" />
+            </el-form-item>
+          </el-col>
+        </el-row>
       </el-form>
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="confirmSave">确定</el-button>
+        <div class="dialog-footer">
+          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="confirmSave">确定</el-button>
+        </div>
       </template>
     </el-dialog>
   </div>
@@ -138,6 +180,7 @@
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Refresh, Upload, Download, Search, Delete, Edit, View } from '@element-plus/icons-vue'
 
 // props接收类型参数
 const props = defineProps({
@@ -164,6 +207,7 @@ const loading = ref(false)
 const currentPage = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
+const multipleSelection = ref([])
 
 // 查询参数
 const queryParams = reactive({
@@ -349,6 +393,11 @@ const confirmSave = () => {
   })
 }
 
+// 处理多选
+const handleSelectionChange = (val) => {
+  multipleSelection.value = val
+}
+
 onMounted(() => {
   getScheduleList()
 })
@@ -357,17 +406,21 @@ onMounted(() => {
 <style scoped>
 .card-container {
   margin: 20px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
 }
 
 .card-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 15px;
 }
 
 .card-header > div:first-child h3 {
   margin: 0 0 5px 0;
   font-size: 18px;
+  color: #303133;
 }
 
 .subtitle {
@@ -388,5 +441,47 @@ onMounted(() => {
 .team-name {
   font-weight: bold;
   color: #409eff;
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.el-row {
+  margin-bottom: 20px;
+}
+
+.el-col {
+  display: flex;
+  align-items: center;
+}
+
+.el-form-item {
+  margin-bottom: 0;
+}
+
+:deep(.el-card__header) {
+  padding: 20px;
+}
+
+:deep(.el-card__body) {
+  padding: 20px;
+}
+
+@media screen and (max-width: 768px) {
+  .card-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .header-actions {
+    justify-content: center;
+  }
+  
+  .el-col {
+    margin-bottom: 15px;
+  }
 }
 </style>

@@ -146,9 +146,15 @@ watch(displayValue, () => {
 })
 
 // 窗口大小改变时重新调整图表
+let resizeTimeout = null;
 const handleResize = () => {
-  gaugeChart?.resize()
-}
+  if (resizeTimeout) {
+    clearTimeout(resizeTimeout);
+  }
+  resizeTimeout = setTimeout(() => {
+    gaugeChart?.resize();
+  }, 100); // 延迟100毫秒执行，避免过于频繁的重绘
+};
 
 // 生命周期
 onMounted(() => {
@@ -161,6 +167,9 @@ import { onUnmounted } from 'vue'
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize)
   gaugeChart?.dispose()
+  if (resizeTimeout) {
+    clearTimeout(resizeTimeout);
+  }
 })
 </script>
 

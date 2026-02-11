@@ -25,10 +25,10 @@
         
         <el-form-item label="密码复杂度要求">
           <el-checkbox-group v-model="form.passwordComplexity">
-            <el-checkbox label="require_uppercase">包含大写字母</el-checkbox>
-            <el-checkbox label="require_lowercase">包含小写字母</el-checkbox>
-            <el-checkbox label="require_numbers">包含数字</el-checkbox>
-            <el-checkbox label="require_symbols">包含特殊符号</el-checkbox>
+            <el-checkbox value="require_uppercase">包含大写字母</el-checkbox>
+            <el-checkbox value="require_lowercase">包含小写字母</el-checkbox>
+            <el-checkbox value="require_numbers">包含数字</el-checkbox>
+            <el-checkbox value="require_symbols">包含特殊符号</el-checkbox>
           </el-checkbox-group>
         </el-form-item>
         

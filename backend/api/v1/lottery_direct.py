@@ -139,7 +139,7 @@ def load_500_com_data_direct(filter_day: Optional[str] = None) -> List[Dict[str,
         return []
 
 
-@router.get("/matches-direct", response_model=UnifiedResponse[PageResponse[Dict[str, Any]]])
+@router.get("/matches-direct", response_model=dict)
 async def get_lottery_matches_direct(
     page: int = Query(1, ge=1, description="页码"),
     size: int = Query(10, ge=1, le=50, description="每页大小"),

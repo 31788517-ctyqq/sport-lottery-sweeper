@@ -1,8 +1,7 @@
 from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from backend.models.base import Base
-from backend.core.base_model import BaseFullModel
+from backend.models.base import Base, BaseFullModel
 
 
 class Department(BaseFullModel):

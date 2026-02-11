@@ -9,6 +9,7 @@ from jose import JWTError, jwt
 
 from .core.database import SessionLocal, get_db
 from .core.auth import verify_password, get_password_hash
+from .core.security import get_current_active_admin_user
 from .models.user import User
 from .config import settings
 
@@ -58,9 +59,7 @@ def get_current_user(
     
     return user
 
-def get_current_admin_user(
-    current_user: User = Depends(get_current_user)
-) -> User:
+def get_current_admin_user(current_user: User = Depends(get_current_user)) -> User:
     """
     获取当前管理员用户
     
@@ -68,22 +67,20 @@ def get_current_admin_user(
         current_user: 当前用户
         
     Returns:
-        User: 管理员用户
+        User: 当前管理员用户
         
     Raises:
         HTTPException: 权限不足
     """
-    if not current_user.is_superuser:
+    # 检查是否为超级用户或具有管理员角色
+    if not current_user.is_superuser and "admin" not in current_user.roles and current_user.role != "admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="需要管理员权限"
+            detail="权限不足"
         )
-    
     return current_user
 
-def get_current_active_user(
-    current_user: User = Depends(get_current_user)
-) -> User:
+def get_current_active_user(current_user: User = Depends(get_current_user)) -> User:
     """
     获取当前活跃用户
     
@@ -91,9 +88,24 @@ def get_current_active_user(
         current_user: 当前用户
         
     Returns:
-        User: 活跃用户
+        User: 当前活跃用户
+        
+    Raises:
+        HTTPException: 用户已被禁用
     """
+    if not current_user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="用户已被禁用"
+        )
     return current_user
+
+
+def get_current_active_admin_user_dep():
+    """
+    兼容导出：保持旧调用路径
+    """
+    return get_current_active_admin_user
 
 def verify_websocket_token(token: str) -> Optional[str]:
     """
@@ -103,11 +115,13 @@ def verify_websocket_token(token: str) -> Optional[str]:
         token: JWT令牌
         
     Returns:
-        Optional[str]: 用户ID或None
+        Optional[str]: 用户名或None
     """
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         username: str = payload.get("sub")
+        if username is None:
+            return None
         return username
     except JWTError:
         return None
@@ -161,3 +175,16 @@ def get_password_verifier():
         function: 密码验证函数
     """
     return verify_password
+
+
+__all__ = [
+    "get_db",
+    "get_current_user",
+    "get_current_admin_user",
+    "get_current_active_user",
+    "get_current_active_admin_user",
+    "verify_websocket_token",
+    "validate_password_strength",
+    "get_password_hasher",
+    "get_password_verifier",
+]

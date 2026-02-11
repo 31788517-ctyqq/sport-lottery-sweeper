@@ -326,7 +326,7 @@
 <script setup>
 import { ref, reactive, onMounted, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import axios from 'axios'
+import request from '@/utils/request'
 import { 
   VideoPlay, 
   Histogram, 
@@ -410,7 +410,7 @@ const exportData = () => {
 const refreshMonitoring = async () => {
   monitoringLoading.value = true
   try {
-    const response = await axios.get('/api/admin/v1/odds/monitoring', {
+    const response = await request.get('/api/admin/v1/odds/monitoring', {
       params: {
         page: monitoringPagination.currentPage,
         size: monitoringPagination.pageSize
@@ -452,7 +452,7 @@ const applyMonitoringFilters = async () => {
       params.date_to = monitoringFilters.dateRange[1]
     }
     
-    const response = await axios.get('/api/admin/v1/odds/monitoring', { params })
+    const response = await request.get('/api/admin/v1/odds/monitoring', { params })
     
     if (response.data.success) {
       monitoringData.value = response.data.data.items
@@ -487,7 +487,7 @@ const loadHistoryData = async () => {
       params.time_to = historyFilters.timeRange[1]
     }
     
-    const response = await axios.get('/api/admin/v1/odds/history', { params })
+    const response = await request.get('/api/admin/v1/odds/history', { params })
     
     if (response.data.success) {
       historyData.value = response.data.data.items
@@ -512,7 +512,7 @@ const generateReport = () => {
 
 const runFullScan = async () => {
   try {
-    const response = await axios.get('/api/admin/v1/odds/anomalies', {
+    const response = await request.get('/api/admin/v1/odds/anomalies', {
       params: {
         page: anomalyPagination.currentPage,
         size: anomalyPagination.pageSize
@@ -552,7 +552,7 @@ const filterAnomalies = async () => {
       params.severity = anomalyFilters.severity
     }
     
-    const response = await axios.get('/api/admin/v1/odds/anomalies', { params })
+    const response = await request.get('/api/admin/v1/odds/anomalies', { params })
     
     if (response.data.success) {
       anomalyData.value = response.data.data.items
@@ -596,7 +596,7 @@ const viewOddsHistory = async (match) => {
   
   matchHistoryLoading.value = true
   try {
-    const response = await axios.get('/api/admin/v1/odds/history', {
+    const response = await request.get('/api/admin/v1/odds/history', {
       params: {
         match_id: parseInt(match.matchId.replace('M', ''))
       }
@@ -623,7 +623,7 @@ const closeHistoryDialog = () => {
 // 加载统计数据
 const loadStats = async () => {
   try {
-    const response = await axios.get('/api/admin/v1/odds/stats')
+    const response = await request.get('/api/admin/v1/odds/stats')
     
     if (response.data.success) {
       Object.assign(stats, response.data.data)

@@ -9,7 +9,7 @@ from sqlalchemy import func
 
 from ..models.system_config import SystemConfig
 from ..models.admin_user import AdminUser
-from ..schemas.crawler import (
+from ..schemas.crawler_config import (
     CrawlerConfigCreate, CrawlerConfigUpdate, CrawlerConfigResponse
 )
 from .crawler_service import BaseCrawlerService

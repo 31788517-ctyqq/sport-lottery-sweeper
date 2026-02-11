@@ -4,6 +4,7 @@
 """
 import logging
 from datetime import datetime, timedelta
+from typing import Optional
 from celery import shared_task
 from sqlalchemy.orm import Session
 
@@ -12,7 +13,7 @@ from ..services.crawler_alert_service import CrawlerAlertService
 from ..services.crawler_service import CrawlerService
 from ..models.crawler_config import CrawlerConfig
 from ..models.crawler_logs import CrawlerTaskLog
-from ..core.cache_manager import CacheManager
+from ..core.cache_manager import HybridCache as CacheManager
 
 logger = logging.getLogger(__name__)
 

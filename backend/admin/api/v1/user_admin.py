@@ -4,7 +4,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 
 from ...deps import get_current_admin
 from .... import crud
@@ -119,7 +119,7 @@ async def update_user_status(
             raise HTTPException(status_code=404, detail="用户不存在")
         
         user.status = status
-        user.updated_at = datetime.utcnow()
+        user.updated_at = datetime.now(timezone.utc)
         await db.commit()
         
         return UnifiedResponse.success({"message": "用户状态更新成功"})

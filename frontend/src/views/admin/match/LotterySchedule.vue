@@ -256,13 +256,10 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { 
-  Plus, Refresh, Document, Clock, 
-  VideoPlay, CircleCheck, Delete 
-} from '@element-plus/icons-vue'
-import axios from 'axios'
+import request from '@/utils/request'  // 替代axios
+import { Search, Edit, Delete, Plus, Refresh, Download, Upload, InfoFilled, Calendar, Clock, Flag } from '@element-plus/icons-vue'
 
 // 响应式数据
 const loading = ref(false)
@@ -403,8 +400,10 @@ const fetchData = async () => {
       params.date_to = searchForm.date_range[1]
     }
     
-    const response = await axios.get('/api/admin/v1/lottery-schedules/', { params })
-    
+    const response = await request.get('/api/admin/v1/lottery-schedules/', { params });
+    schedules.value = response.data.items || [];
+    total.value = response.data.total || 0;
+
     if (response.data.success) {
       tableData.value = response.data.data.items
       pagination.total = response.data.data.total
@@ -422,8 +421,9 @@ const fetchData = async () => {
 // 获取统计数据
 const fetchStats = async () => {
   try {
-    const response = await axios.get('/api/admin/v1/lottery-schedules/stats')
-    
+    const response = await request.get('/api/admin/v1/lottery-schedules/stats');
+    stats.value = response.data;
+
     if (response.data.success) {
       // 更新全局统计数据
       const stats = response.data.data
@@ -478,7 +478,7 @@ const batchDeleteMatches = async () => {
     )
     
     const promises = selectedMatches.value.map(async (selected) => {
-      await axios.delete(`/api/admin/v1/lottery-schedules/${selected.id}`)
+      await request.delete(`/api/admin/v1/lottery-schedules/${selected.id}`);
     })
     
     await Promise.all(promises)
@@ -523,7 +523,7 @@ const handleDelete = async (row) => {
       }
     )
     
-    await axios.delete(`/api/admin/v1/lottery-schedules/${row.id}`)
+    await request.delete(`/api/admin/v1/lottery-schedules/${row.id}`);
     await fetchData()
     ElMessage.success('删除成功')
   } catch (error) {
@@ -544,7 +544,7 @@ const handleSubmit = async () => {
     
     if (form.id) {
       // 编辑模式：更新现有数据
-      const response = await axios.put(`/api/admin/v1/lottery-schedules/${form.id}`, {
+      const response = await request.put(`/api/admin/v1/lottery-schedules/${form.id}`, {
         league_name: form.league_name,
         home_team: form.home_team,
         away_team: form.away_team,
@@ -562,7 +562,7 @@ const handleSubmit = async () => {
       }
     } else {
       // 新增模式：添加新数据
-      const response = await axios.post('/api/admin/v1/lottery-schedules/', {
+      const response = await request.post('/api/admin/v1/lottery-schedules/', {
         league_name: form.league_name,
         home_team: form.home_team,
         away_team: form.away_team,

@@ -10,11 +10,11 @@ import sqlalchemy as sa
 from sqlalchemy import func
 from sqlalchemy.sql import expression
 
-from backend.core.database import GUID
+# from backend.core.database import GUID  # GUID not used in this migration
 
 # revision identifiers, used by Alembic.
 revision = '002'
-down_revision = '001'
+down_revision = '001_admin_users'
 branch_labels = None
 depends_on = None
 

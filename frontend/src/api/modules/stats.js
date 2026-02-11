@@ -9,7 +9,7 @@ export const statsAPI = {
    * @returns {Promise<Object>} - { totalUsers, totalMatches, totalIntelligence, ... }
    */
   getSummaryStats() {
-    return client.get('/stats/summary');
+    return client.get('/stats/data-center');
   },
 
   /**

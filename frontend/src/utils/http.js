@@ -5,7 +5,7 @@ import { useUserStore } from '@/stores/user'
 
 // API配置
 const API_CONFIG = {
-  BASE_URL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000',
+  BASE_URL: import.meta.env.VITE_API_BASE_URL || '',
   TIMEOUT: 15000,
   RETRY_TIMES: 3,
   RETRY_DELAY: 1000

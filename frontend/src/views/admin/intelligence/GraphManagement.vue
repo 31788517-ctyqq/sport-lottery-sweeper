@@ -155,7 +155,7 @@
               <div class="filter-group">
                 <label>节点类型:</label>
                 <el-checkbox-group v-model="visibleNodeTypes">
-                  <el-checkbox v-for="type in nodeTypes" :key="type" :label="type">
+                  <el-checkbox v-for="type in nodeTypes" :key="type" :value="type">
                     {{ type }}
                   </el-checkbox>
                 </el-checkbox-group>
@@ -163,7 +163,7 @@
               <div class="filter-group">
                 <label>关系类型:</label>
                 <el-checkbox-group v-model="visibleEdgeTypes">
-                  <el-checkbox v-for="type in edgeTypes" :key="type" :label="type">
+                  <el-checkbox v-for="type in edgeTypes" :key="type" :value="type">
                     {{ type }}
                   </el-checkbox>
                 </el-checkbox-group>

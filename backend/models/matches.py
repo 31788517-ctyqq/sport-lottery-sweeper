@@ -2,7 +2,7 @@
 比赛信息表模型（足球SP管理专用）
 """
 
-from sqlalchemy import Column, Integer, String, DateTime, Text, Boolean
+from sqlalchemy import Column, Integer, String, DateTime, Text, Boolean, JSON
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from .base import Base  # 使用与 match.py 相同的 Base
@@ -15,11 +15,15 @@ class FootballMatch(Base):
     __table_args__ = {'extend_existing': True}
     
     id = Column(Integer, primary_key=True, index=True)
-    match_id = Column(String(50), unique=True, nullable=False, comment="比赛唯一标识")
+    match_id = Column(String(50), unique=True, nullable=False, comment="比赛唯一标识，格式: date_time_line_id")
+    date_time = Column(Integer, nullable=False, comment="期号，如 26024")
+    line_id = Column(Integer, nullable=False, comment="该期内的序号，如 1")
     home_team = Column(String(100), nullable=False, comment="主队名称")
     away_team = Column(String(100), nullable=False, comment="客队名称")
     match_time = Column(DateTime, nullable=False, comment="比赛时间")
     league = Column(String(100), comment="联赛/杯赛")
+    data_source = Column(String(50), default="100qiu", comment="数据来源")
+    source_attributes = Column(JSON, nullable=True, comment="数据源原始字段")
     status = Column(String(20), default='pending', comment="比赛状态: pending/ongoing/finished")
     home_score = Column(Integer, comment="主队得分")
     away_score = Column(Integer, comment="客队得分")

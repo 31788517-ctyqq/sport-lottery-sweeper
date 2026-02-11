@@ -21,3 +21,11 @@ export const useUserStore = defineStore('user', {
     },
   },
 })
+
+// AI_WORKING: coder1 @2026-02-01 - 导出通用数据管理Store
+export * from './dataManager'
+// AI_DONE: coder1 @2026-02-01
+
+// AI_WORKING: coder1 @2026-02-04 - 导出任务监控Store
+export * from './taskMonitorStore'
+// AI_DONE: coder1 @2026-02-04

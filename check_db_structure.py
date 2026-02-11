@@ -1,40 +1,43 @@
-import sqlite3
+import sys
+import os
+
+# 添加项目根目录到Python路径
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+from backend.database import engine
+from sqlalchemy import inspect
 
 def check_db_structure():
-    """检查数据库结构"""
-    try:
-        conn = sqlite3.connect('backend/sport_lottery.db')
-        cursor = conn.cursor()
+    insp = inspect(engine)
+    tables = insp.get_table_names()
+    print('数据库中存在的表:')
+    for table in tables:
+        print(f'- {table}')
+    
+    # 检查特定表的结构
+    if 'football_matches' in tables:
+        print('\nfootball_matches表结构:')
+        columns = insp.get_columns('football_matches')
+        for col in columns:
+            print(f"  - {col['name']}: {col['type']}")
 
-        # 获取所有表的详细信息
-        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;")
-        tables = cursor.fetchall()
-        print('数据库表列表:')
-        for i, table in enumerate(tables, 1):
-            print(f'{i:2d}. {table[0]}')
+    if 'crawler_task_logs' in tables:
+        print('\ncrawler_task_logs表结构:')
+        columns = insp.get_columns('crawler_task_logs')
+        for col in columns:
+            print(f"  - {col['name']}: {col['type']}")
 
-        # 特别检查log_entries表是否存在
-        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='log_entries';")
-        result = cursor.fetchone()
-        if result:
-            print(f'\nlog_entries表存在，检查其结构:')
-            cursor.execute('PRAGMA table_info(log_entries);')
-            columns = cursor.fetchall()
-            for col in columns:
-                print(f'  {col[1]} ({col[2]}) {"PRIMARY KEY" if col[5] else ""} {"NOT NULL" if col[3] else "NULLABLE"}')
-            
-            # 检查表中的记录数
-            cursor.execute('SELECT COUNT(*) FROM log_entries;')
-            count = cursor.fetchone()[0]
-            print(f'\nlog_entries 表中有 {count} 条记录')
-        else:
-            print('\nlog_entries表不存在')
+    if 'crawler_tasks' in tables:
+        print('\ncrawler_tasks表结构:')
+        columns = insp.get_columns('crawler_tasks')
+        for col in columns:
+            print(f"  - {col['name']}: {col['type']}")
 
-        conn.close()
-    except Exception as e:
-        print(f"数据库检查出错: {e}")
-        import traceback
-        traceback.print_exc()
+    if 'data_sources' in tables:
+        print('\ndata_sources表结构:')
+        columns = insp.get_columns('data_sources')
+        for col in columns:
+            print(f"  - {col['name']}: {col['type']}")
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     check_db_structure()

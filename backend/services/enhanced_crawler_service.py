@@ -10,7 +10,7 @@ from ..models.crawler_logs import CrawlerTaskLog
 from ..models.crawler_tasks import CrawlerTask
 from ..services.crawler_alert_service import CrawlerAlertService
 from ..tasks.alert_monitoring_tasks import collect_crawler_metrics
-from ..core.cache_manager import CacheManager
+from ..core.cache_manager import HybridCache as CacheManager
 
 logger = logging.getLogger(__name__)
 

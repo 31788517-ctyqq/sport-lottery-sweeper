@@ -1,27 +1,30 @@
 import request from '@/utils/request'
 
-// 获取数据情报统计
+// 获取爬虫智能统计
 export function getIntelligenceStats(params) {
   return request({
-    url: '/api/admin/crawler/intelligence/stats',
+    // 修正：使用新版API路径
+    url: '/api/v1/admin/crawler/intelligence/stats',
     method: 'get',
     params
   })
 }
 
-// 获取数据情报列表
+// 获取爬虫智能数据
 export function getIntelligenceData(params) {
   return request({
-    url: '/api/admin/crawler/intelligence/data',
+    // 修正：使用新版API路径
+    url: '/api/v1/admin/crawler/intelligence/data',
     method: 'get',
     params
   })
 }
 
-// 导出数据情报
+// 导出爬虫智能数据
 export function exportIntelligenceData(params) {
   return request({
-    url: '/api/admin/crawler/intelligence/export',
+    // 修正：使用新版API路径
+    url: '/api/v1/admin/crawler/intelligence/export',
     method: 'get',
     params,
     responseType: 'blob'
@@ -32,19 +35,22 @@ export function exportIntelligenceData(params) {
 export const getStats = getIntelligenceStats
 export const getData = getIntelligenceData
 export const exportData = exportIntelligenceData
+export const markAsInvalid = markInvalid // 保留旧名兼容
 
 // 标记数据为无效
-export function markAsInvalid(id) {
+export function markInvalid(id) {
   return request({
-    url: `/api/admin/crawler/intelligence/${id}/mark-invalid`,
-    method: 'put'
+    // 修正：使用新版API路径
+    url: `/api/v1/admin/crawler/intelligence/${id}/mark-invalid`,
+    method: 'post'
   })
 }
 
 // 重新抓取指定数据
 export function recrawlData(id) {
   return request({
-    url: `/api/admin/crawler/intelligence/${id}/recrawl`,
+    // 修正：使用新版API路径
+    url: `/api/v1/admin/crawler/intelligence/${id}/recrawl`,
     method: 'post'
   })
 }
@@ -52,7 +58,8 @@ export function recrawlData(id) {
 // 批量标记数据
 export function batchMarkData(ids, status) {
   return request({
-    url: '/api/admin/crawler/intelligence/batch-mark',
+    // 修正：使用新版API路径
+    url: '/api/v1/admin/crawler/intelligence/batch-mark',
     method: 'put',
     data: { ids, status }
   })
@@ -61,7 +68,8 @@ export function batchMarkData(ids, status) {
 // 获取趋势分析数据
 export function getTrendAnalysis(params) {
   return request({
-    url: '/api/admin/crawler/intelligence/trend',
+    // 修正：使用新版API路径
+    url: '/api/v1/admin/crawler/intelligence/trend',
     method: 'get',
     params
   })

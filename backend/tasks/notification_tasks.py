@@ -4,7 +4,7 @@
 import logging
 from datetime import datetime
 from typing import List, Dict, Any, Optional
-from celery import Task
+from celery import Task, shared_task
 from backend.tasks import DatabaseTask, celery_app
 from backend.services.notification_service import NotificationService
 from backend.config import settings
@@ -152,7 +152,10 @@ def send_bulk_emails(self, emails: List[Dict[str, str]]):
                 failed += 1
                 errors.append(f"邮件发送失败: {email_data.get('to_email', '未知')} - {str(e)}")
         
-        logger.info(f"批量邮件发送完成: 成功={sent}, 失败={failed}")
+        if failed > 0:
+            logger.warning(f"批量邮件发送完成: 成功={sent}, 失败={failed}")
+        else:
+            logger.info(f"批量邮件发送完成: 成功={sent}, 失败={failed}")
         
         return {
             "success": True,
@@ -369,7 +372,10 @@ def send_match_notifications(self, match_id: int, notification_type: str = "remi
                 failed += 1
                 errors.append(f"用户 {subscriber.get('user_id', '未知')} 通知失败: {str(e)}")
         
-        logger.info(f"比赛通知发送完成: 比赛={match_id}, 成功={sent}, 失败={failed}")
+        if failed > 0:
+            logger.warning(f"比赛通知发送完成: 比赛={match_id}, 成功={sent}, 失败={failed}")
+        else:
+            logger.info(f"比赛通知发送完成: 比赛={match_id}, 成功={sent}, 失败={failed}")
         
         return {
             "success": True,
@@ -481,7 +487,10 @@ def send_intelligence_alert(self, intelligence_id: int):
                 failed += 1
                 logger.error(f"用户 {subscriber.get('user_id', '未知')} 告警发送失败: {str(e)}")
         
-        logger.info(f"重要情报告警发送完成: 情报={intelligence_id}, 成功={sent}, 失败={failed}")
+        if failed > 0:
+            logger.warning(f"重要情报告警发送完成: 情报={intelligence_id}, 成功={sent}, 失败={failed}")
+        else:
+            logger.info(f"重要情报告警发送完成: 情报={intelligence_id}, 成功={sent}, 失败={failed}")
         
         return {
             "success": True,

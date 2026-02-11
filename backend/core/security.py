@@ -18,6 +18,15 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 import base64
 
+# 导入FastAPI安全相关组件
+from fastapi import HTTPException, status, Depends, Security
+from fastapi.security import OAuth2PasswordBearer
+
+# 导入模型
+from ..models.user import User as NormalUser  # 普通用户模型
+from ..models.admin_user import AdminUser  # 管理员用户模型
+from ..schemas.token import TokenData
+
 # 导入异常类
 from backend.utils.exceptions import (
     AuthenticationError,
@@ -403,70 +412,117 @@ def generate_csrf_token() -> str:
     return secrets.token_urlsafe(32)
 
 
+# 定义OAuth2密码流
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+# 为了兼容性，也使用reusable_oauth2名称
+reusable_oauth2 = oauth2_scheme
+
+
 from fastapi import HTTPException, status, Depends
 from jose import JWTError
 from ..models.admin_user import AdminUser, AdminStatusEnum, AdminRoleEnum
 from ..config import settings
+from .. import crud
 
 
-async def get_current_user(token: str = Depends(__import__('backend.dependencies', fromlist=['oauth2_scheme']).oauth2_scheme)):
+async def get_current_user(token: str = Security(reusable_oauth2)):
     """
-    获取当前用户的依赖项函数
+    根据token获取当前用户
     """
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
-    
     try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-        user_id: int = payload.get("sub")
-        if user_id is None:
+        # 解析JWT token
+        payload = jwt.decode(
+            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
+        )
+        username: str = payload.get("sub")
+        if username is None:
             raise credentials_exception
-    except JWTError:
+        token_data = TokenData(username=username)
+    except jwt.exceptions.DecodeError:
+        # 如果token格式不正确，抛出认证异常
+        raise credentials_exception
+    except jwt.ExpiredSignatureError:
+        # 如果token过期，抛出认证异常
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token has expired",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    except Exception as e:
+        # 其他JWT相关错误
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"JWT token error: {str(e)}")
         raise credentials_exception
     
-    # 从数据库获取用户信息
+    # 根据token中的信息判断是普通用户还是管理员用户
+    user_id = payload.get("user_id")
+    user_type = payload.get("user_type", "admin")  # 默认认为是管理员
+
     from ..database_async import get_async_db
-    from ..crud import admin_user
-    async with get_async_db() as db:
-        user = await admin_user.admin_user.get(db, id=user_id)
-        if user is None:
-            raise credentials_exception
-        return user
+    user = None
+    async for db in get_async_db():
+        if user_type == "admin":
+            # 从管理员用户表中获取用户
+            user = await crud.admin_user.get(db, id=user_id) if user_id else await crud.admin_user.get_by_username(db, username=token_data.username)
+        else:
+            # 从普通用户表中获取用户
+            user = await crud.user.get_by_username(db, username=token_data.username)
+        break
+    
+    if user is None:
+        raise credentials_exception
+    return user
 
 
-async def get_current_active_user(current_user: AdminUser = Depends(get_current_user)):
+async def get_current_active_user(current_user: NormalUser = Security(get_current_user)):
     """
-    获取当前活跃用户的依赖项函数
+    获取当前活跃用户
     """
-    if not current_user:
-        raise AuthenticationError("Not authenticated")
-    if hasattr(current_user, 'is_active') and not current_user.is_active:
-        raise AuthenticationError("用户账户已被禁用")
+    if not crud.user.is_active(current_user):
+        raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
 
 
-async def get_current_active_admin_user(current_user: AdminUser = Depends(get_current_active_user)):
+async def get_current_active_admin_user(
+    current_user: AdminUser = Security(get_current_user)
+) -> AdminUser:
     """
-    获取当前活跃管理员用户的依赖项函数
+    获取当前活跃的管理员用户
     """
-    if not current_user:
-        raise AuthenticationError("Not authenticated")
-    
-    # 检查用户角色
-    if hasattr(current_user, 'role'):
-        if current_user.role not in [AdminRoleEnum.SUPER_ADMIN, AdminRoleEnum.ADMIN, AdminRoleEnum.MODERATOR, AdminRoleEnum.AUDITOR, AdminRoleEnum.OPERATOR]:
-            raise AuthorizationError("需要管理员权限")
-    else:
-        raise AuthorizationError("需要管理员权限")
-    
+    # 检查用户是否为管理员
+    if not hasattr(current_user, 'role') or not current_user.role:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="用户角色信息缺失"
+        )
+
+    # 检查是否为管理员角色
+    if current_user.role not in [AdminRoleEnum.ADMIN, AdminRoleEnum.SUPER_ADMIN]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="权限不足，需要管理员权限"
+        )
+
     # 检查用户状态
-    if hasattr(current_user, 'status'):
-        if current_user.status != AdminStatusEnum.ACTIVE:
-            raise AuthenticationError("管理员账户未激活或被禁用")
-    
+    if not hasattr(current_user, 'status') or not current_user.status:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="用户状态信息缺失"
+        )
+
+    # 检查是否处于活跃状态
+    if current_user.status != AdminStatusEnum.ACTIVE:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="用户账户未激活或已被禁用"
+        )
+
     return current_user
 
 

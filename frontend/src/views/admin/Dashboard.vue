@@ -158,34 +158,9 @@
       </el-col>
     </el-row>
 
-    <!-- 快速操作和最近活动 -->
+    <!-- 最近活动 -->
     <el-row :gutter="20">
-      <el-col :span="8">
-        <el-card class="quick-actions">
-          <template #header>
-            <span>⚡ 快速操作</span>
-          </template>
-          <div class="action-buttons">
-            <el-button type="primary" @click="navigateTo('/admin/intelligent-decision/hedging')" size="small">
-              <i class="el-icon-money" /> 对冲策略管理
-            </el-button>
-            <el-button type="success" @click="navigateTo('/admin/ai-services/providers')" size="small">
-              <i class="el-icon-chat-dot-round" /> AI服务管理
-            </el-button>
-            <el-button type="info" @click="navigateTo('/admin/intelligence/screening')" size="small">
-              <i class="el-icon-search" /> 情报分析
-            </el-button>
-            <el-button type="warning" @click="navigateTo('/admin/match-data/matches')" size="small">
-              <i class="el-icon-football" /> 比赛数据管理
-            </el-button>
-            <el-button type="danger" @click="navigateTo('/admin/data-source/config')" size="small">
-              <i class="el-icon-connection" /> 数据源管理
-            </el-button>
-          </div>
-        </el-card>
-      </el-col>
-
-      <el-col :span="16">
+      <el-col :span="24">
         <el-card class="recent-activities">
           <template #header>
             <div class="section-header">
@@ -215,7 +190,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, nextTick } from 'vue'
+import { ref, reactive, onMounted, nextTick, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import * as echarts from 'echarts'
 
@@ -249,6 +224,15 @@ const activityTrendChart = ref(null)
 const predictionAccuracyChart = ref(null)
 const aiServiceChart = ref(null)
 const decisionPerformanceChart = ref(null)
+
+// 图表实例
+const activityTrendChartInstance = ref(null)
+const predictionAccuracyChartInstance = ref(null)
+const aiServiceChartInstance = ref(null)
+const decisionPerformanceChartInstance = ref(null)
+
+// 清理函数
+const cleanupFunctions = ref([])
 
 // 初始化数据
 const initializeData = () => {
@@ -339,9 +323,14 @@ const refreshData = async () => {
 const updateCharts = async () => {
   await nextTick()
   
+  // 执行之前的清理函数
+  cleanupFunctions.value.forEach(fn => fn())
+  cleanupFunctions.value = []
+  
   // 活动趋势图
   if (activityTrendChart.value) {
     const chart = echarts.init(activityTrendChart.value)
+    activityTrendChartInstance.value = chart
     chart.setOption({
       tooltip: {
         trigger: 'axis'
@@ -370,12 +359,41 @@ const updateCharts = async () => {
         }
       ]
     })
-    window.addEventListener('resize', () => chart.resize())
+    // 添加防抖功能以避免过多的resize事件
+    let resizeTimeout = null;
+    const debouncedResize = () => {
+      if (resizeTimeout) {
+        clearTimeout(resizeTimeout);
+      }
+      resizeTimeout = setTimeout(() => {
+        chart?.resize();
+      }, 100);
+    };
+    window.addEventListener('resize', debouncedResize);
+    
+    // 注册清理函数
+    cleanupFunctions.value.push(() => {
+      window.removeEventListener('resize', debouncedResize);
+      if (resizeTimeout) {
+        clearTimeout(resizeTimeout);
+      }
+      chart?.dispose();
+    });
   }
 
   // 预测准确率变化
   if (predictionAccuracyChart.value) {
     const chart = echarts.init(predictionAccuracyChart.value)
+    predictionAccuracyChartInstance.value = chart
+    let resizeTimeout2 = null;
+    const debouncedResize2 = () => {
+      if (resizeTimeout2) {
+        clearTimeout(resizeTimeout2);
+      }
+      resizeTimeout2 = setTimeout(() => {
+        chart?.resize();
+      }, 100);
+    };
     chart.setOption({
       tooltip: {
         trigger: 'axis'
@@ -403,12 +421,31 @@ const updateCharts = async () => {
         }
       ]
     })
-    window.addEventListener('resize', () => chart.resize())
+    window.addEventListener('resize', debouncedResize2)
+    
+    // 注册清理函数
+    cleanupFunctions.value.push(() => {
+      window.removeEventListener('resize', debouncedResize2);
+      if (resizeTimeout2) {
+        clearTimeout(resizeTimeout2);
+      }
+      chart?.dispose();
+    });
   }
 
   // AI服务使用情况
   if (aiServiceChart.value) {
     const chart = echarts.init(aiServiceChart.value)
+    aiServiceChartInstance.value = chart
+    let resizeTimeout3 = null;
+    const debouncedResize3 = () => {
+      if (resizeTimeout3) {
+        clearTimeout(resizeTimeout3);
+      }
+      resizeTimeout3 = setTimeout(() => {
+        chart?.resize();
+      }, 100);
+    };
     chart.setOption({
       tooltip: {
         trigger: 'item'
@@ -439,12 +476,31 @@ const updateCharts = async () => {
         }
       ]
     })
-    window.addEventListener('resize', () => chart.resize())
+    window.addEventListener('resize', debouncedResize3)
+    
+    // 注册清理函数
+    cleanupFunctions.value.push(() => {
+      window.removeEventListener('resize', debouncedResize3);
+      if (resizeTimeout3) {
+        clearTimeout(resizeTimeout3);
+      }
+      chart?.dispose();
+    });
   }
 
   // 智能决策表现
   if (decisionPerformanceChart.value) {
     const chart = echarts.init(decisionPerformanceChart.value)
+    decisionPerformanceChartInstance.value = chart
+    let resizeTimeout4 = null;
+    const debouncedResize4 = () => {
+      if (resizeTimeout4) {
+        clearTimeout(resizeTimeout4);
+      }
+      resizeTimeout4 = setTimeout(() => {
+        chart?.resize();
+      }, 100);
+    };
     chart.setOption({
       tooltip: {
         trigger: 'axis',
@@ -506,7 +562,16 @@ const updateCharts = async () => {
         }
       ]
     })
-    window.addEventListener('resize', () => chart.resize())
+    window.addEventListener('resize', debouncedResize4);
+    
+    // 注册清理函数
+    cleanupFunctions.value.push(() => {
+      window.removeEventListener('resize', debouncedResize4);
+      if (resizeTimeout4) {
+        clearTimeout(resizeTimeout4);
+      }
+      chart?.dispose();
+    });
   }
 }
 
@@ -514,6 +579,11 @@ const updateCharts = async () => {
 const updateTime = () => {
   currentTime.value = new Date().toLocaleString('zh-CN')
 }
+
+// 组件卸载时清理资源
+onUnmounted(() => {
+  cleanupFunctions.value.forEach(fn => fn())
+})
 
 // 组件挂载时初始化
 onMounted(() => {
@@ -552,57 +622,50 @@ onMounted(() => {
 }
 
 .stat-card {
-  height: 100px;
+  min-height: 100px;
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
+  overflow: visible;
 }
 
 .stat-content {
   display: flex;
   align-items: center;
   width: 100%;
+  padding: 15px;
 }
-
-.stat-icon {
-  font-size: 24px;
-  margin-right: 15px;
-  color: #fff;
-  width: 50px;
-  height: 50px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  background: #409eff;
-}
-
-.match-data .stat-icon { background: #3b82f6; }
-.intelligence-data .stat-icon { background: #8b5cf6; }
-.crawler-status .stat-icon { background: #10b981; }
-.prediction-accuracy .stat-icon { background: #f59e0b; }
-.user-activity .stat-icon { background: #ef4444; }
-.system-performance .stat-icon { background: #6366f1; }
 
 .stat-info {
   text-align: left;
   flex: 1;
+  min-width: 0;
 }
 
 .stat-label {
   font-size: 14px;
   color: #909399;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .stat-value {
   font-size: 24px;
   font-weight: bold;
   color: #303133;
+  margin: 5px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .stat-change {
   font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .trend-indicator {
@@ -630,25 +693,28 @@ onMounted(() => {
   width: 100%;
 }
 
-.quick-actions .action-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.quick-actions .el-button {
-  width: 100%;
-  justify-content: flex-start;
-}
 
 .recent-activities {
-  height: 300px;
+  min-height: 300px;
+  overflow: visible;
 }
 
 .section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.el-card__body {
+  padding: 0;
+}
+
+.stat-card .el-card__body {
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
 }
 
 @media (max-width: 768px) {

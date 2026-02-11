@@ -14,7 +14,7 @@ class ConversationAgent:
         self.llm_service = llm_service
         self.context_history = {}  # 存储对话历史
     
-    def respond_to_user(self, user_input: str, user_id: str = "default") -> str:
+    async def respond_to_user(self, user_input: str, user_id: str = "default") -> str:
         """响应用户输入"""
         try:
             # 获取用户对话历史
@@ -41,21 +41,25 @@ class ConversationAgent:
             请提供专业、友好且信息丰富的回复。
             """
             
-            response = self.llm_service.generate_response(
+            response = await self.llm_service.generate_response(
                 context_prompt,
-                provider="qwen",  # 对话场景使用通义千问
+                provider="zhipuai",  # 使用智谱AI提供商
                 temperature=0.7,
                 max_tokens=400
             )
             
-            # 更新对话历史
-            self._update_history(user_id, user_input, response)
+            # 更新对话历史 - 使用角色标记的格式
+            history.append({"role": "user", "content": user_input})
+            history.append({"role": "assistant", "content": response})
+            # 限制历史记录长度以避免上下文过长
+            if len(history) > 10:
+                history = history[-10:]
+            self.context_history[user_id] = history
             
             return response
-            
         except Exception as e:
-            logger.error(f"对话助手响应失败: {e}")
-            return "抱歉，我现在遇到了一些技术问题，请稍后再试。"
+            logger.error(f"生成响应失败: {str(e)}")
+            return "抱歉，我暂时无法回答这个问题。请稍后再试。"
     
     def _format_history(self, history: List[Dict[str, str]]) -> str:
         """格式化对话历史"""
@@ -64,8 +68,8 @@ class ConversationAgent:
         
         formatted = []
         for item in history[-5:]:  # 只保留最近5次对话
-            formatted.append(f"用户: {item['user_input']}")
-            formatted.append(f"助手: {item['response']}")
+            role = "用户" if item["role"] == "user" else "助手"
+            formatted.append(f"{role}: {item['content']}")
         
         return "\n".join(formatted)
     

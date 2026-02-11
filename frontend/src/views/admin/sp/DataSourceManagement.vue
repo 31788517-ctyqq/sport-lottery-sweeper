@@ -143,8 +143,8 @@
         
         <el-form-item label="类型" prop="type">
           <el-radio-group v-model="form.type" @change="handleTypeChange">
-            <el-radio label="api">API接口</el-radio>
-            <el-radio label="file">本地文件</el-radio>
+            <el-radio value="api">API接口</el-radio>
+            <el-radio value="file">本地文件</el-radio>
           </el-radio-group>
         </el-form-item>
         

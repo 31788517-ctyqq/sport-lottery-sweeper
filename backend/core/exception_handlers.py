@@ -10,6 +10,7 @@ from fastapi.exceptions import RequestValidationError
 from pydantic import ValidationError
 
 from .response import error_response
+from .exceptions import NullValueError, EmptyResultError
 
 async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
     """
@@ -108,9 +109,55 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         content=error_data
     )
 
+# AI_WORKING: coder1 @2026-02-04 - 添加null值异常处理器
+async def null_value_exception_handler(request: Request, exc: NullValueError) -> JSONResponse:
+    """
+    Null值异常处理器
+    
+    Args:
+        request: 请求对象
+        exc: NullValueError异常实例
+        
+    Returns:
+        JSONResponse: 标准化的错误响应
+    """
+    error_data = error_response(
+        message=str(exc),
+        code=400,
+        error_code="NULL_VALUE_ERROR"
+    )
+    return JSONResponse(
+        status_code=400,
+        content=error_data
+    )
+
+async def empty_result_exception_handler(request: Request, exc: EmptyResultError) -> JSONResponse:
+    """
+    空结果异常处理器
+    
+    Args:
+        request: 请求对象
+        exc: EmptyResultError异常实例
+        
+    Returns:
+        JSONResponse: 标准化的错误响应
+    """
+    error_data = error_response(
+        message=str(exc),
+        code=404,
+        error_code="EMPTY_RESULT_ERROR"
+    )
+    return JSONResponse(
+        status_code=404,
+        content=error_data
+    )
+# AI_DONE: coder1 @2026-02-04
+
 __all__ = [
     "http_exception_handler",
     "sqlalchemy_exception_handler",
     "general_exception_handler",
-    "validation_exception_handler"
+    "validation_exception_handler",
+    "null_value_exception_handler",
+    "empty_result_exception_handler"
 ]

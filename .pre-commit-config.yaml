@@ -1,0 +1,183 @@
+# 代码质量预提交钩子配置
+repos:
+  # 1. 通用代码质量检查
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace          # 删除行尾空格
+      - id: end-of-file-fixer            # 确保文件以换行符结束
+      - id: check-yaml                   # 检查YAML语法
+      - id: check-added-large-files      # 防止提交大文件
+      - id: check-merge-conflict         # 检查合并冲突标记
+      - id: check-case-conflict          # 检查大小写冲突
+      - id: check-ast                    # 检查Python语法
+      - id: check-json                   # 检查JSON语法
+      - id: check-toml                   # 检查TOML语法
+      - id: check-xml                    # 检查XML语法
+      - id: mixed-line-ending            # 统一换行符
+
+  # 2. Python代码格式化
+  - repo: https://github.com/psf/black
+    rev: 23.12.1
+    hooks:
+      - id: black
+        language_version: python3.11
+        args: ['--line-length=88', '--target-version=py311']
+
+  # 3. Python导入排序
+  - repo: https://github.com/PyCQA/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        name: isort (python)
+        args: ["--profile", "black"]
+
+  # 4. Python代码风格检查
+  - repo: https://github.com/PyCQA/flake8
+    rev: 6.1.0
+    hooks:
+      - id: flake8
+        additional_dependencies: [
+          'flake8-bugbear==23.12.2',
+          'flake8-comprehensions==3.14.0',
+          'flake8-docstrings==1.7.0',
+          'flake8-pytest-style==1.7.2',
+        ]
+        args: [
+          '--max-line-length=88',
+          '--extend-ignore=E203,W503',
+          '--exclude=.git,__pycache__,build,dist,.venv,venv,node_modules',
+        ]
+
+  # 5. Python类型检查
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.8.0
+    hooks:
+      - id: mypy
+        additional_dependencies: [
+          'types-requests==2.31.0.10',
+          'types-python-dateutil==2.8.19.14',
+          'types-pyyaml==6.0.12.12',
+          'sqlalchemy-stubs==0.4',
+        ]
+        args: [
+          '--ignore-missing-imports',
+          '--no-implicit-optional',
+          '--strict-equality',
+          '--warn-unused-ignores',
+          '--show-error-codes',
+          '--follow-imports=silent',
+          '--explicit-package-bases',
+          '--python-executable', 'python3',
+        ]
+        exclude: '^(tests|scripts|migrations|alembic)/'
+
+  # 6. Python安全漏洞检查
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.7
+    hooks:
+      - id: bandit
+        args: ['-c', 'pyproject.toml', '-r', 'backend', '-ll']
+        exclude: '^(tests|scripts|migrations|alembic)/'
+
+  # 7. Python依赖检查
+  - repo: https://github.com/jackdewinter/dependency-check
+    rev: v2.2.0
+    hooks:
+      - id: dependency-check
+        args: ['--requirements-file=requirements.txt', '--requirements-file=requirements-dev.txt']
+
+  # 8. 前端代码检查（如果存在前端代码）
+  - repo: https://github.com/pre-commit/mirrors-eslint
+    rev: v8.56.0
+    hooks:
+      - id: eslint
+        files: \.(js|jsx|ts|tsx|vue)$
+        exclude: '(node_modules|\.next|dist|build)'
+        additional_dependencies:
+          - 'eslint@^8.56.0'
+          - '@typescript-eslint/eslint-plugin@^6.15.0'
+          - '@typescript-eslint/parser@^6.15.0'
+          - 'eslint-plugin-vue@^9.19.0'
+        args:
+          - '--fix'
+
+  # 9. 提交消息格式检查
+  - repo: https://github.com/jorisroovers/gitlint
+    rev: v0.19.1
+    hooks:
+      - id: gitlint
+        stages: [commit-msg]
+
+  # 10. 检测调试代码
+  - repo: https://github.com/Lucas-C/pre-commit-hooks
+    rev: v1.5.1
+    hooks:
+      - id: forbid-crlf
+      - id: forbid-tabs
+      - id: remove-tabs
+
+  # 11. 检测TODO/FIXME注释
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: check-executables-have-shebangs
+      - id: check-shebang-scripts-are-executable
+      - id: check-symlinks
+      - id: detect-private-key
+
+  # 12. 自定义Python代码检查
+  - repo: local
+    hooks:
+      - id: pylint-custom
+        name: pylint (backend)
+        entry: python -m pylint
+        language: system
+        types: [python]
+        files: ^backend/
+        args:
+          - '--rcfile=pyproject.toml'
+          - '--exit-zero'  # 仅警告，不阻止提交
+        pass_filenames: false
+
+  # 13. 检测未使用的导入
+  - repo: https://github.com/hadialqattan/pycln
+    rev: v2.4.0
+    hooks:
+      - id: pycln
+        args: [--config=pyproject.toml]
+        files: ^backend/
+
+  # 14. 检测循环导入
+  - repo: https://github.com/PyCQA/flake8-import-order
+    rev: 0.18.2
+    hooks:
+      - id: flake8-import-order
+        args: ['--application-import-names=backend,shared']
+
+# 全局排除文件
+exclude: |
+  (?x)^(
+    \.git|
+    \.venv|
+    venv|
+    node_modules|
+    __pycache__|
+    build|
+    dist|
+    \.pytest_cache|
+    \.coverage|
+    \.eggs|
+    \.tox|
+    \.mypy_cache|
+    \.ruff_cache|
+    \.ipynb_checkpoints|
+    alembic/versions/.*\.py|
+    docs/|
+    frontend/public/|
+    frontend/dist/|
+    uploads/|
+    logs/|
+    data/|
+    \.codebuddy/
+  )

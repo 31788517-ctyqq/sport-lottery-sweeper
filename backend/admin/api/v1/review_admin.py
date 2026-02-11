@@ -4,7 +4,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, Body
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional, Dict, Any
-from datetime import datetime
+from datetime import datetime, timezone
 
 from ....api.deps import get_db
 from ....models.data_review import DataReview, DataTypeEnum, ReviewStatusEnum
@@ -183,7 +183,7 @@ async def approve_review(
         # 执行批准操作
         review.review_status = "approved"
         review.review_notes = notes
-        review.reviewed_at = datetime.utcnow()
+        review.reviewed_at = datetime.now(timezone.utc)
         await db.commit()
         
         return UnifiedResponse.success({
@@ -222,7 +222,7 @@ async def reject_review(
         # 执行拒绝操作
         review.review_status = "rejected"
         review.review_notes = notes
-        review.reviewed_at = datetime.utcnow()
+        review.reviewed_at = datetime.now(timezone.utc)
         await db.commit()
         
         return UnifiedResponse.success({
@@ -262,7 +262,7 @@ async def modify_review(
         review.review_status = "modified"
         if notes:
             review.review_notes = notes
-        review.reviewed_at = datetime.utcnow()
+        review.reviewed_at = datetime.now(timezone.utc)
         await db.commit()
         
         return UnifiedResponse.success({

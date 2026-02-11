@@ -77,7 +77,7 @@
         <el-table-column label="操作" width="180" fixed="right">
           <template #default="{ row }">
             <el-button size="small" @click="editSource(row)">修改</el-button>
-            <el-button size="small" type="danger" @click="deleteSource(row.id)">删除</el-button>
+            <el-button size="small" type="danger" @click="handleDeleteSource(row.id)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -200,7 +200,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getSources, createSource, deleteSource } from '@/api/crawlerConfig.js'
+import { getSources, createSource, deleteSource } from '@/api/crawlerSource.js'
 
 // 数据源列表
 const sources = ref([])
@@ -532,7 +532,7 @@ function editSource(row) {
 }
 
 // 删除数据源
-async function deleteSource(id) {
+async function handleDeleteSource(id) {
   try {
     await ElMessageBox.confirm('确定要删除此数据源吗？', '确认删除', {
       type: 'warning'
@@ -549,8 +549,7 @@ async function deleteSource(id) {
     }
   } catch (error) {
     if (error !== 'cancel') {
-      console.error('删除失败:', error)
-      ElMessage.error('删除失败')
+      ElMessage.error('删除失败: ' + error.message)
     }
   }
 }

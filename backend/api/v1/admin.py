@@ -10,67 +10,149 @@ logger = logging.getLogger("api.v1.admin")
 # 创建主路由器
 router = APIRouter()
 
-# Import other modules with error handling
-import logging
-logger = logging.getLogger(__name__)
+print("Admin module: Starting to import user management modules...")
 
-def safe_import(module_path, router_name="router"):
-    try:
-        module = __import__(module_path, fromlist=[router_name])
-        return getattr(module, router_name)
-    except ImportError as e:
-        logger.warning(f"Failed to import {module_path}.{router_name}: {e}")
-        return None
-    except Exception as e:
-        logger.warning(f"Unexpected error importing {module_path}.{router_name}: {e}")
-        return None
+# 直接导入用户管理模块
+try:
+    from backend.api.v1.users import router as users_router
+    print(f"Admin module: Successfully imported users router with {len(users_router.routes)} routes")
+    router.include_router(users_router, prefix="/users", tags=["users"])
+    print(f"Admin module: Added users router, now has {len(router.routes)} routes")
+except Exception as e:
+    print(f"Admin module: Failed to import/add users router: {e}")
+    import traceback
+    traceback.print_exc()
 
-# Import routers safely
-from .users import router as users_router
-from .admin_user_management import router as admin_user_management_router
-from .frontend_user_management import router as frontend_user_management_router
-from .simple_user_api import router as simple_user_api_router
-crawler_router = safe_import(".crawler", "router")
-from .sp_management import router as sp_management_router
-from .draw_prediction import router as draw_prediction_router
-from .hedging import router as hedging_router
-from .intelligence import router as intelligence_router
-from .match_admin import router as match_admin_router
-from .admin.matches import router as admin_matches_router
-from .monitoring_dashboard import router as monitoring_dashboard_router
-from .logs import router as logs_router  # 添加日志模块路由
+try:
+    from backend.api.v1.admin_user_management import router as admin_user_management_router
+    print(f"Admin module: Successfully imported admin_user_management router with {len(admin_user_management_router.routes)} routes")
+    router.include_router(admin_user_management_router, prefix="/admin-users", tags=["admin-users"])
+    print(f"Admin module: Added admin_user_management router, now has {len(router.routes)} routes")
+except Exception as e:
+    print(f"Admin module: Failed to import/add admin_user_management router: {e}")
+    import traceback
+    traceback.print_exc()
 
-# ===== Login interface (from file A) =====
+try:
+    from backend.api.v1.frontend_user_management import router as frontend_user_management_router
+    print(f"Admin module: Successfully imported frontend_user_management router with {len(frontend_user_management_router.routes)} routes")
+    router.include_router(frontend_user_management_router, prefix="/frontend-users", tags=["frontend-users"])
+    print(f"Admin module: Added frontend_user_management router, now has {len(router.routes)} routes")
+except Exception as e:
+    print(f"Admin module: Failed to import/add frontend_user_management router: {e}")
+    import traceback
+    traceback.print_exc()
+
+try:
+    from backend.api.v1.simple_user_api import router as simple_user_api_router
+    print(f"Admin module: Successfully imported simple_user_api router with {len(simple_user_api_router.routes)} routes")
+    router.include_router(simple_user_api_router, prefix="/simple-users", tags=["simple-users"])
+    print(f"Admin module: Added simple_user_api router, now has {len(router.routes)} routes")
+except Exception as e:
+    print(f"Admin module: Failed to import/add simple_user_api router: {e}")
+    import traceback
+    traceback.print_exc()
+
+# Handle crawler router import safely
+try:
+    from backend.api.v1.crawler import router as crawler_router
+    print(f"Admin module: Successfully imported crawler router")
+    router.include_router(crawler_router, prefix="/crawler", tags=["crawler"])
+    print(f"Admin module: Added crawler router, now has {len(router.routes)} routes")
+except Exception as e:
+    print(f"Admin module: Failed to import/add crawler router: {e}")
+
+try:
+    from backend.api.v1.sp_management import router as sp_management_router
+    print(f"Admin module: Successfully imported sp_management router")
+    router.include_router(sp_management_router, prefix="/sp", tags=["sp-management"])
+    print(f"Admin module: Added sp_management router, now has {len(router.routes)} routes")
+except Exception as e:
+    print(f"Admin module: Failed to import/add sp_management router: {e}")
+    import traceback
+    traceback.print_exc()
+
+try:
+    from backend.api.v1.draw_prediction import router as draw_prediction_router
+    print(f"Admin module: Successfully imported draw_prediction router")
+    router.include_router(draw_prediction_router, prefix="/draw-prediction", tags=["draw-prediction"])
+    print(f"Admin module: Added draw_prediction router, now has {len(router.routes)} routes")
+except Exception as e:
+    print(f"Admin module: Failed to import/add draw_prediction router: {e}")
+    import traceback
+    traceback.print_exc()
+
+try:
+    from backend.api.v1.hedging import router as hedging_router
+    print(f"Admin module: Successfully imported hedging router")
+    router.include_router(hedging_router, prefix="/hedging", tags=["hedging"])
+    print(f"Admin module: Added hedging router, now has {len(router.routes)} routes")
+except Exception as e:
+    print(f"Admin module: Failed to import/add hedging router: {e}")
+    import traceback
+    traceback.print_exc()
+
+try:
+    from backend.api.v1.intelligence import router as intelligence_router
+    print(f"Admin module: Successfully imported intelligence router")
+    router.include_router(intelligence_router, prefix="/intelligence", tags=["intelligence"])
+    print(f"Admin module: Added intelligence router, now has {len(router.routes)} routes")
+except Exception as e:
+    print(f"Admin module: Failed to import/add intelligence router: {e}")
+    import traceback
+    traceback.print_exc()
+
+try:
+    from backend.api.v1.match_admin import router as match_admin_router
+    print(f"Admin module: Successfully imported match_admin router")
+    router.include_router(match_admin_router, prefix="/match", tags=["match-admin"])
+    print(f"Admin module: Added match_admin router, now has {len(router.routes)} routes")
+except Exception as e:
+    print(f"Admin module: Failed to import/add match_admin router: {e}")
+    import traceback
+    traceback.print_exc()
+
+# Skip admin.matches since it may not exist
+try:
+    from backend.api.v1.admin.matches import router as admin_matches_router
+    print(f"Admin module: Successfully imported admin_matches router")
+    router.include_router(admin_matches_router, prefix="/matches", tags=["admin-matches"])
+    print(f"Admin module: Added admin_matches router, now has {len(router.routes)} routes")
+except ImportError:
+    print("Admin module: admin.matches module not found, skipping...")
+
+# Skip monitoring_dashboard since it has dependency issues
+print("Admin module: Skipping monitoring_dashboard due to dependency issues")
+
+# Note: We're not including monitoring_dashboard_router due to import issues
+
+try:
+    from backend.api.v1.admin.logs import router as logs_router
+    print(f"Admin module: Successfully imported logs router")
+    router.include_router(logs_router, prefix="/system", tags=["logs"])  # Register logs module to /system path so the API endpoint is /api/v1/admin/system/logs/
+    print(f"Admin module: Added logs router, now has {len(router.routes)} routes")
+except Exception as e:
+    print(f"Admin module: Failed to import/add logs router: {e}")
+    import traceback
+    traceback.print_exc()
+
+print(f"Admin module: Final route count: {len(router.routes)}")
+
+# ===== Login interface =====
 @router.post(
     "/login",
     response_model=LoginResponse,
     summary="管理员登录",
     description="管理员用户通过用户名和密码进行登录认证",
 )
-async def login(  # 添加缺失的函数定义
-    login_data: LoginRequest,
-    db=Depends(get_db)
-):
-    """管理员登录接口
-    
-    Args:
-        login_data: 登录凭证
-        
-    Returns:
-        LoginResponse: 包含token等信息的响应
-        
-    Raises:
-        HTTPException: 认证失败时抛出异常
-    """
-    # 导入认证函数
+async def login(login_data: LoginRequest, db=Depends(get_db)):
+    """管理员登录接口"""
     from backend.auth.admin_auth import authenticate_admin_user
     
-    # 尝试认证
     admin_user = authenticate_admin_user(db, login_data.username, login_data.password)
     
     if not admin_user:
         logger.warning(f"管理员登录失败: username={login_data.username}")
-        # 检查是否为账户锁定状态
         from backend.models.admin_user import AdminUser
         user = db.query(AdminUser).filter(AdminUser.username == login_data.username).first()
         if user and user.is_locked:
@@ -78,12 +160,10 @@ async def login(  # 添加缺失的函数定义
             raise HTTPException(status_code=423, detail="账户已被锁定，请联系系统管理员")
         raise HTTPException(status_code=401, detail="用户名或密码错误")
     
-    # 重置失败登录计数
     admin_user.failed_login_attempts = 0
     admin_user.last_login_at = datetime.utcnow()
     db.commit()
     
-    # 创建响应
     response = LoginResponse(
         access_token=admin_user.generate_token(),
         token_type="bearer",
@@ -99,18 +179,4 @@ async def login(  # 添加缺失的函数定义
     
     return response
 
-# 注册子路由
-router.include_router(users_router, prefix="/users", tags=["users"])
-router.include_router(admin_user_management_router, prefix="/admin-users", tags=["admin-users"])
-router.include_router(frontend_user_management_router, prefix="/frontend-users", tags=["frontend-users"])
-router.include_router(simple_user_api_router, prefix="/simple-users", tags=["simple-users"])
-if crawler_router:
-    router.include_router(crawler_router, prefix="/crawler", tags=["crawler"])
-router.include_router(sp_management_router, prefix="/sp", tags=["sp-management"])
-router.include_router(draw_prediction_router, prefix="/draw-prediction", tags=["draw-prediction"])
-router.include_router(hedging_router, prefix="/hedging", tags=["hedging"])
-router.include_router(intelligence_router, prefix="/intelligence", tags=["intelligence"])
-router.include_router(match_admin_router, prefix="/match", tags=["match-admin"])
-router.include_router(admin_matches_router, prefix="/matches", tags=["admin-matches"])
-router.include_router(monitoring_dashboard_router, prefix="/monitoring", tags=["monitoring"])
-router.include_router(logs_router, prefix="/system", tags=["logs"])  # 注册日志模块到/system路径下，这样API端点就是 /api/v1/admin/system/logs/
+print("Admin module: Module loaded successfully")

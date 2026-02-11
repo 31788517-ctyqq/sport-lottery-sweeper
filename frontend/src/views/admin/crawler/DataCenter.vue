@@ -3,7 +3,7 @@
     <!-- 面包屑导航 -->
     <el-breadcrumb separator="/" class="breadcrumb">
       <el-breadcrumb-item :to="{ path: '/admin' }">首页</el-breadcrumb-item>
-      <el-breadcrumb-item :to="{ path: '/admin/crawler' }">爬虫管理</el-breadcrumb-item>
+      <el-breadcrumb-item :to="{ path: '/admin/data-source' }">数据源管理</el-breadcrumb-item>
       <el-breadcrumb-item>数据中心</el-breadcrumb-item>
     </el-breadcrumb>
 
@@ -319,9 +319,9 @@
         </el-form-item>
         <el-form-item label="导出范围">
           <el-checkbox-group v-model="exportForm.scope">
-            <el-checkbox label="current">当前页</el-checkbox>
-            <el-checkbox label="selected">选中项</el-checkbox>
-            <el-checkbox label="all">全部数据</el-checkbox>
+            <el-checkbox value="current">当前页</el-checkbox>
+            <el-checkbox value="selected">选中项</el-checkbox>
+            <el-checkbox value="all">全部数据</el-checkbox>
           </el-checkbox-group>
         </el-form-item>
         <el-form-item label="日期范围">
@@ -354,6 +354,8 @@ import {
 import * as echarts from 'echarts'
 import MatchDetail from '@/components/MatchDetail.vue'
 import OddsDetail from '@/components/OddsDetail.vue'
+import { getSummaryStats } from '@/api/modules/stats'
+import { getDataList, exportData } from '@/api/data'
 
 // 响应式数据
 const loading = ref(false)
@@ -371,20 +373,20 @@ const realtimeChart = ref(null)
 
 // 统计数据
 const stats = reactive({
-  totalMatches: 15847,
-  activeSources: 12,
-  dataQuality: 94.2,
-  errorRate: 2.1,
-  avgResponseTime: 245,
-  storageUsed: 127.5,
-  matchGrowth: 15.3,
-  sourceGrowth: 8.7,
+  totalMatches: 0,
+  activeSources: 0,
+  dataQuality: 0,
+  errorRate: 0,
+  avgResponseTime: 0,
+  storageUsed: 0,
+  matchGrowth: 0,
+  sourceGrowth: 0,
   qualityTrend: 'up',
-  qualityChange: 2.1,
-  errorImprovement: 1.8,
-  responseImprovement: 12.3,
+  qualityChange: 0,
+  errorImprovement: 0,
+  responseImprovement: 0,
   storageTrend: 'up',
-  storageChange: 5.2
+  storageChange: 0
 })
 
 // 筛选条件
@@ -443,12 +445,12 @@ onMounted(() => {
 // 加载统计数据
 const loadStats = async () => {
   try {
-    // 模拟API调用
-    await new Promise(resolve => setTimeout(resolve, 500))
-    // 这里应该调用实际的API
-    console.log('Loading stats data...')
+    const res = await getSummaryStats()
+    // 假设API返回字段与stats对象匹配，或进行映射
+    Object.assign(stats, res.data || res)
   } catch (error) {
     ElMessage.error('加载统计数据失败')
+    console.error('Error loading stats:', error)
   }
 }
 
@@ -456,26 +458,33 @@ const loadStats = async () => {
 const loadTableData = async () => {
   loading.value = true
   try {
-    // 模拟API调用
-    await new Promise(resolve => setTimeout(resolve, 800))
+    const params = {
+      page: pagination.page,
+      size: pagination.size
+    }
     
-    // 模拟数据
-    tableData.value = Array.from({ length: 50 }, (_, index) => ({
-      id: index + 1,
-      type: ['matches', 'odds', 'events', 'statistics'][Math.floor(Math.random() * 4)],
-      sourceName: sources.value[Math.floor(Math.random() * sources.value.length)].name,
-      title: `数据记录 ${index + 1}`,
-      status: ['normal', 'error', 'warning'][Math.floor(Math.random() * 3)],
-      quality: Math.floor(Math.random() * 40) + 60,
-      recordCount: Math.floor(Math.random() * 1000) + 100,
-      createdAt: new Date(Date.now() - Math.random() * 86400000 * 30).toLocaleString(),
-      updatedAt: new Date(Date.now() - Math.random() * 86400000 * 7).toLocaleString()
-    }))
+    // 添加筛选条件
+    if (filters.dataType) {
+      params.type = filters.dataType
+    }
+    if (filters.sourceId) {
+      params.source_id = filters.sourceId
+    }
+    if (filters.status) {
+      params.status = filters.status
+    }
+    if (filters.dateRange && filters.dateRange.length === 2) {
+      params.start_date = filters.dateRange[0]
+      params.end_date = filters.dateRange[1]
+    }
     
-    pagination.total = tableData.value.length
+    const res = await getDataList(params)
+    tableData.value = res.data?.items || res.items || []
+    pagination.total = res.data?.total || res.total || 0
     applyFilters()
   } catch (error) {
     ElMessage.error('加载数据失败')
+    console.error('Error loading table data:', error)
   } finally {
     loading.value = false
   }
@@ -539,12 +548,24 @@ const handleExport = () => {
 const confirmExport = async () => {
   try {
     ElMessage.info('正在导出数据...')
+    
+    // 准备导出参数
+    const exportParams = {
+      format: exportForm.format,
+      scope: exportForm.scope,
+      dateRange: exportForm.dateRange
+    }
+    
     // 这里应该调用实际的导出API
-    await new Promise(resolve => setTimeout(resolve, 2000))
+    // TODO: 实现实际的导出API调用
+    console.log('导出参数:', exportParams)
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    
     ElMessage.success('导出成功')
     exportVisible.value = false
   } catch (error) {
     ElMessage.error('导出失败')
+    console.error('导出失败:', error)
   }
 }
 

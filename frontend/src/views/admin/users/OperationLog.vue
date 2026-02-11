@@ -248,8 +248,8 @@
       <el-form :model="cleanupForm" label-width="100px">
         <el-form-item label="清理条件">
           <el-radio-group v-model="cleanupForm.condition">
-            <el-radio label="days">保留最近</el-radio>
-            <el-radio label="count">保留最新</el-radio>
+            <el-radio value="days">保留最近</el-radio>
+            <el-radio value="count">保留最新</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item label="天数" v-if="cleanupForm.condition === 'days'">

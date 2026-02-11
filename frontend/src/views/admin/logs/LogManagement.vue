@@ -73,32 +73,36 @@
       </div>
     </el-card>
 
-    <el-card class="recent-logs">
-      <div slot="header">
+    <!-- 最近日志 -->
+    <el-card class="recent-logs-card">
+      <template #header>
         <span>最近日志</span>
-        <el-button style="float: right; padding: 3px 0" type="link" @click="refreshRecentLogs">刷新</el-button>
-      </div>
-      <el-table :data="recentLogs" style="width: 100%" v-loading="loadingRecent">
-        <el-table-column prop="timestamp" label="时间" width="180"></el-table-column>
-        <el-table-column prop="level" label="级别" width="100">
-          <template slot-scope="scope">
-            <el-tag :type="getTagType(scope.row.level)">{{ scope.row.level }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="module" label="模块" width="120"></el-table-column>
-        <el-table-column prop="message" label="消息"></el-table-column>
-      </el-table>
+        <el-button type="link" @click="refreshData">刷新</el-button>
+      </template>
+      <LogTable
+        :logs="recentLogs"
+        :loading="loadingRecent"
+        :show-filters="false"
+        :show-actions="false"
+        :show-pagination="false"
+        @view-details="viewLogDetails"
+      />
     </el-card>
   </div>
 </template>
 
 <script>
-import axios from 'axios';
+import http from '@/utils/http';  // 使用配置了拦截器的实例
+import LogTable from '@/components/LogTable.vue';
+import { processLogResponse } from '@/utils/logUtils.js';
 
 const API_BASE = '/api/v1/admin/system';
 
 export default {
   name: 'LogManagement',
+  components: {
+    LogTable
+  },
   data() {
     return {
       totalLogs: 0,
@@ -127,37 +131,70 @@ export default {
           return 'info'
       }
     },
+
+    getLogTypeTagType(logType) {
+      switch(logType) {
+        case 'system':
+          return 'primary'
+        case 'user':
+          return 'success'
+        case 'security':
+          return 'warning'
+        case 'api':
+          return 'info'
+        default:
+          return 'default'
+      }
+    },
     
     async loadStatistics() {
       try {
-        const response = await axios.get(`${API_BASE}/logs/db/statistics`);
-        const stats = response.data;
+        const stats = await http.get(`${API_BASE}/logs/db/statistics`);  // 使用http实例
         
         this.totalLogs = stats.total_logs || 0;
-        this.errorLogs = stats.level_stats?.find(stat => stat.level === 'ERROR')?.count || 0;
-        this.userActivities = stats.module_stats?.find(stat => stat.module === 'user')?.count || 0;
-        this.securityEvents = stats.module_stats?.find(stat => stat.module === 'security')?.count || 0;
+        this.errorLogs = stats.logs_by_level?.ERROR || 0;
+        // 从模块统计中获取用户和安全相关日志数量
+        this.userActivities = stats.logs_by_module?.user || 0;
+        this.securityEvents = stats.logs_by_module?.security || 0;
       } catch (error) {
-        console.error('加载日志统计失败:', error);
-        this.$message.error('加载日志统计失败');
+        if (error.response?.status === 401) {
+          this.$message.error('登录已过期，请重新登录');
+          this.$router.push('/login'); // 跳转登录页
+        } else {
+          console.error('加载日志统计失败:', error);
+          this.$message.error('加载日志统计失败');
+        }
       }
     },
     
     async loadRecentLogs() {
       this.loadingRecent = true;
       try {
-        const response = await axios.get(`${API_BASE}/logs/db/system?skip=0&limit=5`);
-        this.recentLogs = response.data.items || [];
+        const response = await http.get(`${API_BASE}/logs/db/system?skip=0&limit=5`);  // 使用http实例
+        const { items } = processLogResponse(response);
+        this.recentLogs = items;
       } catch (error) {
-        console.error('加载最近日志失败:', error);
-        this.$message.error('加载最近日志失败');
+        if (error.response?.status === 401) {
+          this.$message.error('登录已过期，请重新登录');
+          this.$router.push('/login'); // 跳转登录页
+        } else {
+          console.error('加载最近日志失败:', error);
+          this.$message.error('加载最近日志失败');
+        }
       } finally {
         this.loadingRecent = false;
       }
     },
-    
-    async refreshRecentLogs() {
-      await this.loadRecentLogs();
+
+    refreshData() {
+      this.loadStatistics();
+      this.loadRecentLogs();
+    },
+
+    viewLogDetails(log) {
+      // 显示详情弹窗
+      console.log('查看日志详情:', log);
+      this.$message.info('日志详情功能开发中...');
     }
   },
   
@@ -241,7 +278,7 @@ export default {
     }
   }
 
-  .recent-logs {
+  .recent-logs-card {
     .el-table {
       margin-top: 10px;
     }

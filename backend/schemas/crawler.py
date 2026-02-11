@@ -2,7 +2,7 @@
 爬虫相关数据结构定义
 """
 from datetime import datetime
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Union
 from pydantic import BaseModel, Field
 from enum import Enum
 
@@ -74,25 +74,6 @@ class CrawlerIntelligenceStats(BaseModel):
         from_attributes = True
 
 
-# ==================== 趋势分析相关 ====================
-
-class TrendAnalysisData(BaseModel):
-    """趋势分析数据模型"""
-    period_days: int
-    total_matches: int
-    average_odds_home: float
-    average_odds_draw: float
-    average_odds_away: float
-    volatility_index: float
-    trend_direction: str  # up/down/stable
-    top_leagues: List[Dict[str, Any]]
-    prediction_confidence: float
-    last_updated: datetime = Field(default_factory=datetime.utcnow)
-    
-    class Config:
-        from_attributes = True
-
-
 class CrawlerIntelligenceData(BaseModel):
     """爬虫情报数据模型"""
     id: int
@@ -110,20 +91,30 @@ class CrawlerIntelligenceData(BaseModel):
         from_attributes = True
 
 
-# ==================== 趋势分析相关 ====================
+class CrawlerIntelligenceResponse(BaseModel):
+    """爬虫情报响应模型"""
+    id: int
+    source_id: int
+    source_name: str
+    category: str
+    title: str
+    content: str
+    weight: float
+    status: str
+    created_at: datetime
+    updated_at: datetime
+    analysis: Optional[Dict[str, Any]] = None
+    
+    class Config:
+        from_attributes = True
 
-class TrendAnalysisData(BaseModel):
-    """趋势分析数据模型"""
-    period_days: int
-    total_matches: int
-    average_odds_home: float
-    average_odds_draw: float
-    average_odds_away: float
-    volatility_index: float
-    trend_direction: str  # up/down/stable
-    top_leagues: List[Dict[str, Any]]
-    prediction_confidence: float
-    last_updated: datetime = Field(default_factory=datetime.utcnow)
+
+class ErrorDistributionData(BaseModel):
+    """错误分布数据模型"""
+    error_type: str
+    count: int
+    percentage: float
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
     
     class Config:
         from_attributes = True
@@ -179,98 +170,6 @@ class ApiResponse(BaseModel):
         from_attributes = True
 
 
-# ==================== 趋势分析相关 ====================
-
-class TrendAnalysisData(BaseModel):
-    """趋势分析数据模型"""
-    period_days: int
-    total_matches: int
-    average_odds_home: float
-    average_odds_draw: float
-    average_odds_away: float
-    volatility_index: float
-    trend_direction: str  # up/down/stable
-    top_leagues: List[Dict[str, Any]]
-    prediction_confidence: float
-    last_updated: datetime = Field(default_factory=datetime.utcnow)
-    
-    class Config:
-        from_attributes = True
-
-
-# ==================== 情报分析相关 ====================
-
-class CrawlerIntelligenceStats(BaseModel):
-    """爬虫情报统计模型"""
-    total_intelligence: int
-    high_value_intelligence: int
-    medium_value_intelligence: int
-    low_value_intelligence: int
-    processed_intelligence: int
-    pending_intelligence: int
-    average_processing_time: float
-    top_sources: List[Dict[str, Any]]
-    last_update: datetime = Field(default_factory=datetime.utcnow)
-    
-    class Config:
-        from_attributes = True
-
-
-# ==================== 趋势分析相关 ====================
-
-class TrendAnalysisData(BaseModel):
-    """趋势分析数据模型"""
-    period_days: int
-    total_matches: int
-    average_odds_home: float
-    average_odds_draw: float
-    average_odds_away: float
-    volatility_index: float
-    trend_direction: str  # up/down/stable
-    top_leagues: List[Dict[str, Any]]
-    prediction_confidence: float
-    last_updated: datetime = Field(default_factory=datetime.utcnow)
-    
-    class Config:
-        from_attributes = True
-
-
-class CrawlerIntelligenceData(BaseModel):
-    """爬虫情报数据模型"""
-    id: int
-    source_id: int
-    source_name: str
-    category: str
-    title: str
-    content: str
-    weight: float
-    status: str
-    created_at: datetime
-    updated_at: datetime
-    
-    class Config:
-        from_attributes = True
-
-
-# ==================== 趋势分析相关 ====================
-
-class TrendAnalysisData(BaseModel):
-    """趋势分析数据模型"""
-    period_days: int
-    total_matches: int
-    average_odds_home: float
-    average_odds_draw: float
-    average_odds_away: float
-    volatility_index: float
-    trend_direction: str  # up/down/stable
-    top_leagues: List[Dict[str, Any]]
-    prediction_confidence: float
-    last_updated: datetime = Field(default_factory=datetime.utcnow)
-    
-    class Config:
-        from_attributes = True
-
-
 # ==================== 数据源管理相关 ====================
 
 class CrawlerSourceCreate(BaseModel):
@@ -286,98 +185,6 @@ class CrawlerSourceCreate(BaseModel):
         from_attributes = True
 
 
-# ==================== 趋势分析相关 ====================
-
-class TrendAnalysisData(BaseModel):
-    """趋势分析数据模型"""
-    period_days: int
-    total_matches: int
-    average_odds_home: float
-    average_odds_draw: float
-    average_odds_away: float
-    volatility_index: float
-    trend_direction: str  # up/down/stable
-    top_leagues: List[Dict[str, Any]]
-    prediction_confidence: float
-    last_updated: datetime = Field(default_factory=datetime.utcnow)
-    
-    class Config:
-        from_attributes = True
-
-
-# ==================== 情报分析相关 ====================
-
-class CrawlerIntelligenceStats(BaseModel):
-    """爬虫情报统计模型"""
-    total_intelligence: int
-    high_value_intelligence: int
-    medium_value_intelligence: int
-    low_value_intelligence: int
-    processed_intelligence: int
-    pending_intelligence: int
-    average_processing_time: float
-    top_sources: List[Dict[str, Any]]
-    last_update: datetime = Field(default_factory=datetime.utcnow)
-    
-    class Config:
-        from_attributes = True
-
-
-# ==================== 趋势分析相关 ====================
-
-class TrendAnalysisData(BaseModel):
-    """趋势分析数据模型"""
-    period_days: int
-    total_matches: int
-    average_odds_home: float
-    average_odds_draw: float
-    average_odds_away: float
-    volatility_index: float
-    trend_direction: str  # up/down/stable
-    top_leagues: List[Dict[str, Any]]
-    prediction_confidence: float
-    last_updated: datetime = Field(default_factory=datetime.utcnow)
-    
-    class Config:
-        from_attributes = True
-
-
-class CrawlerIntelligenceData(BaseModel):
-    """爬虫情报数据模型"""
-    id: int
-    source_id: int
-    source_name: str
-    category: str
-    title: str
-    content: str
-    weight: float
-    status: str
-    created_at: datetime
-    updated_at: datetime
-    
-    class Config:
-        from_attributes = True
-
-
-# ==================== 趋势分析相关 ====================
-
-class TrendAnalysisData(BaseModel):
-    """趋势分析数据模型"""
-    period_days: int
-    total_matches: int
-    average_odds_home: float
-    average_odds_draw: float
-    average_odds_away: float
-    volatility_index: float
-    trend_direction: str  # up/down/stable
-    top_leagues: List[Dict[str, Any]]
-    prediction_confidence: float
-    last_updated: datetime = Field(default_factory=datetime.utcnow)
-    
-    class Config:
-        from_attributes = True
-
-
 class CrawlerSourceUpdate(BaseModel):
     """更新爬虫数据源模型"""
     name: Optional[str] = Field(None, description="数据源名称")
@@ -385,98 +192,6 @@ class CrawlerSourceUpdate(BaseModel):
     url: Optional[str] = Field(None, description="数据源URL")
     config: Optional[Dict[str, Any]] = Field(None, description="配置参数")
     status: Optional[str] = Field(None, description="状态")
-    
-    class Config:
-        from_attributes = True
-
-
-# ==================== 趋势分析相关 ====================
-
-class TrendAnalysisData(BaseModel):
-    """趋势分析数据模型"""
-    period_days: int
-    total_matches: int
-    average_odds_home: float
-    average_odds_draw: float
-    average_odds_away: float
-    volatility_index: float
-    trend_direction: str  # up/down/stable
-    top_leagues: List[Dict[str, Any]]
-    prediction_confidence: float
-    last_updated: datetime = Field(default_factory=datetime.utcnow)
-    
-    class Config:
-        from_attributes = True
-
-
-# ==================== 情报分析相关 ====================
-
-class CrawlerIntelligenceStats(BaseModel):
-    """爬虫情报统计模型"""
-    total_intelligence: int
-    high_value_intelligence: int
-    medium_value_intelligence: int
-    low_value_intelligence: int
-    processed_intelligence: int
-    pending_intelligence: int
-    average_processing_time: float
-    top_sources: List[Dict[str, Any]]
-    last_update: datetime = Field(default_factory=datetime.utcnow)
-    
-    class Config:
-        from_attributes = True
-
-
-# ==================== 趋势分析相关 ====================
-
-class TrendAnalysisData(BaseModel):
-    """趋势分析数据模型"""
-    period_days: int
-    total_matches: int
-    average_odds_home: float
-    average_odds_draw: float
-    average_odds_away: float
-    volatility_index: float
-    trend_direction: str  # up/down/stable
-    top_leagues: List[Dict[str, Any]]
-    prediction_confidence: float
-    last_updated: datetime = Field(default_factory=datetime.utcnow)
-    
-    class Config:
-        from_attributes = True
-
-
-class CrawlerIntelligenceData(BaseModel):
-    """爬虫情报数据模型"""
-    id: int
-    source_id: int
-    source_name: str
-    category: str
-    title: str
-    content: str
-    weight: float
-    status: str
-    created_at: datetime
-    updated_at: datetime
-    
-    class Config:
-        from_attributes = True
-
-
-# ==================== 趋势分析相关 ====================
-
-class TrendAnalysisData(BaseModel):
-    """趋势分析数据模型"""
-    period_days: int
-    total_matches: int
-    average_odds_home: float
-    average_odds_draw: float
-    average_odds_away: float
-    volatility_index: float
-    trend_direction: str  # up/down/stable
-    top_leagues: List[Dict[str, Any]]
-    prediction_confidence: float
-    last_updated: datetime = Field(default_factory=datetime.utcnow)
     
     class Config:
         from_attributes = True
@@ -496,197 +211,29 @@ class CrawlerSourceResponse(BaseModel):
         from_attributes = True
 
 
-# ==================== 趋势分析相关 ====================
-
-class TrendAnalysisData(BaseModel):
-    """趋势分析数据模型"""
-    period_days: int
-    total_matches: int
-    average_odds_home: float
-    average_odds_draw: float
-    average_odds_away: float
-    volatility_index: float
-    trend_direction: str  # up/down/stable
-    top_leagues: List[Dict[str, Any]]
-    prediction_confidence: float
-    last_updated: datetime = Field(default_factory=datetime.utcnow)
-    
-    class Config:
-        from_attributes = True
-
-
-# ==================== 情报分析相关 ====================
-
-class CrawlerIntelligenceStats(BaseModel):
-    """爬虫情报统计模型"""
-    total_intelligence: int
-    high_value_intelligence: int
-    medium_value_intelligence: int
-    low_value_intelligence: int
-    processed_intelligence: int
-    pending_intelligence: int
-    average_processing_time: float
-    top_sources: List[Dict[str, Any]]
-    last_update: datetime = Field(default_factory=datetime.utcnow)
-    
-    class Config:
-        from_attributes = True
-
-
-# ==================== 趋势分析相关 ====================
-
-class TrendAnalysisData(BaseModel):
-    """趋势分析数据模型"""
-    period_days: int
-    total_matches: int
-    average_odds_home: float
-    average_odds_draw: float
-    average_odds_away: float
-    volatility_index: float
-    trend_direction: str  # up/down/stable
-    top_leagues: List[Dict[str, Any]]
-    prediction_confidence: float
-    last_updated: datetime = Field(default_factory=datetime.utcnow)
-    
-    class Config:
-        from_attributes = True
-
-
-class CrawlerIntelligenceData(BaseModel):
-    """爬虫情报数据模型"""
-    id: int
-    source_id: int
-    source_name: str
-    category: str
-    title: str
-    content: str
-    weight: float
-    status: str
-    created_at: datetime
-    updated_at: datetime
-    
-    class Config:
-        from_attributes = True
-
-
-# ==================== 趋势分析相关 ====================
-
-class TrendAnalysisData(BaseModel):
-    """趋势分析数据模型"""
-    period_days: int
-    total_matches: int
-    average_odds_home: float
-    average_odds_draw: float
-    average_odds_away: float
-    volatility_index: float
-    trend_direction: str  # up/down/stable
-    top_leagues: List[Dict[str, Any]]
-    prediction_confidence: float
-    last_updated: datetime = Field(default_factory=datetime.utcnow)
-    
-    class Config:
-        from_attributes = True
-
+# ==================== 任务管理相关 ====================
 
 class CrawlerTaskCreate(BaseModel):
     """创建爬虫任务模型"""
-    task_name: str
-    source: str
-    schedule: str
-    enabled: bool = True
+    name: str
+    source_id: Union[int, str]  # 支持整数或字符串类型的source_id
+    task_type: str = "crawl"
+    cron_expression: str
+    is_active: bool = True
     config: Dict[str, Any] = Field(default_factory=dict)
     
     class Config:
         from_attributes = True
 
 
-# ==================== 趋势分析相关 ====================
-
-class TrendAnalysisData(BaseModel):
-    """趋势分析数据模型"""
-    period_days: int
-    total_matches: int
-    average_odds_home: float
-    average_odds_draw: float
-    average_odds_away: float
-    volatility_index: float
-    trend_direction: str  # up/down/stable
-    top_leagues: List[Dict[str, Any]]
-    prediction_confidence: float
-    last_updated: datetime = Field(default_factory=datetime.utcnow)
-    
-    class Config:
-        from_attributes = True
-
-
-# ==================== 情报分析相关 ====================
-
-class CrawlerIntelligenceStats(BaseModel):
-    """爬虫情报统计模型"""
-    total_intelligence: int
-    high_value_intelligence: int
-    medium_value_intelligence: int
-    low_value_intelligence: int
-    processed_intelligence: int
-    pending_intelligence: int
-    average_processing_time: float
-    top_sources: List[Dict[str, Any]]
-    last_update: datetime = Field(default_factory=datetime.utcnow)
-    
-    class Config:
-        from_attributes = True
-
-
-# ==================== 趋势分析相关 ====================
-
-class TrendAnalysisData(BaseModel):
-    """趋势分析数据模型"""
-    period_days: int
-    total_matches: int
-    average_odds_home: float
-    average_odds_draw: float
-    average_odds_away: float
-    volatility_index: float
-    trend_direction: str  # up/down/stable
-    top_leagues: List[Dict[str, Any]]
-    prediction_confidence: float
-    last_updated: datetime = Field(default_factory=datetime.utcnow)
-    
-    class Config:
-        from_attributes = True
-
-
-class CrawlerIntelligenceData(BaseModel):
-    """爬虫情报数据模型"""
-    id: int
-    source_id: int
-    source_name: str
-    category: str
-    title: str
-    content: str
-    weight: float
-    status: str
-    created_at: datetime
-    updated_at: datetime
-    
-    class Config:
-        from_attributes = True
-
-
-# ==================== 趋势分析相关 ====================
-
-class TrendAnalysisData(BaseModel):
-    """趋势分析数据模型"""
-    period_days: int
-    total_matches: int
-    average_odds_home: float
-    average_odds_draw: float
-    average_odds_away: float
-    volatility_index: float
-    trend_direction: str  # up/down/stable
-    top_leagues: List[Dict[str, Any]]
-    prediction_confidence: float
-    last_updated: datetime = Field(default_factory=datetime.utcnow)
+class CrawlerTaskUpdate(BaseModel):
+    """更新爬虫任务模型"""
+    name: Optional[str] = None
+    source_id: Optional[str] = None  # 添加source_id字段
+    task_type: Optional[str] = None
+    cron_expression: Optional[str] = None
+    is_active: Optional[bool] = None
+    config: Optional[Dict[str, Any]] = None
     
     class Config:
         from_attributes = True
@@ -695,105 +242,20 @@ class TrendAnalysisData(BaseModel):
 class CrawlerTaskResponse(BaseModel):
     """爬虫任务响应模型"""
     id: int
-    task_name: str
-    source: str
-    schedule: str
-    enabled: bool
+    name: str
+    source_id: str      # 业务源ID (如DS008)，而不是数据库ID
+    task_type: str
+    cron_expression: str
+    is_active: bool
+    status: str
+    last_run_time: Optional[datetime]
+    next_run_time: Optional[datetime]
+    run_count: int
+    success_count: int
+    error_count: int
     config: Dict[str, Any]
     created_at: datetime
     updated_at: datetime
-    
-    class Config:
-        from_attributes = True
-
-
-# ==================== 趋势分析相关 ====================
-
-class TrendAnalysisData(BaseModel):
-    """趋势分析数据模型"""
-    period_days: int
-    total_matches: int
-    average_odds_home: float
-    average_odds_draw: float
-    average_odds_away: float
-    volatility_index: float
-    trend_direction: str  # up/down/stable
-    top_leagues: List[Dict[str, Any]]
-    prediction_confidence: float
-    last_updated: datetime = Field(default_factory=datetime.utcnow)
-    
-    class Config:
-        from_attributes = True
-
-
-# ==================== 情报分析相关 ====================
-
-class CrawlerIntelligenceStats(BaseModel):
-    """爬虫情报统计模型"""
-    total_intelligence: int
-    high_value_intelligence: int
-    medium_value_intelligence: int
-    low_value_intelligence: int
-    processed_intelligence: int
-    pending_intelligence: int
-    average_processing_time: float
-    top_sources: List[Dict[str, Any]]
-    last_update: datetime = Field(default_factory=datetime.utcnow)
-    
-    class Config:
-        from_attributes = True
-
-
-# ==================== 趋势分析相关 ====================
-
-class TrendAnalysisData(BaseModel):
-    """趋势分析数据模型"""
-    period_days: int
-    total_matches: int
-    average_odds_home: float
-    average_odds_draw: float
-    average_odds_away: float
-    volatility_index: float
-    trend_direction: str  # up/down/stable
-    top_leagues: List[Dict[str, Any]]
-    prediction_confidence: float
-    last_updated: datetime = Field(default_factory=datetime.utcnow)
-    
-    class Config:
-        from_attributes = True
-
-
-class CrawlerIntelligenceData(BaseModel):
-    """爬虫情报数据模型"""
-    id: int
-    source_id: int
-    source_name: str
-    category: str
-    title: str
-    content: str
-    weight: float
-    status: str
-    created_at: datetime
-    updated_at: datetime
-    
-    class Config:
-        from_attributes = True
-
-
-# ==================== 趋势分析相关 ====================
-
-class TrendAnalysisData(BaseModel):
-    """趋势分析数据模型"""
-    period_days: int
-    total_matches: int
-    average_odds_home: float
-    average_odds_draw: float
-    average_odds_away: float
-    volatility_index: float
-    trend_direction: str  # up/down/stable
-    top_leagues: List[Dict[str, Any]]
-    prediction_confidence: float
-    last_updated: datetime = Field(default_factory=datetime.utcnow)
     
     class Config:
         from_attributes = True

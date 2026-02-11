@@ -40,7 +40,19 @@ dependencies = [
     "requests>=2.31.0",
     "pandas>=2.1.0",
     "numpy>=1.24.3",
-    "scrapy>=2.11.0"
+    "scrapy>=2.11.0",
+    # LangChain核心依赖
+    "langchain>=0.1.0",
+    "langchain-openai>=0.0.5",
+    "langchain-community>=0.0.20",
+    "langchain-experimental>=0.0.50",
+    "langsmith>=0.0.80",
+    # 向量数据库依赖（可选）
+    "faiss-cpu>=1.7.0",
+    # LLM提供商
+    "openai>=1.10.0",
+    "dashscope>=1.14.0",
+    "google-generativeai>=0.3.0"
 ]
 
 [project.optional-dependencies]

@@ -255,7 +255,7 @@
                 <el-progress 
                   :percentage="scope.row.accuracy" 
                   :color="getAccuracyColor(scope.row.accuracy)"
-                  :format="() => `${scope.row.accuracy}%`"
+                  :format='() => `${scope.row.accuracy}%`'
                 />
               </template>
             </el-table-column>
@@ -930,7 +930,18 @@ const initCostChart = async () => {
       ]
     })
     
-    window.addEventListener('resize', () => chart.resize())
+    // 添加防抖功能以避免过多的resize事件
+    let resizeTimeout = null;
+    const debouncedResize = () => {
+      if (resizeTimeout) {
+        clearTimeout(resizeTimeout);
+      }
+      resizeTimeout = setTimeout(() => {
+        chart?.resize();
+      }, 100);
+    };
+    
+    window.addEventListener('resize', debouncedResize)
   }
 }
 

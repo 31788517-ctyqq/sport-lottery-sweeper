@@ -28,6 +28,9 @@ class CrawlerConfig(BaseAuditModel):
     frequency = Column(Integer, nullable=False, default=3600)  # 爬取频率（秒）
     is_active = Column(Boolean, default=True, nullable=False, index=True)
     
+    # 关联数据源ID（用于与数据源模块同步）
+    source_id = Column(Integer, ForeignKey('data_sources.id', ondelete='SET NULL'), nullable=True, index=True)
+    
     # 配置详情（JSON格式）
     config_data = Column(Text, nullable=False)
     
@@ -38,3 +41,4 @@ class CrawlerConfig(BaseAuditModel):
     # 关系
     creator = relationship("AdminUser", foreign_keys=[created_by])
     updater = relationship("AdminUser", foreign_keys=[updated_by])
+    data_source = relationship("DataSource", back_populates="crawler_configs")

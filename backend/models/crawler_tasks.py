@@ -15,7 +15,7 @@ class CrawlerTask(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(200), nullable=False)
-    source_id = Column(Integer, ForeignKey("crawler_configs.id", ondelete="CASCADE"), nullable=False)
+    source_id = Column(Integer, ForeignKey("data_sources.id", ondelete="CASCADE"), nullable=False)
     task_type = Column(String(50), nullable=False, default='crawl')
     cron_expression = Column(String(100), nullable=True)
     is_active = Column(Boolean, nullable=False, default=True)

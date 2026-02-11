@@ -8,7 +8,7 @@
 
 - **前端**: Vue 3 + Vite + TypeScript + Tailwind CSS
 - **后端**: Python 3.11 + FastAPI + Uvicorn
-- **数据库**: PostgreSQL 15+（主库）、Redis 7+（缓存/消息）
+- **数据库**: SQLite（开发环境）/ PostgreSQL 15+（生产环境）、Redis 7+（缓存/消息）
 - **异步任务**: Celery + RabbitMQ/Redis
 - **爬虫框架**: Scrapy + Playwright + BeautifulSoup4
 - **部署**: Docker + Docker Compose + Nginx
@@ -21,6 +21,27 @@
 - Node.js 18+
 - Docker & Docker Compose
 - pnpm
+
+### 环境配置
+
+1. 复制环境配置文件：
+
+```bash
+cp .env.example .env
+# 编辑 .env 文件以适应你的环境
+```
+
+2. 验证环境配置：
+
+```bash
+python scripts/validate_env_config.py
+```
+
+3. 验证数据库路径一致性（避免多个数据库副本导致数据不一致）：
+
+```bash
+python check_database_paths.py
+```
 
 ### 安装步骤
 
@@ -56,26 +77,42 @@ cd ..
 
 ### 启动服务
 
-#### 方法一：使用脚本启动
+#### 方法一：使用统一启动脚本
+
+```bash
+# 启动开发模式（默认）
+python scripts/start_backend.py --env development
+
+# 启动测试模式
+python scripts/start_backend.py --env testing
+
+# 启动生产模式
+python scripts/start_backend.py --env production
+
+# 指定端口启动
+python scripts/start_backend.py --env development --port 8001
+```
+
+#### 方法二：使用脚本启动
 
 ```bash
 # 启动开发模式
 ./scripts/start-dev-simple.sh
 ```
 
-#### 方法二：手动启动
+#### 方法三：手动启动
 
 1. 启动后端服务：
 
 ```bash
-cd src/backend
+cd backend
 python -m uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 或者使用以下命令：
 
 ```bash
-uvicorn src.backend.main:app --reload --host 0.0.0.0 --port 8000
+uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 2. 启动前端服务：
@@ -88,323 +125,89 @@ pnpm run dev
 ### 访问地址
 
 - **后端 API**: http://127.0.0.1:8000
-- **API 文档**: http://127.0.0.1:8000/docs
+- **API 文档**: http://127.0.0.0:8000/docs
 - **前端界面**: http://127.0.0.1:3000
 - **健康检查**: http://127.0.0.1:8000/health
 
+## 开发规范
+
+### 模拟与真实逻辑分离
+
+为确保代码质量和环境一致性，我们采用以下规范：
+
+1. 在关键服务中，添加日志明确标识当前执行的是模拟还是真实逻辑
+2. 使用 `IS_MOCK` 环境变量控制是否启用模拟逻辑
+3. 在日志中明确标注 "SIMULATED" 或 "REAL" 以区分执行模式
+
+### API路由规范
+
+- **管理端API**: `/api/v1/admin/*`
+  - 用户管理: `/api/v1/admin/users`
+  - 数据源管理: `/api/v1/admin/data-sources`
+  - IP池管理: `/api/v1/admin/ip-pools`
+  - 日志管理: `/api/v1/admin/system/logs`
+
 ## 项目结构
+
+**数据库文件位置规范**：主数据库文件 `sport_lottery.db` 应位于项目根目录。为保持向后兼容性，在 `backend/` 和 `data/` 目录下创建硬链接指向根目录的同一物理文件。所有数据库访问应通过 `backend.database.DATABASE_PATH` 配置，禁止硬编码路径。
 
 ```
 sport-lottery-sweeper/
-├── src/
-│   └── backend/           # 后端源代码
-│       ├── main.py        # 应用入口点
-│       ├── config.py      # 配置文件
-│       ├── database.py    # 数据库配置
-│       ├── api/           # API路由
-│       ├── core/          # 核心功能
-│       ├── models/        # 数据模型
-│       ├── schemas/       # 数据模式
-│       ├── services/      # 业务服务
-│       └── tasks/         # 异步任务
-├── frontend/              # 前端代码
-├── scripts/               # 启动和部署脚本
-├── docker/                # Docker配置
-├── docs/                  # 文档
-├── config/                # 配置文件
-├── tests/                 # 测试代码
-├── requirements.txt       # Python依赖
-├── pyproject.toml         # 项目配置
+├── sport_lottery.db       # 主数据库文件（位于项目根目录）
+├── backend/               # 后端源代码
+│   ├── main.py           # 应用入口点
+│   ├── api/              # API路由定义
+│   ├── models/           # 数据模型
+│   ├── schemas/          # Pydantic模型
+│   ├── database_utils.py # 数据库连接工具
+│   └── config.py         # 配置管理
+├── frontend/             # 前端源代码
+├── scripts/              # 脚本目录
+│   ├── start_backend.py  # 统一启动脚本
+│   └── validate_env_config.py # 环境配置验证
+├── .env                  # 环境配置文件
+├── .env.example          # 环境配置示例文件
+├── requirements.txt      # Python依赖
+├── package.json          # 前端依赖
+├── docker/               # Docker配置
+├── docs/                 # 文档
 └── README.md
 ```
 
-## 性能优化特性
+## 环境配置
 
-- **延迟导入**: 按需加载模块，减少启动时间
-- **异步初始化**: 高效的异步初始化服务
-- **缓存机制**: 高效的缓存管理器
-- **时间监测**: 详细的启动时间监测功能
+项目支持三种环境模式：
+
+- **development**: 开发环境，启用热重载和详细日志
+- **testing**: 测试环境，使用测试数据库
+- **production**: 生产环境，启用性能优化和安全设置
 
 ## 部署
 
 ### Docker部署
 
-本项目支持通过 Docker 快速构建与运行，确保不同环境下行为一致。
-
-#### 1. 基础启动
 ```bash
-cd docker
-docker-compose up -d
+# 构建并启动所有服务
+docker-compose -f docker/docker-compose.yml up -d --build
 ```
 
-#### 2. 使用自动初始化入口脚本
-为确保容器启动时自动完成数据库结构迁移、种子数据导入与健康检查，项目提供了 `scripts/docker/entrypoint.sh` 作为容器入口。
-该脚本会按顺序执行：
-1. `alembic upgrade head` （数据库结构迁移）
-2. `python scripts/seed/seed_runner.py` （防重复导入示例数据）
-3. `python scripts/health_check/db_health_check.py` （健康检查）
-4. `uvicorn backend.main:app --host 0.0.0.0 --port 8000` （启动服务）
+## 测试
 
-如果任一步失败，容器将终止启动，确保环境健康后才提供 API。
-
-#### 3. Dockerfile 示例（后端）
-```Dockerfile
-FROM python:3.11-slim
-
-WORKDIR /app
-
-# 安装系统依赖（如 gcc/sqlite 开发库）
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    && rm -rf /var/lib/apt/lists/*
-
-# 安装 Python 依赖
-COPY requirements.txt .
-RUN pip install --upgrade pip && pip install -r requirements.txt
-
-COPY . .
-
-# 确保入口脚本可执行
-RUN chmod +x scripts/docker/entrypoint.sh
-
-# 设置入口
-ENTRYPOINT ["/app/scripts/docker/entrypoint.sh"]
-```
-
-#### 4. docker-compose.yml 示例（后端服务片段）
-```yaml
-version: "3.9"
-services:
-  backend:
-    build: .
-    container_name: sport_lottery_backend
-    ports:
-      - "8000:8000"
-    volumes:
-      - ./sport_lottery.db:/app/sport_lottery.db  # 可选：持久化数据库文件
-    environment:
-      - ENV=development
-```
-
-#### 5. 启动命令
-在包含 `docker-compose.yml` 的目录下执行：
 ```bash
-docker-compose up -d --build
+# 运行单元测试
+python -m pytest backend/tests/unit/
+
+# 运行集成测试
+python -m pytest backend/tests/integration/
+
+# 运行前端测试
+cd frontend && pnpm run test
 ```
-后端 API 可通过 http://127.0.0.1:8000 访问，API 文档在 http://127.0.0.1:8000/docs。
-
-> **注意**：如果数据库文件需要持久化，请挂载卷或修改 `entrypoint.sh` 逻辑以支持外部数据库（如 PostgreSQL）。生产环境建议切换至 PostgreSQL 并调整 `alembic.ini` 的连接串。
-
-## 数据库管理与恢复
-
-本项目采用 **Alembic** 进行数据库结构版本管理，并使用独立的 seed 脚本管理示例数据，确保数据结构与数据分离，便于开发与生产环境维护。
-
-### 目录结构
-```
-data/seed/sport_lottery_sample_data.sql   # 示例数据
-scripts/seed/seed_runner.py               # 防重复数据导入脚本
-scripts/health_check/db_health_check.py   # 数据库健康检查脚本
-scripts/recovery/reset_and_recover.py     # 一键恢复脚本
-```
-
-### 启动流程
-项目提供了 `start_backend.bat`（Windows）用于一键完成以下步骤：
-1. **数据库结构迁移** → `alembic upgrade head`
-2. **种子数据导入** → `python scripts/seed/seed_runner.py`（仅在表为空时导入）
-3. **数据库健康检查** → `python scripts/health_check/db_health_check.py`
-4. **启动后端服务** → `uvicorn backend.main:app`
-
-运行：
-```bat
-start_backend.bat
-```
-
-### 手动执行迁移与数据初始化
-```bash
-# 进入项目根目录
-cd path/to/sport-lottery-sweeper
-
-# 1. 执行数据库结构迁移
-alembic upgrade head
-
-# 2. 导入种子数据（防重复）
-python scripts/seed/seed_runner.py
-
-# 3. 健康检查
-python scripts/health_check/db_health_check.py
-```
-
-### 数据库健康检查
-检查内容包括：
-- Alembic 当前版本是否为 `fd2e6eb3e2ee (head)`
-- 数据库表 `leagues`、`teams`、`matches` 是否存在
-- 示例数据是否已导入并统计记录数
-
-运行：
-```bash
-python scripts/health_check/db_health_check.py
-```
-返回码 `0` 表示健康，`1` 表示存在问题。
-
-### 一键恢复脚本
-当数据库损坏或结构异常时，可使用恢复脚本快速重置：
-```bash
-python scripts/recovery/reset_and_recover.py
-```
-脚本会：
-1. 删除现有数据库文件
-2. 重新创建 Alembic 空迁移并标记版本
-3. 导入种子数据
-4. 执行健康检查
-
-⚠️ 执行前会要求手动确认，以防误删数据。
-
-### 注意事项
-- **结构变更**必须通过 Alembic 迁移脚本完成，禁止手动修改数据库结构。
-- **示例数据**仅用于开发/测试，生产环境请使用真实数据初始化流程。
-- 未来可考虑将 SQLite 替换为 PostgreSQL 以获得更好的并发与扩展性。
-
-## CI/CD 检查
-
-项目集成了 GitHub Actions 自动化检查，确保每次代码变更不会破坏数据库结构、数据初始化或测试环境。
-
-### 检查流程
-在每次 `push` 到 `main`/`develop` 分支或发起 Pull Request 时，将自动执行：
-
-1. **环境准备**
-   - 安装 Python 依赖（含 `pytest`, `pytest-asyncio`, `alembic` 等）
-   - 自动补全 `pyproject.toml` 中的 `asyncio_mode = "auto"` 配置（解决异步测试问题）
-
-2. **数据库迁移检查**
-   - 使用临时 SQLite 数据库执行 `alembic upgrade head`，确保迁移脚本可正常运行
-
-3. **种子数据导入 & 健康检查**
-   - 运行 `scripts/seed/seed_runner.py` 导入示例数据（防重复）
-   - 执行 `scripts/health_check/db_health_check.py` 验证表结构与数据完整性
-
-4. **测试运行**
-   - 执行 `pytest` 运行所有单元/集成/E2E 测试（含异步测试）
-   - 生成覆盖率报告并上传至 Codecov（可选）
-
-5. **可选：一键恢复验证**
-   - 在临时环境中执行 `scripts/recovery/reset_and_recover.py`，确保恢复流程可用
-
-### Workflow 文件位置
-```
-scripts/ci/db_ci_check.yml
-```
-
-### 触发条件
-- `push` 到 `main` 或 `develop` 分支
-- `pull_request` 面向 `main` 分支
-
-### 本地运行 CI 检查
-可在本地模拟 CI 流程以确保通过率：
-```bash
-# 安装依赖
-pip install -r requirements.txt
-pip install pytest pytest-asyncio coverage alembic
-
-# 补全 pytest 配置（仅需一次）
-echo '[tool.pytest.ini_options]' >> pyproject.toml
-echo 'asyncio_mode = "auto"' >> pyproject.toml
-
-# 依次执行
-alembic upgrade head
-python scripts/seed/seed_runner.py
-python scripts/health_check/db_health_check.py
-pytest tests/ --cov=backend --cov-report=term-missing
-```
-
-> **注意**：CI 环境使用独立的临时数据库文件，不会影响本地开发数据。
-> 异步测试之前存在的配置问题已在 CI 中自动修复，建议同步到本地 `pyproject.toml` 以避免差异。
-
-## 测试体系
-
-项目建立了完整的自动化测试集成，覆盖单元测试、集成测试和端到端测试。
-
-### 测试文档
-- [测试集成规划](./TEST_INTEGRATION_PLAN.md) - 完整的测试架构设计
-- [测试环境设置指南](./test-environment-setup.md) - 测试环境配置说明
-- [测试快速开始指南](./TESTING_QUICKSTART.md) - 5分钟内运行测试
-- [测试环境验证指南](./TEST_VALIDATION_GUIDE.md) - 验证测试环境配置
-
-### 测试验证
-```bash
-# 快速测试环境检查 (1分钟内)
-python scripts/quick-test-check.py
-
-# 验证测试环境配置 (3分钟内)
-python scripts/validate-test-environment.py
-
-# 检查覆盖率阈值 (1分钟内)
-python scripts/check-coverage-thresholds.py
-
-# 生成统一测试报告 (2分钟内)
-python scripts/generate-test-report.py
-
-# CI/CD验证检查 (5分钟内)
-python scripts/validate-ci-checks.py
-
-# 运行完整验证套件 (10分钟内)
-python scripts/run-validation-suite.py
-
-# 最终测试集成验证 (15分钟内)
-python scripts/final-verification.py
-```
-
-### 测试命令
-```bash
-# 一键运行所有测试
-./scripts/run-all-tests.sh  # Linux/macOS
-scripts\run-all-tests.bat   # Windows
-
-# 前端测试
-cd frontend
-npm run test:run           # 运行单元测试
-npm run test:coverage      # 带覆盖率报告
-npm run test:e2e           # 运行E2E测试
-
-# 后端测试
-cd backend
-pytest tests/unit/ -v      # 运行单元测试
-pytest tests/integration/  # 运行集成测试
-```
-
-### 覆盖率要求
-| 组件 | 语句 | 分支 | 函数 | 行 |
-|------|------|------|------|-----|
-| 前端 | ≥80% | ≥75% | ≥80% | ≥80% |
-| 后端 | ≥80% | ≥70% | ≥80% | ≥80% |
-
-### 测试报告
-- 单元测试覆盖率: `frontend/coverage/` 和 `backend/htmlcov/`
-- E2E测试报告: `frontend/playwright-report/`
-- 覆盖率阈值检查: `python scripts/check-coverage-thresholds.py`
-
-详细测试实施总结请参考 [自动测试集成总结](./AUTO_TEST_INTEGRATION_SUMMARY.md)
-
-### 🧪 验证实施效果
-项目提供了完整的验证工具套件，可按以下步骤验证测试集成实施效果：
-
-1. **快速检查** (1分钟): `python scripts/quick-test-check.py`
-2. **环境验证** (3分钟): `python scripts/validate-test-environment.py`
-3. **全面验证** (10分钟): `python scripts/run-validation-suite.py`
-4. **最终验证** (15分钟): `python scripts/final-verification.py`
-
-详细验证步骤请参考 [测试集成验证检查清单](./TEST_INTEGRATION_VALIDATION_CHECKLIST.md)
 
 ## 贡献
 
-欢迎提交Issue和Pull Request来帮助改进这个项目。
+请参考 [CONTRIBUTING.md](CONTRIBUTING.md) 了解如何参与项目贡献。
 
 ## 许可证
 
-MIT
-
-## 📋 开发规范与文件生成指南
-
-为保证项目结构统一与代码可维护性，请所有开发者与 AI 助手遵循 [文件生成指令示例清单](./FILE_GENERATION_GUIDE.md) 进行新文件的创建。
-该清单基于项目的 `<always_applied_workspace_rules>` 制定，涵盖 Vue 组件、页面、API、工具函数、测试等所有模块的路径与命名规范。
-
-> ✅ 使用清单可确保文件始终生成到正确目录，避免结构混乱与后期重构成本。
+本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情。

@@ -6,6 +6,12 @@
       <p class="page-description">管理系统用户、角色和权限分配</p>
     </div>
 
+    <!-- 错误提示 -->
+    <div v-if="error" class="error-message">
+      ❌ {{ error }}
+      <button @click="error = null" class="close-error">×</button>
+    </div>
+
     <!-- 快速操作工具栏 -->
     <div class="toolbar">
       <div class="search-box">
@@ -50,11 +56,14 @@
         <button class="action-btn primary" @click="createNewUser">
           <span>➕</span> 新增用户
         </button>
-        <button class="action-btn secondary" @click="refreshUsers">
-          <span>🔄</span> 刷新
+        <button class="action-btn secondary" @click="refreshUsers" :disabled="loading">
+          <span>🔄</span> {{ loading ? '加载中...' : '刷新' }}
         </button>
-        <button class="action-btn tertiary" @click="exportUserData">
+        <button class="action-btn tertiary" @click="exportUserData" :disabled="loading">
           <span>📤</span> 导出用户
+        </button>
+        <button class="action-btn danger" @click="batchDeleteSelected" :disabled="!selectedUsers.length">
+          <span>🗑️</span> 批量删除 ({{ selectedUsers.length }})
         </button>
       </div>
     </div>
@@ -117,7 +126,18 @@
       </div>
       
       <div class="users-table-container">
-        <table class="users-table">
+        <!-- 加载状态 -->
+        <div v-if="loading" class="loading-state">
+          <span>⏳ 加载中，请稍候...</span>
+        </div>
+        
+        <!-- 空状态 -->
+        <div v-else-if="!filteredUsers.length" class="empty-state">
+          <span>📭 暂无用户数据</span>
+        </div>
+        
+        <!-- 正常表格 -->
+        <table v-else class="users-table">
           <thead>
             <tr>
               <th><input type="checkbox" @change="toggleSelectAll" /></th>
@@ -160,7 +180,10 @@
                 <button class="action-btn view" @click="viewUser(user)">👁️</button>
                 <button class="action-btn edit" @click="editUser(user)">✏️</button>
                 <button class="action-btn reset-password" @click="resetPassword(user)">🔑</button>
-                <button class="action-btn delete" @click="deleteUser(user)">🗑️</button>
+                <button class="action-btn delete" @click="deleteUserHandler(user)">🗑️</button>
+                <button v-if="user.status === 'suspended'" class="action-btn unlock" @click="unlockUserAccount(user)">
+                  🔓 解锁
+                </button>
               </td>
             </tr>
           </tbody>
@@ -436,106 +459,24 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { 
+  getUserList, 
+  createUser, 
+  updateUser, 
+  deleteUser, 
+  getUserStats,
+  updateUserStatus,
+  resetUserPassword,
+  batchDeleteUsers,
+  getUserRoles,
+  unlockUser,
+  getUserDepartments
+} from '@/api/modules/users'
 
-// 模拟用户数据
-const allUsers = ref([
-  {
-    id: 1,
-    username: 'admin',
-    firstName: '系统',
-    lastName: '管理员',
-    email: 'admin@example.com',
-    phone: '+86 13800138000',
-    role: 'admin',
-    department: 'management',
-    status: 'active',
-    avatar: '/avatars/admin.jpg',
-    bio: '系统超级管理员，拥有所有权限',
-    joinDate: new Date(Date.now() - 86400000 * 365),
-    lastActivity: new Date(Date.now() - 3600000),
-    createdAt: new Date(Date.now() - 86400000 * 365)
-  },
-  {
-    id: 2,
-    username: 'johndoe',
-    firstName: 'John',
-    lastName: 'Doe',
-    email: 'john.doe@example.com',
-    phone: '+86 13800138001',
-    role: 'analyst',
-    department: 'analysis',
-    status: 'active',
-    avatar: '/avatars/john.jpg',
-    bio: '资深数据分析师，专注于足球比赛预测',
-    joinDate: new Date(Date.now() - 86400000 * 180),
-    lastActivity: new Date(Date.now() - 7200000),
-    createdAt: new Date(Date.now() - 86400000 * 180)
-  },
-  {
-    id: 3,
-    username: 'janedoe',
-    firstName: 'Jane',
-    lastName: 'Doe',
-    email: 'jane.doe@example.com',
-    phone: '+86 13800138002',
-    role: 'moderator',
-    department: 'operations',
-    status: 'active',
-    avatar: '/avatars/jane.jpg',
-    bio: '运营主管，负责内容审核和用户管理',
-    joinDate: new Date(Date.now() - 86400000 * 120),
-    lastActivity: new Date(Date.now() - 1800000),
-    createdAt: new Date(Date.now() - 86400000 * 120)
-  },
-  {
-    id: 4,
-    username: 'bobsmith',
-    firstName: 'Bob',
-    lastName: 'Smith',
-    email: 'bob.smith@example.com',
-    phone: '+86 13800138003',
-    role: 'user',
-    department: 'support',
-    status: 'suspended',
-    avatar: null,
-    bio: '技术支持工程师',
-    joinDate: new Date(Date.now() - 86400000 * 90),
-    lastActivity: new Date(Date.now() - 86400000),
-    createdAt: new Date(Date.now() - 86400000 * 90)
-  },
-  {
-    id: 5,
-    username: 'alicejones',
-    firstName: 'Alice',
-    lastName: 'Jones',
-    email: 'alice.jones@example.com',
-    phone: '+86 13800138004',
-    role: 'analyst',
-    department: 'analysis',
-    status: 'active',
-    avatar: '/avatars/alice.jpg',
-    bio: '数据挖掘专家，专精机器学习算法',
-    joinDate: new Date(Date.now() - 86400000 * 60),
-    lastActivity: new Date(Date.now() - 3600000),
-    createdAt: new Date(Date.now() - 86400000 * 60)
-  },
-  {
-    id: 6,
-    username: 'charliebrown',
-    firstName: 'Charlie',
-    lastName: 'Brown',
-    email: 'charlie.brown@example.com',
-    phone: '+86 13800138005',
-    role: 'user',
-    department: 'operations',
-    status: 'pending',
-    avatar: null,
-    bio: '新加入的运营助理',
-    joinDate: new Date(Date.now() - 86400000 * 7),
-    lastActivity: new Date(Date.now() - 86400000 * 5),
-    createdAt: new Date(Date.now() - 86400000 * 7)
-  }
-])
+// 用户数据
+const allUsers = ref([])
+const loading = ref(false)
+const error = ref(null)
 
 // 搜索和筛选
 const searchKeyword = ref('')
@@ -708,9 +649,33 @@ const handleFilterChange = () => {
   currentPage.value = 1
 }
 
-const refreshUsers = () => {
+// 从API获取用户列表
+const fetchUsers = async () => {
+  loading.value = true
+  error.value = null
+  
+  try {
+    const response = await getUserList({
+      skip: (currentPage.value - 1) * pageSize.value,
+      limit: pageSize.value,
+      role: filters.value.role,
+      status: filters.value.status,
+      search: searchKeyword.value
+    })
+    
+    allUsers.value = response.data.items || []
+  } catch (err) {
+    error.value = err.message || '获取用户列表失败'
+    console.error('获取用户列表失败:', err)
+  } finally {
+    loading.value = false
+  }
+}
+
+const refreshUsers = async () => {
   console.log('刷新用户列表')
   currentPage.value = 1
+  await fetchUsers()
 }
 
 const createNewUser = () => {
@@ -745,32 +710,50 @@ const closeModal = () => {
   editingUser.value = null
 }
 
-const saveUser = () => {
+const saveUser = async () => {
   if (!isValidUser.value) return
-  
-  if (editingUser.value) {
-    // 更新现有用户
-    const index = allUsers.value.findIndex(u => u.id === editingUser.value.id)
-    if (index !== -1) {
-      allUsers.value[index] = { ...currentUser.value, id: editingUser.value.id }
+
+  try {
+    if (editingUser.value) {
+      // 更新现有用户
+      const response = await updateUser(editingUser.value.id, {
+        ...currentUser.value,
+        realName: `${currentUser.value.firstName} ${currentUser.value.lastName}`
+      })
+      const updatedUser = response.data
+      
+      // 更新本地数据
+      const index = allUsers.value.findIndex(u => u.id === editingUser.value.id)
+      if (index !== -1) {
+        allUsers.value[index] = updatedUser
+      }
+    } else {
+      // 添加新用户
+      const response = await createUser({
+        ...currentUser.value,
+        realName: `${currentUser.value.firstName} ${currentUser.value.lastName}`
+      })
+      const newUser = response.data
+      allUsers.value.unshift(newUser)
     }
-  } else {
-    // 添加新用户
-    const newId = Math.max(...allUsers.value.map(u => u.id)) + 1
-    allUsers.value.push({
-      ...currentUser.value,
-      id: newId,
-      createdAt: new Date()
-    })
+    
+    closeModal()
+  } catch (err) {
+    console.error('保存用户失败:', err)
+    alert(`保存用户失败: ${err.message || '未知错误'}`)
   }
-  
-  closeModal()
 }
 
-const viewUser = (user) => {
+const viewUser = async (user) => {
   selectedUser.value = user
-  // 初始化用户权限
-  selectedUserPermissions.value = getUserPermissionIds(user.role)
+  // 获取用户权限信息
+  try {
+    const rolesResponse = await getUserRoles(user.id)
+    selectedUserPermissions.value = rolesResponse.data.roles || []
+  } catch (err) {
+    console.error('获取用户角色失败:', err)
+    selectedUserPermissions.value = []
+  }
   showDetailModal.value = true
   showPermissionEdit.value = false
 }
@@ -781,19 +764,30 @@ const closeDetailModal = () => {
   showPermissionEdit.value = false
 }
 
-const deleteUser = (user) => {
+const deleteUserHandler = async (user) => {
   if (confirm(`确定要删除用户 "${user.username}" 吗？`)) {
-    const index = allUsers.value.indexOf(user)
-    if (index !== -1) {
-      allUsers.value.splice(index, 1)
+    try {
+      await deleteUser(user.id)
+      // 从本地列表中移除用户
+      const index = allUsers.value.indexOf(user)
+      if (index !== -1) {
+        allUsers.value.splice(index, 1)
+      }
+    } catch (error) {
+      console.error('删除用户失败:', error)
+      // 显示错误信息给用户
     }
   }
 }
 
-const resetPassword = (user) => {
-  console.log(`重置用户 "${user.username}" 的密码`)
-  // 在实际应用中，这里会打开重置密码的对话框
-  alert(`重置用户: ${user.username} 的密码`)
+const resetPassword = async (user) => {
+  try {
+    await resetUserPassword(user.id, { newPassword: 'default123' }) // 这里应该是重置密码的逻辑
+    alert(`用户: ${user.username} 的密码已重置`)
+  } catch (error) {
+    console.error('重置密码失败:', error)
+    // 显示错误信息给用户
+  }
 }
 
 const exportUserData = () => {
@@ -803,8 +797,51 @@ const exportUserData = () => {
 }
 
 const toggleSelectAll = () => {
-  const isSelected = paginatedUsers.value.some(item => item.selected)
-  paginatedUsers.value.forEach(item => item.selected = !isSelected)
+  const allSelected = paginatedUsers.value.every(user => user.selected)
+  paginatedUsers.value.forEach(user => {
+    user.selected = !allSelected
+  })
+}
+
+// 批量操作
+const selectedUsers = computed(() => {
+  return paginatedUsers.value.filter(user => user.selected)
+})
+
+const batchDeleteSelected = async () => {
+  if (selectedUsers.value.length === 0) {
+    alert('请选择要删除的用户')
+    return
+  }
+  
+  if (confirm(`确定要删除选中的 ${selectedUsers.value.length} 个用户吗？`)) {
+    try {
+      const userIds = selectedUsers.value.map(user => user.id)
+      await batchDeleteUsers(userIds)
+      // 从本地列表中移除用户
+      selectedUsers.value.forEach(user => {
+        const index = allUsers.value.indexOf(user)
+        if (index !== -1) {
+          allUsers.value.splice(index, 1)
+        }
+      })
+    } catch (err) {
+      console.error('批量删除用户失败:', err)
+      alert(`批量删除失败: ${err.message || '未知错误'}`)
+    }
+  }
+}
+
+const unlockUserAccount = async (user) => {
+  try {
+    await unlockUser(user.id)
+    alert(`用户: ${user.username} 的账户已解锁`)
+    // 更新本地状态
+    user.status = 'active'
+  } catch (err) {
+    console.error('解锁用户失败:', err)
+    alert(`解锁用户失败: ${err.message || '未知错误'}`)
+  }
 }
 
 const nextPage = () => {
@@ -885,23 +922,9 @@ const updateUserPermissions = () => {
 }
 
 // 初始化数据
-onMounted(() => {
+onMounted(async () => {
   console.log('User Management 页面已加载')
-  
-  // 计算统计数据
-  stats.value.totalUsers = allUsers.value.length
-  stats.value.newThisMonth = allUsers.value.filter(u => 
-    new Date(u.joinDate).getTime() > Date.now() - 86400000 * 30
-  ).length
-  stats.value.activeUsers = allUsers.value.filter(u => u.status === 'active').length
-  stats.value.onlineUsers = allUsers.value.filter(u => 
-    new Date(u.lastActivity).getTime() > Date.now() - 300000
-  ).length // 活跃用户定义为5分钟内有活动的用户
-  stats.value.joinedToday = allUsers.value.filter(u => 
-    new Date(u.joinDate).toDateString() === new Date().toDateString()
-  ).length
-  stats.value.roleTypes = Object.keys(roleLabels).length
-  stats.value.mostCommonRole = 'analyst' // 简化处理，实际应该计算最常见角色
+  await fetchUsers()
 })
 </script>
 
@@ -915,6 +938,68 @@ onMounted(() => {
 .page-header {
   margin-bottom: 32px;
 }
+
+/* 错误消息样式 */
+.error-message {
+  background: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.close-error {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: #b91c1c;
+}
+
+.close-error:hover {
+  opacity: 0.7;
+}
+
+/* 加载和空状态样式 */
+.loading-state,
+.empty-state {
+  padding: 40px;
+  text-align: center;
+  color: #6b7280;
+  border-top: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* 批量操作按钮 */
+.action-btn.danger {
+  background: #ef4444;
+  color: white;
+}
+
+.action-btn.danger:hover {
+  background: #dc2626;
+}
+
+.action-btn.danger:disabled {
+  background: #fca5a5;
+  cursor: not-allowed;
+}
+
+.action-btn.unlock {
+  background: #06b6d4;
+  color: white;
+  padding: 6px 10px;
+}
+
+.action-btn.unlock:hover {
+  background: #0891b2;
+}
+
+/* 其他现有样式保持不变 */
 
 .page-title {
   font-size: 32px;

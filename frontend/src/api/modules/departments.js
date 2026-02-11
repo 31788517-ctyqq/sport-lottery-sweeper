@@ -96,5 +96,15 @@ export const importDepartments = (file) => {
   })
 }
 
+// 将用户分配到部门
+export const assignUserToDepartment = (departmentId, userId) => {
+  return http.post(`/api/v1/admin/departments/${departmentId}/members/${userId}`)
+}
+
+// 从部门移除用户
+export const removeUserFromDepartment = (departmentId, userId) => {
+  return http.delete(`/api/v1/admin/departments/${departmentId}/members/${userId}`)
+}
+
 // 别名导出，以匹配组件中的导入
 export const getDepartments = getDepartmentList

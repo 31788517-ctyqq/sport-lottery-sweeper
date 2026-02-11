@@ -32,18 +32,30 @@
           <el-menu-item index="/admin/users/logs">操作日志</el-menu-item>
         </el-sub-menu>
 
+        <!-- 新增: 精算工具中心 -->
+        <el-sub-menu index="/admin/analytic-tools">
+          <template #title>
+            <el-icon><DataAnalysis /></el-icon>
+            <span>精算工具中心</span>
+          </template>
+          <el-menu-item index="/admin/beidan-filter">北单三维筛选器</el-menu-item>
+        </el-sub-menu>
+
         <!-- 3. 数据源管理 -->
         <el-sub-menu index="/admin/data-source">
           <template #title>
             <el-icon><SetUp /></el-icon>
             <span>数据源管理</span>
           </template>
+          <!-- AI_WORKING: coder1 @2026-02-04 - 添加任务执行监控菜单项 -->
           <el-menu-item index="/admin/data-source/config">数据源配置</el-menu-item>
           <el-menu-item index="/admin/data-source/task-console">任务控制台</el-menu-item>
           <el-menu-item index="/admin/data-source/monitor">爬虫监控</el-menu-item>
           <el-menu-item index="/admin/data-source/data-center">数据中心</el-menu-item>
           <el-menu-item index="/admin/data-source/ip-pool">IP池管理</el-menu-item>
           <el-menu-item index="/admin/data-source/headers">请求头管理</el-menu-item>
+          <el-menu-item index="/admin/data-source/task-monitor">任务执行监控</el-menu-item>
+          <!-- AI_DONE: coder1 @2026-02-04 -->
         </el-sub-menu>
 
         <!-- 4. 比赛数据管理 -->
@@ -186,7 +198,8 @@ import {
   Memo,
   Setting, 
   Tickets,
-  ArrowDown 
+  ArrowDown,
+  DataAnalysis
 } from '@element-plus/icons-vue'
 
 const route = useRoute()

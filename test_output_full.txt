@@ -1,0 +1,937 @@
+
+[1m[46m RUN [49m[22m [36mv4.0.18 [39m[90mc:/Users/11581/Downloads/sport-lottery-sweeper[39m
+
+ [31m❯[39m frontend/tests/integration/beidan-integration-no-mount.spec.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/tests/integration/beidan-integration-logic-only.spec.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/src/tests/e2e/user_management.test.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/src/tests/unit/verify-vue.test.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/src/tests/unit/test-vitest.test.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/src/tests/e2e/user_management_e2e.test.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/tests/unit/utils/authUtils.test.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/src/tests/integration/user_api.test.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/src/tests/integration/log_api.test.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/tests/unit/composables/useAuth.test.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/tests/unit/views/BasicSettings.test.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/src/tests/unit/simple-vue.test.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/tests/integration/log_api.test.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/tests/unit/components/RegisterForm.test.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/src/tests/integration/user_management_api.test.js [2m([22m[2m0 test[22m[2m)[22m
+[90mstdout[2m | frontend/src/tests/minimal.test.js
+[22m[39mMinimal test starting...
+
+ [31m❯[39m frontend/src/tests/minimal.test.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/tests/e2e/log_management.test.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/tests/integration/beidan-integration-suite.spec.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/src/tests/unit/minimal.test.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/tests/unit/utils/beidanFilterUtils.spec.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/src/tests/unit/absolute-minimal.test.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/tests/integration/beidan-integration-minimal.spec.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/src/tests/unit/global-test.test.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/src/tests/unit/api.test.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m e2e/match-data-management.spec.js [2m([22m[2m0 test[22m[2m)[22m
+[90mstdout[2m | frontend/src/tests/unit/no-import.test.js
+[22m[39mGlobal describe: undefined
+Global it: undefined
+Global expect: undefined
+Global test: undefined
+
+ [31m❯[39m frontend/src/tests/unit/no-import.test.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/src/tests/unit/simple-global.test.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m e2e/data-source-config.spec.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/tests/e2e/user-management.spec.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/tests/e2e/beidan-filter-panel.e2e.spec.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m e2e/example.spec.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/tests/e2e/beidan-complete-e2e.spec.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/e2e/test-beidan-filter.spec.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/tests/e2e/user-management-comprehensive.spec.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/src/tests/unit/simple.test.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/tests/e2e/data-source-management.spec.js [2m([22m[2m0 test[22m[2m)[22m
+Cannot parse C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/api/matches.test.js:
+Expected ',', got '}'.
+ [31m❯[39m frontend/src/tests/unit/api/matches.test.js [2m([22m[2m0 test[22m[2m)[22m
+Cannot parse C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/api/admin.test.js:
+Expected ',', got 'ident'.
+ [31m❯[39m frontend/src/tests/unit/api/admin.test.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/src/tests/unit/simple_test.test.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/src/tests/unit/components/BottomNav.test.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/tests/unit/views/Login.test.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/src/tests/unit/components/HeaderComponent.test.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/src/tests/unit/components/LoginModal.test.js [2m([22m[2m0 test[22m[2m)[22m
+Cannot parse C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/api/bets.test.js:
+Unexpected token `)`. Expected ... , *,  (, [, :, , ?, = or an identifier.
+ [31m❯[39m frontend/src/tests/unit/api/bets.test.js [2m([22m[2m0 test[22m[2m)[22m
+Cannot parse C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/api/auth.test.js:
+Expected ',', got 'ident'.
+ [31m❯[39m frontend/src/tests/unit/api/auth.test.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/src/tests/unit/api/users.test.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/src/tests/unit/components/MatchCard.test.js [2m([22m[2m0 test[22m[2m)[22m
+Cannot parse C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/composables/useAuth.test.js:
+Expected ',', got 'ident'.
+ [31m❯[39m frontend/src/tests/unit/components/MainView.test.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/src/tests/unit/composables/useAuth.test.js [2m([22m[2m0 test[22m[2m)[22m
+Cannot parse C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/composables/useMatches.test.js:
+Unexpected token `)`. Expected ... , *,  (, [, :, , ?, = or an identifier.
+ [31m❯[39m frontend/src/tests/unit/composables/useMatches.test.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/src/tests/unit/composables/useFilters.test.js [2m([22m[2m0 test[22m[2m)[22m
+Cannot parse C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/composables/useBets.test.js:
+Unexpected token `)`. Expected ... , *,  (, [, :, , ?, = or an identifier.
+ [31m❯[39m frontend/src/tests/unit/composables/useBets.test.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/src/tests/unit/composables/useNotifications.test.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/src/tests/unit/store/admin.test.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/src/tests/unit/composables/useWebSocket.test.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/src/tests/unit/views/AdminDashboard.test.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/src/tests/unit/utils/style-regression.test.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/src/tests/unit/store/app.test.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/tests/unit/log_management.test.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/src/tests/unit/stores/user.test.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/tests/integration/views/admin/BeidanFilterPanel.component.spec.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/tests/integration/views/admin/BeidanFilterPanel.integration.spec.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/src/tests/unit/views/DataSourceManagement.test.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/tests/unit/views/admin/BeidanFilterPanel.unit.spec.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/src/tests/unit/views/JczqSchedule.test.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/src/tests/unit/views/DataCenter.test.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/src/tests/unit/views/HeadersManagement.test.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/src/tests/unit/views/IpPoolManagement.test.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/src/tests/unit/views/ProfileView.test.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/src/tests/unit/views/LoginView.test.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/src/tests/unit/views/SourceConfig.test.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m src/tests/_test_helpers_/env.test.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/src/tests/pure-js.test.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/src/tests/unit/test-basic.test.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/src/tests/unit/import-test.test.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/src/tests/simple.test.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/src/tests/unit/views/TaskConsole.test.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/src/tests/unit/utils/minimal.test.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/src/tests/unit/views/TaskScheduler.test.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/src/tests/unit/test-simple.test.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/src/tests/verify-vitest.test.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/src/tests/unit/check-environment.test.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/tests/integration/simple-test.spec.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/src/tests/unit/basic.test.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/src/tests/unit/final-check.test.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/src/tests/unit/direct-jsdom.test.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/src/tests/unit/jsdom-env.test.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/src/tests/unit/user_management.test.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m frontend/src/tests/unit/log_management.test.js [2m([22m[2m0 test[22m[2m)[22m
+
+[31m⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Suites 89 [49m[22m[31m⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m e2e/data-source-config.spec.js[2m [ e2e/data-source-config.spec.js ][22m
+[31m[1mError[22m: Playwright Test did not expect test.describe() to be called here.
+Most common reasons include:
+- You are calling test.describe() in a configuration file.
+- You are calling test.describe() in a file that is imported by the configuration file.
+- You have two different versions of @playwright/test. This usually happens
+  when one of the dependencies in your package.json depends on @playwright/test.[39m
+[90m [2m❯[22m TestTypeImpl._currentSuite node_modules/playwright/lib/common/testType.js:[2m75:13[22m[39m
+[90m [2m❯[22m TestTypeImpl._describe node_modules/playwright/lib/common/testType.js:[2m115:24[22m[39m
+[90m [2m❯[22m Function.describe node_modules/playwright/lib/transform/transform.js:[2m282:12[22m[39m
+[36m [2m❯[22m e2e/data-source-config.spec.js:[2m5:6[22m[39m
+    [90m  3| [39m
+    [90m  4| [39m[90m// 数据源配置页面端到端测试[39m
+    [90m  5| [39mtest[33m.[39m[34mdescribe[39m([32m'数据源配置页面端到端测试'[39m[33m,[39m () [33m=>[39m {
+    [90m   | [39m     [31m^[39m
+    [90m  6| [39m  [90m// 登录函数[39m
+    [90m  7| [39m  [35mconst[39m login [33m=[39m [35masync[39m (page) [33m=>[39m {
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m e2e/example.spec.js[2m [ e2e/example.spec.js ][22m
+[31m[1mError[22m: Playwright Test did not expect test() to be called here.
+Most common reasons include:
+- You are calling test() in a configuration file.
+- You are calling test() in a file that is imported by the configuration file.
+- You have two different versions of @playwright/test. This usually happens
+  when one of the dependencies in your package.json depends on @playwright/test.[39m
+[90m [2m❯[22m TestTypeImpl._currentSuite node_modules/playwright/lib/common/testType.js:[2m75:13[22m[39m
+[90m [2m❯[22m TestTypeImpl._createTest node_modules/playwright/lib/common/testType.js:[2m88:24[22m[39m
+[90m [2m❯[22m node_modules/playwright/lib/transform/transform.js:[2m282:12[22m[39m
+[36m [2m❯[22m e2e/example.spec.js:[2m4:5[22m[39m
+    [90m  2| [39m[35mimport[39m { test[33m,[39m expect } [35mfrom[39m [32m'@playwright/test'[39m[33m;[39m
+    [90m  3| [39m
+    [90m  4| [39m[34mtest[39m([32m'has title'[39m[33m,[39m [35masync[39m ({ page }) [33m=>[39m {
+    [90m   | [39m    [31m^[39m
+    [90m  5| [39m  [35mawait[39m page[33m.[39m[34mgoto[39m([32m'https://playwright.dev/'[39m)[33m;[39m
+    [90m  6| [39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m e2e/match-data-management.spec.js[2m [ e2e/match-data-management.spec.js ][22m
+[31m[1mError[22m: Playwright Test did not expect test.describe() to be called here.
+Most common reasons include:
+- You are calling test.describe() in a configuration file.
+- You are calling test.describe() in a file that is imported by the configuration file.
+- You have two different versions of @playwright/test. This usually happens
+  when one of the dependencies in your package.json depends on @playwright/test.[39m
+[90m [2m❯[22m TestTypeImpl._currentSuite node_modules/playwright/lib/common/testType.js:[2m75:13[22m[39m
+[90m [2m❯[22m TestTypeImpl._describe node_modules/playwright/lib/common/testType.js:[2m115:24[22m[39m
+[90m [2m❯[22m Function.describe node_modules/playwright/lib/transform/transform.js:[2m282:12[22m[39m
+[90m [2m❯[22m e2e/match-data-management.spec.js:[2m4:6[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/e2e/test-beidan-filter.spec.js[2m [ frontend/e2e/test-beidan-filter.spec.js ][22m
+[31m[1mError[22m: Playwright Test did not expect test.describe() to be called here.
+Most common reasons include:
+- You are calling test.describe() in a configuration file.
+- You are calling test.describe() in a file that is imported by the configuration file.
+- You have two different versions of @playwright/test. This usually happens
+  when one of the dependencies in your package.json depends on @playwright/test.[39m
+[90m [2m❯[22m TestTypeImpl._currentSuite frontend/node_modules/playwright/lib/common/testType.js:[2m75:13[22m[39m
+[90m [2m❯[22m TestTypeImpl._describe frontend/node_modules/playwright/lib/common/testType.js:[2m115:24[22m[39m
+[90m [2m❯[22m Function.describe frontend/node_modules/playwright/lib/transform/transform.js:[2m282:12[22m[39m
+[36m [2m❯[22m frontend/e2e/test-beidan-filter.spec.js:[2m5:6[22m[39m
+    [90m  3| [39m
+    [90m  4| [39m[90m// 北单过滤面板端到端测试[39m
+    [90m  5| [39mtest[33m.[39m[34mdescribe[39m([32m'北单过滤面板功能测试'[39m[33m,[39m () [33m=>[39m {
+    [90m   | [39m     [31m^[39m
+    [90m  6| [39m  test[33m.[39m[34mbeforeEach[39m([35masync[39m ({ page }) [33m=>[39m {
+    [90m  7| [39m    [90m// 登录到管理面板[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/src/tests/minimal.test.js[2m [ frontend/src/tests/minimal.test.js ][22m
+[31m[1mReferenceError[22m: test is not defined[39m
+[36m [2m❯[22m frontend/src/tests/minimal.test.js:[2m3:1[22m[39m
+    [90m  1| [39m[90m// 最小化测试验证Vitest[39m
+    [90m  2| [39mconsole[33m.[39m[34mlog[39m([32m'Minimal test starting...'[39m)
+    [90m  3| [39m[34mtest[39m([32m'1+1=2'[39m[33m,[39m () [33m=>[39m {
+    [90m   | [39m[31m^[39m
+    [90m  4| [39m  [34mexpect[39m([34m1[39m [33m+[39m [34m1[39m)[33m.[39m[34mtoBe[39m([34m2[39m)
+    [90m  5| [39m})
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/src/tests/pure-js.test.js[2m [ frontend/src/tests/pure-js.test.js ][22m
+[31m[1mError[22m: No test suite found in file c:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/pure-js.test.js[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/src/tests/simple.test.js[2m [ frontend/src/tests/simple.test.js ][22m
+[31m[1mError[22m: No test suite found in file c:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/simple.test.js[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/src/tests/verify-vitest.test.js[2m [ frontend/src/tests/verify-vitest.test.js ][22m
+[31m[1mError[22m: No test suite found in file c:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/verify-vitest.test.js[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/tests/e2e/beidan-complete-e2e.spec.js[2m [ frontend/tests/e2e/beidan-complete-e2e.spec.js ][22m
+[31m[1mError[22m: Playwright Test did not expect test.describe() to be called here.
+Most common reasons include:
+- You are calling test.describe() in a configuration file.
+- You are calling test.describe() in a file that is imported by the configuration file.
+- You have two different versions of @playwright/test. This usually happens
+  when one of the dependencies in your package.json depends on @playwright/test.[39m
+[90m [2m❯[22m TestTypeImpl._currentSuite frontend/node_modules/playwright/lib/common/testType.js:[2m75:13[22m[39m
+[90m [2m❯[22m TestTypeImpl._describe frontend/node_modules/playwright/lib/common/testType.js:[2m115:24[22m[39m
+[90m [2m❯[22m Function.describe frontend/node_modules/playwright/lib/transform/transform.js:[2m282:12[22m[39m
+[36m [2m❯[22m frontend/tests/e2e/beidan-complete-e2e.spec.js:[2m4:6[22m[39m
+    [90m  2| [39m[35mimport[39m { test[33m,[39m expect } [35mfrom[39m [32m'@playwright/test'[39m[33m;[39m
+    [90m  3| [39m
+    [90m  4| [39mtest[33m.[39m[34mdescribe[39m([32m'Beidan Filter Panel - Complete E2E Tests'[39m[33m,[39m () [33m=>[39m {
+    [90m   | [39m     [31m^[39m
+    [90m  5| [39m  test[33m.[39m[34mbeforeEach[39m([35masync[39m ({ page }) [33m=>[39m {
+    [90m  6| [39m    [90m// Mock login or authentication if required[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/tests/e2e/beidan-filter-panel.e2e.spec.js[2m [ frontend/tests/e2e/beidan-filter-panel.e2e.spec.js ][22m
+[31m[1mError[22m: Playwright Test did not expect test.describe() to be called here.
+Most common reasons include:
+- You are calling test.describe() in a configuration file.
+- You are calling test.describe() in a file that is imported by the configuration file.
+- You have two different versions of @playwright/test. This usually happens
+  when one of the dependencies in your package.json depends on @playwright/test.[39m
+[90m [2m❯[22m TestTypeImpl._currentSuite frontend/node_modules/playwright/lib/common/testType.js:[2m75:13[22m[39m
+[90m [2m❯[22m TestTypeImpl._describe frontend/node_modules/playwright/lib/common/testType.js:[2m115:24[22m[39m
+[90m [2m❯[22m Function.describe frontend/node_modules/playwright/lib/transform/transform.js:[2m282:12[22m[39m
+[36m [2m❯[22m frontend/tests/e2e/beidan-filter-panel.e2e.spec.js:[2m4:6[22m[39m
+    [90m  2| [39m[35mimport[39m { test[33m,[39m expect } [35mfrom[39m [32m'@playwright/test'[39m[33m;[39m
+    [90m  3| [39m
+    [90m  4| [39mtest[33m.[39m[34mdescribe[39m([32m'BeidanFilterPanel E2E Tests'[39m[33m,[39m () [33m=>[39m {
+    [90m   | [39m     [31m^[39m
+    [90m  5| [39m  test[33m.[39m[34mbeforeEach[39m([35masync[39m ({ page }) [33m=>[39m {
+    [90m  6| [39m    // Assuming the app is running on localhost:5173 (default Vite por…
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/tests/e2e/data-source-management.spec.js[2m [ frontend/tests/e2e/data-source-management.spec.js ][22m
+[31m[1mError[22m: Playwright Test did not expect test.describe() to be called here.
+Most common reasons include:
+- You are calling test.describe() in a configuration file.
+- You are calling test.describe() in a file that is imported by the configuration file.
+- You have two different versions of @playwright/test. This usually happens
+  when one of the dependencies in your package.json depends on @playwright/test.[39m
+[90m [2m❯[22m TestTypeImpl._currentSuite frontend/node_modules/playwright/lib/common/testType.js:[2m75:13[22m[39m
+[90m [2m❯[22m TestTypeImpl._describe frontend/node_modules/playwright/lib/common/testType.js:[2m115:24[22m[39m
+[90m [2m❯[22m Function.describe frontend/node_modules/playwright/lib/transform/transform.js:[2m282:12[22m[39m
+[36m [2m❯[22m frontend/tests/e2e/data-source-management.spec.js:[2m46:6[22m[39m
+    [90m 44| [39m}[33m;[39m
+    [90m 45| [39m
+    [90m 46| [39mtest[33m.[39m[34mdescribe[39m([32m'足球SP管理 - 数据源管理页面'[39m[33m,[39m () [33m=>[39m {
+    [90m   | [39m     [31m^[39m
+    [90m 47| [39m  test[33m.[39m[34mbeforeEach[39m([35masync[39m ({ page }) [33m=>[39m {
+    [90m 48| [39m    [90m// 拦截API请求并返回模拟数据[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/tests/e2e/log_management.test.js[2m [ frontend/tests/e2e/log_management.test.js ][22m
+[31m[1mError[22m: Cannot find module 'puppeteer'
+Require stack:
+- C:\Users\11581\Downloads\sport-lottery-sweeper\frontend\tests\e2e\log_management.test.js[39m
+[36m [2m❯[22m frontend/tests/e2e/log_management.test.js:[2m6:19[22m[39m
+    [90m  4| [39m */[39m
+    [90m  5| [39m
+    [90m  6| [39m[35mconst[39m puppeteer [33m=[39m [34mrequire[39m([32m'puppeteer'[39m)[33m;[39m
+    [90m   | [39m                  [31m^[39m
+    [90m  7| [39m[35mconst[39m fs [33m=[39m [34mrequire[39m([32m'fs'[39m)[33m;[39m
+    [90m  8| [39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/tests/e2e/user-management-comprehensive.spec.js[2m [ frontend/tests/e2e/user-management-comprehensive.spec.js ][22m
+[31m[1mError[22m: Playwright Test did not expect test.describe() to be called here.
+Most common reasons include:
+- You are calling test.describe() in a configuration file.
+- You are calling test.describe() in a file that is imported by the configuration file.
+- You have two different versions of @playwright/test. This usually happens
+  when one of the dependencies in your package.json depends on @playwright/test.[39m
+[90m [2m❯[22m TestTypeImpl._currentSuite frontend/node_modules/playwright/lib/common/testType.js:[2m75:13[22m[39m
+[90m [2m❯[22m TestTypeImpl._describe frontend/node_modules/playwright/lib/common/testType.js:[2m115:24[22m[39m
+[90m [2m❯[22m Function.describe frontend/node_modules/playwright/lib/transform/transform.js:[2m282:12[22m[39m
+[36m [2m❯[22m frontend/tests/e2e/user-management-comprehensive.spec.js:[2m3:6[22m[39m
+    [90m  1| [39m[35mimport[39m { test[33m,[39m expect } [35mfrom[39m [32m'@playwright/test'[39m[33m;[39m
+    [90m  2| [39m
+    [90m  3| [39mtest[33m.[39m[34mdescribe[39m([32m'Comprehensive User Management Page Tests'[39m[33m,[39m () [33m=>[39m {
+    [90m   | [39m     [31m^[39m
+    [90m  4| [39m  test[33m.[39m[34mbeforeEach[39m([35masync[39m ({ page }) [33m=>[39m {
+    [90m  5| [39m    [90m// 直接访问用户管理页面[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/tests/e2e/user-management.spec.js[2m [ frontend/tests/e2e/user-management.spec.js ][22m
+[31m[1mError[22m: Playwright Test did not expect test.describe() to be called here.
+Most common reasons include:
+- You are calling test.describe() in a configuration file.
+- You are calling test.describe() in a file that is imported by the configuration file.
+- You have two different versions of @playwright/test. This usually happens
+  when one of the dependencies in your package.json depends on @playwright/test.[39m
+[90m [2m❯[22m TestTypeImpl._currentSuite frontend/node_modules/playwright/lib/common/testType.js:[2m75:13[22m[39m
+[90m [2m❯[22m TestTypeImpl._describe frontend/node_modules/playwright/lib/common/testType.js:[2m115:24[22m[39m
+[90m [2m❯[22m Function.describe frontend/node_modules/playwright/lib/transform/transform.js:[2m282:12[22m[39m
+[36m [2m❯[22m frontend/tests/e2e/user-management.spec.js:[2m3:6[22m[39m
+    [90m  1| [39m[35mimport[39m { test[33m,[39m expect } [35mfrom[39m [32m'@playwright/test'[39m[33m;[39m
+    [90m  2| [39m
+    [90m  3| [39mtest[33m.[39m[34mdescribe[39m([32m'User Management Page'[39m[33m,[39m () [33m=>[39m {
+    [90m   | [39m     [31m^[39m
+    [90m  4| [39m  test[33m.[39m[34mbeforeEach[39m([35masync[39m ({ page }) [33m=>[39m {
+    [90m  5| [39m    [90m// 使用API进行身份验证[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/tests/integration/beidan-integration-logic-only.spec.js[2m [ frontend/tests/integration/beidan-integration-logic-only.spec.js ][22m
+[31m[1mError[22m: Cannot find package '@/utils/beidanFilterUtils' imported from 'c:/Users/11581/Downloads/sport-lottery-sweeper/frontend/tests/integration/beidan-integration-logic-only.spec.js'[39m
+[90m [2m❯[22m frontend/tests/integration/beidan-integration-logic-only.spec.js:[2m3:1[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/tests/integration/beidan-integration-minimal.spec.js[2m [ frontend/tests/integration/beidan-integration-minimal.spec.js ][22m
+[31m[1mError[22m: Cannot find package '@/utils/beidanFilterUtils' imported from 'C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/tests/integration/beidan-integration-minimal.spec.js'[39m
+[36m [2m❯[22m frontend/tests/integration/beidan-integration-minimal.spec.js:[2m3:1[22m[39m
+    [90m  1| [39m[90m// Minimal integration test focusing only on utility functions[39m
+    [90m  2| [39m[35mimport[39m { describe[33m,[39m it[33m,[39m expect } [35mfrom[39m [32m'vitest'[39m[33m;[39m
+    [90m  3| [39m[35mimport[39m {
+    [90m   | [39m[31m^[39m
+    [90m  4| [39m  calcDeltaPLevel[33m,[39m
+    [90m  5| [39m  calcDeltaWp[33m,[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/tests/integration/beidan-integration-no-mount.spec.js[2m [ frontend/tests/integration/beidan-integration-no-mount.spec.js ][22m
+[31m[1mError[22m: Cannot find package '@/utils/beidanFilterUtils' imported from 'c:/Users/11581/Downloads/sport-lottery-sweeper/frontend/tests/integration/beidan-integration-no-mount.spec.js'[39m
+[90m [2m❯[22m frontend/tests/integration/beidan-integration-no-mount.spec.js:[2m3:1[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/tests/integration/beidan-integration-suite.spec.js[2m [ frontend/tests/integration/beidan-integration-suite.spec.js ][22m
+[31m[1mError[22m: Cannot find package '@/views/admin/BeidanFilterPanel.vue' imported from 'C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/tests/integration/beidan-integration-suite.spec.js'[39m
+[36m [2m❯[22m frontend/tests/integration/beidan-integration-suite.spec.js:[2m4:1[22m[39m
+    [90m  2| [39mimport { describe, it, expect, vi, beforeEach, afterEach } from 'vites…
+    [90m  3| [39m[35mimport[39m { mount[33m,[39m createLocalVue } [35mfrom[39m [32m'@vue/test-utils'[39m[33m;[39m
+    [90m  4| [39m[35mimport[39m [33mBeidanFilterPanel[39m [35mfrom[39m [32m'@/views/admin/BeidanFilterPanel.vue'[39m[33m;[39m
+    [90m   | [39m[31m^[39m
+    [90m  5| [39m[35mimport[39m { createTestingPinia } [35mfrom[39m [32m'@pinia/testing'[39m[33m;[39m
+    [90m  6| [39m[35mimport[39m {
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/tests/integration/log_api.test.js[2m [ frontend/tests/integration/log_api.test.js ][22m
+[31m[1mError[22m: No test suite found in file c:/Users/11581/Downloads/sport-lottery-sweeper/frontend/tests/integration/log_api.test.js[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/tests/integration/simple-test.spec.js[2m [ frontend/tests/integration/simple-test.spec.js ][22m
+[31m[1mError[22m: No test suite found in file c:/Users/11581/Downloads/sport-lottery-sweeper/frontend/tests/integration/simple-test.spec.js[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/tests/unit/log_management.test.js[2m [ frontend/tests/unit/log_management.test.js ][22m
+[31m[1mError[22m: Cannot find package '@/views/admin/logs/LogManagement.vue' imported from 'C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/tests/unit/log_management.test.js'[39m
+[36m [2m❯[22m frontend/tests/unit/log_management.test.js:[2m12:1[22m[39m
+    [90m 10| [39m
+    [90m 11| [39m[90m// 导入各个日志管理页面组件[39m
+    [90m 12| [39m[35mimport[39m [33mLogManagement[39m [35mfrom[39m [32m'@/views/admin/logs/LogManagement.vue'[39m[33m;[39m
+    [90m   | [39m[31m^[39m
+    [90m 13| [39m[35mimport[39m [33mSystemLogs[39m [35mfrom[39m [32m'@/views/admin/logs/SystemLogs.vue'[39m[33m;[39m
+    [90m 14| [39m[35mimport[39m [33mUserLogs[39m [35mfrom[39m [32m'@/views/admin/logs/UserLogs.vue'[39m[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/tests/_test_helpers_/env.test.js[2m [ src/tests/_test_helpers_/env.test.js ][22m
+[31m[1mError[22m: No test suite found in file c:/Users/11581/Downloads/sport-lottery-sweeper/src/tests/_test_helpers_/env.test.js[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/src/tests/e2e/user_management.test.js[2m [ frontend/src/tests/e2e/user_management.test.js ][22m
+[31m[1mError[22m: No test suite found in file c:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/e2e/user_management.test.js[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/src/tests/e2e/user_management_e2e.test.js[2m [ frontend/src/tests/e2e/user_management_e2e.test.js ][22m
+[31m[1mError[22m: Cannot find package '@/api/userManagement' imported from 'c:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/e2e/user_management_e2e.test.js'[39m
+[90m [2m❯[22m frontend/src/tests/e2e/user_management_e2e.test.js:[2m22:1[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/src/tests/integration/log_api.test.js[2m [ frontend/src/tests/integration/log_api.test.js ][22m
+[31m[1mError[22m: No test suite found in file c:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/integration/log_api.test.js[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/src/tests/integration/user_api.test.js[2m [ frontend/src/tests/integration/user_api.test.js ][22m
+[31m[1mError[22m: Cannot find package '@/api/userManagement' imported from 'c:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/integration/user_api.test.js'[39m
+[90m [2m❯[22m frontend/src/tests/integration/user_api.test.js:[2m2:1[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/src/tests/integration/user_management_api.test.js[2m [ frontend/src/tests/integration/user_management_api.test.js ][22m
+[31m[1mError[22m: No test suite found in file c:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/integration/user_management_api.test.js[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[27/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/src/tests/unit/absolute-minimal.test.js[2m [ frontend/src/tests/unit/absolute-minimal.test.js ][22m
+[31m[1mTypeError[22m: globalThis.describe is not a function[39m
+[36m [2m❯[22m frontend/src/tests/unit/absolute-minimal.test.js:[2m5:12[22m[39m
+    [90m  3| [39m
+    [90m  4| [39m[90m// 直接调用全局函数[39m
+    [90m  5| [39mglobalThis[33m.[39m[34mdescribe[39m([32m'Absolute minimal test'[39m[33m,[39m () [33m=>[39m {
+    [90m   | [39m           [31m^[39m
+    [90m  6| [39m  globalThis[33m.[39m[34mit[39m([32m'should work'[39m[33m,[39m () [33m=>[39m {
+    [90m  7| [39m    globalThis[33m.[39m[34mexpect[39m([34m1[39m)[33m.[39m[34mtoBe[39m([34m1[39m)
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[28/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/src/tests/unit/api.test.js[2m [ frontend/src/tests/unit/api.test.js ][22m
+[31m[1mError[22m: Cannot find package '@/utils/request' imported from 'C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/api.test.js'[39m
+[36m [2m❯[22m frontend/src/tests/unit/api.test.js:[2m7:1[22m[39m
+    [90m  5| [39m[35mimport[39m { describe[33m,[39m it[33m,[39m expect[33m,[39m vi } [35mfrom[39m [32m'vitest'[39m
+    [90m  6| [39m[35mimport[39m { request } [35mfrom[39m [32m'@/utils/request'[39m
+    [90m  7| [39m[35mimport[39m axios [35mfrom[39m [32m'axios'[39m
+    [90m   | [39m[31m^[39m
+    [90m  8| [39m
+    [90m  9| [39m[90m// 模拟axios[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[29/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/src/tests/unit/basic.test.js[2m [ frontend/src/tests/unit/basic.test.js ][22m
+[31m[1mError[22m: Vitest failed to find the current suite. One of the following is possible:
+- "vitest" is imported directly without running "vitest" command
+- "vitest" is imported inside "globalSetup" (to fix this, use "setupFiles" instead, because "globalSetup" runs in a different context)
+- "vitest" is imported inside Vite / Vitest config file
+- Otherwise, it might be a Vitest bug. Please report it to https://github.com/vitest-dev/vitest/issues
+[39m
+[36m [2m❯[22m frontend/src/tests/unit/basic.test.js:[2m3:5[22m[39m
+    [90m  1| [39m[35mimport[39m { test[33m,[39m expect } [35mfrom[39m [32m'vitest'[39m
+    [90m  2| [39m
+    [90m  3| [39m[34mtest[39m([32m'basic test'[39m[33m,[39m () [33m=>[39m {
+    [90m   | [39m    [31m^[39m
+    [90m  4| [39m  [34mexpect[39m([34m1[39m [33m+[39m [34m1[39m)[33m.[39m[34mtoBe[39m([34m2[39m)
+    [90m  5| [39m})
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[30/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/src/tests/unit/check-environment.test.js[2m [ frontend/src/tests/unit/check-environment.test.js ][22m
+[31m[1mError[22m: No test suite found in file c:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/check-environment.test.js[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[31/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/src/tests/unit/direct-jsdom.test.js[2m [ frontend/src/tests/unit/direct-jsdom.test.js ][22m
+[31m[1mError[22m: No test suite found in file c:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/direct-jsdom.test.js[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[32/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/src/tests/unit/final-check.test.js[2m [ frontend/src/tests/unit/final-check.test.js ][22m
+[31m[1mError[22m: No test suite found in file c:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/final-check.test.js[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[33/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/src/tests/unit/global-test.test.js[2m [ frontend/src/tests/unit/global-test.test.js ][22m
+[31m[1mReferenceError[22m: describe is not defined[39m
+[36m [2m❯[22m frontend/src/tests/unit/global-test.test.js:[2m4:1[22m[39m
+    [90m  2| [39m[90m// 如果globals: true生效，describe、it、expect应该全局可用[39m
+    [90m  3| [39m
+    [90m  4| [39m[34mdescribe[39m([32m'Global variables test'[39m[33m,[39m () [33m=>[39m {
+    [90m   | [39m[31m^[39m
+    [90m  5| [39m  [34mit[39m([32m'should have global describe function'[39m[33m,[39m () [33m=>[39m {
+    [90m  6| [39m    [34mexpect[39m([35mtypeof[39m describe)[33m.[39m[34mtoBe[39m([32m'function'[39m)
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[34/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/src/tests/unit/import-test.test.js[2m [ frontend/src/tests/unit/import-test.test.js ][22m
+[31m[1mError[22m: No test suite found in file c:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/import-test.test.js[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[35/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/src/tests/unit/jsdom-env.test.js[2m [ frontend/src/tests/unit/jsdom-env.test.js ][22m
+[31m[1mError[22m: No test suite found in file c:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/jsdom-env.test.js[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[36/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/src/tests/unit/log_management.test.js[2m [ frontend/src/tests/unit/log_management.test.js ][22m
+[31m[1mError[22m: Failed to parse source for import analysis because the content contains invalid JS syntax. Install @vitejs/plugin-vue to handle .vue files.[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/views/admin/logs/LogManagement.vue[39m:4:21
+[33m  2  |    <div class="log-management-container">
+  3  |      <el-card class="log-header">
+  4  |        <h2>日志管理中心</h2>
+     |                       ^
+  5  |        <p>系统各类日志的集中管理与分析平台</p>
+  6  |      </el-card>[39m
+[90m [2m❯[22m TransformPluginContext._formatLog node_modules/vite/dist/node/chunks/config.js:[2m28999:43[22m[39m
+[90m [2m❯[22m TransformPluginContext.error node_modules/vite/dist/node/chunks/config.js:[2m28996:14[22m[39m
+[90m [2m❯[22m TransformPluginContext.transform node_modules/vite/dist/node/chunks/config.js:[2m27082:10[22m[39m
+[90m [2m❯[22m EnvironmentPluginContainer.transform node_modules/vite/dist/node/chunks/config.js:[2m28797:14[22m[39m
+[90m [2m❯[22m loadAndTransform node_modules/vite/dist/node/chunks/config.js:[2m22670:26[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[37/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/src/tests/unit/minimal.test.js[2m [ frontend/src/tests/unit/minimal.test.js ][22m
+[31m[1mError[22m: No test suite found in file c:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/minimal.test.js[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[38/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/src/tests/unit/no-import.test.js[2m [ frontend/src/tests/unit/no-import.test.js ][22m
+[31m[1mReferenceError[22m: describe is not defined[39m
+[36m [2m❯[22m frontend/src/tests/unit/no-import.test.js:[2m11:1[22m[39m
+    [90m  9| [39m
+    [90m 10| [39m[90m// 使用全局describe和it[39m
+    [90m 11| [39m[34mdescribe[39m([32m'No import test suite'[39m[33m,[39m () [33m=>[39m {
+    [90m   | [39m[31m^[39m
+    [90m 12| [39m  [34mit[39m([32m'should work without imports'[39m[33m,[39m () [33m=>[39m {
+    [90m 13| [39m    [34mexpect[39m([35mtrue[39m)[33m.[39m[34mtoBe[39m([35mtrue[39m)
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[39/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/src/tests/unit/simple-global.test.js[2m [ frontend/src/tests/unit/simple-global.test.js ][22m
+[31m[1mReferenceError[22m: describe is not defined[39m
+[36m [2m❯[22m frontend/src/tests/unit/simple-global.test.js:[2m2:1[22m[39m
+    [90m  1| [39m[90m// 测试globals是否可用[39m
+    [90m  2| [39m[34mdescribe[39m([32m'Global availability test'[39m[33m,[39m () [33m=>[39m {
+    [90m   | [39m[31m^[39m
+    [90m  3| [39m  [34mit[39m([32m'should have global expect'[39m[33m,[39m () [33m=>[39m {
+    [90m  4| [39m    [34mexpect[39m([34m1[39m)[33m.[39m[34mtoBe[39m([34m1[39m)
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[40/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/src/tests/unit/simple-vue.test.js[2m [ frontend/src/tests/unit/simple-vue.test.js ][22m
+[31m[1mError[22m: No test suite found in file c:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/simple-vue.test.js[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[41/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/src/tests/unit/simple.test.js[2m [ frontend/src/tests/unit/simple.test.js ][22m
+[31m[1mError[22m: No test suite found in file c:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/simple.test.js[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[42/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/src/tests/unit/simple_test.test.js[2m [ frontend/src/tests/unit/simple_test.test.js ][22m
+[31m[1mError[22m: No test suite found in file c:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/simple_test.test.js[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[43/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/src/tests/unit/test-basic.test.js[2m [ frontend/src/tests/unit/test-basic.test.js ][22m
+[31m[1mError[22m: Vitest failed to find the current suite. One of the following is possible:
+- "vitest" is imported directly without running "vitest" command
+- "vitest" is imported inside "globalSetup" (to fix this, use "setupFiles" instead, because "globalSetup" runs in a different context)
+- "vitest" is imported inside Vite / Vitest config file
+- Otherwise, it might be a Vitest bug. Please report it to https://github.com/vitest-dev/vitest/issues
+[39m
+[36m [2m❯[22m frontend/src/tests/unit/test-basic.test.js:[2m3:5[22m[39m
+    [90m  1| [39m[35mimport[39m { test[33m,[39m expect } [35mfrom[39m [32m'vitest'[39m
+    [90m  2| [39m
+    [90m  3| [39m[34mtest[39m([32m'basic test should work'[39m[33m,[39m () [33m=>[39m {
+    [90m   | [39m    [31m^[39m
+    [90m  4| [39m  [34mexpect[39m([34m1[39m [33m+[39m [34m1[39m)[33m.[39m[34mtoBe[39m([34m2[39m)
+    [90m  5| [39m})
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[44/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/src/tests/unit/test-simple.test.js[2m [ frontend/src/tests/unit/test-simple.test.js ][22m
+[31m[1mError[22m: Vitest failed to find the current suite. One of the following is possible:
+- "vitest" is imported directly without running "vitest" command
+- "vitest" is imported inside "globalSetup" (to fix this, use "setupFiles" instead, because "globalSetup" runs in a different context)
+- "vitest" is imported inside Vite / Vitest config file
+- Otherwise, it might be a Vitest bug. Please report it to https://github.com/vitest-dev/vitest/issues
+[39m
+[36m [2m❯[22m frontend/src/tests/unit/test-simple.test.js:[2m4:5[22m[39m
+    [90m  2| [39m[35mimport[39m { test[33m,[39m expect } [35mfrom[39m [32m'vitest'[39m
+    [90m  3| [39m
+    [90m  4| [39m[34mtest[39m([32m'simple test with test function'[39m[33m,[39m () [33m=>[39m {
+    [90m   | [39m    [31m^[39m
+    [90m  5| [39m  [34mexpect[39m([34m1[39m)[33m.[39m[34mtoBe[39m([34m1[39m)
+    [90m  6| [39m})
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[45/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/src/tests/unit/test-vitest.test.js[2m [ frontend/src/tests/unit/test-vitest.test.js ][22m
+[31m[1mError[22m: No test suite found in file c:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/test-vitest.test.js[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[46/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/src/tests/unit/user_management.test.js[2m [ frontend/src/tests/unit/user_management.test.js ][22m
+[31m[1mError[22m: No test suite found in file c:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/user_management.test.js[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[47/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/src/tests/unit/verify-vue.test.js[2m [ frontend/src/tests/unit/verify-vue.test.js ][22m
+[31m[1mError[22m: No test suite found in file c:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/verify-vue.test.js[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[48/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/tests/unit/components/RegisterForm.test.js[2m [ frontend/tests/unit/components/RegisterForm.test.js ][22m
+[31m[1mError[22m: Cannot find package '@/components/RegisterForm.vue' imported from 'c:/Users/11581/Downloads/sport-lottery-sweeper/frontend/tests/unit/components/RegisterForm.test.js'[39m
+[90m [2m❯[22m frontend/tests/unit/components/RegisterForm.test.js:[2m5:1[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[49/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/tests/unit/composables/useAuth.test.js[2m [ frontend/tests/unit/composables/useAuth.test.js ][22m
+[31m[1mError[22m: Cannot find package '@/composables/useAuth.js' imported from 'C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/tests/unit/composables/useAuth.test.js'[39m
+[36m [2m❯[22m frontend/tests/unit/composables/useAuth.test.js:[2m4:1[22m[39m
+    [90m  2| [39mimport { describe, it, expect, vi, beforeEach, afterEach } from 'vites…
+    [90m  3| [39m[35mimport[39m { ref } [35mfrom[39m [32m'vue'[39m
+    [90m  4| [39m[35mimport[39m { useAuth } [35mfrom[39m [32m'@/composables/useAuth.js'[39m
+    [90m   | [39m[31m^[39m
+    [90m  5| [39m[35mimport[39m { useAuthStore } [35mfrom[39m [32m'@/stores/auth.js'[39m
+    [90m  6| [39m[35mimport[39m { [33mElMessage[39m[33m,[39m [33mElMessageBox[39m } [35mfrom[39m [32m'element-plus'[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[50/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/tests/unit/utils/authUtils.test.js[2m [ frontend/tests/unit/utils/authUtils.test.js ][22m
+[31m[1mError[22m: Cannot find package '@/utils/authUtils' imported from 'c:/Users/11581/Downloads/sport-lottery-sweeper/frontend/tests/unit/utils/authUtils.test.js'[39m
+[90m [2m❯[22m frontend/tests/unit/utils/authUtils.test.js:[2m3:1[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[51/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/tests/unit/utils/beidanFilterUtils.spec.js[2m [ frontend/tests/unit/utils/beidanFilterUtils.spec.js ][22m
+[31m[1mError[22m: Cannot find package '@/utils/beidanFilterUtils' imported from 'C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/tests/unit/utils/beidanFilterUtils.spec.js'[39m
+[36m [2m❯[22m frontend/tests/unit/utils/beidanFilterUtils.spec.js:[2m3:1[22m[39m
+    [90m  1| [39m[90m// Unit tests for BeidanFilter utilities[39m
+    [90m  2| [39m[35mimport[39m { describe[33m,[39m it[33m,[39m expect } [35mfrom[39m [32m'vitest'[39m[33m;[39m
+    [90m  3| [39m[35mimport[39m {
+    [90m   | [39m[31m^[39m
+    [90m  4| [39m  calcDeltaPLevel[33m,[39m
+    [90m  5| [39m  calcDeltaWp[33m,[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[52/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/tests/unit/views/BasicSettings.test.js[2m [ frontend/tests/unit/views/BasicSettings.test.js ][22m
+[31m[1mError[22m: Cannot find package '@/views/admin/settings/settings-components/BasicSettings.vue' imported from 'C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/tests/unit/views/BasicSettings.test.js'[39m
+[36m [2m❯[22m frontend/tests/unit/views/BasicSettings.test.js:[2m5:1[22m[39m
+    [90m  3| [39m[35mimport[39m { createTestingPinia } [35mfrom[39m [32m'@pinia/testing'[39m
+    [90m  4| [39m[35mimport[39m { [33mElMessage[39m } [35mfrom[39m [32m'element-plus'[39m
+    [90m  5| [39mimport BasicSettings from '@/views/admin/settings/settings-components/…
+    [90m   | [39m[31m^[39m
+    [90m  6| [39m
+    [90m  7| [39m[90m// Mock Element Plus Message[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[53/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/tests/unit/views/Login.test.js[2m [ frontend/tests/unit/views/Login.test.js ][22m
+[31m[1mError[22m: Cannot find package '@/views/Login.vue' imported from 'C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/tests/unit/views/Login.test.js'[39m
+[36m [2m❯[22m frontend/tests/unit/views/Login.test.js:[2m3:1[22m[39m
+    [90m  1| [39m[35mimport[39m { describe[33m,[39m it[33m,[39m expect[33m,[39m vi } [35mfrom[39m [32m'vitest'[39m
+    [90m  2| [39m[35mimport[39m { mount } [35mfrom[39m [32m'@vue/test-utils'[39m
+    [90m  3| [39m[35mimport[39m [33mLogin[39m [35mfrom[39m [32m'@/views/Login.vue'[39m
+    [90m   | [39m[31m^[39m
+    [90m  4| [39m
+    [90m  5| [39m[90m// Mock Element Plus Message[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[54/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/src/tests/unit/components/BottomNav.test.js[2m [ frontend/src/tests/unit/components/BottomNav.test.js ][22m
+[31m[1mError[22m: Cannot find package '@/components/BottomNav.vue' imported from 'C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/components/BottomNav.test.js'[39m
+[36m [2m❯[22m frontend/src/tests/unit/components/BottomNav.test.js:[2m6:1[22m[39m
+    [90m  4| [39m[35mimport[39m { mount } [35mfrom[39m [32m'@vue/test-utils'[39m
+    [90m  5| [39m[35mimport[39m { nextTick } [35mfrom[39m [32m'vue'[39m
+    [90m  6| [39m[35mimport[39m [33mBottomNav[39m [35mfrom[39m [32m'@/components/BottomNav.vue'[39m
+    [90m   | [39m[31m^[39m
+    [90m  7| [39m
+    [90m  8| [39m[90m// 模拟vue-router[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[55/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/src/tests/unit/components/HeaderComponent.test.js[2m [ frontend/src/tests/unit/components/HeaderComponent.test.js ][22m
+[31m[1mError[22m: Cannot find package '@/components/HeaderComponent.vue' imported from 'C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/components/HeaderComponent.test.js'[39m
+[36m [2m❯[22m frontend/src/tests/unit/components/HeaderComponent.test.js:[2m6:1[22m[39m
+    [90m  4| [39m[35mimport[39m { mount } [35mfrom[39m [32m'@vue/test-utils'[39m
+    [90m  5| [39m[35mimport[39m { nextTick } [35mfrom[39m [32m'vue'[39m
+    [90m  6| [39m[35mimport[39m [33mHeaderComponent[39m [35mfrom[39m [32m'@/components/HeaderComponent.vue'[39m
+    [90m   | [39m[31m^[39m
+    [90m  7| [39m
+    [90m  8| [39m[90m// 模拟vue-router[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[56/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/src/tests/unit/components/LoginModal.test.js[2m [ frontend/src/tests/unit/components/LoginModal.test.js ][22m
+[31m[1mError[22m: Cannot find package '@/components/LoginModal.vue' imported from 'C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/components/LoginModal.test.js'[39m
+[36m [2m❯[22m frontend/src/tests/unit/components/LoginModal.test.js:[2m6:1[22m[39m
+    [90m  4| [39m[35mimport[39m { mount } [35mfrom[39m [32m'@vue/test-utils'[39m
+    [90m  5| [39m[35mimport[39m { nextTick } [35mfrom[39m [32m'vue'[39m
+    [90m  6| [39m[35mimport[39m [33mLoginModal[39m [35mfrom[39m [32m'@/components/LoginModal.vue'[39m
+    [90m   | [39m[31m^[39m
+    [90m  7| [39m
+    [90m  8| [39m[90m// 模拟vue-i18n[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[57/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/src/tests/unit/components/MainView.test.js[2m [ frontend/src/tests/unit/components/MainView.test.js ][22m
+[31m[1mError[22m: Cannot find package '@/components/MainView.vue' imported from 'C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/components/MainView.test.js'[39m
+[36m [2m❯[22m frontend/src/tests/unit/components/MainView.test.js:[2m6:1[22m[39m
+    [90m  4| [39m[35mimport[39m { mount } [35mfrom[39m [32m'@vue/test-utils'[39m
+    [90m  5| [39m[35mimport[39m { nextTick } [35mfrom[39m [32m'vue'[39m
+    [90m  6| [39m[35mimport[39m [33mMainView[39m [35mfrom[39m [32m'@/components/MainView.vue'[39m
+    [90m   | [39m[31m^[39m
+    [90m  7| [39m
+    [90m  8| [39m[90m// 模拟子组件[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[58/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/src/tests/unit/components/MatchCard.test.js[2m [ frontend/src/tests/unit/components/MatchCard.test.js ][22m
+[31m[1mError[22m: Cannot find module '../../components/MatchCard.vue' imported from 'C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/components/MatchCard.test.js'[39m
+[36m [2m❯[22m frontend/src/tests/unit/components/MatchCard.test.js:[2m5:1[22m[39m
+    [90m  3| [39m[35mimport[39m { mount } [35mfrom[39m [32m'@vue/test-utils'[39m
+    [90m  4| [39m[35mimport[39m { nextTick } [35mfrom[39m [32m'vue'[39m
+    [90m  5| [39m[35mimport[39m [33mMatchCard[39m [35mfrom[39m [32m'../../components/MatchCard.vue'[39m
+    [90m   | [39m[31m^[39m
+    [90m  6| [39m
+    [90m  7| [39m[90m// 模拟全局对象[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[59/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/src/tests/unit/api/admin.test.js[2m [ frontend/src/tests/unit/api/admin.test.js ][22m
+[41m[1m FAIL [22m[49m frontend/src/tests/unit/api/auth.test.js[2m [ frontend/src/tests/unit/api/auth.test.js ][22m
+[41m[1m FAIL [22m[49m frontend/src/tests/unit/api/bets.test.js[2m [ frontend/src/tests/unit/api/bets.test.js ][22m
+[41m[1m FAIL [22m[49m frontend/src/tests/unit/api/matches.test.js[2m [ frontend/src/tests/unit/api/matches.test.js ][22m
+[41m[1m FAIL [22m[49m frontend/src/tests/unit/api/users.test.js[2m [ frontend/src/tests/unit/api/users.test.js ][22m
+[41m[1m FAIL [22m[49m frontend/src/tests/unit/composables/useAuth.test.js[2m [ frontend/src/tests/unit/composables/useAuth.test.js ][22m
+[41m[1m FAIL [22m[49m frontend/src/tests/unit/composables/useBets.test.js[2m [ frontend/src/tests/unit/composables/useBets.test.js ][22m
+[41m[1m FAIL [22m[49m frontend/src/tests/unit/composables/useMatches.test.js[2m [ frontend/src/tests/unit/composables/useMatches.test.js ][22m
+[41m[1m FAIL [22m[49m frontend/src/tests/unit/store/admin.test.js[2m [ frontend/src/tests/unit/store/admin.test.js ][22m
+[41m[1m FAIL [22m[49m frontend/src/tests/unit/utils/style-regression.test.js[2m [ frontend/src/tests/unit/utils/style-regression.test.js ][22m
+[41m[1m FAIL [22m[49m frontend/src/tests/unit/views/AdminDashboard.test.js[2m [ frontend/src/tests/unit/views/AdminDashboard.test.js ][22m
+[41m[1m FAIL [22m[49m frontend/src/tests/unit/views/JczqSchedule.test.js[2m [ frontend/src/tests/unit/views/JczqSchedule.test.js ][22m
+[41m[1m FAIL [22m[49m frontend/src/tests/unit/views/LoginView.test.js[2m [ frontend/src/tests/unit/views/LoginView.test.js ][22m
+[41m[1m FAIL [22m[49m frontend/src/tests/unit/views/ProfileView.test.js[2m [ frontend/src/tests/unit/views/ProfileView.test.js ][22m
+[31m[1mError[22m: Failed to parse source for import analysis because the content contains invalid JS syntax. If you are using JSX, make sure to name the file with the .jsx or .tsx extension.[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/api/admin.test.js[39m:76:5
+[33m  78 |  
+  79 |    describe('getPendingApprovals', () => {
+  80 |      it('应该获取待审批用户列表', async () => {
+     |                           ^
+  81 |        const mockUsers = [
+  82 |          {[39m
+[90m [2m❯[22m TransformPluginContext._formatLog node_modules/vite/dist/node/chunks/config.js:[2m28999:43[22m[39m
+[90m [2m❯[22m TransformPluginContext.error node_modules/vite/dist/node/chunks/config.js:[2m28996:14[22m[39m
+[90m [2m❯[22m TransformPluginContext.transform node_modules/vite/dist/node/chunks/config.js:[2m27082:10[22m[39m
+[90m [2m❯[22m EnvironmentPluginContainer.transform node_modules/vite/dist/node/chunks/config.js:[2m28797:14[22m[39m
+[90m [2m❯[22m loadAndTransform node_modules/vite/dist/node/chunks/config.js:[2m22670:26[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[60/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/src/tests/unit/composables/useFilters.test.js[2m [ frontend/src/tests/unit/composables/useFilters.test.js ][22m
+[31m[1mRollupError[22m: Parse failure: Expected a semicolon
+At file: /@fs/C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/composables/useFilters.test.js:642:12[39m
+  File: [36m/@fs/C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/composables/useFilters.test.js[39m:642:12
+[33m  666 |        
+  667 |        // 很多联赛
+  668 |        const manyLeagues = Array.from({ length: 100 }, (_, i) => `League ${i}`)
+      |                                                 ^
+  669 |        filters.filters.value.leagues = manyLeagues
+  670 |        expect(filters.filters.value.leagues.length).toBeLessThanOrEqual(50) // 假设有上限[39m
+[90m [2m❯[22m getRollupError node_modules/rollup/dist/es/shared/parseAst.js:[2m400:41[22m[39m
+[90m [2m❯[22m convertProgram node_modules/rollup/dist/es/shared/parseAst.js:[2m1106:26[22m[39m
+[90m [2m❯[22m parseAstAsync node_modules/rollup/dist/es/shared/parseAst.js:[2m2092:106[22m[39m
+[90m [2m❯[22m ssrTransformScript node_modules/vite/dist/node/chunks/config.js:[2m15374:9[22m[39m
+[90m [2m❯[22m loadAndTransform node_modules/vite/dist/node/chunks/config.js:[2m22701:64[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[61/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/src/tests/unit/composables/useNotifications.test.js[2m [ frontend/src/tests/unit/composables/useNotifications.test.js ][22m
+[31m[1mError[22m: Cannot find module '../../composables/useNotifications.js' imported from 'C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/composables/useNotifications.test.js'[39m
+[36m [2m❯[22m frontend/src/tests/unit/composables/useNotifications.test.js:[2m4:1[22m[39m
+    [90m  2| [39mimport { describe, it, expect, vi, beforeEach, afterEach } from 'vites…
+    [90m  3| [39m[35mimport[39m { ref[33m,[39m computed } [35mfrom[39m [32m'vue'[39m
+    [90m  4| [39mimport { useNotifications } from '../../composables/useNotifications.j…
+    [90m   | [39m[31m^[39m
+    [90m  5| [39m
+    [90m  6| [39m[90m// 模拟浏览器通知 API[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[62/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/src/tests/unit/composables/useWebSocket.test.js[2m [ frontend/src/tests/unit/composables/useWebSocket.test.js ][22m
+[31m[1mError[22m: Cannot find module '../../composables/useWebSocket.js' imported from 'C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/composables/useWebSocket.test.js'[39m
+[36m [2m❯[22m frontend/src/tests/unit/composables/useWebSocket.test.js:[2m4:1[22m[39m
+    [90m  2| [39mimport { describe, it, expect, vi, beforeEach, afterEach } from 'vites…
+    [90m  3| [39m[35mimport[39m { ref[33m,[39m onMounted[33m,[39m onUnmounted } [35mfrom[39m [32m'vue'[39m
+    [90m  4| [39m[35mimport[39m { useWebSocket } [35mfrom[39m [32m'../../composables/useWebSocket.js'[39m
+    [90m   | [39m[31m^[39m
+    [90m  5| [39m
+    [90m  6| [39m[90m// 模拟 WebSocket[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[63/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/src/tests/unit/store/app.test.js[2m [ frontend/src/tests/unit/store/app.test.js ][22m
+[31m[1mError[22m: Cannot find module '../../stores/app.js' imported from 'C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/store/app.test.js'[39m
+[36m [2m❯[22m frontend/src/tests/unit/store/app.test.js:[2m4:1[22m[39m
+    [90m  2| [39mimport { describe, it, expect, vi, beforeEach, afterEach } from 'vites…
+    [90m  3| [39m[35mimport[39m { setActivePinia[33m,[39m createPinia } [35mfrom[39m [32m'pinia'[39m
+    [90m  4| [39m[35mimport[39m { useAppStore } [35mfrom[39m [32m'../../stores/app.js'[39m
+    [90m   | [39m[31m^[39m
+    [90m  5| [39m
+    [90m  6| [39m[90m// 模拟 localStorage[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[64/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/src/tests/unit/stores/user.test.js[2m [ frontend/src/tests/unit/stores/user.test.js ][22m
+[31m[1mError[22m: Cannot find module '/@fs/C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/stores/user' imported from 'C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/stores/user.test.js'[39m
+[36m [2m❯[22m frontend/src/tests/unit/stores/user.test.js:[2m4:1[22m[39m
+    [90m  2| [39mimport { describe, it, expect, vi, beforeEach, afterEach } from 'vites…
+    [90m  3| [39m[35mimport[39m { setActivePinia[33m,[39m createPinia } [35mfrom[39m [32m'pinia'[39m
+    [90m  4| [39m[35mimport[39m { useUserStore } [35mfrom[39m [32m'../../stores/user'[39m
+    [90m   | [39m[31m^[39m
+    [90m  5| [39m
+    [90m  6| [39m[90m// Mock localStorage[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[65/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/src/tests/unit/utils/minimal.test.js[2m [ frontend/src/tests/unit/utils/minimal.test.js ][22m
+[31m[1mError[22m: No test suite found in file c:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/utils/minimal.test.js[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[66/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/src/tests/unit/views/DataCenter.test.js[2m [ frontend/src/tests/unit/views/DataCenter.test.js ][22m
+[31m[1mError[22m: Cannot find package '@/views/admin/crawler/DataCenter.vue' imported from 'C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/views/DataCenter.test.js'[39m
+[36m [2m❯[22m frontend/src/tests/unit/views/DataCenter.test.js:[2m4:1[22m[39m
+    [90m  2| [39m[35mimport[39m { mount } [35mfrom[39m [32m'@vue/test-utils'[39m
+    [90m  3| [39m[35mimport[39m { createTestingPinia } [35mfrom[39m [32m'@pinia/testing'[39m
+    [90m  4| [39m[35mimport[39m [33mDataCenter[39m [35mfrom[39m [32m'@/views/admin/crawler/DataCenter.vue'[39m
+    [90m   | [39m[31m^[39m
+    [90m  5| [39m
+    [90m  6| [39m[90m// 模拟Element Plus组件和全局对象[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[67/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/src/tests/unit/views/DataSourceManagement.test.js[2m [ frontend/src/tests/unit/views/DataSourceManagement.test.js ][22m
+[31m[1mError[22m: Cannot find module '../../../../views/admin/crawler/DataSourceManagement.vue' imported from 'C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/views/DataSourceManagement.test.js'[39m
+[36m [2m❯[22m frontend/src/tests/unit/views/DataSourceManagement.test.js:[2m3:1[22m[39m
+    [90m  1| [39mimport { describe, it, expect, vi, beforeEach, afterEach } from 'vites…
+    [90m  2| [39m[35mimport[39m { mount } [35mfrom[39m [32m'@vue/test-utils'[39m
+    [90m  3| [39mimport DataSourceManagement from '../../../../views/admin/crawler/Data…
+    [90m   | [39m[31m^[39m
+    [90m  4| [39m
+    [90m  5| [39m[90m// 模拟全局 fetch[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[68/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/src/tests/unit/views/HeadersManagement.test.js[2m [ frontend/src/tests/unit/views/HeadersManagement.test.js ][22m
+[31m[1mError[22m: Cannot find package '@/views/admin/crawler/HeadersManagement.vue' imported from 'C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/views/HeadersManagement.test.js'[39m
+[36m [2m❯[22m frontend/src/tests/unit/views/HeadersManagement.test.js:[2m4:1[22m[39m
+    [90m  2| [39m[35mimport[39m { mount } [35mfrom[39m [32m'@vue/test-utils'[39m
+    [90m  3| [39m[35mimport[39m { createTestingPinia } [35mfrom[39m [32m'@pinia/testing'[39m
+    [90m  4| [39mimport HeadersManagement from '@/views/admin/crawler/HeadersManagement…
+    [90m   | [39m[31m^[39m
+    [90m  5| [39m
+    [90m  6| [39m[34mdescribe[39m([32m'HeadersManagement.vue'[39m[33m,[39m () [33m=>[39m {
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[69/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/src/tests/unit/views/IpPoolManagement.test.js[2m [ frontend/src/tests/unit/views/IpPoolManagement.test.js ][22m
+[31m[1mError[22m: Cannot find package '@/views/admin/crawler/IpPoolManagement.vue' imported from 'C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/views/IpPoolManagement.test.js'[39m
+[36m [2m❯[22m frontend/src/tests/unit/views/IpPoolManagement.test.js:[2m4:1[22m[39m
+    [90m  2| [39m[35mimport[39m { mount } [35mfrom[39m [32m'@vue/test-utils'[39m
+    [90m  3| [39m[35mimport[39m { createTestingPinia } [35mfrom[39m [32m'@pinia/testing'[39m
+    [90m  4| [39mimport IpPoolManagement from '@/views/admin/crawler/IpPoolManagement.v…
+    [90m   | [39m[31m^[39m
+    [90m  5| [39m
+    [90m  6| [39m[34mdescribe[39m([32m'IpPoolManagement.vue'[39m[33m,[39m () [33m=>[39m {
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[70/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/src/tests/unit/views/SourceConfig.test.js[2m [ frontend/src/tests/unit/views/SourceConfig.test.js ][22m
+[31m[1mError[22m: Cannot find package '@/views/admin/crawler/SourceConfig.vue' imported from 'C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/views/SourceConfig.test.js'[39m
+[36m [2m❯[22m frontend/src/tests/unit/views/SourceConfig.test.js:[2m4:1[22m[39m
+    [90m  2| [39m[35mimport[39m { mount } [35mfrom[39m [32m'@vue/test-utils'[39m
+    [90m  3| [39m[35mimport[39m { createTestingPinia } [35mfrom[39m [32m'@pinia/testing'[39m
+    [90m  4| [39m[35mimport[39m [33mSourceConfig[39m [35mfrom[39m [32m'@/views/admin/crawler/SourceConfig.vue'[39m
+    [90m   | [39m[31m^[39m
+    [90m  5| [39m
+    [90m  6| [39m[34mdescribe[39m([32m'SourceConfig.vue'[39m[33m,[39m () [33m=>[39m {
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[71/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/src/tests/unit/views/TaskConsole.test.js[2m [ frontend/src/tests/unit/views/TaskConsole.test.js ][22m
+[31m[1mError[22m: Cannot find package '@/views/admin/crawler/TaskConsole.vue' imported from 'C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/views/TaskConsole.test.js'[39m
+[36m [2m❯[22m frontend/src/tests/unit/views/TaskConsole.test.js:[2m4:1[22m[39m
+    [90m  2| [39m[35mimport[39m { mount } [35mfrom[39m [32m'@vue/test-utils'[39m
+    [90m  3| [39m[35mimport[39m { createTestingPinia } [35mfrom[39m [32m'@pinia/testing'[39m
+    [90m  4| [39m[35mimport[39m [33mTaskConsole[39m [35mfrom[39m [32m'@/views/admin/crawler/TaskConsole.vue'[39m
+    [90m   | [39m[31m^[39m
+    [90m  5| [39m
+    [90m  6| [39m[34mdescribe[39m([32m'TaskConsole.vue'[39m[33m,[39m () [33m=>[39m {
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[72/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/src/tests/unit/views/TaskScheduler.test.js[2m [ frontend/src/tests/unit/views/TaskScheduler.test.js ][22m
+[31m[1mError[22m: Cannot find package '@/views/admin/crawler/TaskScheduler.vue' imported from 'C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/views/TaskScheduler.test.js'[39m
+[36m [2m❯[22m frontend/src/tests/unit/views/TaskScheduler.test.js:[2m4:1[22m[39m
+    [90m  2| [39m[35mimport[39m { mount } [35mfrom[39m [32m'@vue/test-utils'[39m
+    [90m  3| [39m[35mimport[39m { createTestingPinia } [35mfrom[39m [32m'@pinia/testing'[39m
+    [90m  4| [39m[35mimport[39m [33mTaskScheduler[39m [35mfrom[39m [32m'@/views/admin/crawler/TaskScheduler.vue'[39m
+    [90m   | [39m[31m^[39m
+    [90m  5| [39m
+    [90m  6| [39m[34mdescribe[39m([32m'TaskScheduler.vue'[39m[33m,[39m () [33m=>[39m {
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[73/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/tests/integration/views/admin/BeidanFilterPanel.component.spec.js[2m [ frontend/tests/integration/views/admin/BeidanFilterPanel.component.spec.js ][22m
+[31m[1mError[22m: Cannot find package '@/utils/beidanFilterUtils' imported from 'C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/tests/integration/views/admin/BeidanFilterPanel.component.spec.js'[39m
+[36m [2m❯[22m frontend/tests/integration/views/admin/BeidanFilterPanel.component.spec.js:[2m193:1[22m[39m
+    [90m191| [39m[90m// Testing business logic separately from Vue component rendering[39m
+    [90m192| [39m[35mimport[39m { describe[33m,[39m it[33m,[39m expect } [35mfrom[39m [32m'vitest'[39m[33m;[39m
+    [90m193| [39m[35mimport[39m {
+    [90m   | [39m[31m^[39m
+    [90m194| [39m  calcDeltaPLevel[33m,[39m
+    [90m195| [39m  calcDeltaWp[33m,[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[74/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/tests/integration/views/admin/BeidanFilterPanel.integration.spec.js[2m [ frontend/tests/integration/views/admin/BeidanFilterPanel.integration.spec.js ][22m
+[31m[1mError[22m: Cannot find package '@/utils/beidanFilterUtils' imported from 'C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/tests/integration/views/admin/BeidanFilterPanel.integration.spec.js'[39m
+[36m [2m❯[22m frontend/tests/integration/views/admin/BeidanFilterPanel.integration.spec.js:[2m3:1[22m[39m
+    [90m  1| [39m[90m// Integration tests for BeidanFilterPanel business logic[39m
+    [90m  2| [39m[35mimport[39m { describe[33m,[39m it[33m,[39m expect[33m,[39m vi } [35mfrom[39m [32m'vitest'[39m[33m;[39m
+    [90m  3| [39m[35mimport[39m {
+    [90m   | [39m[31m^[39m
+    [90m  4| [39m  calcDeltaPLevel[33m,[39m
+    [90m  5| [39m  calcDeltaWp[33m,[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[75/89]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m frontend/tests/unit/views/admin/BeidanFilterPanel.unit.spec.js[2m [ frontend/tests/unit/views/admin/BeidanFilterPanel.unit.spec.js ][22m
+[31m[1mError[22m: Cannot find package '@/views/admin/BeidanFilterPanel.vue' imported from 'C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/tests/unit/views/admin/BeidanFilterPanel.unit.spec.js'[39m
+[36m [2m❯[22m frontend/tests/unit/views/admin/BeidanFilterPanel.unit.spec.js:[2m4:1[22m[39m
+    [90m  2| [39m[35mimport[39m { describe[33m,[39m it[33m,[39m expect[33m,[39m vi[33m,[39m beforeEach } [35mfrom[39m [32m'vitest'[39m[33m;[39m
+    [90m  3| [39m[35mimport[39m { mount } [35mfrom[39m [32m'@vue/test-utils'[39m[33m;[39m
+    [90m  4| [39m[35mimport[39m [33mBeidanFilterPanel[39m [35mfrom[39m [32m'@/views/admin/BeidanFilterPanel.vue'[39m[33m;[39m
+    [90m   | [39m[31m^[39m
+    [90m  5| [39m[35mimport[39m { createTestingPinia } [35mfrom[39m [32m'@pinia/testing'[39m[33m;[39m
+    [90m  6| [39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[76/89]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m89 failed[39m[22m[90m (89)[39m
+[2m      Tests [22m [2mno tests[22m
+[2m   Start at [22m 19:01:15
+[2m   Duration [22m 20.14s[2m (transform 9.40s, setup 0ms, import 17.50s, tests 0ms, environment 14.27s)[22m
+

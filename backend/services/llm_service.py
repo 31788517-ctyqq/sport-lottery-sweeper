@@ -1,21 +1,17 @@
-from abc import ABC, abstractmethod
-from typing import Dict, Any, List, Optional
 import logging
+import os
 import time
-import openai
 import asyncio
-import warnings
+from abc import ABC, abstractmethod
+from typing import List, Optional, Dict, Any
 import requests
-import json
 
-# 根据规范，google.generativeai已被废弃，应使用google.genai
-warnings.warn(
-    "google.generativeai has been deprecated. Please migrate to google.genai when available.",
-    DeprecationWarning
-)
-import google.generativeai as genai
+# 根据规范，google.generativeai已被废弃，已迁移到google.genai
+import google.genai as genai
+import openai
+from zhipuai import ZhipuAI
 
-from ..utils.llm_monitor import LLMUsageMonitor
+from backend.utils.llm_monitor import LLMUsageMonitor
 
 logger = logging.getLogger(__name__)
 
@@ -30,8 +26,9 @@ class BaseLLMProvider(ABC):
 class OpenAILLMProvider(BaseLLMProvider):
     """OpenAI GPT系列模型 (更新为异步)"""
     
-    def __init__(self, api_key: str):
+    def __init__(self, api_key: str, monitor: LLMUsageMonitor):
         self.client = openai.AsyncOpenAI(api_key=api_key)
+        self.monitor = monitor
         
     async def generate_response(self, prompt: str, **kwargs) -> str:
         start_time = time.time()
@@ -58,10 +55,6 @@ class OpenAILLMProvider(BaseLLMProvider):
         except Exception as e:
             logger.error(f"OpenAI API调用失败: {e}")
             raise
-    
-    def __init__(self, api_key: str, monitor: LLMUsageMonitor):
-        self.client = openai.AsyncOpenAI(api_key=api_key)
-        self.monitor = monitor
         
     def get_embeddings(self, text: str) -> List[float]:
         try:
@@ -77,9 +70,10 @@ class OpenAILLMProvider(BaseLLMProvider):
 class GeminiLLMProvider(BaseLLMProvider):
     """Google Gemini模型 (更新为异步)"""
     
-    def __init__(self, api_key: str):
+    def __init__(self, api_key: str, monitor: LLMUsageMonitor):
         genai.configure(api_key=api_key)
         self.model = genai.GenerativeModel('gemini-pro')
+        self.monitor = monitor
         
     async def generate_response(self, prompt: str, **kwargs) -> str:
         start_time = time.time()
@@ -108,11 +102,6 @@ class GeminiLLMProvider(BaseLLMProvider):
         except Exception as e:
             logger.error(f"Gemini API调用失败: {e}")
             raise
-            
-    def __init__(self, api_key: str, monitor: LLMUsageMonitor):
-        genai.configure(api_key=api_key)
-        self.model = genai.GenerativeModel('gemini-pro')
-        self.monitor = monitor
         
     def get_embeddings(self, text: str) -> List[float]:
         try:
@@ -129,9 +118,11 @@ class GeminiLLMProvider(BaseLLMProvider):
 class QwenLLMProvider(BaseLLMProvider):
     """阿里云通义千问模型 (更新为异步)"""
     
-    def __init__(self, api_key: str):
+    def __init__(self, api_key: str, monitor: LLMUsageMonitor):
         self.api_key = api_key
-        self.url = "https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation"
+        # 使用OpenAI兼容模式API端点
+        self.url = "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions"
+        self.monitor = monitor
         
     async def generate_response(self, prompt: str, **kwargs) -> str:
         start_time = time.time()
@@ -140,16 +131,14 @@ class QwenLLMProvider(BaseLLMProvider):
             "Content-Type": "application/json"
         }
         
+        # 准备请求数据，符合OpenAI兼容模式API格式
         data = {
             "model": kwargs.get("model", "qwen-max"),
-            "input": {
-                "messages": [
-                    {"role": "user", "content": prompt}
-                ]
-            },
-            "parameters": {
-                "temperature": kwargs.get("temperature", 0.7)
-            }
+            "messages": [
+                {"role": "user", "content": prompt}
+            ],
+            "temperature": kwargs.get("temperature", 0.7),
+            "max_tokens": kwargs.get("max_tokens", 1000)
         }
         
         try:
@@ -157,7 +146,7 @@ class QwenLLMProvider(BaseLLMProvider):
             response.raise_for_status()
             
             result = response.json()
-            content = result["output"]["text"]
+            content = result["choices"][0]["message"]["content"]
             
             # 计算成本（估算）
             prompt_tokens = len(prompt.split())
@@ -173,11 +162,6 @@ class QwenLLMProvider(BaseLLMProvider):
         except Exception as e:
             logger.error(f"Qwen API调用失败: {e}")
             raise
-            
-    def __init__(self, api_key: str, monitor: LLMUsageMonitor):
-        self.api_key = api_key
-        self.url = "https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation"
-        self.monitor = monitor
         
     def get_embeddings(self, text: str) -> List[float]:
         # 通义千问Embedding API调用实现
@@ -207,6 +191,58 @@ class QwenLLMProvider(BaseLLMProvider):
             logger.error(f"Qwen embeddings调用异常: {e}")
             return []
 
+class ZhipuAILLMProvider(BaseLLMProvider):
+    """智谱AI GLM系列模型 (更新为异步)"""
+    
+    def __init__(self, api_key: str, monitor: LLMUsageMonitor):
+        self.client = ZhipuAI(api_key=api_key)
+        self.monitor = monitor
+        
+    async def generate_response(self, prompt: str, **kwargs) -> str:
+        start_time = time.time()
+        try:
+            # 智谱AI API是同步的，使用线程池异步执行
+            import concurrent.futures
+            loop = asyncio.get_event_loop()
+            
+            def sync_generate():
+                response = self.client.chat.completions.create(
+                    model=kwargs.get("model", "glm-4"),
+                    messages=[{"role": "user", "content": prompt}],
+                    temperature=kwargs.get("temperature", 0.7),
+                    max_tokens=kwargs.get("max_tokens", 1000)
+                )
+                return response.choices[0].message.content
+                
+            content = await loop.run_in_executor(None, sync_generate)
+            
+            # 计算成本（估算）
+            prompt_tokens = len(prompt.split())
+            completion_tokens = len(content.split()) if content else 0
+            estimated_tokens = prompt_tokens + completion_tokens
+            cost = (estimated_tokens / 1000) * 0.0015  # 智谱AI成本估算
+            self.monitor.log_request("zhipuai", prompt_tokens, completion_tokens, cost)
+            
+            response_time = time.time() - start_time
+            logger.info(f"ZhipuAI API调用完成，耗时: {response_time:.2f}s")
+            
+            return content if content else ""
+        except Exception as e:
+            logger.error(f"ZhipuAI API调用失败: {e}")
+            raise
+        
+    def get_embeddings(self, text: str) -> List[float]:
+        # 智谱AI Embedding API调用实现
+        try:
+            response = self.client.embeddings.create(
+                model="embedding-2",
+                input=text
+            )
+            return response.data[0].embedding
+        except Exception as e:
+            logger.error(f"ZhipuAI embeddings调用失败: {e}")
+            return []
+
 class LLMService:
     """LLM服务统一接口 (更新为异步)"""
     
@@ -217,35 +253,60 @@ class LLMService:
         
     def register_provider(self, name: str, api_key: str):
         """注册LLM提供商"""
-        if name == "openai":
+        # 规范化提供商名称：将'alibaba'映射为'qwen'以保持一致性
+        normalized_name = name
+        if name == "alibaba":
+            normalized_name = "qwen"
+        elif name == "zhipuai":
+            normalized_name = "zhipuai"
+            
+        if normalized_name == "openai":
             provider = OpenAILLMProvider(api_key, self.monitor)
-        elif name == "gemini":
+        elif normalized_name == "gemini":
             provider = GeminiLLMProvider(api_key, self.monitor)
-        elif name == "qwen":
+        elif normalized_name == "qwen":
             provider = QwenLLMProvider(api_key, self.monitor)
+        elif normalized_name == "zhipuai":
+            provider = ZhipuAILLMProvider(api_key, self.monitor)
         else:
             raise ValueError(f"Unsupported provider: {name}")
         
-        self.providers[name] = provider
-        logger.info(f"LLM提供商 {name} 已注册")
+        self.providers[normalized_name] = provider
+        logger.info(f"LLM提供商 {name} (规范化: {normalized_name}) 已注册")
         
         if self.default_provider is None:
-            self.default_provider = name
+            self.default_provider = normalized_name
             
     def set_default_provider(self, name: str):
         """设置默认提供商"""
-        if name not in self.providers:
+        # 规范化提供商名称：将'alibaba'映射为'qwen'以保持一致性
+        normalized_name = name
+        if name == "alibaba":
+            normalized_name = "qwen"
+        elif name == "zhipuai":
+            normalized_name = "zhipuai"
+            
+        if normalized_name not in self.providers:
             raise ValueError(f"Provider {name} not registered")
-        self.default_provider = name
-        logger.info(f"默认LLM提供商已设置为 {name}")
+        self.default_provider = normalized_name
+        logger.info(f"默认LLM提供商已设置为 {name} (规范化: {normalized_name})")
         
     async def generate_response(self, prompt: str, provider: str = None, **kwargs) -> str:
         """生成响应"""
         if provider is None:
             provider = self.default_provider
+        
+        # 规范化提供商名称：将'alibaba'映射为'qwen'以保持一致性
+        normalized_provider = provider
+        if provider == "alibaba":
+            normalized_provider = "qwen"
+        elif provider == "zhipuai":
+            normalized_provider = "zhipuai"
             
-        if provider not in self.providers:
+        if normalized_provider not in self.providers:
             raise ValueError(f"Provider {provider} not registered")
+        
+        provider = normalized_provider
             
         start_time = time.time()
         try:
@@ -261,8 +322,12 @@ class LLMService:
     @property
     def request_cost(self) -> float:
         """获取累计成本"""
-        return self.cost_tracker.total_cost
+        return sum(v.get('cost', 0) for v in self.monitor.current_daily_usage.values())
         
     def get_cost_breakdown(self) -> Dict[str, float]:
         """获取成本明细"""
-        return self.cost_tracker.get_provider_costs()
+        breakdown = {}
+        for key, value in self.monitor.current_daily_usage.items():
+            provider = key.split(':', 1)[0]
+            breakdown[provider] = breakdown.get(provider, 0) + value.get('cost', 0)
+        return breakdown

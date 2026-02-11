@@ -1,131 +1,99 @@
 from fastapi import APIRouter, Query
 from typing import Dict, Any, Optional, List
-from datetime import timedelta, datetime
-from pathlib import Path
+from datetime import datetime
+from pathlib import Path as SysPath
 import traceback
 import logging
 import json
 import os
 
-# AI_WORKING: coder1 @2026-01-26 - 修复导入路径错误，backend.tasks模块不存在
-# 使用绝对导入路径
-from backend.schemas.response import UnifiedResponse, PageResponse, ErrorResponse
+from backend.schemas.response import UnifiedResponse, PageResponse
 from backend.core.cache_manager import get_cache_manager
 from backend.scrapers.sporttery_scraper import sporttery_scraper
-# AI_DONE: coder1 @2026-01-26
 
 router = APIRouter(prefix="/lottery", tags=["Sports Lottery"])
-
 logger = logging.getLogger(__name__)
 
 
 def load_500_com_data(filter_day: Optional[str] = None) -> List[Dict[str, Any]]:
-    """
-    从debug目录加载500彩票网数据
-    
-    Args:
-        filter_day: 筛选特定星期的比赛，如 "周一"
-    """
+    """Load 500.com data from debug directory."""
     try:
-        project_root = Path(__file__).parent.parent.parent.parent
+        project_root = SysPath(__file__).parent.parent.parent.parent
         debug_dir = project_root / "debug"
-        
         if not debug_dir.exists():
-            logger.warning(f"debug目录不存在: {debug_dir}")
+            logger.warning(f"debug directory not found: {debug_dir}")
             return []
-        
         files = [f for f in os.listdir(debug_dir) if f.startswith("500_com_matches_")]
-        
         if not files:
-            logger.info("没有找到500彩票网数据文件")
+            logger.info("No 500.com data files found")
             return []
-        
         latest_file = sorted(files)[-1]
         file_path = debug_dir / latest_file
-        
         with open(file_path, 'r', encoding='utf-8') as f:
             matches = json.load(f)
-        
-        # 过滤表头
-        matches = [m for m in matches if m.get('match_id') != '编号']
-        
-        # 按星期筛选
+
+        matches = [m for m in matches if m.get('match_id') != '??']
         if filter_day:
             matches = [m for m in matches if m.get('match_id', '').startswith(filter_day)]
-        
-        # 格式化数据 - 生成数字ID
+
         formatted_matches = []
         for idx, m in enumerate(matches, 1):
             match_time = m.get("match_time", "")
-            # 从 match_time 提取日期部分
             match_date = match_time.split(' ')[0] if match_time and ' ' in match_time else match_time
-            
             formatted_matches.append({
-                "id": idx,  # 数字ID，从1开始递增
+                "id": idx,
                 "match_id": m.get("match_id"),
                 "league": m.get("league"),
                 "home_team": m.get("home_team"),
                 "away_team": m.get("away_team"),
                 "match_time": match_time,
-                "match_date": match_date,  # 只包含日期部分
+                "match_date": match_date,
                 "odds_home_win": m.get("odds_home_win", 0),
                 "odds_draw": m.get("odds_draw", 0),
                 "odds_away_win": m.get("odds_away_win", 0),
                 "status": m.get("status", "scheduled"),
                 "score": m.get("score", "-:-"),
-                "popularity": m.get("popularity", 70),  # 使用原始数据的popularity
-                "source": "500彩票网"
+                "popularity": m.get("popularity", 70),
+                "source": "500.com",
             })
-        
-        logger.info(f"成功加载500彩票网数据: {len(formatted_matches)}场比赛")
+        logger.info(f"Loaded 500.com data: {len(formatted_matches)} matches")
         return formatted_matches
     except Exception as e:
-        logger.error(f"加载500彩票网数据失败: {e}")
+        logger.error(f"Failed to load 500.com data: {e}")
         return []
 
 
 @router.get("/matches", response_model=UnifiedResponse[PageResponse[Dict[str, Any]]])
 async def get_lottery_matches(
-    page: int = Query(1, ge=1, description="页码"),
-    size: int = Query(10, ge=1, le=50, description="每页大小"),
-    source: str = Query("auto", description="数据源: auto/500/sporttery"),
-    date_from: Optional[str] = Query(None, description="起始日期 (YYYY-MM-DD)"),
-    date_to: Optional[str] = Query(None, description="结束日期 (YYYY-MM-DD)"),
-    league: Optional[str] = Query(None, description="联赛过滤"),
-    day_filter: Optional[str] = Query(None, description="星期筛选: 周一/周二/周三等"),
-    sort: Optional[str] = Query("date", description="排序字段: date/popularity"),
-    order: Optional[str] = Query("asc", description="排序方向: asc/desc")
+    page: int = Query(1, ge=1, description="page"),
+    size: int = Query(10, ge=1, le=50, description="page size"),
+    source: str = Query("auto", description="source: auto/500/sporttery"),
+    date_from: Optional[str] = Query(None, description="start date (YYYY-MM-DD)"),
+    date_to: Optional[str] = Query(None, description="end date (YYYY-MM-DD)"),
+    league: Optional[str] = Query(None, description="league filter"),
+    day_filter: Optional[str] = Query(None, description="weekday filter"),
+    sort: Optional[str] = Query("date", description="sort: date/popularity"),
+    order: Optional[str] = Query("asc", description="order: asc/desc"),
 ) -> Dict[str, Any]:
-    """
-    获取竞彩足球比赛列表 - 支持多数据源
-    
-    数据源优先级：
-    - auto: 自动选择（优先500.com，回退到sporttery）
-    - 500: 强制使用500彩票网数据
-    - sporttery: 强制使用竞彩官网数据
-    """
+    """Get lottery matches."""
     try:
         cache_manager = get_cache_manager()
         cache_key = f"jczq_v2:{source}:{page}:{size}:{date_from}:{date_to}:{league}:{day_filter}:{sort}:{order}"
 
-        # 尝试从缓存获取
         cached_data = await cache_manager.get(cache_key)
         if cached_data:
-            logger.info(f"[缓存命中] 竞彩足球比赛数据 (source={source})")
+            logger.info(f"[cache hit] lottery matches (source={source})")
             matches = cached_data.get('matches', [])
             data_source = cached_data.get('source', 'cache')
         else:
-            logger.info(f"[缓存未命中] 获取新竞彩足球数据 (source={source})")
+            logger.info(f"[cache miss] fetch lottery matches (source={source})")
             matches = []
             data_source = "unknown"
-            
-            # 根据数据源选择
+
             if source == "500":
-                # 强制使用500彩票网数据
                 matches = load_500_com_data(filter_day=day_filter)
-                data_source = "500彩票网"
+                data_source = "500.com"
             elif source == "sporttery":
-                # 强制使用竞彩官网数据
                 try:
                     async with sporttery_scraper:
                         raw_matches = await sporttery_scraper.get_recent_matches(7)
@@ -133,30 +101,29 @@ async def get_lottery_matches(
                         {
                             "id": m.get('id', ''),
                             "match_date": m.get('match_date', ''),
-                            "home_team": m.get('home_team', '主队'),
-                            "away_team": m.get('away_team', '客队'),
-                            "league": m.get('league', '未知联赛'),
+                            "home_team": m.get('home_team', 'Home'),
+                            "away_team": m.get('away_team', 'Away'),
+                            "league": m.get('league', 'Unknown'),
                             "odds_home_win": m.get('odds_home_win', 0.0),
                             "odds_draw": m.get('odds_draw', 0.0),
                             "odds_away_win": m.get('odds_away_win', 0.0),
                             "popularity": m.get('popularity', 0),
-                            "status": m.get('status', '未开始'),
+                            "status": m.get('status', 'scheduled'),
                             "score": m.get('score', '0:0'),
                             "match_time": m.get('match_time', ''),
                             "match_id": m.get('match_id', ''),
-                            "source": "竞彩官网"
+                            "source": "sporttery",
                         }
                         for m in raw_matches
                     ]
-                    data_source = "竞彩官网"
+                    data_source = "sporttery"
                 except Exception as e:
-                    logger.error(f"竞彩官网爬虫失败: {e}")
+                    logger.error(f"sporttery scraper failed: {e}")
                     matches = []
             else:
-                # auto模式：优先500.com，回退到sporttery
                 matches = load_500_com_data(filter_day=day_filter)
                 if matches:
-                    data_source = "500彩票网"
+                    data_source = "500.com"
                 else:
                     try:
                         async with sporttery_scraper:
@@ -165,130 +132,134 @@ async def get_lottery_matches(
                             {
                                 "id": m.get('id', ''),
                                 "match_date": m.get('match_date', ''),
-                                "home_team": m.get('home_team', '主队'),
-                                "away_team": m.get('away_team', '客队'),
-                                "league": m.get('league', '未知联赛'),
+                                "home_team": m.get('home_team', 'Home'),
+                                "away_team": m.get('away_team', 'Away'),
+                                "league": m.get('league', 'Unknown'),
                                 "odds_home_win": m.get('odds_home_win', 0.0),
                                 "odds_draw": m.get('odds_draw', 0.0),
                                 "odds_away_win": m.get('odds_away_win', 0.0),
                                 "popularity": m.get('popularity', 0),
-                                "status": m.get('status', '未开始'),
+                                "status": m.get('status', 'scheduled'),
                                 "score": m.get('score', '0:0'),
                                 "match_time": m.get('match_time', ''),
                                 "match_id": m.get('match_id', ''),
-                                "source": "竞彩官网"
+                                "source": "sporttery",
                             }
                             for m in raw_matches
                         ]
-                        data_source = "竞彩官网（回退）"
+                        data_source = "sporttery (fallback)"
                     except Exception as e:
-                        logger.error(f"所有数据源均失败: {e}")
+                        logger.error(f"all sources failed: {e}")
                         matches = []
 
-            # 应用过滤器
             if league:
                 matches = [m for m in matches if m.get('league') == league]
-            
-            # 排序
             if sort == "popularity":
                 matches.sort(key=lambda x: x.get('popularity', 0), reverse=(order == "desc"))
             elif sort == "date":
                 matches.sort(key=lambda x: x.get('match_time', ''), reverse=(order == "desc"))
 
-            # 缓存数据
             cache_data = {
                 'matches': matches,
                 'total': len(matches),
                 'source': data_source,
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now().isoformat(),
             }
-            await cache_manager.set(cache_key, cache_data, timedelta(minutes=5))
+            await cache_manager.set(cache_key, cache_data, 300)
 
-        # 分页处理
         total_matches = len(matches)
         start_idx = (page - 1) * size
         end_idx = start_idx + size
         paginated_matches = matches[start_idx:end_idx]
+        pages = (total_matches + size - 1) // size if size > 0 else 0
 
-        return {
-            "success": True,
-            "data": paginated_matches,
-            "total": total_matches,
-            "page": page,
-            "size": size,
-            "source": data_source,
-            "message": f"成功获取{len(paginated_matches)}场比赛数据",
-            "timestamp": datetime.now().isoformat()
-        }
+        page_response = PageResponse(
+            code=200,
+            message="Success",
+            data=paginated_matches,
+            total=total_matches,
+            page=page,
+            size=size,
+            pages=pages,
+            timestamp=datetime.now(),
+        )
+        return UnifiedResponse(
+            code=200,
+            message=f"ok: {len(paginated_matches)}",
+            data=page_response,
+            timestamp=datetime.now(),
+        )
     except Exception as e:
-        logger.error(f"获取竞彩足球数据失败: {e}")
+        logger.error(f"Failed to get lottery matches: {e}")
         traceback.print_exc()
-        return {
-            "success": False,
-            "message": f"获取竞彩足球数据失败: {str(e)}",
-            "error": str(e),
-            "data": [],
-            "total": 0
-        }
+        page_response = PageResponse(
+            code=500,
+            message="Error",
+            data=[],
+            total=0,
+            page=page,
+            size=size,
+            pages=0,
+            timestamp=datetime.now(),
+        )
+        return UnifiedResponse(
+            code=500,
+            message=f"Failed to get lottery matches: {str(e)}",
+            data=page_response,
+            timestamp=datetime.now(),
+        )
 
 
 @router.get("/leagues", summary="Get league list")
 async def get_lottery_leagues(
-    source: str = Query("auto", description="数据源: auto/500/sporttery")
+    source: str = Query("auto", description="source: auto/500/sporttery")
 ) -> Dict[str, Any]:
-    """获取可用的联赛列表"""
+    """Get available leagues."""
     try:
-        # 获取所有比赛
-        matches_response = await get_lottery_matches(
-            page=1, size=1000, source=source
-        )
-        
-        if not matches_response.get("success"):
+        matches_response = await get_lottery_matches(page=1, size=1000, source=source)
+        if getattr(matches_response, "code", 500) != 200:
             return matches_response
-        
-        matches = matches_response.get("data", [])
-        
-        # 提取唯一联赛并统计
-        leagues = {}
+        page_data = matches_response.data
+        matches = page_data.data if page_data else []
+
+        leagues: Dict[str, Dict[str, Any]] = {}
         for match in matches:
-            league_name = match.get("league", "未知")
+            league_name = match.get("league", "Unknown")
             if league_name not in leagues:
                 leagues[league_name] = {"name": league_name, "count": 0}
             leagues[league_name]["count"] += 1
-        
+
         league_list = sorted(leagues.values(), key=lambda x: x["count"], reverse=True)
-        
         return {
             "success": True,
             "data": league_list,
             "total": len(league_list),
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
     except Exception as e:
-        logger.error(f"获取联赛列表失败: {e}")
+        logger.error(f"Failed to get leagues: {e}")
         return {
             "success": False,
-            "message": f"获取联赛列表失败: {str(e)}",
-            "data": []
+            "message": f"Failed to get leagues: {str(e)}",
+            "data": [],
         }
 
 
 @router.post("/refresh", summary="Refresh data cache")
 async def refresh_lottery_cache() -> Dict[str, Any]:
-    """清除竞彩足球数据缓存，强制重新获取"""
+    """Clear lottery cache."""
     try:
         cache_manager = get_cache_manager()
         await cache_manager.invalidate_pattern("jczq_v2:*")
-        logger.info("已清除竞彩足球缓存")
-        
+        logger.info("Lottery cache cleared")
         return {
             "success": True,
-            "message": "缓存已清除，下次请求将重新获取数据",
-            "timestamp": datetime.now().isoformat()
+            "message": "Cache cleared, next request will refetch data",
+            "timestamp": datetime.now().isoformat(),
         }
     except Exception as e:
-        logger.error(f"刷新缓存失败: {e}")
+        logger.error(f"Failed to refresh cache: {e}")
         return {
             "success": False,
-            "message": f"刷新缓存失败: {str(e)}"
+            "message": f"Failed to refresh cache: {str(e)}",
         }

@@ -53,6 +53,72 @@
       </el-row>
     </div>
 
+    <!-- 任务与监控关联 -->
+    <div class="task-monitor-association">
+      <el-card shadow="hover" class="association-card">
+        <template #header>
+          <div class="association-header">
+            <span class="association-title">任务执行与监控关联</span>
+          </div>
+        </template>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <div class="association-item">
+              <h4>任务状态统计</h4>
+              <div class="task-stats">
+                <div class="stat-item">
+                  <span class="label">总任务数:</span>
+                  <span class="value">{{ taskStats.totalTasks }}</span>
+                </div>
+                <div class="stat-item">
+                  <span class="label">运行中任务:</span>
+                  <span class="value running">{{ taskStats.runningTasks }}</span>
+                </div>
+                <div class="stat-item">
+                  <span class="label">今日执行:</span>
+                  <span class="value">{{ taskStats.todayExecutions }}</span>
+                </div>
+                <div class="stat-item">
+                  <span class="label">成功率:</span>
+                  <span class="value">{{ taskStats.successRate }}%</span>
+                </div>
+              </div>
+            </div>
+          </el-col>
+          <el-col :span="12">
+            <div class="association-item">
+              <h4>实时任务监控</h4>
+              <div class="task-list">
+                <div 
+                  v-for="task in recentTasks" 
+                  :key="task.id" 
+                  class="task-item"
+                  :class="{'running': task.status === 'RUNNING'}"
+                >
+                  <div class="task-name">{{ task.name }}</div>
+                  <div class="task-status">
+                    <el-tag 
+                      :type="getStatusType(task.status)" 
+                      size="small"
+                    >
+                      {{ getStatusText(task.status) }}
+                    </el-tag>
+                  </div>
+                  <div class="task-progress">
+                    <el-progress 
+                      :percentage="task.progress || 0" 
+                      :status="getProgressStatus(task.status)"
+                      :stroke-width="6"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </el-col>
+        </el-row>
+      </el-card>
+    </div>
+
     <!-- 实时监控图表 -->
     <div class="monitor-charts">
       <el-row :gutter="20">
@@ -202,12 +268,16 @@ import { ref, reactive, onMounted, onUnmounted, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Refresh, VideoPlay, Top, Bottom } from '@element-plus/icons-vue'
 import * as echarts from 'echarts'
+// AI_WORKING: coder1 @2026-02-04T18:38:22 - 修复导入错误：将getSystemHealth改为getHealthStatus，getSystemResources改为getResourcesUsage
 import { 
-  getSystemHealth, 
+  getHealthStatus, 
   getAlerts, 
-  getSystemResources, 
-  acknowledgeAlert 
+  getResourcesUsage,
+  acknowledgeAlert
 } from '@/api/crawlerMonitor'
+// 导入任务相关的API
+import { getExecutions } from '@/api/taskMonitorApi'
+// AI_DONE: coder1 @2026-02-04T18:38:22
 
 // 响应式数据
 const autoRefresh = ref(true)
@@ -271,6 +341,17 @@ const healthStatuses = ref([
   }
 ])
 
+// 任务统计数据
+const taskStats = reactive({
+  totalTasks: 0,
+  runningTasks: 0,
+  todayExecutions: 0,
+  successRate: 0
+})
+
+// 最近任务列表
+const recentTasks = ref([])
+
 // 告警数据
 const activeAlerts = ref([])
 const alertCounts = reactive({
@@ -288,10 +369,80 @@ const systemResources = reactive({
   dbMaxConnections: 100
 })
 
+// 加载任务统计数据
+const loadTaskStats = async () => {
+  try {
+    // 获取任务执行数据
+    const res = await getExecutions({
+      page: 1,
+      page_size: 20,
+      status: 'RUNNING'
+    })
+    
+    if (res && res.data && res.data.items) {
+      recentTasks.value = res.data.items.slice(0, 5).map(item => ({
+        id: item.id,
+        name: item.task_name,
+        status: item.status,
+        progress: item.progress,
+        records_processed: item.records_processed
+      }))
+      
+      taskStats.runningTasks = res.data.items.filter(t => t.status === 'RUNNING').length
+      taskStats.todayExecutions = res.data.items.length
+    }
+    
+    // 计算成功率
+    if (res.data.items && res.data.items.length > 0) {
+      const successful = res.data.items.filter(t => t.status === 'SUCCESS').length
+      taskStats.successRate = ((successful / res.data.items.length) * 100).toFixed(2)
+    } else {
+      taskStats.successRate = 0
+    }
+  } catch (error) {
+    console.error('Load task stats failed:', error)
+  }
+}
+
+// 获取状态类型
+const getStatusType = (status) => {
+  const types = {
+    'RUNNING': 'success',
+    'SUCCESS': 'primary',
+    'FAILED': 'danger',
+    'PENDING': 'warning',
+    'CANCELLED': 'info'
+  }
+  return types[status] || 'info'
+}
+
+// 获取状态文本
+const getStatusText = (status) => {
+  const texts = {
+    'RUNNING': '运行中',
+    'SUCCESS': '成功',
+    'FAILED': '失败',
+    'PENDING': '待执行',
+    'CANCELLED': '已取消'
+  }
+  return texts[status] || status
+}
+
+// 获取进度状态
+const getProgressStatus = (status) => {
+  const statuses = {
+    'RUNNING': 'success',
+    'SUCCESS': 'success',
+    'FAILED': 'exception',
+    'PENDING': 'warning'
+  }
+  return statuses[status] || 'normal'
+}
+
 // 加载健康状态数据
 const loadHealthStatus = async () => {
   try {
-    const res = await getSystemHealth()
+    const res = await getHealthStatus()  // AI_MODIFIED: coder1 @2026-02-04T18:38:22
     // TODO: 根据实际API返回格式处理数据
     console.log('Health status:', res.data)
   } catch (error) {
@@ -320,7 +471,7 @@ const loadAlerts = async () => {
 // 加载系统资源数据
 const loadSystemResources = async () => {
   try {
-    const res = await getSystemResources()
+    const res = await getResourcesUsage()  // AI_MODIFIED: coder1 @2026-02-04T18:38:22
     Object.assign(systemResources, res.data)
   } catch (error) {
     console.error('Load system resources failed:', error)
@@ -483,7 +634,8 @@ const refreshData = async () => {
   await Promise.all([
     loadHealthStatus(),
     loadAlerts(),
-    loadSystemResources()
+    loadSystemResources(),
+    loadTaskStats()
   ])
   updateSuccessRateChart()
   ElMessage.success('数据刷新完成')
@@ -560,10 +712,16 @@ const formatTime = (timeStr) => {
   return date.toLocaleString('zh-CN')
 }
 
-// 窗口大小改变时重新调整图表
+// 添加防抖功能的handleResize函数
+let resizeTimeout = null;
 const handleResize = () => {
-  successRateChartInstance?.resize()
-  dataDistributionChartInstance?.resize()
+  if (resizeTimeout) {
+    clearTimeout(resizeTimeout);
+  }
+  resizeTimeout = setTimeout(() => {
+    successRateChartInstance?.resize()
+    dataDistributionChartInstance?.resize()
+  }, 100); // 100ms防抖延迟
 }
 
 // 生命周期
@@ -571,6 +729,7 @@ onMounted(async () => {
   await loadHealthStatus()
   await loadAlerts()
   await loadSystemResources()
+  await loadTaskStats()  // 加载任务数据
   await initCharts()
   startAutoRefresh()
   
@@ -580,6 +739,11 @@ onMounted(async () => {
 onUnmounted(() => {
   stopAutoRefresh()
   window.removeEventListener('resize', handleResize)
+  
+  // 清除可能存在的timeout
+  if (resizeTimeout) {
+    clearTimeout(resizeTimeout);
+  }
   
   successRateChartInstance?.dispose()
   dataDistributionChartInstance?.dispose()
@@ -653,6 +817,103 @@ onUnmounted(() => {
 .trend-text {
   font-size: 12px;
   color: #909399;
+}
+
+.task-monitor-association {
+  margin-bottom: 20px;
+}
+
+.association-card {
+  border: none;
+}
+
+.association-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.association-title {
+  font-weight: 600;
+  color: #303133;
+}
+
+.association-item {
+  padding: 15px;
+  border: 1px solid #ebeef5;
+  border-radius: 4px;
+  background-color: #fafafa;
+}
+
+.association-item h4 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  color: #303133;
+  font-weight: 500;
+}
+
+.task-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 0;
+  border-bottom: 1px dashed #e4e7ed;
+}
+
+.stat-item:last-child {
+  border-bottom: none;
+}
+
+.stat-item .label {
+  color: #606266;
+}
+
+.stat-item .value {
+  font-weight: 500;
+  color: #303133;
+}
+
+.stat-item .value.running {
+  color: #67c23a;
+}
+
+.task-list {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.task-item {
+  padding: 8px 0;
+  border-bottom: 1px solid #ebeef5;
+}
+
+.task-item:last-child {
+  border-bottom: none;
+}
+
+.task-item.running {
+  background-color: rgba(103, 194, 58, 0.1);
+  border-radius: 4px;
+  padding: 8px;
+  margin-bottom: 5px;
+}
+
+.task-item .task-name {
+  font-weight: 500;
+  margin-bottom: 5px;
+}
+
+.task-item .task-status {
+  margin-bottom: 8px;
+}
+
+.task-item .task-progress {
+  margin-top: 5px;
 }
 
 .monitor-charts {

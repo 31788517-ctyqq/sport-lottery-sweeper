@@ -29,6 +29,7 @@ class DataSourceCreate(BaseModel):
     api_key: Optional[str] = Field(None, description="API密钥")
     file_path: Optional[str] = Field(None, description="文件路径")
     config: Optional[dict] = Field(None, description="配置信息")
+    status: Optional[str] = Field('online', description="状态: online/offline/maintenance/error")
 
 
 class DataSourceUpdate(BaseModel):

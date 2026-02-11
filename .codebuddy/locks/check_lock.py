@@ -10,79 +10,150 @@ import sys
 import json
 from datetime import datetime, timedelta
 from pathlib import Path
+import time
 
 LOCK_DIR = Path(".codebuddy/locks")
 STATUS_FILE = Path(".codebuddy/status.json")
 
+def ensure_lock_dir():
+    """确保锁目录存在"""
+    LOCK_DIR.mkdir(parents=True, exist_ok=True)
+
 def check_lock(filename):
     """检查文件是否被锁定"""
-    if not LOCK_DIR.exists():
-        return None, "Lock directory not found"
+    ensure_lock_dir()
     
-    locks = list(LOCK_DIR.glob(f"{filename}.*.lock"))
-    if not locks:
-        return None, "No lock found"
+    # 查找该文件的所有锁
+    file_locks = list(LOCK_DIR.glob(f"*{filename}*.lock"))
     
-    # 检查是否有过期锁(>30分钟)
+    if not file_locks:
+        return "UNLOCKED", "文件未锁定，可以安全修改"
+    
+    # 检查是否有活跃锁（创建时间在30分钟内）
     current_time = datetime.now()
-    for lock_file in locks:
-        timestamp_str = lock_file.stem.split('.')[-2]  # 提取时间戳
-        try:
-            lock_time = datetime.fromtimestamp(int(timestamp_str))
-            if current_time - lock_time > timedelta(minutes=30):
-                return "STALE", f"Stale lock found: {lock_file.name}"
-        except:
-            continue
+    for lock_file in file_locks:
+        # 提取时间戳
+        parts = lock_file.stem.split('.')
+        if len(parts) >= 3:
+            try:
+                timestamp_str = parts[-2]
+                lock_time = datetime.fromtimestamp(int(timestamp_str))
+                if current_time - lock_time < timedelta(minutes=30):
+                    # 获取AI名称
+                    ai_name = parts[-3] if len(parts) >= 4 else "unknown"
+                    return "LOCKED", f"文件已被 {ai_name} 锁定，锁文件: {lock_file.name}"
+            except (ValueError, IndexError):
+                continue
     
-    return "LOCKED", f"Active lock found: {locks[0].name}"
+    # 所有锁都已过期
+    return "STALE", "存在过期锁，可以清理后修改"
 
 def create_lock(filename, ai_name):
     """创建文件锁"""
-    if not LOCK_DIR.exists():
-        LOCK_DIR.mkdir(parents=True, exist_ok=True)
+    ensure_lock_dir()
     
-    # 检查是否已被锁定
+    # 先检查是否已锁定
     status, msg = check_lock(filename)
     if status == "LOCKED":
-        return False, msg
+        return False, f"无法创建锁: {msg}"
     
-    # 清理过期锁
-    if status == "STALE":
-        clean_stale_locks()
+    # 清理该文件的过期锁
+    clean_stale_locks_for_file(filename)
     
-    timestamp = int(datetime.now().timestamp())
-    lock_file = LOCK_DIR / f"{filename}.{ai_name}.{timestamp}.lock"
+    # 生成时间戳
+    timestamp = int(time.time())
     
-    lock_file.write_text("working")
-    update_status(ai_name, filename)
-    return True, f"Lock created: {lock_file.name}"
+    # 创建锁文件名
+    lock_filename = f"{filename}.{ai_name}.{timestamp}.lock"
+    lock_file = LOCK_DIR / lock_filename
+    
+    # 创建锁文件
+    try:
+        lock_file.write_text(f"AI:{ai_name}\nFile:{filename}\nTimestamp:{timestamp}\nCreated:{datetime.now().isoformat()}")
+        
+        # 更新状态文件
+        update_status(ai_name, filename)
+        
+        return True, f"锁创建成功: {lock_filename}"
+    except Exception as e:
+        return False, f"创建锁失败: {str(e)}"
 
 def release_lock(filename, ai_name):
     """释放文件锁"""
-    if not LOCK_DIR.exists():
-        return True, "No locks to release"
+    ensure_lock_dir()
     
-    locks = list(LOCK_DIR.glob(f"{filename}.{ai_name}.*.lock"))
-    for lock_file in locks:
-        lock_file.unlink()
+    # 查找该AI对该文件的锁
+    file_locks = list(LOCK_DIR.glob(f"*{filename}*.{ai_name}.*.lock"))
     
+    if not file_locks:
+        return True, f"未找到 {ai_name} 对 {filename} 的锁"
+    
+    # 释放所有找到的锁
+    released = 0
+    for lock_file in file_locks:
+        try:
+            lock_file.unlink()
+            released += 1
+        except Exception:
+            continue
+    
+    # 更新状态文件
     update_status(ai_name, None)
-    return True, f"Released {len(locks)} lock(s)"
+    
+    return True, f"已释放 {released} 个锁"
 
 def clean_stale_locks():
-    """清理过期锁"""
-    if not LOCK_DIR.exists():
-        return
+    """清理所有过期锁"""
+    ensure_lock_dir()
     
     current_time = datetime.now()
+    cleaned = 0
+    
     for lock_file in LOCK_DIR.glob("*.lock"):
-        timestamp_str = lock_file.stem.split('.')[-2]
         try:
-            lock_time = datetime.fromtimestamp(int(timestamp_str))
-            if current_time - lock_time > timedelta(minutes=30):
+            # 提取时间戳
+            parts = lock_file.stem.split('.')
+            if len(parts) >= 3:
+                timestamp_str = parts[-2]
+                lock_time = datetime.fromtimestamp(int(timestamp_str))
+                if current_time - lock_time > timedelta(minutes=30):
+                    lock_file.unlink()
+                    cleaned += 1
+        except (ValueError, IndexError):
+            # 如果无法解析时间戳，也删除（可能是无效锁文件）
+            try:
                 lock_file.unlink()
-        except:
-            continue
+                cleaned += 1
+            except:
+                continue
+    
+    return cleaned
+
+def clean_stale_locks_for_file(filename):
+    """清理指定文件的过期锁"""
+    ensure_lock_dir()
+    
+    current_time = datetime.now()
+    cleaned = 0
+    
+    file_locks = list(LOCK_DIR.glob(f"*{filename}*.lock"))
+    for lock_file in file_locks:
+        try:
+            parts = lock_file.stem.split('.')
+            if len(parts) >= 3:
+                timestamp_str = parts[-2]
+                lock_time = datetime.fromtimestamp(int(timestamp_str))
+                if current_time - lock_time > timedelta(minutes=30):
+                    lock_file.unlink()
+                    cleaned += 1
+        except (ValueError, IndexError):
+            try:
+                lock_file.unlink()
+                cleaned += 1
+            except:
+                continue
+    
+    return cleaned
 
 def update_status(ai_name, current_file):
     """更新状态文件"""
@@ -114,7 +185,7 @@ def update_status(ai_name, current_file):
 def main():
     if len(sys.argv) < 3:
         print("用法: python check_lock.py <action> <filename> [ai_name]")
-        print("action: check|create|release")
+        print("action: check|create|release|clean")
         sys.exit(1)
     
     action = sys.argv[1]
@@ -132,8 +203,8 @@ def main():
         success, msg = release_lock(filename, ai_name)
         print(msg)
     elif action == "clean":
-        clean_stale_locks()
-        print("Cleaned stale locks")
+        cleaned = clean_stale_locks()
+        print(f"清理了 {cleaned} 个过期锁文件")
     else:
         print("Invalid action")
         sys.exit(1)

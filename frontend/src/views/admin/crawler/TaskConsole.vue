@@ -12,8 +12,8 @@
         <el-col :span="6">
           <el-card class="stat-card">
             <el-statistic
-              title="总任务数"
-              :value="statistics.totalTasks"
+              :title="displayTotalTitle"
+              :value="displayTotalValue"
               :precision="0"
             >
               <template #prefix>
@@ -67,8 +67,9 @@
       </el-row>
     </div>
 
-    <!-- 操作栏 -->
+    <!-- 操作栏 (已删除500彩票网相关按钮) -->
     <div class="operation-bar">
+      <!-- AI_WORKING: coder1 @1770014206 - 删除500彩票网爬虫按钮和创建500数据源按钮 -->
       <el-button type="primary" @click="showCreateDialog = true">
         <el-icon><Plus /></el-icon>
         新建任务
@@ -77,18 +78,11 @@
         <el-icon><Delete /></el-icon>
         批量删除
       </el-button>
-      <el-button type="success" @click="executeFiveHundredCrawl(3)">
-        <el-icon><VideoPlay /></el-icon>
-        执行500彩票网爬虫(3天)
-      </el-button>
-      <el-button type="warning" @click="createFiveHundredDataSource">
-        <el-icon><Plus /></el-icon>
-        创建500数据源
-      </el-button>
       <el-button @click="loadTasks">
         <el-icon><Refresh /></el-icon>
         刷新
       </el-button>
+      <!-- AI_DONE: coder1 @1770014206 -->
     </div>
 
     <!-- 筛选栏 -->
@@ -173,13 +167,6 @@
           </template>
         </el-table-column>
         <el-table-column prop="source_id" label="源ID" width="100" />
-        <el-table-column prop="priority" label="优先级" width="80">
-          <template #default="scope">
-            <el-tag :type="getPriorityColor(scope.row.priority)">
-              {{ scope.row.priority }}
-            </el-tag>
-          </template>
-        </el-table-column>
         <el-table-column prop="progress" label="进度" width="120">
           <template #default="scope">
             <el-progress :percentage="scope.row.progress || 0" :stroke-width="6" />
@@ -195,8 +182,21 @@
             {{ formatDate(scope.row.started_at) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column label="操作" width="380" fixed="right">
           <template #default="scope">
+            <el-button 
+              type="primary" 
+              size="small" 
+              @click="handleToggleTask(scope.row)"
+              :loading="scope.row.loadingTrigger">
+              {{ scope.row.status === 'RUNNING' ? '停止' : '启动' }}
+            </el-button>
+            <el-button 
+              type="info" 
+              size="small" 
+              @click="viewTaskDetails(scope.row)">
+              详情
+            </el-button>
             <el-button 
               type="primary" 
               size="small" 
@@ -244,6 +244,8 @@
       @close="resetForm"
     >
       <el-form :model="taskForm" :rules="formRules" ref="taskFormRef" label-width="100px">
+        <el-tabs v-model="editActiveTab">
+          <el-tab-pane label="基础信息" name="basic">
         <el-form-item label="任务名称" prop="name">
           <el-input v-model="taskForm.name" placeholder="请输入任务名称" />
         </el-form-item>
@@ -256,16 +258,12 @@
           </el-select>
         </el-form-item>
         <el-form-item label="源ID" prop="source_id">
-          <el-input v-model="taskForm.source_id" placeholder="请输入数据源ID" />
+          <el-input v-model="taskForm.source_id" placeholder="请输入数据源ID（数字）" />
         </el-form-item>
-        <el-form-item label="优先级" prop="priority">
-          <el-select v-model="taskForm.priority" placeholder="请选择优先级" style="width: 100%">
-            <el-option label="低 (1)" value="1" />
-            <el-option label="中 (2)" value="2" />
-            <el-option label="高 (3)" value="3" />
-            <el-option label="紧急 (4)" value="4" />
-          </el-select>
+        <el-form-item label="Cron表达式" prop="cron_expression">
+          <el-input v-model="taskForm.cron_expression" placeholder="请输入Cron表达式，例如：0 * * * *" />
         </el-form-item>
+
         <el-form-item label="配置参数" prop="config">
           <el-input
             v-model="taskForm.config"
@@ -282,6 +280,56 @@
             style="width: 100%"
           />
         </el-form-item>
+          </el-tab-pane>
+          <el-tab-pane label="请求头绑定" name="headers">
+            <div class="bind-header-actions">
+              <el-select
+                v-model="bindTaskForm.headerIds"
+                multiple
+                filterable
+                remote
+                :remote-method="loadHeaderOptions"
+                placeholder="选择请求头（可搜索）"
+                style="width: 320px;"
+              >
+                <el-option
+                  v-for="item in headerOptions"
+                  :key="item.id"
+                  :label="`${item.name} (${item.domain})`"
+                  :value="item.id"
+                />
+              </el-select>
+              <el-select v-model="bindTaskForm.priorityOverride" placeholder="优先级覆盖" style="width: 140px;">
+                <el-option label="高" :value="3" />
+                <el-option label="中" :value="2" />
+                <el-option label="低" :value="1" />
+              </el-select>
+              <el-button size="small" type="primary" @click="bindTaskHeaders">绑定</el-button>
+              <el-button size="small" @click="loadTaskHeaderBindings">刷新绑定</el-button>
+            </div>
+            <el-table :data="taskHeaderBindings" size="small" style="width: 100%">
+              <el-table-column prop="header.id" label="Header ID" width="90" />
+              <el-table-column prop="header.name" label="名称" width="120" />
+              <el-table-column prop="header.domain" label="域名" min-width="140" />
+              <el-table-column prop="priorityOverride" label="优先级覆盖" width="110" />
+              <el-table-column prop="enabled" label="启用" width="80">
+                <template #default="scope">
+                  <el-tag :type="scope.row.enabled ? 'success' : 'info'">
+                    {{ scope.row.enabled ? '启用' : '禁用' }}
+                  </el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column label="操作" width="180">
+                <template #default="scope">
+                  <el-button size="small" @click="toggleTaskBinding(scope.row)">
+                    {{ scope.row.enabled ? '禁用' : '启用' }}
+                  </el-button>
+                  <el-button size="small" type="danger" @click="removeTaskBinding(scope.row)">解绑</el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+          </el-tab-pane>
+        </el-tabs>
       </el-form>
       <template #footer>
         <span class="dialog-footer">
@@ -305,24 +353,68 @@
           <el-button @click="clearLogs">清空日志</el-button>
           <el-button @click="pauseLogs" v-if="!logsPaused">暂停</el-button>
           <el-button @click="resumeLogs" v-else>继续</el-button>
+          <el-button @click="fetchLatestLogs">刷新日志</el-button>
         </div>
         <div class="log-content">
-          <pre v-for="log in taskLogs" :key="log.id" class="log-line">
-{{ log.timestamp }} [{{ log.level }}] {{ log.message }}</pre>
+          <div v-for="log in taskLogs" :key="log.id" class="log-line">
+            <span class="log-timestamp">{{ formatTimestamp(log.timestamp) }}</span>
+            <span :class="`log-level log-level-${log.level.toLowerCase()}`">[{{ log.level }}]</span>
+            <span class="log-message">{{ log.message }}</span>
+          </div>
         </div>
+      </div>
+    </el-drawer>
+
+    <!-- 添加任务执行监控抽屉 -->
+    <el-drawer
+      v-model="showMonitorDrawer"
+      title="任务执行监控"
+      direction="rtl"
+      size="40%"
+    >
+      <div class="monitor-content">
+        <el-descriptions :column="1" border>
+          <el-descriptions-item label="任务ID">{{ currentTask?.id }}</el-descriptions-item>
+          <el-descriptions-item label="任务名称">{{ currentTask?.name }}</el-descriptions-item>
+          <el-descriptions-item label="状态">
+            <el-tag :type="getStatusColor(currentTask?.status)">
+              {{ getStatusName(currentTask?.status) }}
+            </el-tag>
+          </el-descriptions-item>
+          <el-descriptions-item label="进度">
+            <el-progress :percentage="currentProgress" :status="currentTask?.status === 'RUNNING' ? null : 'success'" />
+          </el-descriptions-item>
+          <el-descriptions-item label="数据源ID">{{ currentTask?.source_id }}</el-descriptions-item>
+          <el-descriptions-item label="上次运行时间">{{ formatDate(currentTask?.last_run_time) }}</el-descriptions-item>
+          <el-descriptions-item label="下次运行时间">{{ formatDate(currentTask?.next_run_time) }}</el-descriptions-item>
+          <el-descriptions-item label="运行次数">{{ currentTask?.run_count || 0 }}</el-descriptions-item>
+          <el-descriptions-item label="成功次数">{{ currentTask?.success_count || 0 }}</el-descriptions-item>
+          <el-descriptions-item label="错误次数">{{ currentTask?.error_count || 0 }}</el-descriptions-item>
+          <el-descriptions-item label="创建时间">{{ formatDate(currentTask?.created_at) }}</el-descriptions-item>
+        </el-descriptions>
       </div>
     </el-drawer>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, onUnmounted } from 'vue'
+import { ref, reactive, onMounted, onUnmounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { 
   Document, VideoPlay, CircleCheck, CircleClose, 
   Plus, Refresh, Delete, Edit 
 } from '@element-plus/icons-vue'
-import axios from 'axios'
+import { 
+  listTasks, 
+  createTask, 
+  updateTask, 
+  deleteTask as deleteTaskApi,
+  triggerTask,
+  stopTask,
+  getLogs,
+  batchDeleteTasks as batchDeleteTasksApi,
+  getTaskStatistics
+} from '@/api/crawlerTask'
 
 // 响应式数据
 const loading = ref(false)
@@ -368,7 +460,7 @@ const taskForm = reactive({
   name: '',
   task_type: '',
   source_id: '',
-  priority: 2,
+  cron_expression: '* * * * *', // 添加cron_expression字段
   config: '',
   scheduled_at: null
 })
@@ -378,15 +470,32 @@ const formRules = {
   name: [{ required: true, message: '请输入任务名称', trigger: 'blur' }],
   task_type: [{ required: true, message: '请选择任务类型', trigger: 'change' }],
   source_id: [{ required: true, message: '请输入源ID', trigger: 'blur' }],
-  priority: [{ required: true, message: '请选择优先级', trigger: 'change' }]
+  cron_expression: [{ required: true, message: '请输入Cron表达式', trigger: 'blur' }] // 添加cron_expression验证
 }
+
+// 计算属性：判断是否有激活的筛选条件
+const hasActiveFilters = computed(() => {
+  return Object.values(filters).some(value => value !== '' && value !== null && value !== undefined);
+});
+
+// 计算属性：显示的总数标题
+const displayTotalTitle = computed(() => {
+  return hasActiveFilters.value ? '当前筛选结果' : '总任务数';
+});
+
+// 计算属性：显示的总数值
+const displayTotalValue = computed(() => {
+  return hasActiveFilters.value ? pagination.total : statistics.totalTasks;
+});
 
 // 任务日志
 const taskLogs = ref([])
 let logWebSocket = null
 
-// API基础URL
-const API_BASE = '/api/v1/crawler'
+// 添加响应式变量
+const showMonitorDrawer = ref(false)
+const currentTask = ref(null)
+const currentProgress = ref(0)
 
 // 生命周期
 onMounted(() => {
@@ -409,9 +518,21 @@ const loadTasks = async () => {
       size: pagination.size,
       ...filters
     }
-    const response = await axios.get(`${API_BASE}/tasks`, { params })
-    tasks.value = response.data.items || []
-    pagination.total = response.data.total || 0
+    const response = await listTasks(params)
+    tasks.value = (response.data?.items || response.items || []).map(task => ({
+      ...task,
+      loadingTrigger: false  // 初始化启动按钮的加载状态
+    }))
+    pagination.total = response.data?.total || response.total || 0
+    
+    // 检查是否没有应用任何筛选条件，如果没有则更新总任务数
+    const hasFilters = Object.values(filters).some(value => value !== '' && value !== null && value !== undefined);
+    if (!hasFilters) {
+      statistics.totalTasks = pagination.total;
+    }
+    
+    // 每次加载任务列表后都更新统计数据，确保一致性
+    await loadStatistics();
   } catch (error) {
     ElMessage.error('加载任务列表失败')
     console.error(error)
@@ -422,8 +543,13 @@ const loadTasks = async () => {
 
 const loadStatistics = async () => {
   try {
-    const response = await axios.get(`${API_BASE}/tasks/statistics`)
-    Object.assign(statistics, response.data)
+    const response = await getTaskStatistics()
+    // 修正：从statusStats对象中获取各个状态的统计值
+    const statusStats = response.data.statusStats || {}
+    statistics.runningTasks = (statusStats.RUNNING || statusStats.running || 0)
+    statistics.successTasks = (statusStats.SUCCESS || statusStats.success || 0)
+    statistics.failedTasks = (statusStats.FAILED || statusStats.failed || 0)
+    // totalTasks已经在loadTasks中处理，这里不需要重复设置
   } catch (error) {
     console.error('加载统计数据失败:', error)
   }
@@ -444,6 +570,7 @@ const resetFilters = () => {
     filters[key] = ''
   })
   searchTasks()
+  loadStatistics()  // 重置筛选条件后也更新统计数据
 }
 
 const handleSelectionChange = (selection) => {
@@ -469,29 +596,58 @@ const submitTaskForm = async () => {
     submitting.value = true
     
     const payload = { ...taskForm }
-    if (payload.config && typeof payload.config === 'string') {
-      try {
-        payload.config = JSON.parse(payload.config)
-      } catch (e) {
-        ElMessage.error('配置参数必须是有效的JSON格式')
-        return
+    
+    // 解析config：如果是字符串，尝试转换为对象；否则使用空对象
+    let configObj = {}
+    if (payload.config) {
+      if (typeof payload.config === 'string') {
+        try {
+          configObj = JSON.parse(payload.config.trim() || '{}')
+        } catch (e) {
+          console.warn('配置参数JSON解析失败，使用空对象:', e)
+          configObj = {}
+        }
+      } else if (typeof payload.config === 'object') {
+        configObj = payload.config
       }
     }
     
-    if (isEdit.value) {
-      await axios.put(`${API_BASE}/tasks/${payload.id}`, payload)
-      ElMessage.success('任务更新成功')
-    } else {
-      await axios.post(`${API_BASE}/tasks`, payload)
+    if (!isEdit.value) { // 创建任务
+      const taskPayload = {
+        name: payload.name.trim(),
+        source_id: payload.source_id, // 作为字符串传递，后端会验证是否为数字
+        task_type: payload.task_type,
+        cron_expression: payload.cron_expression,
+        config: configObj
+      }
+      
+      await createTask(taskPayload)
       ElMessage.success('任务创建成功')
+    } else { // 更新任务
+      const updatePayload = {
+        name: payload.name.trim(),
+        source_id: payload.source_id,
+        task_type: payload.task_type,
+        cron_expression: payload.cron_expression,
+        is_active: payload.is_active !== undefined ? !!payload.is_active : true,
+        config: configObj
+      }
+      
+      await updateTask(payload.id, updatePayload)
+      ElMessage.success('任务更新成功')
     }
     
     showCreateDialog.value = false
     loadTasks()
     loadStatistics()
   } catch (error) {
-    ElMessage.error(isEdit.value ? '任务更新失败' : '任务创建失败')
-    console.error(error)
+    if (error.message && error.message.includes('validate')) {
+      console.error('表单验证失败:', error)
+      ElMessage.error('请检查表单中的必填项')
+    } else {
+      ElMessage.error(isEdit.value ? '任务更新失败' : '任务创建失败')
+      console.error(error)
+    }
   } finally {
     submitting.value = false
   }
@@ -504,9 +660,10 @@ const editTask = (task) => {
     name: task.name,
     task_type: task.task_type,
     source_id: task.source_id,
-    priority: task.priority,
-    config: task.config ? JSON.stringify(task.config, null, 2) : '',
-    scheduled_at: task.scheduled_at ? new Date(task.scheduled_at) : null
+    cron_expression: task.cron_expression || '* * * * *',
+    config: task.config ? JSON.stringify(task.config, null, 2) : '{}',
+    scheduled_at: task.scheduled_at ? new Date(task.scheduled_at) : null,
+    is_active: task.is_active !== undefined ? task.is_active : true
   })
   showCreateDialog.value = true
 }
@@ -517,7 +674,7 @@ const deleteTask = async (task) => {
       type: 'warning'
     })
     
-    await axios.delete(`${API_BASE}/tasks/${task.id}`)
+    await deleteTaskApi(task.id)
     ElMessage.success('任务删除成功')
     loadTasks()
     loadStatistics()
@@ -539,7 +696,7 @@ const batchDeleteTasks = async () => {
     )
     
     const ids = selectedTasks.value.map(task => task.id)
-    await axios.delete(`${API_BASE}/tasks/batch`, { data: { ids } })
+    await batchDeleteTasksApi(ids)
     ElMessage.success('批量删除成功')
     loadTasks()
     loadStatistics()
@@ -550,9 +707,39 @@ const batchDeleteTasks = async () => {
   }
 }
 
-const viewLogs = (task) => {
-  showLogDrawer.value = true
-  connectLogWebSocket(task.id)
+const viewLogs = async (task) => {
+  try {
+    showLogDrawer.value = true;
+    const response = await getLogs(task.id);
+    // 直接使用后端返回的日志数据，而不是构建消息
+    taskLogs.value = response.data.items.map(log => ({
+      id: log.id,
+      timestamp: log.created_at || log.started_at,
+      level: log.status ? log.status.toUpperCase() : 'INFO',
+      message: log.message || `${log.status || 'LOG'} - 处理了${log.records_processed || 0}条记录，成功${log.records_success || 0}条，失败${log.records_failed || 0}条`
+    }));
+  } catch (error) {
+    console.error('获取日志失败:', error);
+    ElMessage.error('获取日志失败');
+  }
+}
+
+// 添加刷新日志功能
+const fetchLatestLogs = async () => {
+  if (!currentTask.value) return;
+  
+  try {
+    const response = await getLogs(currentTask.value.id);
+    taskLogs.value = response.data.items.map(log => ({
+      id: log.id,
+      timestamp: log.created_at || log.started_at,
+      level: log.status ? log.status.toUpperCase() : 'INFO',
+      message: log.message || `${log.status || 'LOG'} - 处理了${log.records_processed || 0}条记录，成功${log.records_success || 0}条，失败${log.records_failed || 0}条`
+    }));
+  } catch (error) {
+    console.error('刷新日志失败:', error);
+    ElMessage.error('刷新日志失败');
+  }
 }
 
 const connectLogWebSocket = (taskId) => {
@@ -563,10 +750,10 @@ const connectLogWebSocket = (taskId) => {
   taskLogs.value = []
   logsPaused.value = false
   
-  // 这里应该连接到实际的WebSocket端点
+  // TODO: 这里应该连接到实际的WebSocket端点
   // logWebSocket = new WebSocket(`ws://localhost:8001/ws/logs/${taskId}`)
+  // 临时保持模拟数据，直到WebSocket实现完成
   
-  // 模拟日志数据
   const mockLogs = [
     { id: 1, timestamp: new Date().toISOString(), level: 'INFO', message: '任务开始执行' },
     { id: 2, timestamp: new Date().toISOString(), level: 'INFO', message: '正在连接数据源...' },
@@ -598,33 +785,39 @@ const resumeLogs = () => {
   logsPaused.value = false
 }
 
-// 新增：执行500彩票网爬虫任务
-const executeFiveHundredCrawl = async (days = 3) => {
+const handleToggleTask = async (task) => {
   try {
-    const response = await axios.post(`${API_BASE}/tasks/0/execute-five-hundred-crawl`, {}, {
-      params: { days }
-    });
-    
-    ElMessage.success(`成功执行500彩票网爬虫任务: ${response.data.message}`);
-    console.log('爬虫任务执行结果:', response.data);
-  } catch (error) {
-    console.error('执行500彩票网爬虫任务失败:', error);
-    ElMessage.error(`执行爬虫任务失败: ${error.response?.data?.detail || error.message}`);
-  }
-}
+    // 设置加载状态
+    task.loadingTrigger = true;
 
-// 新增：创建500彩票网数据源
-const createFiveHundredDataSource = async () => {
-  try {
-    const response = await axios.post(`${API_BASE}/sources/five-hundred-create`);
+    if (task.status === 'RUNNING') {
+      // 如果任务正在运行，则停止任务
+      await stopTask(task.id);
+      ElMessage.success('任务停止成功');
+      
+      // 更新任务状态
+      task.status = 'STOPPED';
+    } else {
+      // 如果任务不在运行，则启动任务
+      await triggerTask(task.id);
+      ElMessage.success('任务启动成功');
+      
+      // 更新任务状态，设置开始时间为当前时间
+      task.status = 'RUNNING';
+      task.started_at = new Date().toISOString();
+    }
     
-    ElMessage.success(response.data.message);
-    console.log('500彩票网数据源创建结果:', response.data);
+    // 重新加载任务列表以获取最新状态
+    loadTasks();
+    loadStatistics();
   } catch (error) {
-    console.error('创建500彩票网数据源失败:', error);
-    ElMessage.error(`创建数据源失败: ${error.response?.data?.detail || error.message}`);
+    console.error(task.status === 'RUNNING' ? '停止任务失败:' : '启动任务失败:', error);
+    ElMessage.error(task.status === 'RUNNING' ? '停止任务失败' : '启动任务失败');
+  } finally {
+    // 清除加载状态
+    task.loadingTrigger = false;
   }
-}
+};
 
 const resetForm = () => {
   if (taskFormRef.value) {
@@ -650,7 +843,7 @@ const getTaskTypeColor = (type) => {
     'DATA_CLEANING': 'warning',
     'REPORT_GENERATION': 'info'
   }
-  return colors[type] || 'default'
+  return colors[type] || 'info'  // 将'default'改为'info'
 }
 
 const getTaskTypeName = (type) => {
@@ -669,9 +862,9 @@ const getStatusColor = (status) => {
     'RUNNING': 'warning',
     'SUCCESS': 'success',
     'FAILED': 'danger',
-    'CANCELLED': 'default'
+    'CANCELLED': 'info'
   }
-  return colors[status] || 'default'
+  return colors[status] || 'info'  // 确保默认返回值也是'info'
 }
 
 const getStatusName = (status) => {
@@ -685,18 +878,29 @@ const getStatusName = (status) => {
   return names[status] || status
 }
 
-const getPriorityColor = (priority) => {
-  const num = parseInt(priority)
-  if (num >= 4) return 'danger'
-  if (num >= 3) return 'warning'
-  if (num >= 2) return 'info'
-  return 'success'
+// 添加格式化时间戳函数
+const formatTimestamp = (timestamp) => {
+  if (!timestamp) return '-';
+  return new Date(timestamp).toLocaleTimeString('zh-CN');
 }
 
 const formatDate = (dateStr) => {
   if (!dateStr) return '-'
   return new Date(dateStr).toLocaleString('zh-CN')
 }
+
+// 添加查看任务详情功能
+const viewTaskDetails = (task) => {
+  currentTask.value = task;
+  // 计算进度百分比，基于处理成功的记录数
+  if (task.success_count && task.run_count) {
+    currentProgress.value = Math.min(100, Math.round((task.success_count / task.run_count) * 100));
+  } else {
+    currentProgress.value = 0;
+  }
+  showMonitorDrawer.value = true;
+}
+
 </script>
 
 <style scoped>
@@ -779,6 +983,44 @@ const formatDate = (dateStr) => {
   font-family: 'Courier New', monospace;
   font-size: 12px;
   line-height: 1.4;
+  padding: 2px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.log-timestamp {
+  color: #999;
+  margin-right: 8px;
+}
+
+.log-level {
+  font-weight: bold;
+  margin-right: 8px;
+  padding: 0 4px;
+  border-radius: 2px;
+}
+
+.log-level-info {
+  color: #409eff;
+}
+
+.log-level-warning {
+  color: #e6a23c;
+}
+
+.log-level-error {
+  color: #f56c6c;
+}
+
+.log-level-success {
+  color: #67c23a;
+}
+
+.log-message {
+  color: #333;
+}
+
+.monitor-content {
+  padding: 20px 0;
 }
 
 /* 响应式设计 */

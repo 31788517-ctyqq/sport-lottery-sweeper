@@ -219,8 +219,8 @@
         
         <el-form-item label="盘口类型" prop="handicap_type">
           <el-radio-group v-model="entryForm.handicap_type">
-            <el-radio label="no_handicap">不让球</el-radio>
-            <el-radio label="handicap">让球</el-radio>
+            <el-radio value="no_handicap">不让球</el-radio>
+            <el-radio value="handicap">让球</el-radio>
           </el-radio-group>
         </el-form-item>
         

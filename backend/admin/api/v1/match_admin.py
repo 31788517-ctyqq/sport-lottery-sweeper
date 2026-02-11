@@ -4,11 +4,11 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional, Dict, Any
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta, date, timezone
 import json
 
 from ....api.deps import get_db
-from ....models.match import Match, League, Team, MatchStatusEnum
+from ....models.match import Match, League, MatchStatusEnum
 from ...deps import get_current_admin
 
 
@@ -304,8 +304,8 @@ async def create_match(
             match_date=match_datetime.date(),
             match_time=match_datetime.time(),
             status=MatchStatusEnum.UPCOMING,
-            created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(timezone.utc)
         )
         
         db.add(new_match)
@@ -370,7 +370,7 @@ async def update_match(
         if away_score is not None:
             match.away_score = away_score
             
-        match.updated_at = datetime.utcnow()
+        match.updated_at = datetime.now(timezone.utc)
         await db.commit()
         
         return UnifiedResponse.success({
@@ -435,7 +435,7 @@ async def update_match_status(
         
         old_status = match.status
         match.status = status
-        match.updated_at = datetime.utcnow()
+        match.updated_at = datetime.now(timezone.utc)
         await db.commit()
         
         return UnifiedResponse.success({
@@ -482,7 +482,7 @@ async def update_match_scores(
         if halftime_away_score is not None:
             match.away_score_ht = halftime_away_score
         
-        match.updated_at = datetime.utcnow()
+        match.updated_at = datetime.now(timezone.utc)
         await db.commit()
         
         return UnifiedResponse.success({
@@ -518,7 +518,7 @@ async def cancel_match(
         
         old_status = match.status
         match.status = "cancelled"
-        match.updated_at = datetime.utcnow()
+        match.updated_at = datetime.now(timezone.utc)
         
         # 保存取消原因到配置中
         if not match.config:

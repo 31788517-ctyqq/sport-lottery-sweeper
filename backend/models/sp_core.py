@@ -10,64 +10,8 @@ from datetime import datetime
 import json
 import uuid
 
-
-class DataSource(Base):
-    """数据源配置表 - 保留核心的数据源管理"""
-    
-    __tablename__ = 'data_sources'
-    __table_args__ = {'extend_existing': True}  # 解决表重复定义问题
-    
-    id = Column(Integer, primary_key=True, index=True)
-    source_id = Column(String(10), unique=True, comment="源ID")  # 新增源ID字段
-    name = Column(String(100), nullable=False, unique=True, comment="数据源名称")
-    category = Column(String(50), default="match_data", comment="内容分类")
-    source_type = Column(String(20), nullable=False, default='api', comment="类型: api/file")
-    api_url = Column(Text, comment="接口地址")
-    method = Column(String(10), default='GET', comment="请求方法")
-    timeout = Column(Integer, default=30, comment="超时时间(秒)")
-    headers = Column(JSON, comment="请求头配置")
-    params = Column(JSON, comment="请求参数")
-    description = Column(Text, comment="描述")
-    api_key = Column(String(200), comment="API密钥")
-    file_path = Column(String(500), comment="文件路径")
-    config = Column(JSON, comment="配置信息(JSON格式)")
-    is_active = Column(Boolean, default=True, comment="启用状态")
-    status = Column(String(20), default='online', comment="状态: online/offline/maintenance")
-    test_status = Column(String(20), default='untested', comment="测试状态")
-    last_test_at = Column(DateTime, comment="最后测试时间")
-    success_rate = Column(Float, default=0, comment="成功率")
-    avg_response_time = Column(Float, comment="平均响应时间")
-    last_update_time = Column(DateTime, comment="最后更新时间")
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
-    # 关联关系
-    sp_records = relationship("SPRecord", back_populates="data_source")
-    
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'sourceId': self.source_id or f"DS{self.id:03d}",  # 自动生成源ID
-            'name': self.name,
-            'category': self.category,
-            'source_type': self.source_type,
-            'url': self.api_url,
-            'method': self.method,
-            'timeout': self.timeout,
-            'headers': self.headers,
-            'params': self.params,
-            'description': self.description,
-            'status': self.status,
-            'success_rate': self.success_rate or 0,
-            'avgResponseTime': self.avg_response_time or 0,
-            'lastUpdateTime': self.last_update_time.isoformat() if self.last_update_time else None,
-            'is_active': self.is_active,
-            'test_status': self.test_status,
-            'last_test_at': self.last_test_at.isoformat() if self.last_test_at else None,
-            'created_at': self.created_at.isoformat() if self.created_at else None,
-            'updated_at': self.updated_at.isoformat() if self.updated_at else None
-        }
-
+# 从data_sources模块导入DataSource，避免重复定义
+from .data_sources import DataSource
 
 # 导入OddsCompany模型而不是重新定义
 from .odds_companies import OddsCompany
@@ -83,7 +27,7 @@ class SPRecord(Base):
     # 关联到现有的matches表，但不管理比赛信息
     match_identifier = Column(String(50), nullable=False, comment="比赛标识符（引用现有matches表）")
     company_id = Column(Integer, ForeignKey('odds_companies.id'), nullable=False, comment="赔率公司ID")
-    data_source_id = Column(Integer, ForeignKey('data_sources.id'), comment="数据源ID")
+    data_source_id = Column(Integer, ForeignKey('data_sources.id'), nullable=False, comment="数据源ID")
     
     # SP值核心字段
     handicap_type = Column(String(20), nullable=False, default='handicap', comment="盘口类型")
@@ -166,6 +110,10 @@ Index('idx_sp_recorded_time', SPRecord.recorded_at)
 Index('idx_sp_company_time', SPRecord.company_id, SPRecord.recorded_at)
 Index('idx_sp_match_time', SPRecord.match_identifier, SPRecord.recorded_at)
 
+# 为DataSource添加反向关系，这样SPRecord才能正确关联回去
+if not hasattr(DataSource, 'sp_records'):
+    # 动态添加关系
+    DataSource.sp_records = relationship("SPRecord", back_populates="data_source")
 
 # 预定义常量
 HANDICAP_TYPES = {

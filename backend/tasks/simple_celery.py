@@ -17,7 +17,8 @@ celery = Celery(
     broker='redis://localhost:6379/0',
     backend='redis://localhost:6379/0',
     include=[
-        'backend.tasks.500wang_scheduler'
+        'backend.tasks.500wang_scheduler',
+        'backend.tasks.ip_pool_refresh',
     ]
 )
 
@@ -30,4 +31,4 @@ celery.conf.update(
     enable_utc=True,
 )
 
-print("✅ 简化Celery配置加载成功")
+print("[celery] simple configuration loaded")

@@ -22,13 +22,31 @@
     <nav class="sidebar-nav">
       <div 
         v-for="item in menuItems" 
-        :key="item.path"
+        :key="item.path || item.name"
         class="nav-item"
-        :class="{ active: isActive(item.path) }"
-        @click="navigateTo(item.path)"
+        :class="{ active: isActive(item.path || item.children?.[0]?.path) }"
+        @click="navigateTo(item.path || item.children?.[0]?.path, item)"
       >
         <i :class="item.icon" class="nav-icon"></i>
         <span class="nav-text" v-show="!isCollapsed || isMobile">{{ item.text }}</span>
+        
+        <!-- 子菜单 -->
+        <div 
+          v-if="item.children && item.children.length > 0"
+          class="sub-menu"
+          :class="{ visible: isSubmenuVisible[item.name] }"
+        >
+          <div
+            v-for="child in item.children"
+            :key="child.path"
+            class="sub-nav-item"
+            :class="{ active: isActive(child.path) }"
+            @click.stop="navigateTo(child.path)"
+          >
+            <i :class="child.icon || 'fas fa-chevron-right'" class="nav-icon"></i>
+            <span class="nav-text">{{ child.text }}</span>
+          </div>
+        </div>
       </div>
     </nav>
     
@@ -51,49 +69,35 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import menuConfig from '@/components/Sidebar/MenuConfig.js'
 
 const router = useRouter()
 const route = useRoute()
 const isOpen = ref(false)
 const isCollapsed = ref(false)
 const isMobile = ref(false)
+const isSubmenuVisible = ref({})
 
 // 手势相关
 const touchStartX = ref(0)
 const SWIPE_THRESHOLD = 50 // 最小滑动距离
 
-  const menuItems = [
-    { path: '/admin/dashboard', text: '仪表盘', icon: 'fas fa-tachometer-alt' },
-    { 
-      path: '/admin/users/list', 
-      text: '用户管理', 
-      icon: 'fas fa-users',
-      children: [
-        { path: '/admin/users/list', text: '用户列表' },
-        { path: '/admin/users/roles', text: '角色与权限' },
-        { path: '/admin/users/departments', text: '部门管理' },
-        { path: '/admin/users/profile', text: '个人中心' },
-        { path: '/admin/users/logs', text: '操作日志' }
-      ]
-    },
-    { path: '/admin/match/all', text: '比赛管理', icon: 'fas fa-futbol' },
-    // 情报中心菜单已隐藏
-    // { path: '/admin/intelligence', text: '情报中心', icon: 'fas fa-newspaper' },
-    // 数据管理菜单已隐藏
-    // { path: '/admin/data', text: '数据管理', icon: 'fas fa-database' },
-    { path: '/admin/crawler/data-source-management', text: '数据源管理', icon: 'fas fa-link' },
-    { path: '/admin/sp/all', text: 'SP管理', icon: 'fas fa-percentage' },
-    { path: '/admin/draw-prediction/all', text: '平局预测', icon: 'fas fa-balance-scale' },
-    { path: '/admin/system', text: '系统设置', icon: 'fas fa-cog' }
-  ]
+// 使用统一的菜单配置
+const menuItems = menuConfig
 
-const navigateTo = (path) => {
-  router.push(path)
-  closeMenu()
+const navigateTo = (path, item) => {
+  if (item && item.children && item.children.length > 0) {
+    // 如果是父菜单，切换子菜单显示状态
+    isSubmenuVisible.value[item.name] = !isSubmenuVisible.value[item.name];
+  } else if (path) {
+    router.push(path)
+    closeMenu()
+  }
 }
 
 const isActive = (path) => {
-  return route.path === path
+  if (!path) return false;
+  return route.path.startsWith(path) || route.path === path
 }
 
 const openMenu = () => {
@@ -250,6 +254,7 @@ defineExpose({ openMenu, closeMenu })
   color: var(--text-sub);
   cursor: pointer;
   transition: all 0.2s;
+  position: relative;
 }
 
 .nav-item:hover,
@@ -275,6 +280,38 @@ defineExpose({ openMenu, closeMenu })
 
 .nav-text {
   font-size: 16px;
+}
+
+.sub-menu {
+  position: absolute;
+  left: 100%;
+  top: 0;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  min-width: 200px;
+  z-index: 1002;
+  display: none;
+}
+
+.sub-menu.visible {
+  display: block;
+}
+
+.sub-nav-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  color: var(--text-sub);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.sub-nav-item:hover,
+.sub-nav-item.active {
+  background: rgba(88, 166, 255, 0.1);
+  color: var(--primary);
 }
 
 .sidebar-footer {
@@ -353,6 +390,14 @@ defineExpose({ openMenu, closeMenu })
   .sidebar-menu.open + .sidebar-overlay {
     opacity: 1;
   }
+  .sub-menu {
+    position: static;
+    width: 100%;
+    box-shadow: none;
+    border: none;
+    border-top: 1px solid var(--border-color);
+    margin-top: 10px;
+  }
 }
 
 @media (min-width: 481px) and (max-width: 767px) {
@@ -376,3 +421,4 @@ defineExpose({ openMenu, closeMenu })
     width: 260px;
   }
 }
+</style>

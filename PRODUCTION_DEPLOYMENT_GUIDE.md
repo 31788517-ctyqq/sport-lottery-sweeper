@@ -52,6 +52,7 @@ vim .env
 
 ### 3.2 数据库配置
 
+#### 3.2.1 生产环境配置
 生产环境推荐使用PostgreSQL：
 
 ```bash
@@ -59,6 +60,27 @@ vim .env
 DATABASE_URL=postgresql://username:password@postgres:5432/sport_lottery_db
 ASYNC_DATABASE_URL=postgresql+asyncpg://username:password@postgres:5432/sport_lottery_db
 ```
+
+#### 3.2.2 开发环境数据库文件位置规范
+开发环境使用SQLite数据库，数据库文件管理遵循以下规范：
+
+1. **主数据库文件位置**：
+   - 数据库文件应位于项目根目录，文件名为 `sport_lottery.db`
+   - 这是项目的唯一权威数据库文件，所有数据操作都应基于此文件
+
+2. **硬链接使用规范**：
+   - 为保持向后兼容性，可在 `backend/` 和 `data/` 目录下创建硬链接指向根目录的数据库文件
+   - 硬链接确保多个路径指向同一物理文件，避免数据不一致
+   - 创建硬链接命令（Windows）：`mklink /H "backend\sport_lottery.db" "sport_lottery.db"`
+
+3. **代码引用规范**：
+   - 所有数据库访问应通过 `backend.database.DATABASE_PATH` 配置
+   - 禁止在代码中硬编码数据库路径（如 `"backend/sport_lottery.db"`）
+   - 现有脚本应逐步迁移到使用统一配置
+
+4. **健康检查**：
+   - 定期运行 `check_database_paths.py` 验证所有数据库访问路径是否一致
+   - 检查硬链接状态，确保没有创建冗余的数据库副本
 
 ## 4. 部署步骤
 

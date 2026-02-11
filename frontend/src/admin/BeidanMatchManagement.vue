@@ -6,7 +6,8 @@
   - 锁格式：# LOCK: 文件名 | AI:名称 | Time:时间戳
 -->
 <template>
-  <div class="beidan-match-management">
+  <!-- AI_WORKING: coder1 @2026-01-31 - 重构模板布局，采用OddsManagement.vue样式 -->
+  <div class="beidan-match-management-container">
     <!-- 页面标题 -->
     <div class="page-header">
       <h2>北单赛程管理</h2>
@@ -276,92 +277,14 @@
         </span>
       </template>
     </el-dialog>
-
-    <el-table :data="filteredMatches" style="width: 100%" v-loading="loading" stripe border empty-text="暂无北单比赛数据">
-      <el-table-column prop="match_identifier" label="北单编号" width="150" />
-      <el-table-column prop="league_name" label="联赛" width="120" />
-      <el-table-column prop="round_number" label="期次" width="80" />
-      <el-table-column label="开奖时间" width="180">
-        <template #default="scope">
-          {{ formatDateTime(scope.row.scheduled_kickoff) }}
-        </template>
-      </el-table-column>
-      <el-table-column label="对阵" min-width="220">
-        <template #default="scope">
-          <div class="match-teams">
-            <div class="team-info">
-              <el-avatar :size="24" src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png" />
-              <span class="team-name">{{ scope.row.home_team }}</span>
-            </div>
-            <span class="vs-text">VS</span>
-            <div class="team-info">
-              <el-avatar :size="24" src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png" />
-              <span class="team-name">{{ scope.row.away_team }}</span>
-            </div>
-          </div>
-        </template>
-      </el-table-column>
-      <el-table-column label="胜负预测" width="120">
-        <template #default="scope">
-          <div class="prediction-info">
-            <el-tag size="small" type="success" v-if="scope.row.home_win_prob">主胜: {{ (scope.row.home_win_prob * 100).toFixed(1) }}%</el-tag>
-            <el-tag size="small" type="info" v-if="scope.row.draw_prob">平局: {{ (scope.row.draw_prob * 100).toFixed(1) }}%</el-tag>
-            <el-tag size="small" type="warning" v-if="scope.row.away_win_prob">客胜: {{ (scope.row.away_win_prob * 100).toFixed(1) }}%</el-tag>
-          </div>
-        </template>
-      </el-table-column>
-      <el-table-column label="状态" width="100">
-        <template #default="scope">
-          <el-tag :type="getStatusTagType(scope.row.status)" size="small">
-            {{ getStatusText(scope.row.status) }}
-          </el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column label="重要程度" width="100">
-        <template #default="scope">
-          <el-tag :type="getImportanceTagType(scope.row.importance)" size="small">
-            {{ getImportanceText(scope.row.importance) }}
-          </el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column label="操作" width="220" fixed="right">
-        <template #default="scope">
-          <el-button size="small" @click="handleView(scope.row)">详情</el-button>
-          <el-button size="small" @click="handleEdit(scope.row)">编辑</el-button>
-          <el-button 
-            size="small" 
-            :type="scope.row.is_published ? 'warning' : 'success'"
-            @click="togglePublish(scope.row)"
-          >
-            {{ scope.row.is_published ? '下架' : '上架' }}
-          </el-button>
-          <el-button size="small" type="danger" @click="handleDelete(scope.row)">删除</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
-    
-    <div class="pagination-wrapper">
-      <el-pagination
-        v-model:current-page="pagination.page"
-        v-model:page-size="pagination.size"
-        :total="pagination.total"
-        :page-sizes="[10, 20, 50, 100]"
-        layout="total, sizes, prev, pager, next, jumper"
-        @size-change="handleSizeChange"
-        @current-change="handleCurrentChange"
-      />
-    </div>
-  </el-card>
-</div>
-      </el-tab-pane>
-    </el-tabs>
   </div>
+  <!-- AI_DONE: coder1 @2026-01-31 -->
 </template>
 
 <script>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Search, Refresh, Upload, UploadFilled, Connection, Star, Download } from '@element-plus/icons-vue'
+import { Search, Refresh, Upload, UploadFilled, Connection, Star, Download, Calendar, Clock, Money } from '@element-plus/icons-vue'
 import BaseCard from '@/components/common/BaseCard.vue'
 // AI_WORKING: coder1 @2025-01-31 12:00:00 - 修复http导入错误，http是默认导出
 import http from '@/utils/http'
@@ -392,6 +315,12 @@ export default {
     const searchKeyword = ref('')
     const showImportDialog = ref(false)
     const importLoading = ref(false)
+    const activeTab = ref('schedule')
+    const filterModel = reactive({
+      keyword: '',
+      league: '',
+      days: 3
+    })
 
     // 分页
     const pagination = reactive({
@@ -446,8 +375,10 @@ export default {
       return filtered
     })
 
+    // AI_WORKING: coder1 @2026-01-31 - 更新uploadUrl，使用正确的API路径（match_admin路由）
     // 上传相关
     const uploadUrl = computed(() => `${import.meta.env.VITE_API_BASE_URL}/admin/matches/import/file`)
+    // AI_DONE: coder1 @2026-01-31
     const uploadHeaders = computed(() => ({
       'Authorization': `Bearer ${localStorage.getItem('token')}`
     }))
@@ -456,15 +387,22 @@ export default {
     }))
 
     // 方法
+    // AI_WORKING: coder1 @2026-01-31 - 更新fetchMatches函数，使用正确的API路径和响应格式
     const fetchMatches = async () => {
       loading.value = true
       try {
-        const response = await http.get('/admin/matches/beidan/matches', {
-          params: { days: selectedDays.value }
+        const response = await http.get('/admin/beidan-schedules/', {
+          params: { 
+            days: selectedDays.value,
+            page: pagination.page,
+            size: pagination.size,
+            league_id: selectedLeague.value,
+            keyword: searchKeyword.value
+          }
         })
-        if (response.code === 200) {
-          matches.value = response.data || []
-          pagination.total = matches.value.length
+        if (response.success === true) {
+          matches.value = response.data?.items || []
+          pagination.total = response.data?.total || 0
           calculateStatistics()
         } else {
           ElMessage.error(response.message || '获取北单比赛数据失败')
@@ -476,14 +414,17 @@ export default {
         loading.value = false
       }
     }
+    // AI_DONE: coder1 @2026-01-31
 
+    // AI_WORKING: coder1 @2026-01-31 - 更新fetchLeagues函数，使用正确的API路径和响应格式
     const fetchLeagues = async () => {
       try {
-        const response = await http.get('/admin/matches/leagues')
-        if (response.code === 200) {
-          leagues.value = response.data || []
+        const response = await http.get('/admin/beidan-schedules/leagues')
+        if (response.success === true) {
+          const leagueItems = response.data?.items || []
+          leagues.value = leagueItems
           // 筛选出北单相关联赛
-          beidanLeagues.value = leagues.value.filter(league => 
+          beidanLeagues.value = leagueItems.filter(league => 
             league.name.includes('北单') || 
             league.code.includes('bd') ||
             league.name.includes('北京单场')
@@ -493,6 +434,7 @@ export default {
         console.error('获取联赛列表失败:', error)
       }
     }
+    // AI_DONE: coder1 @2026-01-31
 
     const calculateStatistics = () => {
       if (matches.value.length === 0) {
@@ -520,18 +462,24 @@ export default {
       })
     }
 
+    // AI_WORKING: coder1 @2026-01-31 - 修改handleSearch函数，触发数据刷新
     const handleSearch = () => {
       pagination.page = 1
+      fetchMatches()
     }
+    // AI_DONE: coder1 @2026-01-31
 
     const handleDaysChange = () => {
       pagination.page = 1
       fetchMatches()
     }
 
+    // AI_WORKING: coder1 @2026-01-31 - 修改handleLeagueChange函数，触发数据刷新
     const handleLeagueChange = () => {
       pagination.page = 1
+      fetchMatches()
     }
+    // AI_DONE: coder1 @2026-01-31
 
     const refreshData = () => {
       pagination.page = 1
@@ -557,8 +505,12 @@ export default {
       }
     }
 
-    // AI_WORKING: coder1 @2026-01-31 - 添加导出数据功能
+    // AI_WORKING: coder1 @2026-01-31 - 修改导出数据功能，暂时返回提示，因为后端尚未实现导出端点
     const exportData = async () => {
+      ElMessage.info('导出功能正在开发中，敬请期待')
+      return
+      // 以下为原有导出逻辑，暂时注释掉
+      /*
       try {
         loading.value = true
         ElMessage.info('正在准备导出数据...')
@@ -571,7 +523,7 @@ export default {
         }
         
         // 调用导出API
-        const response = await http.get('/admin/matches/beidan/export', {
+        const response = await http.get('/admin/beidan-schedules/export', {
           params,
           responseType: 'blob'
         })
@@ -593,6 +545,7 @@ export default {
       } finally {
         loading.value = false
       }
+      */
     }
     // AI_DONE: coder1 @2026-01-31
 
@@ -606,6 +559,7 @@ export default {
       // 实现编辑逻辑
     }
 
+    // AI_WORKING: coder1 @2026-01-31 - 更新handleDelete函数，使用正确的API路径和响应格式
     const handleDelete = async (row) => {
       try {
         await ElMessageBox.confirm(`确定要删除北单比赛 "${row.home_team} VS ${row.away_team}" 吗？`, '确认删除', {
@@ -614,8 +568,8 @@ export default {
           type: 'warning'
         })
         
-        const response = await http.delete(`/admin/matches/${row.id}`)
-        if (response.code === 200) {
+        const response = await http.delete(`/admin/beidan-schedules/${row.id}`)
+        if (response.success === true) {
           ElMessage.success('删除成功')
           fetchMatches()
         } else {
@@ -628,13 +582,15 @@ export default {
         }
       }
     }
+    // AI_DONE: coder1 @2026-01-31
 
+    // AI_WORKING: coder1 @2026-01-31 - 更新togglePublish函数，使用正确的API路径、参数和响应格式
     const togglePublish = async (row) => {
       try {
-        const response = await http.put(`/admin/matches/${row.id}/publish`, {
-          is_published: !row.is_published
+        const response = await http.put(`/admin/beidan-schedules/${row.id}/publish`, null, {
+          params: { publish: !row.is_published }
         })
-        if (response.code === 200) {
+        if (response.success === true) {
           ElMessage.success(`${row.is_published ? '下架' : '上架'}成功`)
           row.is_published = !row.is_published
         } else {
@@ -645,6 +601,7 @@ export default {
         ElMessage.error('操作失败')
       }
     }
+    // AI_DONE: coder1 @2026-01-31
 
     // AI_WORKING: coder1 @2026-01-31 - 修改handleImport函数以支持API地址
     const handleImport = async () => {
@@ -831,6 +788,22 @@ export default {
       uploadData,
       predictionStats,
       dataSources,
+      activeTab,
+      filterModel,
+      // 图标组件
+      Search,
+      Refresh,
+      Upload,
+      UploadFilled,
+      Connection,
+      Star,
+      Download,
+      Calendar,
+      Clock,
+      Money,
+      // 方法
+      fetchMatches,
+      fetchLeagues,
       handleSearch,
       handleDaysChange,
       handleLeagueChange,
@@ -859,7 +832,7 @@ export default {
 </script>
 
 <style scoped>
-.beidan-match-management {
+.beidan-match-management-container {
   padding: 20px;
 }
 

@@ -1,0 +1,389 @@
+{
+  "metadata": {
+    "scan_timestamp": "2026-02-07T05:36:17.323804",
+    "scan_config": {
+      "api_dir": "api/v1",
+      "timestamp": "2026-02-07T05:36:17.323804"
+    },
+    "summary": {
+      "total_routes": 15,
+      "total_auth_issues": 2,
+      "total_validation_issues": 0,
+      "auth_issues_by_severity": {
+        "high": 2
+      },
+      "validation_issues_by_severity": {}
+    }
+  },
+  "route_analysis": {
+    "total_routes": 15,
+    "routes": [
+      {
+        "path": "/",
+        "method": "POST",
+        "function_name": "create_single_caipiao_data",
+        "file_path": "api\\v1\\caipiao_data.py",
+        "requires_auth": false,
+        "requires_admin": false,
+        "parameters": [
+          {
+            "name": "caipiao_data",
+            "type": "CaipiaoDataCreate"
+          },
+          {
+            "name": "db",
+            "type": "Session"
+          }
+        ]
+      },
+      {
+        "path": "/{caipiao_data_id}",
+        "method": "GET",
+        "function_name": "get_single_caipiao_data",
+        "file_path": "api\\v1\\caipiao_data.py",
+        "requires_auth": false,
+        "requires_admin": false,
+        "parameters": [
+          {
+            "name": "caipiao_data_id",
+            "type": "int"
+          },
+          {
+            "name": "db",
+            "type": "Session"
+          }
+        ]
+      },
+      {
+        "path": "/{caipiao_data_id}",
+        "method": "PUT",
+        "function_name": "update_single_caipiao_data",
+        "file_path": "api\\v1\\caipiao_data.py",
+        "requires_auth": false,
+        "requires_admin": false,
+        "parameters": [
+          {
+            "name": "caipiao_data_id",
+            "type": "int"
+          },
+          {
+            "name": "caipiao_data",
+            "type": "CaipiaoDataUpdate"
+          },
+          {
+            "name": "db",
+            "type": "Session"
+          }
+        ]
+      },
+      {
+        "path": "/{caipiao_data_id}",
+        "method": "DELETE",
+        "function_name": "delete_single_caipiao_data",
+        "file_path": "api\\v1\\caipiao_data.py",
+        "requires_auth": false,
+        "requires_admin": false,
+        "parameters": [
+          {
+            "name": "caipiao_data_id",
+            "type": "int"
+          },
+          {
+            "name": "db",
+            "type": "Session"
+          }
+        ]
+      },
+      {
+        "path": "/",
+        "method": "GET",
+        "function_name": "get_caipiao_data_list_simple",
+        "file_path": "api\\v1\\caipiao_data.py",
+        "requires_auth": false,
+        "requires_admin": false,
+        "parameters": [
+          {
+            "name": "skip",
+            "type": "int"
+          },
+          {
+            "name": "limit",
+            "type": "int"
+          },
+          {
+            "name": "home_team",
+            "type": "str"
+          },
+          {
+            "name": "guest_team",
+            "type": "str"
+          },
+          {
+            "name": "game_short_name",
+            "type": "str"
+          },
+          {
+            "name": "db",
+            "type": "Session"
+          }
+        ]
+      },
+      {
+        "path": "/sync-from-api/",
+        "method": "POST",
+        "function_name": "sync_caipiao_data_from_api",
+        "file_path": "api\\v1\\caipiao_data.py",
+        "requires_auth": false,
+        "requires_admin": false,
+        "parameters": [
+          {
+            "name": "date_time",
+            "type": "str"
+          },
+          {
+            "name": "db",
+            "type": "Session"
+          }
+        ]
+      },
+      {
+        "path": "/batch/",
+        "method": "POST",
+        "function_name": "batch_create_caipiao_data",
+        "file_path": "api\\v1\\caipiao_data.py",
+        "requires_auth": false,
+        "requires_admin": false,
+        "parameters": [
+          {
+            "name": "caipiao_data_list",
+            "type": "List[CaipiaoDataCreate]"
+          },
+          {
+            "name": "db",
+            "type": "Session"
+          }
+        ]
+      },
+      {
+        "path": "/parlay-opportunities",
+        "method": "GET",
+        "function_name": "get_parlay_opportunities",
+        "file_path": "api\\v1\\hedging.py",
+        "requires_auth": false,
+        "requires_admin": false,
+        "parameters": [
+          {
+            "name": "date",
+            "type": "str"
+          },
+          {
+            "name": "db",
+            "type": "Session"
+          }
+        ]
+      },
+      {
+        "path": "/config",
+        "method": "GET",
+        "function_name": "get_hedging_config",
+        "file_path": "api\\v1\\hedging.py",
+        "requires_auth": false,
+        "requires_admin": false,
+        "parameters": [
+          {
+            "name": "db",
+            "type": "Session"
+          }
+        ]
+      },
+      {
+        "path": "/calculate-manual",
+        "method": "POST",
+        "function_name": "calculate_manual_hedging",
+        "file_path": "api\\v1\\hedging.py",
+        "requires_auth": false,
+        "requires_admin": false,
+        "parameters": [
+          {
+            "name": "sp_odd",
+            "type": "float"
+          },
+          {
+            "name": "european_odd",
+            "type": "float"
+          },
+          {
+            "name": "investment",
+            "type": "float"
+          },
+          {
+            "name": "db",
+            "type": "Session"
+          }
+        ]
+      },
+      {
+        "path": "/mock-data-test",
+        "method": "GET",
+        "function_name": "get_mock_data_test",
+        "file_path": "api\\v1\\hedging.py",
+        "requires_auth": false,
+        "requires_admin": false,
+        "parameters": [
+          {
+            "name": "date",
+            "type": "str"
+          },
+          {
+            "name": "db",
+            "type": "Session"
+          }
+        ]
+      },
+      {
+        "path": "/parlay-opportunities",
+        "method": "GET",
+        "function_name": "get_parlay_opportunities",
+        "file_path": "api\\v1\\simple_hedging.py",
+        "requires_auth": false,
+        "requires_admin": false,
+        "parameters": [
+          {
+            "name": "date",
+            "type": "str"
+          }
+        ]
+      },
+      {
+        "path": "/config",
+        "method": "GET",
+        "function_name": "get_hedging_config",
+        "file_path": "api\\v1\\simple_hedging.py",
+        "requires_auth": false,
+        "requires_admin": false,
+        "parameters": []
+      },
+      {
+        "path": "/calculate-manual",
+        "method": "POST",
+        "function_name": "calculate_manual_hedging",
+        "file_path": "api\\v1\\simple_hedging.py",
+        "requires_auth": false,
+        "requires_admin": false,
+        "parameters": [
+          {
+            "name": "sp_odd",
+            "type": "float"
+          },
+          {
+            "name": "european_odd",
+            "type": "float"
+          },
+          {
+            "name": "investment",
+            "type": "float"
+          }
+        ]
+      },
+      {
+        "path": "/mock-data-test",
+        "method": "GET",
+        "function_name": "get_mock_data_test",
+        "file_path": "api\\v1\\simple_hedging.py",
+        "requires_auth": false,
+        "requires_admin": false,
+        "parameters": [
+          {
+            "name": "date",
+            "type": "str"
+          }
+        ]
+      }
+    ],
+    "route_patterns": [],
+    "analysis_summary": {
+      "requires_auth": 0,
+      "requires_admin": 0,
+      "methods_distribution": {
+        "POST": 5,
+        "GET": 8,
+        "PUT": 1,
+        "DELETE": 1
+      }
+    }
+  },
+  "auth_issues": [
+    {
+      "type": "missing_auth",
+      "severity": "high",
+      "route": "/config",
+      "method": "GET",
+      "file": "api\\v1\\hedging.py",
+      "description": "敏感接口缺少认证保护",
+      "recommendation": "添加Depends(get_current_user)或Depends(get_current_admin_user)"
+    },
+    {
+      "type": "missing_auth",
+      "severity": "high",
+      "route": "/config",
+      "method": "GET",
+      "file": "api\\v1\\simple_hedging.py",
+      "description": "敏感接口缺少认证保护",
+      "recommendation": "添加Depends(get_current_user)或Depends(get_current_admin_user)"
+    }
+  ],
+  "validation_issues": [],
+  "recommendations": {
+    "high_priority": [
+      {
+        "title": "修复敏感接口的认证缺失",
+        "description": "发现 2 个敏感接口缺少认证保护",
+        "action_items": [
+          "检查缺少认证的接口，添加合适的Depends依赖",
+          "重新测试接口，确保未认证访问返回401",
+          "更新API文档，标注接口认证要求"
+        ]
+      }
+    ],
+    "medium_priority": [],
+    "low_priority": [],
+    "preventive_measures": [
+      {
+        "title": "建立API开发规范",
+        "description": "制定统一的认证和参数验证标准",
+        "action_items": [
+          "为不同接口类型定义认证要求",
+          "建立Pydantic模型使用规范",
+          "制定路径参数和查询参数验证规则"
+        ]
+      },
+      {
+        "title": "实施代码审查流程",
+        "description": "在合并前检查认证和验证实现",
+        "action_items": [
+          "添加认证检查到代码审查清单",
+          "建立验证规则检查机制",
+          "实施自动化测试要求"
+        ]
+      },
+      {
+        "title": "集成自动化扫描",
+        "description": "在CI/CD流程中加入定期扫描",
+        "action_items": [
+          "设置每日自动扫描任务",
+          "配置扫描结果告警",
+          "建立问题跟踪和修复流程"
+        ]
+      },
+      {
+        "title": "提升测试覆盖率",
+        "description": "当前问题占比: 13.3%",
+        "action_items": [
+          "为所有接口添加认证测试",
+          "实现参数验证测试用例",
+          "建立端到端测试覆盖关键流程"
+        ]
+      }
+    ]
+  }
+}

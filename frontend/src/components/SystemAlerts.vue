@@ -195,10 +195,10 @@
         
         <el-form-item label="通知方式" prop="notifications">
           <el-checkbox-group v-model="alertForm.notifications">
-            <el-checkbox label="email">邮件通知</el-checkbox>
-            <el-checkbox label="sms">短信通知</el-checkbox>
-            <el-checkbox label="webhook">Webhook</el-checkbox>
-            <el-checkbox label="dingtalk">钉钉群</el-checkbox>
+            <el-checkbox value="email">邮件通知</el-checkbox>
+            <el-checkbox value="sms">短信通知</el-checkbox>
+            <el-checkbox value="webhook">Webhook</el-checkbox>
+            <el-checkbox value="dingtalk">钉钉群</el-checkbox>
           </el-checkbox-group>
         </el-form-item>
         

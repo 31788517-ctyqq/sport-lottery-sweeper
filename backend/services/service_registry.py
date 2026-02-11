@@ -2,8 +2,8 @@
 服务注册表 - 解决循环依赖问题
 """
 
-from .crawler_config_service import CrawlerConfigService
-from .crawler_integration import CrawlerIntegrationService
+from .crawler_config_service import CrawlerService as CrawlerConfigService
+from .crawler_integration import CrawlerIntegration as CrawlerIntegrationService
 from .enhanced_crawler_service import EnhancedCrawlerService
 from .crawler_alert_service import CrawlerAlertService
 
@@ -36,4 +36,12 @@ def get_alert_service(db):
     key = f"alert_{id(db)}"
     if key not in _service_cache:
         _service_cache[key] = CrawlerAlertService(db)
+    return _service_cache[key]
+
+def get_crawler_service(db):
+    """获取爬虫服务"""
+    key = f"crawler_{id(db)}"
+    if key not in _service_cache:
+        from .crawler_service import CrawlerService
+        _service_cache[key] = CrawlerService(db)
     return _service_cache[key]

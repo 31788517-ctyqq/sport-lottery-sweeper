@@ -5,15 +5,16 @@
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, Query, Path, UploadFile, File, Form
+from sqlalchemy.orm import Session
 import pandas as pd
 import io
 
 from backend.core.auth import get_current_admin_user
-from backend.database_utils import get_db
+from backend.database import get_db
 from backend.models.user import User
 from backend.models.match import League, Match
-from ..schemas.response import UnifiedResponse, PageResponse, ErrorResponse
-from ..services.crawler_service import crawler_service
+from backend.schemas.response import UnifiedResponse, PageResponse, ErrorResponse
+from backend.services.service_registry import get_crawler_service
 
 router = APIRouter(prefix="/admin/matches", tags=["admin-matches"])
 
@@ -137,6 +138,9 @@ async def get_jingcai_matches(
     获取竞彩足球近N天比赛
     """
     try:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info("进入 get_beidan_matches 函数")
         # 计算日期范围
         end_date = datetime.now().date()
         start_date = end_date - timedelta(days=days)
@@ -189,6 +193,9 @@ async def get_beidan_matches(
     获取北单足球近N天比赛
     """
     try:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info("进入 get_beidan_matches 函数")
         # 计算日期范围
         end_date = datetime.now().date()
         start_date = end_date - timedelta(days=days)
@@ -204,6 +211,7 @@ async def get_beidan_matches(
         # 如果没有北单数据，可以从爬虫服务获取
         if not matches:
             try:
+                crawler_service = get_crawler_service(db)
                 beidan_matches = await crawler_service.crawl_beidan_matches(days)
                 match_list = []
                 for match in beidan_matches:

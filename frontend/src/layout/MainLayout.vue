@@ -92,7 +92,7 @@
       <el-header class="header">
         <div class="header-left">
           <el-button 
-            type="text" 
+            type="link" 
             @click="toggleSidebar" 
             class="collapse-btn"
           >

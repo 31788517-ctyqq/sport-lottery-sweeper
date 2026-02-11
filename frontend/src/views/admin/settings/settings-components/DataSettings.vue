@@ -62,10 +62,10 @@
         
         <el-form-item label="数据清洗规则">
           <el-checkbox-group v-model="form.cleaningRules">
-            <el-checkbox label="remove_duplicates">去重</el-checkbox>
-            <el-checkbox label="validate_format">格式验证</el-checkbox>
-            <el-checkbox label="fill_missing">缺失值填充</el-checkbox>
-            <el-checkbox label="outlier_detection">异常值检测</el-checkbox>
+            <el-checkbox value="remove_duplicates">去重</el-checkbox>
+            <el-checkbox value="validate_format">格式验证</el-checkbox>
+            <el-checkbox value="fill_missing">缺失值填充</el-checkbox>
+            <el-checkbox value="outlier_detection">异常值检测</el-checkbox>
           </el-checkbox-group>
         </el-form-item>
         

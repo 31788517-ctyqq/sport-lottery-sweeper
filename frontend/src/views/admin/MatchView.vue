@@ -89,19 +89,19 @@
                     :percentage="props.row.prediction.homeWin * 100" 
                     :stroke-width="20" 
                     :color="progressColors"
-                    :format="() => `主胜 ${(props.row.prediction.homeWin * 100).toFixed(1)}%`"
+                    :format='() => `主胜 ${(props.row.prediction.homeWin * 100).toFixed(1)}%`'
                   />
                   <el-progress 
                     :percentage="props.row.prediction.draw * 100" 
                     :stroke-width="20" 
                     :color="progressColors"
-                    :format="() => `平局 ${(props.row.prediction.draw * 100).toFixed(1)}%`"
+                    :format='() => `平局 ${(props.row.prediction.draw * 100).toFixed(1)}%`'
                   />
                   <el-progress 
                     :percentage="props.row.prediction.awayWin * 100" 
                     :stroke-width="20" 
                     :color="progressColors"
-                    :format="() => `客胜 ${(props.row.prediction.awayWin * 100).toFixed(1)}%`"
+                    :format='() => `客胜 ${(props.row.prediction.awayWin * 100).toFixed(1)}%`'
                   />
                   <div class="confidence-level">
                     预测置信度: <el-tag type="success">{{ (props.row.prediction.confidence * 100).toFixed(1) }}%</el-tag>

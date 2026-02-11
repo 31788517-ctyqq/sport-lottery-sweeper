@@ -5,7 +5,7 @@ import logging
 import asyncio
 from datetime import datetime, timedelta
 from typing import List, Dict, Any, Optional
-from celery import Task
+from celery import Task, shared_task
 from backend.tasks import DatabaseTask, celery_app
 from backend.services.crawler_service import CrawlerService
 from backend.services.match_service import MatchService

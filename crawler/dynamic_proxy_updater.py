@@ -8,7 +8,7 @@ import time
 from datetime import datetime
 from typing import Callable
 
-from .ip_proxy import IPProxyManager
+from .ip_proxy import IPProxyPool
 
 
 class DynamicProxyUpdater:
@@ -23,7 +23,8 @@ class DynamicProxyUpdater:
         :param refresh_interval_minutes: 刷新间隔（分钟）
         """
         self.refresh_interval = refresh_interval_minutes * 60  # 转换为秒
-        self.ip_proxy_manager = IPProxyManager()
+        # 兼容旧命名，实际使用 IPProxyPool
+        self.ip_proxy_manager = IPProxyPool()
         self.stop_event = threading.Event()
         self.thread = None
         self.callback = None

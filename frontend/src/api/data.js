@@ -25,3 +25,12 @@ export function deleteData(id) {
     method: 'delete'
   })
 }
+
+// 导出数据
+export function exportData(params) {
+  return request({
+    url: '/api/admin/data/export',
+    method: 'post',
+    data: params
+  })
+}

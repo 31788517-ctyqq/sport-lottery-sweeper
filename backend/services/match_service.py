@@ -10,13 +10,13 @@ from typing import List, Optional, Dict, Any
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_, func
 
-from database import get_db
-from models.match import Match, Team, League, MatchStatusEnum, MatchTypeEnum, MatchImportanceEnum
-from models.intelligence import Intelligence, IntelligenceTypeEnum, IntelligenceSourceEnum
-from models.odds import Odds, OddsTypeEnum, OddsMovementTypeEnum
-from models.predictions import Prediction, PredictionTypeEnum
-from core.exceptions import ValidationException, NotFoundException, BusinessException
-from core.security import get_password_hash
+from backend.database import get_db
+from backend.models.match import Match, Team, League, MatchStatusEnum, MatchTypeEnum, MatchImportanceEnum
+from backend.models.intelligence import Intelligence, IntelligenceTypeEnum, IntelligenceSourceEnum
+from backend.models.odds import Odds, OddsTypeEnum, OddsMovementTypeEnum
+from backend.models.predictions import Prediction, PredictionTypeEnum
+from backend.core.exceptions import ValidationException, NotFoundException, BusinessException
+from backend.core.security import get_password_hash
 
 logger = logging.getLogger(__name__)
 

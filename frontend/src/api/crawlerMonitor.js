@@ -1,172 +1,186 @@
 import request from '@/utils/request'
 
-// 获取系统健康状态
-export function getSystemHealth() {
+// 获取爬虫健康状态
+export function getHealthStatus() {
   return request({
-    url: '/api/admin/crawler/monitor/health',
+    // 修正：使用实际API路径
+    url: '/api/v1/admin/crawler/monitor/health',
     method: 'get'
   })
 }
 
-// 获取告警列表
+// AI_WORKING: coder1 @2026-02-04T18:40:30 - 修改getAlerts函数以支持params参数
+// 获取警报列表
 export function getAlerts(params) {
   return request({
-    url: '/api/admin/crawler/monitor/alerts',
+    // 修正：使用实际API路径
+    url: '/api/v1/admin/crawler/monitor/alerts',
     method: 'get',
     params
   })
 }
+// AI_DONE: coder1 @2026-02-04T18:40:30
 
-// 获取告警历史
-export function getAlertHistory(params) {
+// 获取警报历史
+export function getAlertHistory() {
   return request({
-    url: '/api/admin/crawler/monitor/alerts/history',
-    method: 'get',
-    params
+    // 修正：使用实际API路径
+    url: '/api/v1/admin/crawler/monitor/alerts/history',
+    method: 'get'
   })
 }
 
-// 确认告警
+// 确认警报
 export function acknowledgeAlert(alertId) {
   return request({
-    url: `/api/admin/crawler/monitor/alerts/${alertId}/acknowledge`,
-    method: 'put'
+    // 修正：使用实际API路径
+    url: `/api/v1/admin/crawler/monitor/alerts/${alertId}/acknowledge`,
+    method: 'post'
   })
 }
 
-// 获取系统资源使用情况
-export function getSystemResources() {
+// 获取资源使用情况
+export function getResourcesUsage() {
   return request({
-    url: '/api/admin/crawler/monitor/resources',
+    // 修正：使用实际API路径
+    url: '/api/v1/admin/crawler/monitor/resources',
     method: 'get'
   })
 }
 
-// 获取监控指标数据
-export function getMetrics(params) {
+// 获取指标数据
+export function getMetrics() {
   return request({
-    url: '/api/admin/crawler/monitor/metrics',
-    method: 'get',
-    params
+    // 修正：使用实际API路径
+    url: '/api/v1/admin/crawler/monitor/metrics',
+    method: 'get'
   })
 }
 
-// 获取采集成功率趋势
-export function getSuccessRateTrend(params) {
+// 获取成功率趋势
+export function getSuccessRateTrends() {
   return request({
-    url: '/api/admin/crawler/monitor/trends/success-rate',
-    method: 'get',
-    params
+    // 修正：使用实际API路径
+    url: '/api/v1/admin/crawler/monitor/trends/success-rate',
+    method: 'get'
   })
 }
 
-// 获取数据采集量统计
-export function getDataVolumeStats(params) {
+// 获取数据量统计
+export function getDataVolumeStats() {
   return request({
-    url: '/api/admin/crawler/monitor/stats/data-volume',
-    method: 'get',
-    params
+    // 修正：使用实际API路径
+    url: '/api/v1/admin/crawler/monitor/stats/data-volume',
+    method: 'get'
   })
 }
 
-// 获取告警规则列表
+// 获取警报规则
 export function getAlertRules() {
   return request({
-    url: '/api/admin/crawler/monitor/alert-rules',
+    // 修正：使用实际API路径
+    url: '/api/v1/admin/crawler/monitor/alert-rules',
     method: 'get'
   })
 }
 
-// 创建告警规则
+// 创建警报规则
 export function createAlertRule(data) {
   return request({
-    url: '/api/admin/crawler/monitor/alert-rules',
+    // 修正：使用实际API路径
+    url: '/api/v1/admin/crawler/monitor/alert-rules',
     method: 'post',
     data
   })
 }
 
-// 更新告警规则
+// 更新警报规则
 export function updateAlertRule(ruleId, data) {
   return request({
-    url: `/api/admin/crawler/monitor/alert-rules/${ruleId}`,
+    // 修正：使用实际API路径
+    url: `/api/v1/admin/crawler/monitor/alert-rules/${ruleId}`,
     method: 'put',
     data
   })
 }
 
-// 删除告警规则
+// 删除警报规则
 export function deleteAlertRule(ruleId) {
   return request({
-    url: `/api/admin/crawler/monitor/alert-rules/${ruleId}`,
+    // 修正：使用实际API路径
+    url: `/api/v1/admin/crawler/monitor/alert-rules/${ruleId}`,
     method: 'delete'
   })
 }
 
-// 测试告警规则
-export function testAlertRule(data) {
+// 测试警报规则
+export function testAlertRule() {
   return request({
-    url: '/api/admin/crawler/monitor/alert-rules/test',
-    method: 'post',
-    data
-  })
-}
-
-// 获取实时监控数据 (WebSocket endpoint info)
-export function getRealtimeEndpoint() {
-  return request({
-    url: '/api/admin/crawler/monitor/realtime/endpoint',
-    method: 'get'
-  })
-}
-
-// 导出监控报告
-export function exportMonitorReport(params) {
-  return request({
-    url: '/api/admin/crawler/monitor/export',
-    method: 'get',
-    params,
-    responseType: 'blob'
-  })
-}
-
-// 获取爬虫实例状态
-export function getCrawlerInstances() {
-  return request({
-    url: '/api/admin/crawler/monitor/instances',
-    method: 'get'
-  })
-}
-
-// 重启爬虫实例
-export function restartCrawlerInstance(instanceId) {
-  return request({
-    url: `/api/admin/crawler/monitor/instances/${instanceId}/restart`,
+    // 修正：使用实际API路径
+    url: '/api/v1/admin/crawler/monitor/alert-rules/test',
     method: 'post'
   })
 }
 
-// 获取数据库性能指标
-export function getDatabaseMetrics() {
+// 获取实时连接
+export function getRealtimeEndpoint() {
   return request({
-    url: '/api/admin/crawler/monitor/database/metrics',
+    // 修正：使用实际API路径
+    url: '/api/v1/admin/crawler/monitor/realtime/endpoint',
     method: 'get'
   })
 }
 
-// 获取网络连接状态
+// 导出监控数据
+export function exportMonitorData() {
+  return request({
+    // 修正：使用实际API路径
+    url: '/api/v1/admin/crawler/monitor/export',
+    method: 'get'
+  })
+}
+
+// 获取实例列表
+export function getInstances() {
+  return request({
+    // 修正：使用实际API路径
+    url: '/api/v1/admin/crawler/monitor/instances',
+    method: 'get'
+  })
+}
+
+// 重启实例
+export function restartInstance(instanceId) {
+  return request({
+    // 修正：使用实际API路径
+    url: `/api/v1/admin/crawler/monitor/instances/${instanceId}/restart`,
+    method: 'post'
+  })
+}
+
+// 获取数据库指标
+export function getDatabaseMetrics() {
+  return request({
+    // 修正：使用实际API路径
+    url: '/api/v1/admin/crawler/monitor/database/metrics',
+    method: 'get'
+  })
+}
+
+// 获取网络状态
 export function getNetworkStatus() {
   return request({
-    url: '/api/admin/crawler/monitor/network/status',
+    // 修正：使用实际API路径
+    url: '/api/v1/admin/crawler/monitor/network/status',
     method: 'get'
   })
 }
 
 // 清理监控数据
-export function cleanupMonitorData(params) {
+export function cleanupMonitorData() {
   return request({
-    url: '/api/admin/crawler/monitor/cleanup',
-    method: 'delete',
-    params
+    // 修正：使用实际API路径
+    url: '/api/v1/admin/crawler/monitor/cleanup',
+    method: 'post'
   })
 }

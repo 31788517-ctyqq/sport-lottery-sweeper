@@ -114,9 +114,15 @@
               </el-form>
             </div>
 
-            <el-table :data="matchData" style="width: 100%" v-loading="matchesLoading">
+            <el-table 
+              :data="matchData" 
+              style="width: 100%" 
+              v-loading="matchesLoading" 
+              stripe
+              @selection-change="handleSelectionChange"
+            >
               <el-table-column prop="id" label="ID" width="80" />
-              <el-table-column prop="matchId" label="比赛ID" width="120" />
+              <el-table-column prop="matchId" label="比赛ID" width="150" />
               <el-table-column label="对阵" min-width="200">
                 <template #default="scope">
                   <div class="match-teams">
@@ -128,14 +134,19 @@
               </el-table-column>
               <el-table-column prop="league" label="联赛" width="120" />
               <el-table-column prop="matchTime" label="比赛时间" width="160" />
-              <el-table-column prop="status" label="状态" width="100">
+              <el-table-column prop="score" label="比分" width="120">
+                <template #default="scope">
+                  {{ scope.row.score || '-' }}
+                </template>
+              </el-table-column>
+              <el-table-column prop="status" label="状态" width="120">
                 <template #default="scope">
                   <el-tag :type="getStatusTagType(scope.row.status)">
                     {{ getStatusText(scope.row.status) }}
                   </el-tag>
                 </template>
               </el-table-column>
-              <el-table-column label="操作" width="200">
+              <el-table-column label="操作" width="240" fixed="right">
                 <template #default="scope">
                   <el-button size="small" @click="viewMatchDetails(scope.row)">详情</el-button>
                   <el-button size="small" type="primary" @click="editMatch(scope.row)">编辑</el-button>
@@ -149,8 +160,9 @@
                 v-model:current-page="matchPagination.currentPage"
                 v-model:page-size="matchPagination.pageSize"
                 :total="matchPagination.total"
-                layout="total, prev, pager, next, jumper"
+                layout="total, sizes, prev, pager, next, jumper"
                 @current-change="handleMatchPageChange"
+                @size-change="handleSizeChange"
               />
             </div>
           </el-card>
@@ -238,7 +250,6 @@
           <el-card class="related-card">
             <template #header>
               <div class="card-header">
-                <span>关联数据管理</span>
                 <div class="header-actions">
                   <el-button size="small" @click="refreshRelatedData">刷新</el-button>
                   <el-button size="small" type="primary" @click="syncWithExternal">同步外部</el-button>
@@ -369,6 +380,7 @@
             <el-option label="进行中" value="ongoing" />
             <el-option label="已结束" value="finished" />
             <el-option label="取消" value="cancelled" />
+            <el-option label="延期" value="postponed" />
           </el-select>
         </el-form-item>
         <el-form-item label="备注">
@@ -457,6 +469,7 @@ const matchForm = reactive({
   league: '',
   matchTime: '',
   status: 'pending',
+  score: '',
   remarks: ''
 })
 const matchFormRef = ref(null)
@@ -466,6 +479,20 @@ const matchFormRules = {
   league: [{ required: true, message: '请选择联赛', trigger: 'change' }],
   matchTime: [{ required: true, message: '请选择比赛时间', trigger: 'change' }],
   status: [{ required: true, message: '请选择比赛状态', trigger: 'change' }]
+}
+
+// 选中的比赛
+const selectedMatches = ref([])
+
+// 处理选择变化
+const handleSelectionChange = (selection) => {
+  selectedMatches.value = selection
+}
+
+// 处理分页大小变化
+const handleSizeChange = (size) => {
+  matchPagination.pageSize = size
+  // 这里可以重新加载数据
 }
 
 // 方法
@@ -479,6 +506,7 @@ const handleAddMatch = () => {
     league: '',
     matchTime: '',
     status: 'pending',
+    score: '',
     remarks: ''
   })
   showMatchDialog.value = true
@@ -522,6 +550,7 @@ const getStatusTagType = (status) => {
     case 'ongoing': return 'warning'
     case 'finished': return 'success'
     case 'cancelled': return 'danger'
+    case 'postponed': return 'info'
     default: return 'info'
   }
 }
@@ -532,6 +561,7 @@ const getStatusText = (status) => {
     case 'ongoing': return '进行中'
     case 'finished': return '已结束'
     case 'cancelled': return '取消'
+    case 'postponed': return '延期'
     default: return status
   }
 }
@@ -544,6 +574,10 @@ const editMatch = (match) => {
   isEditing.value = true
   Object.assign(matchForm, match)
   showMatchDialog.value = true
+}
+
+const relateData = (match) => {
+  ElMessage.info(`为比赛 "${match.homeTeam} VS ${match.awayTeam}" 关联数据`)
 }
 
 const deleteMatch = (match) => {
@@ -657,7 +691,8 @@ onMounted(() => {
       awayTeam: '利物浦', 
       league: '英超', 
       matchTime: '2024-01-15 20:00:00', 
-      status: 'pending' 
+      status: 'pending',
+      score: '-' 
     },
     { 
       id: 2, 
@@ -666,7 +701,8 @@ onMounted(() => {
       awayTeam: '皇马', 
       league: '西甲', 
       matchTime: '2024-01-16 03:00:00', 
-      status: 'pending' 
+      status: 'pending',
+      score: '-' 
     },
     { 
       id: 3, 
@@ -675,7 +711,28 @@ onMounted(() => {
       awayTeam: '多特蒙德', 
       league: '德甲', 
       matchTime: '2024-01-14 22:30:00', 
-      status: 'finished' 
+      status: 'finished',
+      score: '3:1' 
+    },
+    { 
+      id: 4, 
+      matchId: 'M20240114002', 
+      homeTeam: '尤文图斯', 
+      awayTeam: 'AC米兰', 
+      league: '意甲', 
+      matchTime: '2024-01-14 21:45:00', 
+      status: 'ongoing',
+      score: '1:0' 
+    },
+    { 
+      id: 5, 
+      matchId: 'M20240117001', 
+      homeTeam: '曼城', 
+      awayTeam: '切尔西', 
+      league: '英超', 
+      matchTime: '2024-01-17 19:30:00', 
+      status: 'postponed',
+      score: '-' 
     }
   ]
   
@@ -813,7 +870,7 @@ onMounted(() => {
 }
 
 .filters {
-  margin-bottom: 20px;
+  margin-bottom: 0;
 }
 
 .match-teams {
@@ -841,8 +898,7 @@ onMounted(() => {
 
 .pagination-wrapper {
   margin-top: 20px;
-  display: flex;
-  justify-content: center;
+  text-align: right;
 }
 
 .validation-summary {
@@ -888,5 +944,24 @@ onMounted(() => {
 .related-data-table h4 {
   margin-bottom: 15px;
   color: #303133;
+}
+
+.matches-card :deep(.el-card__body) {
+  padding-left: 0;
+  padding-right: 0;
+  padding-top: 20px;
+}
+
+.matches-card :deep(.el-table) {
+  width: 100%;
+  table-layout: fixed;
+}
+
+.matches-card :deep(.el-form) {
+  padding: 0 20px 20px;
+}
+
+.filters {
+  margin: 0 20px 20px 20px;
 }
 </style>

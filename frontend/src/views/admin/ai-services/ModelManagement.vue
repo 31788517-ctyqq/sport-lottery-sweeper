@@ -56,10 +56,10 @@
         </el-table-column>
         <el-table-column prop="accuracy" label="准确率" width="150">
           <template #default="scope">
-            <el-progress 
+            <el-progress
               :percentage="scope.row.accuracy" 
               :color="getAccuracyColor(scope.row.accuracy)"
-              :format="() => `${scope.row.accuracy}%`"
+              :format='() => `${scope.row.accuracy}%`'
             />
           </template>
         </el-table-column>
@@ -114,10 +114,10 @@
               </el-tag>
             </el-descriptions-item>
             <el-descriptions-item label="准确率">
-              <el-progress 
+              <el-progress
                 :percentage="selectedModel.accuracy" 
                 :color="getAccuracyColor(selectedModel.accuracy)"
-                :format="() => `${selectedModel.accuracy}%`"
+                :format='() => `${selectedModel.accuracy}%`'
               />
             </el-descriptions-item>
             <el-descriptions-item label="训练数据量">{{ selectedModel.trainingDataSize }}</el-descriptions-item>

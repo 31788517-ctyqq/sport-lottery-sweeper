@@ -7,10 +7,8 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime, date
 import json
 
-from ....api.deps import get_db
-from ....models.match import Match, MatchStatusEnum
-from ....models.team import Team
-from ....models.league import League
+from ....database_async import get_async_db
+from ....models.match import Match, MatchStatusEnum, Team, League
 from ....schemas.match import MatchCreate, MatchUpdate, MatchResponse
 from ....services.match_service import MatchService
 from ...deps import get_current_admin
@@ -23,14 +21,6 @@ class UnifiedResponse(BaseModel):
     data: Optional[Dict[str, Any]] = None
     message: Optional[str] = None
     error: Optional[Dict[str, Any]] = None
-
-    @classmethod
-    def success(cls, data: Any, message: str = "操作成功"):
-        return cls(success=True, data=data, message=message)
-
-    @classmethod
-    def error(cls, message: str, error_code: Optional[str] = None):
-        return cls(success=False, message=message, error={"code": error_code, "message": message})
 
 
 class MatchCreateRequest(BaseModel):
@@ -62,7 +52,7 @@ async def get_lottery_schedules(
     status: Optional[str] = Query(None, description="状态筛选"),
     date_from: Optional[str] = Query(None, description="开始日期(YYYY-MM-DD)"),
     date_to: Optional[str] = Query(None, description="结束日期(YYYY-MM-DD)"),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """
     获取竞彩赛程列表
@@ -92,12 +82,16 @@ async def get_lottery_schedules(
             to_date = datetime.strptime(date_to, "%Y-%m-%d").date()
             conditions.append(Match.match_date <= to_date)
         
-        # 查询匹配的比赛数据
+        # ??????????????
+        from sqlalchemy.orm import aliased
+        HomeTeam = aliased(Team)
+        AwayTeam = aliased(Team)
+
         query = (
-            select(Match, League, Team, Team)
+            select(Match, League, HomeTeam, AwayTeam)
             .join(League, Match.league_id == League.id)
-            .join(Team, Match.home_team_id == Team.id, isouter=True)
-            .join(Team, Match.away_team_id == Team.id, isouter=True)
+            .join(HomeTeam, Match.home_team_id == HomeTeam.id, isouter=True)
+            .join(AwayTeam, Match.away_team_id == AwayTeam.id, isouter=True)
             .where(and_(*conditions))
             .order_by(desc(Match.scheduled_kickoff))
             .offset((page - 1) * size)
@@ -144,20 +138,24 @@ async def get_lottery_schedules(
         total_result = await db.execute(count_query)
         total = total_result.scalar()
         
-        return UnifiedResponse.success({
+        return UnifiedResponse(
+            success=True,
+            data={
             "items": formatted_matches,
             "total": total,
             "page": page,
             "size": size,
             "pages": (total + size - 1) // size
-        }, "获取竞彩赛程列表成功")
+        },
+            message="获取竞彩赛程列表成功"
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/stats", response_model=UnifiedResponse)
 async def get_schedule_stats(
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """
     获取赛程统计数据
@@ -192,7 +190,11 @@ async def get_schedule_stats(
             "finishedMatches": row.finished_matches or 0
         }
         
-        return UnifiedResponse.success(stats, "获取统计数据成功")
+        return UnifiedResponse(
+            success=True,
+            data=stats,
+            message="获取统计数据成功"
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -200,7 +202,7 @@ async def get_schedule_stats(
 @router.post("/", response_model=UnifiedResponse)
 async def create_lottery_schedule(
     request: MatchCreateRequest,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """
     创建竞彩赛程
@@ -300,7 +302,9 @@ async def create_lottery_schedule(
         await db.commit()
         await db.refresh(match)
         
-        return UnifiedResponse.success({
+        return UnifiedResponse(
+            success=True,
+            data={
             "id": match.id,
             "league_name": league.name,
             "home_team": home_team.name,
@@ -308,7 +312,9 @@ async def create_lottery_schedule(
             "match_time": match.scheduled_kickoff.strftime('%Y-%m-%d %H:%M:%S'),
             "status": request.status,
             "score": request.score
-        }, "创建竞彩赛程成功")
+        },
+            message="创建竞彩赛程成功"
+        )
     except Exception as e:
         await db.rollback()
         raise HTTPException(status_code=500, detail=f"创建竞彩赛程失败: {str(e)}")
@@ -318,7 +324,7 @@ async def create_lottery_schedule(
 async def update_lottery_schedule(
     match_id: int,
     request: MatchUpdateRequest,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """
     更新竞彩赛程
@@ -449,7 +455,9 @@ async def update_lottery_schedule(
             MatchStatusEnum.HALFTIME.value: "running"
         }
         
-        return UnifiedResponse.success({
+        return UnifiedResponse(
+            success=True,
+            data={
             "id": match.id,
             "league_name": league.name if league else "未知",
             "home_team": home_team.name if home_team else "未知",
@@ -457,7 +465,9 @@ async def update_lottery_schedule(
             "match_time": match.scheduled_kickoff.strftime('%Y-%m-%d %H:%M:%S'),
             "status": reverse_status_mapping.get(match.status, "pending"),
             "score": f"{match.home_score}-{match.away_score}" if match.home_score is not None and match.away_score is not None else None
-        }, "更新竞彩赛程成功")
+        },
+            message="更新竞彩赛程成功"
+        )
     except Exception as e:
         await db.rollback()
         raise HTTPException(status_code=500, detail=f"更新竞彩赛程失败: {str(e)}")
@@ -466,7 +476,7 @@ async def update_lottery_schedule(
 @router.delete("/{match_id}", response_model=UnifiedResponse)
 async def delete_lottery_schedule(
     match_id: int,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """
     删除竞彩赛程
@@ -491,7 +501,11 @@ async def delete_lottery_schedule(
         await db.execute(stmt)
         await db.commit()
         
-        return UnifiedResponse.success({"id": match_id}, "删除竞彩赛程成功")
+        return UnifiedResponse(
+            success=True,
+            data={"id": match_id},
+            message="删除竞彩赛程成功"
+        )
     except HTTPException as he:
         raise he
     except Exception as e:

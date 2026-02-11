@@ -12,10 +12,10 @@ def main():
     port = 8000
     host = "0.0.0.0"
     
-    print(f"🚀 启动后端服务...")
-    print(f"📍 地址: http://{host}:{port}")
-    print(f"📖 API文档: http://{host}:{port}/docs")
-    print(f"❤️  健康检查: http://{host}:{port}/health/live")
+    print("启动后端服务...")
+    print(f"地址: http://{host}:{port}")
+    print(f"API文档: http://{host}:{port}/docs")
+    print(f"健康检查: http://{host}:{port}/health/live")
     print("-" * 50)
     
     # 启动uvicorn服务器，固定端口8000
@@ -23,7 +23,7 @@ def main():
         "main:app",
         host=host,
         port=port,
-        reload=True,
+        reload=False,
         log_level="info",
         access_log=True
     )

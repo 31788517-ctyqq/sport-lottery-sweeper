@@ -90,10 +90,19 @@ class LogService:
             LogEntry.timestamp >= seven_days_ago
         ).count()
         
+        # 转换为前端期望的格式
+        logs_by_level = {}
+        for stat in level_stats:
+            logs_by_level[stat[0]] = stat[1]
+            
+        logs_by_module = {}
+        for stat in module_stats:
+            logs_by_module[stat[0]] = stat[1]
+        
         return {
             "total_logs": total_count,
-            "level_stats": [{"level": stat[0], "count": stat[1]} for stat in level_stats],
-            "module_stats": [{"module": stat[0], "count": stat[1]} for stat in module_stats],
+            "logs_by_level": logs_by_level,
+            "logs_by_module": logs_by_module,
             "recent_logs_7_days": recent_logs
         }
 

@@ -254,3 +254,32 @@ class CrawlerService(BaseCrawlerService):
                 {"source": "sporttery", "count": random.randint(800, 2000)}
             ]
         }
+    
+    async def crawl_beidan_matches(self, days: int = 5) -> List[Dict[str, Any]]:
+        """爬取北单比赛数据 - 模拟实现"""
+        logger.debug(f"爬取北单比赛数据，天数: {days}")
+        # 返回模拟数据
+        return self._generate_mock_beidan_matches(days)
+    
+    def _generate_mock_beidan_matches(self, days: int) -> List[Dict[str, Any]]:
+        """生成模拟北单比赛数据"""
+        matches = []
+        for i in range(10):
+            match_date = datetime.now() + timedelta(days=random.randint(1, days))
+            match = {
+                "id": i + 1,
+                "match_identifier": f"BD{datetime.now().strftime('%Y%m%d')}{i:03d}",
+                "league_name": random.choice(['北单', '北京单场', '单场']),
+                "home_team": f"北单主队{i}",
+                "away_team": f"北单客队{i}",
+                "match_date": match_date.date().isoformat(),
+                "match_time": f"{random.randint(12, 22):02d}:{random.choice(['00', '15', '30', '45'])}",
+                "venue": f"北单球场{i}",
+                "handicap": random.choice([-1, 0, 1, 2]),
+                "home_odds": round(random.uniform(1.5, 3.0), 2),
+                "draw_odds": round(random.uniform(2.5, 3.5), 2),
+                "away_odds": round(random.uniform(2.0, 4.0), 2),
+                "status": "scheduled"
+            }
+            matches.append(match)
+        return matches

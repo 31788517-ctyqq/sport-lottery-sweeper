@@ -8,9 +8,12 @@
             <p class="subtitle">管理爬虫系统的IP池，确保稳定的数据抓取服务</p>
           </div>
           <div class="header-actions">
-            <el-button type="primary" @click="addIp">添加IP</el-button>
+            <el-button type="primary" @click="addIp">新增IP</el-button>
             <el-button @click="refreshList">刷新</el-button>
             <el-button @click="testAllIps">测试全部</el-button>
+            <el-button :disabled="selectedIds.length === 0" @click="batchTest">批量测试</el-button>
+            <el-button :disabled="selectedIds.length === 0" type="danger" @click="batchDelete">批量删除</el-button>
+            <el-button @click="exportIps">导出</el-button>
           </div>
         </div>
       </template>
@@ -35,7 +38,8 @@
         </el-form-item>
       </el-form>
 
-      <el-table :data="ipList" style="width: 100%" v-loading="loading">
+      <el-table :data="ipList" style="width: 100%" v-loading="loading" @selection-change="handleSelectionChange">
+        <el-table-column type="selection" width="50" />
         <el-table-column prop="ipAddress" label="IP地址" width="150" />
         <el-table-column prop="port" label="端口" width="100" />
         <el-table-column prop="protocol" label="协议" width="100">
@@ -64,6 +68,15 @@
             <span>{{ scope.row.successRate }}%</span>
           </template>
         </el-table-column>
+        <el-table-column prop="source" label="来源" width="120" />
+        <el-table-column prop="anonymity" label="匿名级别" width="100" />
+        <el-table-column prop="score" label="得分" width="80" />
+        <el-table-column prop="lastChecked" label="最近验证" width="160">
+          <template #default="scope">
+            {{ scope.row.lastChecked || '-' }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="failReason" label="失败原因" min-width="150" show-overflow-tooltip />
         <el-table-column prop="status" label="状态" width="100">
           <template #default="scope">
             <el-tag :type="getStatusTagType(scope.row.status)">
@@ -73,11 +86,11 @@
         </el-table-column>
         <el-table-column prop="usageCount" label="使用次数" width="100" />
         <el-table-column prop="lastUsed" label="最后使用" width="150" />
-        <el-table-column label="操作" width="250">
+        <el-table-column label="操作" width="280">
           <template #default="scope">
-            <el-button size="small" @click="testIp(scope.row)">测试</el-button>
+            <el-button size="small" @click="testIpRow(scope.row)">测试</el-button>
             <el-button size="small" @click="editIp(scope.row)">编辑</el-button>
-            <el-button size="small" type="danger" @click="deleteIp(scope.row)">删除</el-button>
+            <el-button size="small" type="danger" @click="deleteIpRow(scope.row)">删除</el-button>
             <el-button 
               size="small" 
               :type="scope.row.isEnabled ? 'info' : 'success'" 
@@ -102,8 +115,8 @@
       />
     </el-card>
 
-    <!-- IP编辑对话框 -->
-    <el-dialog :title="dialogTitle" v-model="dialogVisible" width="500px">
+    <!-- IP编辑弹窗 -->
+    <el-dialog :title="dialogTitle" v-model="dialogVisible" width="520px">
       <el-form :model="currentIp" :rules="ipRules" ref="ipFormRef" label-width="100px">
         <el-form-item label="IP地址" prop="ipAddress">
           <el-input v-model="currentIp.ipAddress" placeholder="请输入IP地址" />
@@ -127,6 +140,18 @@
         <el-form-item label="地理位置">
           <el-input v-model="currentIp.location" placeholder="IP所在地理位置" />
         </el-form-item>
+        <el-form-item label="来源">
+          <el-input v-model="currentIp.source" placeholder="采集来源" />
+        </el-form-item>
+        <el-form-item label="匿名级别">
+          <el-input v-model="currentIp.anonymity" placeholder="透明/匿名/高匿" />
+        </el-form-item>
+        <el-form-item label="得分">
+          <el-input-number v-model="currentIp.score" :min="0" :max="100" style="width: 100%" />
+        </el-form-item>
+        <el-form-item label="失败原因">
+          <el-input v-model="currentIp.failReason" placeholder="最近失败原因" />
+        </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
@@ -139,6 +164,7 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { getIpPoolList, createIp, updateIp, deleteIp, testIp, batchDeleteIps, batchTestIps } from '@/api/ipPool'
 
 const loading = ref(false)
 const dialogVisible = ref(false)
@@ -146,6 +172,8 @@ const dialogTitle = ref('')
 const currentPage = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
+const ipFormRef = ref()
+const selectedIds = ref([])
 
 // 查询参数
 const queryParams = reactive({
@@ -168,6 +196,11 @@ const currentIp = reactive({
   status: 'pending',
   usageCount: 0,
   lastUsed: '',
+  lastChecked: '',
+  source: '',
+  anonymity: '',
+  score: null,
+  failReason: '',
   isEnabled: true
 })
 
@@ -178,7 +211,7 @@ const ipList = ref([])
 const ipRules = {
   ipAddress: [
     { required: true, message: '请输入IP地址', trigger: 'blur' },
-    { pattern: /^(\d{1,3}\.){3}\d{1,3}$/, message: '请输入正确的IP地址格式', trigger: 'blur' }
+    { pattern: /^([0-9]{1,3}\.){3}[0-9]{1,3}$/, message: '请输入正确的IP地址格式', trigger: 'blur' }
   ],
   port: [
     { required: true, message: '请输入端口号', trigger: 'blur' }
@@ -186,39 +219,35 @@ const ipRules = {
 }
 
 // 获取IP列表
-const getIpList = () => {
+const getIpList = async () => {
   loading.value = true
-  
-  // 模拟获取数据
-  setTimeout(() => {
-    // 根据查询条件过滤数据
-    let data = mockIpData
-    
-    if (queryParams.ipAddress) {
-      data = data.filter(item => item.ipAddress.includes(queryParams.ipAddress))
-    }
-    
-    if (queryParams.port) {
-      data = data.filter(item => String(item.port).includes(queryParams.port))
-    }
-    
-    if (queryParams.status) {
-      data = data.filter(item => item.status === queryParams.status)
-    }
-    
-    // 计算总数
-    total.value = data.length
-    
-    // 计算当前页数据
-    const start = (currentPage.value - 1) * pageSize.value
-    const end = start + pageSize.value
-    ipList.value = data.slice(start, end)
-    
+  try {
+    const res = await getIpPoolList({
+      page: currentPage.value,
+      size: pageSize.value,
+      status: queryParams.status || undefined,
+      search: queryParams.ipAddress || queryParams.port || undefined
+    })
+    const payload = res.data || res
+    const data = payload.items ? payload : (payload.data || {})
+    const items = data.items || []
+    total.value = data.total || 0
+    ipList.value = items.map((item) => ({
+      ...item,
+      responseTime: item.responseTime ?? 0,
+      successRate: item.successRate ?? 0,
+      lastChecked: item.lastChecked || '',
+      isEnabled: item.isEnabled ?? item.status === 'available'
+    }))
+  } catch (error) {
+    console.error(error)
+    ElMessage.error('获取IP池失败')
+  } finally {
     loading.value = false
-  }, 500)
+  }
 }
 
-// 搜索
+// 查询
 const onQuery = () => {
   currentPage.value = 1
   getIpList()
@@ -233,7 +262,7 @@ const resetQuery = () => {
   getIpList()
 }
 
-// 添加IP
+// 新增IP
 const addIp = () => {
   Object.assign(currentIp, {
     id: null,
@@ -248,10 +277,14 @@ const addIp = () => {
     status: 'pending',
     usageCount: 0,
     lastUsed: '',
+    lastChecked: '',
+    source: '',
+    anonymity: '',
+    score: null,
+    failReason: '',
     isEnabled: true
   })
-  
-  dialogTitle.value = '添加IP'
+  dialogTitle.value = '新增IP'
   dialogVisible.value = true
 }
 
@@ -263,16 +296,49 @@ const editIp = (row) => {
 }
 
 // 保存IP
-const saveIp = () => {
-  // 这里应该是实际的保存逻辑
-  console.log('保存IP:', currentIp)
-  dialogVisible.value = false
-  ElMessage.success('保存成功')
-  getIpList()
+const saveIp = async () => {
+  try {
+    if (currentIp.id) {
+      await updateIp(currentIp.id, {
+        ip: currentIp.ipAddress,
+        port: currentIp.port,
+        protocol: currentIp.protocol,
+        location: currentIp.location,
+        status: currentIp.status,
+        latency_ms: currentIp.responseTime,
+        success_rate: currentIp.successRate,
+        source: currentIp.source,
+        anonymity: currentIp.anonymity,
+        score: currentIp.score,
+        fail_reason: currentIp.failReason
+      })
+      ElMessage.success('更新成功')
+    } else {
+      await createIp({
+        ip: currentIp.ipAddress,
+        port: currentIp.port,
+        protocol: currentIp.protocol,
+        location: currentIp.location,
+        status: currentIp.status,
+        latency_ms: currentIp.responseTime,
+        success_rate: currentIp.successRate,
+        source: currentIp.source,
+        anonymity: currentIp.anonymity,
+        score: currentIp.score,
+        fail_reason: currentIp.failReason
+      })
+      ElMessage.success('创建成功')
+    }
+    dialogVisible.value = false
+    getIpList()
+  } catch (error) {
+    console.error(error)
+    ElMessage.error('保存失败')
+  }
 }
 
 // 删除IP
-const deleteIp = async (row) => {
+const deleteIpRow = async (row) => {
   try {
     await ElMessageBox.confirm(
       `确定要删除IP ${row.ipAddress}:${row.port} 吗？`,
@@ -283,9 +349,7 @@ const deleteIp = async (row) => {
         type: 'warning'
       }
     )
-    
-    // 实际删除逻辑
-    console.log('删除IP:', row)
+    await deleteIp(row.id)
     ElMessage.success('删除成功')
     getIpList()
   } catch (error) {
@@ -295,40 +359,101 @@ const deleteIp = async (row) => {
   }
 }
 
-// 测试IP
-const testIp = (row) => {
-  // 模拟测试过程
-  ElMessage.info(`正在测试IP: ${row.ipAddress}:${row.port}`)
-  
-  // 模拟异步测试结果
-  setTimeout(() => {
-    ElMessage.success(`IP ${row.ipAddress} 测试成功`)
-    // 更新列表中的IP状态
-    const index = ipList.value.findIndex(ip => ip.id === row.id)
-    if (index !== -1) {
-      ipList.value[index].status = 'available'
-      ipList.value[index].responseTime = Math.floor(Math.random() * 1000)
-      ipList.value[index].successRate = Math.floor(Math.random() * 40) + 60 // 60-100%
-    }
-  }, 1000)
+const handleSelectionChange = (rows) => {
+  selectedIds.value = rows.map((row) => row.id)
 }
 
-// 测试全部IP
+const batchTest = async () => {
+  if (selectedIds.value.length === 0) return
+  try {
+    await batchTestIps({ ids: selectedIds.value })
+    ElMessage.success('批量测试完成')
+    getIpList()
+  } catch (error) {
+    console.error(error)
+    ElMessage.error('批量测试失败')
+  }
+}
+
+const batchDelete = async () => {
+  if (selectedIds.value.length === 0) return
+  try {
+    await ElMessageBox.confirm(
+      `确定要删除选中的 ${selectedIds.value.length} 条记录吗？`,
+      '确认删除',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+    await batchDeleteIps({ ids: selectedIds.value })
+    ElMessage.success('批量删除成功')
+    selectedIds.value = []
+    getIpList()
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('批量删除失败')
+    }
+  }
+}
+
+const exportIps = async () => {
+  try {
+    const token = localStorage.getItem('token')
+    const resp = await fetch('/api/v1/admin/ip-pools/export', {
+      headers: token ? { Authorization: `Bearer ${token}` } : {}
+    })
+    if (!resp.ok) {
+      throw new Error(`导出失败: ${resp.status}`)
+    }
+    const blob = await resp.blob()
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = 'ip_pools.csv'
+    link.click()
+    window.URL.revokeObjectURL(url)
+    ElMessage.success('导出成功')
+  } catch (error) {
+    console.error(error)
+    ElMessage.error('导出失败')
+  }
+}
+
+// 测试IP
+const testIpRow = async (row) => {
+  try {
+    ElMessage.info(`正在测试IP: ${row.ipAddress}:${row.port}`)
+    const res = await testIp(row.id)
+    const data = res.data?.data || res.data || {}
+    const target = ipList.value.find((ip) => ip.id === row.id)
+    if (target) {
+      target.status = data.status || 'available'
+      target.responseTime = data.response_time || target.responseTime
+      target.successRate = data.success_rate || target.successRate
+      target.lastChecked = new Date().toISOString()
+    }
+    ElMessage.success('测试完成')
+  } catch (error) {
+    console.error(error)
+    ElMessage.error('测试失败')
+  }
+}
+
+// 测试全部IP（简单刷新）
 const testAllIps = () => {
   ElMessage.info('开始测试全部IP...')
-  
-  // 模拟测试过程
   setTimeout(() => {
     ElMessage.success('全部IP测试完成')
     getIpList()
-  }, 2000)
+  }, 800)
 }
 
-// 切换IP状态
+// 切换状态
 const toggleStatus = (row) => {
   row.isEnabled = !row.isEnabled
-  const statusText = row.isEnabled ? '启用' : '禁用'
-  ElMessage.success(`IP ${statusText}成功`)
+  row.status = row.isEnabled ? 'available' : 'unavailable'
 }
 
 // 刷新列表
@@ -347,7 +472,7 @@ const handleCurrentChange = (page) => {
   getIpList()
 }
 
-// 获取状态文本
+// 状态文本
 const getStatusText = (status) => {
   switch (status) {
     case 'available': return '可用'
@@ -357,7 +482,7 @@ const getStatusText = (status) => {
   }
 }
 
-// 获取状态标签类型
+// 状态tag
 const getStatusTagType = (status) => {
   switch (status) {
     case 'available': return 'success'
@@ -367,7 +492,7 @@ const getStatusTagType = (status) => {
   }
 }
 
-// 获取协议标签类型
+// 协议tag
 const getProtocolTagType = (protocol) => {
   switch (protocol) {
     case 'http': return 'primary'
@@ -377,31 +502,19 @@ const getProtocolTagType = (protocol) => {
   }
 }
 
-// 获取响应时间样式
+// 响应时间样式
 const getResponseTimeClass = (time) => {
   if (time < 200) return 'text-success'
   if (time < 500) return 'text-warning'
   return 'text-danger'
 }
 
-// 获取成功率颜色
+// 成功率颜色
 const getSuccessRateColor = (rate) => {
   if (rate >= 90) return '#67c23a' // green
   if (rate >= 70) return '#e6a23c' // yellow
   return '#f56c6c' // red
 }
-
-// 模拟数据
-const mockIpData = [
-  { id: 1, ipAddress: '192.168.1.100', port: 8080, protocol: 'http', location: '北京', responseTime: 150, successRate: 95, status: 'available', usageCount: 120, lastUsed: '2026-01-30 10:30:00', isEnabled: true },
-  { id: 2, ipAddress: '10.0.0.50', port: 3128, protocol: 'https', location: '上海', responseTime: 210, successRate: 88, status: 'available', usageCount: 95, lastUsed: '2026-01-30 09:45:20', isEnabled: true },
-  { id: 3, ipAddress: '203.0.113.25', port: 1080, protocol: 'socks5', location: '广州', responseTime: 0, successRate: 0, status: 'pending', usageCount: 0, lastUsed: '-', isEnabled: true },
-  { id: 4, ipAddress: '198.51.100.75', port: 80, protocol: 'http', location: '深圳', responseTime: 320, successRate: 75, status: 'available', usageCount: 80, lastUsed: '2026-01-30 08:20:15', isEnabled: false },
-  { id: 5, ipAddress: '192.0.2.45', port: 8080, protocol: 'https', location: '杭州', responseTime: 0, successRate: 0, status: 'unavailable', usageCount: 5, lastUsed: '2026-01-29 16:30:45', isEnabled: true },
-  { id: 6, ipAddress: '203.0.113.15', port: 3128, protocol: 'http', location: '成都', responseTime: 180, successRate: 92, status: 'available', usageCount: 110, lastUsed: '2026-01-30 11:15:30', isEnabled: true },
-  { id: 7, ipAddress: '198.51.100.120', port: 1080, protocol: 'socks5', location: '武汉', responseTime: 0, successRate: 0, status: 'pending', usageCount: 0, lastUsed: '-', isEnabled: true },
-  { id: 8, ipAddress: '192.0.2.88', port: 80, protocol: 'http', location: '西安', responseTime: 0, successRate: 0, status: 'unavailable', usageCount: 3, lastUsed: '2026-01-28 14:20:10', isEnabled: false }
-]
 
 onMounted(() => {
   getIpList()

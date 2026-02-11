@@ -2,6 +2,7 @@
 管理后台API v1初始化
 """
 from fastapi import APIRouter
+# AI_WORKING: coder1 @2026-02-03T12:00 - 移除缺失的menu_admin模块导入
 from . import (
     user_admin,
     data_admin,
@@ -9,8 +10,7 @@ from . import (
     match_admin,
     review_admin,
     crawler_config_admin,
-    intelligence_admin,
-    menu_admin
+    intelligence_admin
 )
 
 # 创建管理后台API v1路由器
@@ -24,6 +24,6 @@ router.include_router(match_admin.router)
 router.include_router(review_admin.router)
 router.include_router(crawler_config_admin.router)
 router.include_router(intelligence_admin.router)
-router.include_router(menu_admin.router)
+
 
 __all__ = ["router"]

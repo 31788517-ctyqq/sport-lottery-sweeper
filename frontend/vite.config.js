@@ -1,79 +1,54 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import { fileURLToPath, URL } from 'node:url'
-import path from 'node:path'
 import { VitePWA } from 'vite-plugin-pwa'
+import { resolve } from 'path'
 
+// https://vitejs.dev/config/
 export default defineConfig({
-  appType: 'spa',
-  base: '/',
   plugins: [
     vue(),
     VitePWA({
       registerType: 'autoUpdate',
-      devOptions: {
-        enabled: false  // 在开发阶段完全禁用PWA，避免各种PWA相关错误
-      },
-      workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],  // 移除了对pwa相关图片的引用
+      includeAssets: ['favicon.ico', 'apple-touch-icon.png'],
+      manifest: {
+        name: '体育彩票扫盘系统',
+        short_name: '体育扫盘系统',
+        description: '用于体育彩票数据分析和智能扫盘的管理系统',
+        start_url: '/',
+        display: 'standalone',
+        background_color: '#ffffff',
+        theme_color: '#409eff',
+        icons: [
+          {
+            src: '/favicon.ico',
+            sizes: '64x64 32x32 24x24 16x16',
+            type: 'image/x-icon'
+          }
+        ]
       }
     })
   ],
-  css: {
-    preprocessorOptions: {
-      scss: {
-        // additionalData removed to avoid duplicate imports
+  server: {
+    port: 3000,           // 设置默认端口为3000
+    host: '0.0.0.0',      // 允许外部访问
+    proxy: {              // 配置代理
+      '/api': {
+        target: 'http://127.0.0.1:8000',  // 修改后端API地址为正确的端口8000
+        changeOrigin: true,
+        // 保留/api前缀，因为后端路由是以/api开头的
       }
     }
   },
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, 'src'),
-      '@/components': path.resolve(__dirname, 'src/components'),
-      '@/views': path.resolve(__dirname, 'src/views'),
-      '@/api': path.resolve(__dirname, 'src/api'),
-      '@/utils': path.resolve(__dirname, 'src/utils'),
-      '@/styles': path.resolve(__dirname, 'src/styles'),
-      '@/layout': path.resolve(__dirname, 'src/layout'),
-      '@/router': path.resolve(__dirname, 'src/router'),
-      '@/stores': path.resolve(__dirname, 'src/stores'),
-      '@/config': path.resolve(__dirname, 'src/config'),
-    },
-  },
-  server: {
-    port: 3000,
-    host: '0.0.0.0',
-    strictPort: false,
-    strict: false,
-    open: true,
-    hmr: {
-      overlay: true,
-    },
-    proxy: {
-      '/api': {
-        target: 'http://localhost:8000',  // 后端FastAPI服务地址
-        changeOrigin: true,
-        secure: false,
-      },
-      '/ws': {  // WebSocket连接代理
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-        ws: true,
-      },
-      // AI_WORKING: coder1 @2026-01-29T12:00 - 禁用/admin代理规则避免前端路由被代理
-      // 添加对admin路径的WebSocket代理支持（已禁用，避免前端路由被代理）
-      // '/admin': {
-      //   target: 'http://localhost:8000',
-      //   changeOrigin: true,
-      //   ws: true  // 支持WebSocket连接
-      // }
-      // AI_DONE: coder1 @2026-01-29T12:00
-    },
-    fs: {
-      allow: [path.resolve(__dirname)]
+      '@': resolve(__dirname, 'src'),      // 配置@符号指向src目录
     }
   },
-  define: {
-    __APP_VERSION__: JSON.stringify('1.0.0'),
+  css: {
+    preprocessorOptions: {
+      scss: {
+        additionalData: `@use "@/styles/variables.css" as *;`  // 全局CSS变量
+      }
+    }
   }
 })

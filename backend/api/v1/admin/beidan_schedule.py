@@ -1,55 +1,53 @@
 """
-北单赛程管理API端点
+彩票赛程管理API端点
+提供彩票赛程管理功能，遵循统一API设计原则
 """
+from typing import List, Dict, Any, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List, Optional, Dict, Any
+from sqlalchemy.orm import Session, aliased
+from sqlalchemy import select, func, desc, asc
 from datetime import datetime, timedelta
-import json
+import logging
 
-from ....api.deps import get_db
-from ....models.match import Match, MatchStatusEnum
-from ....models.team import Team
-from ....models.league import League
-from ....schemas.match import MatchCreate, MatchUpdate, MatchResponse
+from ....database import get_db
+from ....models.user import User
+from ....models.match import Match, League, Team  # 修改导入路径
+from ....schemas.response import UnifiedResponse, PageResponse
+from ....schemas.match import MatchCreateUpdate, MatchFilter
 from ....services.match_service import MatchService
-from ...deps import get_current_admin
+# 修改logger导入
+logger = logging.getLogger(__name__)
 
-from pydantic import BaseModel
+# 假设MatchStatusEnum是一个枚举类
+from enum import Enum
 
-
-class UnifiedResponse(BaseModel):
-    success: bool
-    data: Optional[Dict[str, Any]] = None
-    message: Optional[str] = None
-    error: Optional[Dict[str, Any]] = None
-
-    @classmethod
-    def success(cls, data: Any, message: str = "操作成功"):
-        return cls(success=True, data=data, message=message)
-
-    @classmethod
-    def error(cls, message: str, error_code: Optional[str] = None):
-        return cls(success=False, message=message, error={"code": error_code, "message": message})
+class MatchStatusEnum(str, Enum):
+    SCHEDULED = "scheduled"
+    LIVE = "live"
+    HALFTIME = "halftime"
+    FINISHED = "finished"
+    CANCELLED = "cancelled"
+    POSTPONED = "postponed"
+    ABANDONED = "abandoned"
+    SUSPENDED = "suspended"
 
 
-router = APIRouter(prefix="/beidan-schedules", tags=["admin-beidan-schedules"])
+router = APIRouter()
 
-
-@router.get("/", response_model=UnifiedResponse)
+@router.get("/", response_model=PageResponse)
 async def get_beidan_schedules(
     page: int = Query(1, ge=1, description="页码"),
     size: int = Query(20, ge=1, le=100, description="每页数量"),
     league_id: Optional[int] = Query(None, description="联赛ID筛选"),
     days: Optional[int] = Query(5, description="查询天数"),
     keyword: Optional[str] = Query(None, description="搜索关键词"),
-    db: AsyncSession = Depends(get_db)
+    db: Session = Depends(get_db)
 ):
     """
     获取北单赛程列表
     """
     try:
-        from sqlalchemy import select, and_, func, desc, or_
+        from sqlalchemy import and_, or_
         
         # 构建查询条件
         conditions = []
@@ -58,7 +56,9 @@ async def get_beidan_schedules(
         if days:
             start_date = datetime.now().date()
             end_date = start_date + timedelta(days=days)
-            conditions.append(Match.match_date.between(start_date, end_date))
+            # 假设Match模型有match_date字段
+            from ....models.match import Match as MatchModel
+            conditions.append(MatchModel.match_date.between(start_date, end_date))
         
         # 联赛筛选
         if league_id:
@@ -72,18 +72,20 @@ async def get_beidan_schedules(
             ))
         
         # 查询匹配的北单比赛数据
+        home_team = aliased(Team)
+        away_team = aliased(Team)
         query = (
-            select(Match, League, Team, Team)
+            select(Match, League, home_team, away_team)
             .join(League, Match.league_id == League.id)
-            .join(Team, Match.home_team_id == Team.id, isouter=True)  # 左外连接主队
-            .join(Team, Match.away_team_id == Team.id, isouter=True)  # 左外连接客队
+            .join(home_team, Match.home_team_id == home_team.id, isouter=True)  # 左外连接主队
+            .join(away_team, Match.away_team_id == away_team.id, isouter=True)  # 左外连接客队
             .where(and_(*conditions))
             .order_by(Match.scheduled_kickoff)
             .offset((page - 1) * size)
             .limit(size)
         )
         
-        result = await db.execute(query)
+        result = db.execute(query)
         matches = result.all()
         
         # 格式化返回数据
@@ -123,34 +125,35 @@ async def get_beidan_schedules(
             .join(League, Match.league_id == League.id)
             .where(and_(*conditions))
         )
-        total_result = await db.execute(count_query)
+        total_result = db.execute(count_query)
         total = total_result.scalar()
         
-        return UnifiedResponse.success({
-            "items": formatted_matches,
-            "total": total,
-            "page": page,
-            "size": size,
-            "pages": (total + size - 1) // size
-        }, "获取北单赛程列表成功")
+        return PageResponse(
+            code=200,
+            message="OK",
+            data=formatted_matches,
+            total=total,
+            page=page,
+            size=size,
+            pages=(total + size - 1) // size
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/leagues", response_model=UnifiedResponse)
 async def get_leagues(
-    db: AsyncSession = Depends(get_db)
+    db: Session = Depends(get_db)
 ):
     """
-    获取联赛列表
+    ??????
     """
     try:
-        from sqlalchemy import select
-        
+        # ????
         query = select(League).where(League.is_active == True).order_by(League.name)
-        result = await db.execute(query)
+        result = db.execute(query)
         leagues = result.scalars().all()
-        
+
         formatted_leagues = [
             {
                 "id": league.id,
@@ -160,61 +163,66 @@ async def get_leagues(
             }
             for league in leagues
         ]
-        
-        return UnifiedResponse.success({
-            "items": formatted_leagues
-        }, "获取联赛列表成功")
+
+        return UnifiedResponse(
+            code=200,
+            message="????????",
+            data={
+                "items": formatted_leagues
+            }
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
 
 @router.put("/{match_id}/publish", response_model=UnifiedResponse)
 async def toggle_publish(
     match_id: int,
-    publish: bool = Query(..., description="是否发布"),
-    db: AsyncSession = Depends(get_db)
+    publish: bool = Query(..., description="????"),
+    db: Session = Depends(get_db)
 ):
     """
-    切换比赛发布状态
+    ????????
     """
     try:
-        from sqlalchemy import select
-        
-        # 获取比赛
+        # ????
         query = select(Match).where(Match.id == match_id)
-        result = await db.execute(query)
+        result = db.execute(query)
         match = result.scalar_one_or_none()
-        
-        if not match:
-            raise HTTPException(status_code=404, detail="比赛不存在")
-        
-        # 更新发布状态
-        match.is_published = publish
-        await db.commit()
-        
-        return UnifiedResponse.success({
-            "id": match.id,
-            "is_published": match.is_published
-        }, f"{'发布' if match.is_published else '取消发布'}成功")
-    except Exception as e:
-        await db.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
 
+        if not match:
+            raise HTTPException(status_code=404, detail="?????")
+
+        # ??????
+        match.is_published = publish
+        db.commit()
+
+        publish_message = "????" if match.is_published else "??????"
+        return UnifiedResponse(
+            code=200,
+            message=publish_message,
+            data={
+                "id": match.id,
+                "is_published": match.is_published
+            }
+        )
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.delete("/{match_id}", response_model=UnifiedResponse)
 async def delete_beidan_schedule(
     match_id: int,
-    db: AsyncSession = Depends(get_db)
+    db: Session = Depends(get_db)
 ):
     """
     删除北单赛程
     """
     try:
-        from sqlalchemy import select, delete
+        from sqlalchemy import delete
         
         # 检查比赛是否存在
         match_query = select(Match).where(Match.id == match_id)
-        match_result = await db.execute(match_query)
+        match_result = db.execute(match_query)
         match = match_result.scalar_one_or_none()
         
         if not match:
@@ -222,24 +230,28 @@ async def delete_beidan_schedule(
         
         # 执行删除
         stmt = delete(Match).where(Match.id == match_id)
-        await db.execute(stmt)
-        await db.commit()
+        db.execute(stmt)
+        db.commit()
         
-        return UnifiedResponse.success({"id": match_id}, "删除北单赛程成功")
+        return UnifiedResponse(
+            code=200,
+            message="????????",
+            data={"id": match_id}
+        )
     except Exception as e:
-        await db.rollback()
+        db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/stats", response_model=UnifiedResponse)
 async def get_beidan_stats(
-    db: AsyncSession = Depends(get_db)
+    db: Session = Depends(get_db)
 ):
     """
     获取北单赛程统计数据
     """
     try:
-        from sqlalchemy import select, func, case
+        from sqlalchemy import case
         
         # 获取各种状态的比赛数量
         stats_query = select(
@@ -262,7 +274,7 @@ async def get_beidan_stats(
             )).label('published_matches')
         )
         
-        result = await db.execute(stats_query)
+        result = db.execute(stats_query)
         row = result.fetchone()
         
         stats = {
@@ -273,6 +285,10 @@ async def get_beidan_stats(
             "publishedMatches": row.published_matches or 0
         }
         
-        return UnifiedResponse.success(stats, "获取统计数据成功")
+        return UnifiedResponse(
+            code=200,
+            message="获取统计数据成功",
+            data=stats
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

@@ -7,9 +7,8 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime, timedelta
 import json
 
-from ....api.deps import get_db
+from ....database_async import get_async_db
 from ....models.match import League, Match
-from ....models.team import Team
 from ....schemas.match import LeagueCreate, LeagueUpdate, LeagueResponse
 from ....services.match_service import MatchService
 from ...deps import get_current_admin
@@ -22,14 +21,6 @@ class UnifiedResponse(BaseModel):
     data: Optional[Dict[str, Any]] = None
     message: Optional[str] = None
     error: Optional[Dict[str, Any]] = None
-
-    @classmethod
-    def success(cls, data: Any, message: str = "操作成功"):
-        return cls(success=True, data=data, message=message)
-
-    @classmethod
-    def error(cls, message: str, error_code: Optional[str] = None):
-        return cls(success=False, message=message, error={"code": error_code, "message": message})
 
 
 class LeagueCreateRequest(BaseModel):
@@ -61,13 +52,13 @@ async def get_leagues(
     level: Optional[str] = Query(None, description="联赛级别筛选"),
     status: Optional[str] = Query(None, description="状态筛选"),
     search_keyword: Optional[str] = Query(None, description="搜索关键词"),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """
     获取联赛列表
     """
     try:
-        from sqlalchemy import select, and_, func, desc, or_
+        from sqlalchemy import select, and_, func, desc, or_, case
         
         # 构建查询条件
         conditions = []
@@ -172,13 +163,17 @@ async def get_leagues(
         total_result = await db.execute(count_query)
         total = total_result.scalar()
         
-        return UnifiedResponse.success({
+        return UnifiedResponse(
+            success=True,
+            data={
             "items": formatted_leagues,
             "total": total,
             "page": page,
             "size": size,
             "pages": (total + size - 1) // size
-        }, "获取联赛列表成功")
+        },
+            message="获取联赛列表成功"
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -186,7 +181,7 @@ async def get_leagues(
 @router.post("/", response_model=UnifiedResponse)
 async def create_league(
     request: LeagueCreateRequest,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """
     创建联赛
@@ -235,7 +230,9 @@ async def create_league(
         await db.commit()
         await db.refresh(league)
         
-        return UnifiedResponse.success({
+        return UnifiedResponse(
+            success=True,
+            data={
             "id": league.id,
             "name": league.name,
             "country": league.country,
@@ -243,7 +240,9 @@ async def create_league(
             "season": request.season,
             "status": request.status,
             "description": request.description
-        }, "创建联赛成功")
+        },
+            message="创建联赛成功"
+        )
     except HTTPException as e:
         raise e
     except Exception as e:
@@ -255,7 +254,7 @@ async def create_league(
 async def update_league(
     league_id: int,
     request: LeagueUpdateRequest,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """
     更新联赛
@@ -313,7 +312,9 @@ async def update_league(
             False: "inactive"
         }
         
-        return UnifiedResponse.success({
+        return UnifiedResponse(
+            success=True,
+            data={
             "id": league.id,
             "name": league.name,
             "country": league.country,
@@ -321,7 +322,9 @@ async def update_league(
             "season": league.current_season or "未知",
             "status": status_mapping_reverse.get(league.is_active, "inactive"),
             "description": league.description or ""
-        }, "更新联赛成功")
+        },
+            message="更新联赛成功"
+        )
     except Exception as e:
         await db.rollback()
         raise HTTPException(status_code=500, detail=f"更新联赛失败: {str(e)}")
@@ -330,7 +333,7 @@ async def update_league(
 @router.delete("/{league_id}", response_model=UnifiedResponse)
 async def delete_league(
     league_id: int,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """
     删除联赛
@@ -359,7 +362,11 @@ async def delete_league(
         await db.execute(stmt)
         await db.commit()
         
-        return UnifiedResponse.success({"id": league_id}, "删除联赛成功")
+        return UnifiedResponse(
+            success=True,
+            data={"id": league_id},
+            message="删除联赛成功"
+        )
     except HTTPException as e:
         raise e
     except Exception as e:
@@ -369,7 +376,7 @@ async def delete_league(
 
 @router.get("/countries", response_model=UnifiedResponse)
 async def get_countries(
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """
     获取所有国家/地区列表
@@ -381,22 +388,26 @@ async def get_countries(
         result = await db.execute(query)
         countries = [row[0] for row in result.fetchall() if row[0]]
         
-        return UnifiedResponse.success({
+        return UnifiedResponse(
+            success=True,
+            data={
             "countries": countries
-        }, "获取国家/地区列表成功")
+        },
+            message="获取国家/地区列表成功"
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/stats", response_model=UnifiedResponse)
 async def get_league_stats(
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """
     获取联赛统计数据
     """
     try:
-        from sqlalchemy import select, func, case
+        from sqlalchemy import select, func, case, distinct
         
         # 获取各种统计信息
         stats_query = select(
@@ -435,6 +446,10 @@ async def get_league_stats(
             "completionRate": round(completion_rate, 1)
         }
         
-        return UnifiedResponse.success(stats, "获取统计数据成功")
+        return UnifiedResponse(
+            success=True,
+            data=stats,
+            message="获取统计数据成功"
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

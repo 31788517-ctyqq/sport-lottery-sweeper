@@ -3,7 +3,7 @@ import logging
 logger = logging.getLogger(__name__)
 from datetime import datetime
 
-bp = Bluelogger.debug('crawler_source', __name__, url_prefix='/api/admin/crawler/sources')
+bp = Blueprint('crawler_source', __name__, url_prefix='/api/admin/crawler/sources')
 
 @bp.route('', methods=['GET'])
 def list_sources():

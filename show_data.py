@@ -8,6 +8,13 @@ import socketserver
 import json
 from urllib.parse import urlparse, parse_qs
 from datetime import datetime
+import sys
+from pathlib import Path
+
+# 添加backend目录到Python路径
+sys.path.append(str(Path(__file__).parent / 'backend'))
+
+from backend.database import DATABASE_PATH
 
 class DataHandler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
@@ -24,7 +31,7 @@ class DataHandler(http.server.SimpleHTTPRequestHandler):
     
     def show_main_page(self):
         # 获取数据
-        conn = sqlite3.connect('backend/sport_lottery.db')
+        conn = sqlite3.connect(str(DATABASE_PATH))
         cursor = conn.cursor()
         
         cursor.execute("SELECT match_id, home_team, away_team, match_time, league, status, odds_home_win, odds_draw, odds_away_win, popularity FROM football_matches ORDER BY match_time")
@@ -129,7 +136,7 @@ class DataHandler(http.server.SimpleHTTPRequestHandler):
         self.wfile.write(html.encode('utf-8'))
     
     def show_matches_api(self):
-        conn = sqlite3.connect('backend/sport_lottery.db')
+        conn = sqlite3.connect(str(DATABASE_PATH))
         cursor = conn.cursor()
         cursor.execute("SELECT match_id, home_team, away_team, match_time, league, odds_home_win, odds_draw, odds_away_win, popularity FROM football_matches ORDER BY match_time")
         matches = cursor.fetchall()
@@ -153,7 +160,7 @@ class DataHandler(http.server.SimpleHTTPRequestHandler):
         self.send_json({'success': True, 'data': data, 'total': len(data)})
     
     def show_sources_api(self):
-        conn = sqlite3.connect('backend/sport_lottery.db')
+        conn = sqlite3.connect(str(DATABASE_PATH))
         cursor = conn.cursor()
         cursor.execute("SELECT name, url, config FROM data_sources WHERE name='500万彩票'")
         source = cursor.fetchone()

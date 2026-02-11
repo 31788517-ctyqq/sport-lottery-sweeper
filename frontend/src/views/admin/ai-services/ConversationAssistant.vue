@@ -126,6 +126,8 @@
 <script setup>
 import { ref, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
+import axios from 'axios'
+import { API_ENDPOINTS } from '@/config/api.js'
 
 // 助手数据
 const assistants = ref([
@@ -219,34 +221,51 @@ const sendMessage = async () => {
   // 显示加载状态
   isLoading.value = true
   
-  // 模拟AI回复（实际应用中会调用AI API）
-  setTimeout(() => {
+  try {
+    // 调用后端LLM API - 使用智谱AI模型 (MY_ZP_BIGMODLE)
+    const response = await axios.post(API_ENDPOINTS.LLM.CHAT, {
+      user_input: inputCopy,
+      provider: 'zhipuai', // 使用智谱AI提供商
+      user_id: `assistant_${currentAssistant.value.id}`
+    })
+    
     const aiResponse = {
       sender: 'ai',
-      text: generateAIResponse(inputCopy, currentAssistant.value.name),
+      text: response.data.response,
       timestamp: new Date().toLocaleString('zh-CN', { hour12: false })
     }
     
     currentAssistant.value.conversation.push(aiResponse)
+  } catch (error) {
+    console.error('AI对话失败:', error)
+    let errorMessage = '抱歉，AI服务暂时不可用，请稍后再试。'
+    
+    if (error.response) {
+      if (error.response.status === 401) {
+        errorMessage = '认证已过期，请重新登录。'
+        // 可以在这里添加自动跳转到登录页的逻辑
+      } else if (error.response.status === 500) {
+        errorMessage = `AI服务错误: ${error.response.data?.detail || '未知错误'}`
+      } else if (error.response.status === 400) {
+        errorMessage = '请求参数错误，请检查输入内容。'
+      }
+    }
+    
+    const aiResponse = {
+      sender: 'ai',
+      text: errorMessage,
+      timestamp: new Date().toLocaleString('zh-CN', { hour12: false })
+    }
+    
+    currentAssistant.value.conversation.push(aiResponse)
+    ElMessage.error(errorMessage)
+  } finally {
     isLoading.value = false
     
     // 滚动到底部
     nextTick(() => {
       scrollToBottom()
     })
-  }, 1500)
-}
-
-const generateAIResponse = (userInput, assistantName) => {
-  // 根据助手类型生成不同类型的回复
-  if (assistantName === '体育分析师助手') {
-    return `关于"${userInput}"，根据我的分析，这是一个非常有趣的问题。基于当前的数据和趋势，我认为...\n\n您可以期待更详细的分析报告，或者我可以为您提供更多相关信息。`;
-  } else if (assistantName === '赔率计算器') {
-    return `针对您提到的"${userInput}"，我进行了赔率计算。根据历史数据和当前赔率，预期收益率大约为XX%，风险等级为YY。\n\n如果您需要更精确的计算，请提供更多详细信息。`;
-  } else if (assistantName === '数据洞察助手') {
-    return `您提到的"${userInput}"涉及到复杂的数据分析。通过我们的数据模型，我发现了一些有趣的模式：\n1. 趋势A\n2. 关联性B\n3. 预测C\n\n这些洞察可能会对您的决策有所帮助。`;
-  } else {
-    return `感谢您询问关于"${userInput}"的问题。作为${assistantName}，我会尽力为您提供有价值的信息和建议。`;
   }
 }
 

@@ -12,9 +12,18 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
-    setupFiles: './src/tests/setup.js',
-    include: ['src/**/*.{test,spec}.{js,ts,vue}'],
-    exclude: ['node_modules', 'dist'],
+    setupFiles: ['./src/tests/setup.js'],
+    include: ['src/**/*.{test,spec}.{js,ts}', 'tests/**/*.{test,spec}.{js,ts}'],
+    exclude: [
+      'node_modules', 
+      'dist',
+      '**/*.md',           // 排除所有markdown文件
+      '**/*.vue',         // 排除所有vue文件（除非在特定目录）
+      'tests/e2e/**',     // 排除e2e测试目录
+      'tests/unit/temp/**',  // 排除临时测试目录
+      '**/backup/**',     // 排除备份目录
+      '**/*.d.ts'         // 排除类型定义文件
+    ],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html']

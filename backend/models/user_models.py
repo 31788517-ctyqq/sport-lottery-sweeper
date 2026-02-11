@@ -122,6 +122,7 @@ class User(Base):
     email_verification_tokens = relationship("EmailVerificationToken", back_populates="user", cascade="all, delete-orphan")
     # 使用字符串引用解决循环导入问题
     user_predictions = relationship("UserPrediction", back_populates="user", cascade="all, delete-orphan")
+    activities = relationship("UserActivity", back_populates="user", cascade="all, delete-orphan")
     
     # AI_WORKING: coder1 @2026-01-26T01:16:00 - 修复User.__repr__缺少闭合括号的语法错误
     def __repr__(self):

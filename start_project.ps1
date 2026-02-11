@@ -74,9 +74,9 @@ Write-Host "🌐 启动后端服务 (端口 8001)..." -ForegroundColor Cyan
 
 # 启动后端服务
 $backendScript = @"
-from src.backend.optimized_main import app
+from backend.main import app
 import uvicorn
-uvicorn.run(app, host='127.0.0.1', port=8001, log_level='info')
+uvicorn.run(app, host='0.0.0.0', port=8000, log_level='info')
 "@
 
 # 启动后端服务在后台

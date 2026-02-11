@@ -140,16 +140,33 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         response = await call_next(request)
         
-        # 添加安全头
+        # 获取请求路径
+        path = request.url.path
+        
+        # 根据路径设置不同的安全头
         security_headers = {
             "X-Content-Type-Options": "nosniff",
             "X-Frame-Options": "DENY",
             "X-XSS-Protection": "1; mode=block",
             "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
-            "Content-Security-Policy": "default-src 'self'",
             "Referrer-Policy": "strict-origin-when-cross-origin",
             "Permissions-Policy": "geolocation=(), camera=()"
         }
+        
+        # 对于Swagger UI和Redoc页面，需要允许加载外部资源
+        if path in ["/docs", "/redoc"]:
+            security_headers["Content-Security-Policy"] = (
+                "default-src 'self'; "
+                "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; "
+                "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; "
+                "font-src 'self' https://fonts.gstatic.com; "
+                "img-src 'self' data: https://fastapi.tiangolo.com; "
+                "connect-src 'self' https://cdn.jsdelivr.net; "
+                "frame-ancestors 'none';"
+            )
+        else:
+            # 对于其他页面，使用更严格的安全策略
+            security_headers["Content-Security-Policy"] = "default-src 'self'"
         
         for header, value in security_headers.items():
             response.headers[header] = value

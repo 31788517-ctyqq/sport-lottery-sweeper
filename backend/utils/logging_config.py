@@ -104,7 +104,8 @@ def setup_logging(log_level: int = None,
     # 设置环境变量以确保正确的编码
     os.environ['PYTHONIOENCODING'] = 'utf-8'
     
-    # 控制台处理器 - 使用UTF-8编码
+    # 控制台处理器 - 使用UTF-8编码（Windows下使用utf-8-sig）
+    console_encoding = "utf-8-sig" if sys.platform == "win32" else "utf-8"
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setLevel(log_level)
     console_formatter = logging.Formatter(

@@ -1,75 +1,95 @@
-#!/usr/bin/env python3
-"""
-简单测试后端是否响应
-"""
-import subprocess
-import time
-import requests
-import sys
+#!/usr/bin/env python
+# 使用简化选择器测试前端功能
 
-def start_backend():
-    """启动后端服务"""
-    print("启动后端服务...")
-    proc = subprocess.Popen(
-        [sys.executable, "backend/main.py"],
-        cwd="c:/Users/11581/Downloads/sport-lottery-sweeper",
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE
-    )
-    time.sleep(3)
-    return proc
+import asyncio
+from playwright.async_api import async_playwright
 
-def test_health():
-    """测试健康检查"""
-    try:
-        r = requests.get("http://localhost:8000/health/ready", timeout=5)
-        print(f"健康检查: {r.status_code} - {r.text}")
-        return r.status_code == 200
-    except Exception as e:
-        print(f"健康检查失败: {e}")
-        return False
 
-def test_login():
-    """测试登录"""
-    try:
-        data = {"email": "admin", "password": "admin123"}
-        r = requests.post(
-            "http://localhost:8000/api/auth/login",
-            json=data,
-            headers={"Content-Type": "application/json"},
-            timeout=5
-        )
-        print(f"登录测试: {r.status_code} - {r.text}")
-        if r.status_code == 200:
-            print("✓ 登录成功!")
-            return True
-        else:
-            print("✗ 登录失败")
-            return False
-    except Exception as e:
-        print(f"登录测试失败: {e}")
-        return False
+async def test_submit_issue_simple():
+    """使用更简单的方法测试提交问题"""
+    async with async_playwright() as p:
+        browser = await p.chromium.launch(headless=False)
+        page = await browser.new_page()
+        
+        try:
+            # 访问数据源管理页面
+            print("正在访问数据源管理页面...")
+            await page.goto("http://localhost:3000/admin/data-source/config")
+            await page.wait_for_load_state('networkidle')
+            
+            # 等待页面加载完成
+            print("等待页面加载...")
+            await page.wait_for_selector('text="数据源管理"', timeout=10000)
+            
+            # 点击新增数据源按钮
+            print("点击新增数据源按钮...")
+            await page.locator('button:has-text("新增数据源")').click()
+            
+            # 等待对话框出现
+            print("等待对话框出现...")
+            await page.wait_for_selector('text="新增数据源"', timeout=10000)
+            
+            # 等待表单元素加载
+            print("等待表单元素加载...")
+            await page.wait_for_timeout(1000)
+            
+            # 填充必要的字段
+            print("填充数据源名称...")
+            await page.fill('input[placeholder*="数据源名称"]', '测试数据源')
+            
+            print("填充接口地址...")
+            await page.fill('input[placeholder*="接口地址"]', 'https://api.example.com/data')
+            
+            print("选择分类...")
+            # 使用更简单的选择器定位分类下拉框
+            await page.locator('div:has(> .el-select__wrapper)').nth(0).click()
+            await page.wait_for_timeout(500)
+            # 选择"赛事数据"选项
+            await page.click('text="赛事数据"')
+            
+            print("点击提交按钮...")
+            submit_button = page.locator('button:has-text("提交")')
+            await submit_button.scroll_into_view_if_needed()
+            # 等待按钮可用
+            await page.wait_for_timeout(500)
+            await submit_button.click()
+            
+            # 等待响应
+            await page.wait_for_timeout(3000)
+            
+            # 检查是否有成功消息
+            success_msg = await page.locator('text="创建成功"').count()
+            if success_msg > 0:
+                print("✅ 数据源创建成功!")
+            else:
+                print("❌ 未检测到创建成功提示")
+                
+                # 检查是否有错误消息
+                error_msgs = await page.locator('.el-message, .el-notification').count()
+                if error_msgs > 0:
+                    error_texts = await page.locator('.el-message, .el-notification').all_text_contents()
+                    for txt in error_texts:
+                        if txt.strip():
+                            print(f"错误消息: {txt}")
+                
+                # 检查是否是验证错误
+                validation_errors = await page.locator('.el-form-item__error').count()
+                if validation_errors > 0:
+                    validation_texts = await page.locator('.el-form-item__error').all_text_contents()
+                    for txt in validation_texts:
+                        if txt.strip():
+                            print(f"验证错误: {txt}")
+                
+                # 截图用于调试
+                await page.screenshot(path='simple_test_debug.png')
+                
+        except Exception as e:
+            print(f"测试失败: {str(e)}")
+            await page.screenshot(path='simple_test_error.png')
+            raise e
+        finally:
+            await browser.close()
+
 
 if __name__ == "__main__":
-    print("=== 后端POST请求测试 ===")
-    
-    # 启动后端
-    proc = start_backend()
-    
-    try:
-        # 测试健康检查
-        if test_health():
-            print("✓ 后端服务正常")
-            
-            # 测试登录
-            if test_login():
-                print("\n=== 测试结果: 成功 ===")
-            else:
-                print("\n=== 测试结果: 登录失败 ===")
-        else:
-            print("✗ 后端服务未就绪")
-    finally:
-        # 清理
-        proc.terminate()
-        proc.wait()
-        print("\n后端服务已停止")
+    asyncio.run(test_submit_issue_simple())

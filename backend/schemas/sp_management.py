@@ -17,7 +17,8 @@ class DataSourceBase(BaseModel):
     type: str = Field(..., description="数据源类型: api/file")
     url: Optional[str] = Field(None, max_length=500, description="接口地址或文件路径")
     config: Optional[Union[Dict[str, Any], str]] = Field(None, description="配置信息(JSON格式)")
-    status: bool = Field(True, description="启用状态")
+    status: Optional[str] = Field('online', description="状态: online/offline/maintenance/error")  # 修改为字符串类型
+    source_id: Optional[str] = Field(None, description="源ID")
 
 class DataSourceCreate(DataSourceBase):
     """创建数据源请求模型"""
@@ -26,6 +27,13 @@ class DataSourceCreate(DataSourceBase):
     def validate_type(cls, v):
         if v not in ['api', 'file']:
             raise ValueError('type必须是api或file')
+        return v
+    
+    @validator('status')
+    def validate_status(cls, v):
+        valid_statuses = ['online', 'offline', 'maintenance', 'error']
+        if v is not None and v not in valid_statuses:
+            raise ValueError(f'status必须是以下值之一: {valid_statuses}')
         return v
     
     @validator('url')
@@ -50,7 +58,7 @@ class DataSourceUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=100)
     url: Optional[str] = Field(None, max_length=500)
     config: Optional[Union[Dict[str, Any], str]] = None
-    status: Optional[bool] = None
+    status: Optional[str] = None  # 修改为字符串类型
 
     @validator('config', pre=True)
     def validate_config(cls, v):
@@ -59,6 +67,14 @@ class DataSourceUpdate(BaseModel):
                 return json.loads(v)
             except (ValueError, TypeError):
                 return {}
+        return v
+    
+    @validator('status')
+    def validate_status(cls, v):
+        if v is not None:
+            valid_statuses = ['online', 'offline', 'maintenance', 'error']
+            if v not in valid_statuses:
+                raise ValueError(f'status必须是以下值之一: {valid_statuses}')
         return v
 
 class DataSourceResponse(DataSourceBase):
@@ -315,8 +331,10 @@ class PaginationParams(BaseModel):
 class DataSourceFilterParams(PaginationParams):
     """数据源筛选参数"""
     type: Optional[str] = Field(None, description="数据源类型")
-    status: Optional[bool] = Field(None, description="启用状态")
+    status: Optional[str] = Field(None, description="状态(online/offline/maintenance/error/1/0/true/false)")
     search: Optional[str] = Field(None, max_length=50, description="搜索关键词")
+    category: Optional[str] = Field(None, description="内容分类")
+    source_id: Optional[str] = Field(None, description="源ID")
 
 class MatchFilterParams(PaginationParams):
     """比赛筛选参数"""

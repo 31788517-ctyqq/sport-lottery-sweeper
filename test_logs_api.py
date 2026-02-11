@@ -3,11 +3,43 @@
 用于测试日志API端点是否正常工作
 """
 import requests
+import os
 import json
 
-# 测试后端API是否运行
-BASE_URL = "http://localhost:8001"
+os.chdir('.')
 
+# 测试日志统计API
+try:
+    response = requests.get('http://localhost:8001/api/v1/admin/system/logs/db/statistics')
+    print(f'Log statistics API status: {response.status_code}')
+    if response.status_code == 200:
+        data = response.json()
+        print('Response keys:', list(data.keys()) if isinstance(data, dict) else 'Not a dict')
+        print('Total logs:', data.get('total_logs', 'N/A') if isinstance(data, dict) else 'N/A')
+    else:
+        print(f'Error: {response.text}')
+except Exception as e:
+    print(f'Request failed: {e}')
+
+# 测试系统日志API
+try:
+    response = requests.get('http://localhost:8001/api/v1/admin/system/logs/db/system?skip=0&limit=5')
+    print(f'\nSystem logs API status: {response.status_code}')
+    if response.status_code == 200:
+        data = response.json()
+        print(f'Response type: {type(data)}')
+        if isinstance(data, list):
+            print(f'Number of logs returned: {len(data)}')
+            if data:
+                print(f'First log keys: {list(data[0].keys()) if isinstance(data[0], dict) else "Not a dict"}')
+        elif isinstance(data, dict):
+            print(f'Response keys: {list(data.keys()) if isinstance(data, dict) else "Not a dict"}')
+    else:
+        print(f'Error: {response.text}')
+except Exception as e:
+    print(f'Request failed: {e}')
+
+# 测试日志API端点
 def test_logs_api():
     """测试日志API端点"""
     print("测试日志管理API端点...")

@@ -8,7 +8,7 @@ import request from '@/utils/request'
 // 获取数据源列表
 export function getDataSources(params) {
   return request({
-    url: '/api/v1/sp-management/data-sources',
+    url: '/api/v1/admin/sources',
     method: 'get',
     params
   })
@@ -17,7 +17,7 @@ export function getDataSources(params) {
 // 获取单个数据源
 export function getDataSourceById(id) {
   return request({
-    url: `/api/v1/sp-management/data-sources/${id}`,
+    url: `/api/v1/admin/sources/${id}`,
     method: 'get'
   })
 }
@@ -25,7 +25,7 @@ export function getDataSourceById(id) {
 // 创建数据源
 export function createDataSource(data) {
   return request({
-    url: '/api/v1/sp-management/data-sources',
+    url: '/api/v1/admin/sources',
     method: 'post',
     data
   })
@@ -34,7 +34,7 @@ export function createDataSource(data) {
 // 更新数据源
 export function updateDataSource(id, data) {
   return request({
-    url: `/api/v1/sp-management/data-sources/${id}`,
+    url: `/api/v1/admin/sources/${id}`,
     method: 'put',
     data
   })
@@ -43,7 +43,7 @@ export function updateDataSource(id, data) {
 // 删除数据源
 export function deleteDataSource(id) {
   return request({
-    url: `/api/v1/sp-management/data-sources/${id}`,
+    url: `/api/v1/admin/sources/${id}`,
     method: 'delete'
   })
 }
@@ -51,7 +51,7 @@ export function deleteDataSource(id) {
 // 测试数据源连接
 export function testDataSource(id) {
   return request({
-    url: `/api/v1/sp-management/data-sources/${id}/test`,
+    url: `/api/v1/admin/sources/${id}/test`,
     method: 'post'
   })
 }
@@ -59,7 +59,7 @@ export function testDataSource(id) {
 // 获取API类型数据源
 export function getApiDataSources(params) {
   return request({
-    url: '/api/v1/sp-management/data-sources/api',
+    url: '/api/v1/admin/sources/api',
     method: 'get',
     params
   })
@@ -68,7 +68,7 @@ export function getApiDataSources(params) {
 // 获取文件类型数据源
 export function getFileDataSources(params) {
   return request({
-    url: '/api/v1/sp-management/data-sources/file',
+    url: '/api/v1/admin/sources/file',
     method: 'get',
     params
   })

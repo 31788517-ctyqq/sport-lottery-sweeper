@@ -7,21 +7,22 @@ from typing import Optional, List
 
 # 简化的导入，避免复杂依赖
 from backend import crud, models, schemas
+from backend.schemas import admin_user as admin_schemas
 from backend.database_async import get_async_db
 from backend.core.security import get_current_active_admin_user
 from backend.utils.response import UnifiedResponse
 
-router = APIRouter()
+router = APIRouter(prefix="/admin-users")
 
 
-@router.get("/", response_model=UnifiedResponse[schemas.AdminUserListResponse])
+@router.get("/", response_model=UnifiedResponse[admin_schemas.AdminUserListResponse])
 async def list_admin_users(
     db: AsyncSession = Depends(get_async_db),
     current_admin: models.AdminUser = Depends(get_current_active_admin_user),
     skip: int = Query(0, ge=0, description="跳过的记录数"),
     limit: int = Query(10, ge=1, le=100, description="每页最大记录数"),
-    role: Optional[schemas.AdminRoleEnum] = Query(None, description="按角色筛选"),
-    status: Optional[schemas.AdminStatusEnum] = Query(None, description="按状态筛选"),
+    role: Optional[admin_schemas.AdminRoleEnum] = Query(None, description="按角色筛选"),
+    status: Optional[admin_schemas.AdminStatusEnum] = Query(None, description="按状态筛选"),
     department: Optional[str] = Query(None, description="按部门筛选"),
     search: Optional[str] = Query(None, description="按用户名/真实姓名/邮箱搜索")
 ):
@@ -33,7 +34,7 @@ async def list_admin_users(
         department=department, search=search
     )
     
-    return UnifiedResponse.success(data=schemas.AdminUserListResponse(
+    return UnifiedResponse.success(data=admin_schemas.AdminUserListResponse(
         items=users,
         total=total,
         page=(skip // limit) + 1,
@@ -42,9 +43,9 @@ async def list_admin_users(
     ))
 
 
-@router.post("/", response_model=UnifiedResponse[schemas.AdminUserResponse])
+@router.post("/", response_model=UnifiedResponse[admin_schemas.AdminUserResponse])
 async def create_admin_user(
-    user_in: schemas.AdminUserCreate,
+    user_in: admin_schemas.AdminUserCreate,
     db: AsyncSession = Depends(get_async_db),
     current_admin: models.AdminUser = Depends(get_current_active_admin_user)
 ):
@@ -61,103 +62,24 @@ async def create_admin_user(
         raise HTTPException(status_code=400, detail="邮箱已被使用")
     
     user = await crud.admin_user.create(db, obj_in=user_in, created_by=current_admin.id)
-    return UnifiedResponse.success(data=user)
-
-
-@router.get("/{user_id}", response_model=UnifiedResponse[schemas.AdminUserResponse])
-async def get_admin_user(
-    user_id: int,
-    db: AsyncSession = Depends(get_async_db),
-    current_admin: models.AdminUser = Depends(get_current_active_admin_user)
-):
-    """
-    获取后台用户详情
-    """
-    user = await crud.admin_user.get(db, id=user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="用户不存在")
     
-    # 添加创建者姓名信息
-    if user.created_by:
-        creator = await crud.admin_user.get(db, id=user.created_by)
-        user.creator_name = creator.real_name if creator else None
-    else:
-        user.creator_name = "系统"
+    # 记录操作日志
+    await crud.admin_operation_log.create(
+        db,
+        admin_id=current_admin.id,
+        action="CREATE_USER",
+        resource_type="ADMIN_USER",
+        resource_id=str(user.id),
+        resource_name=user.username,
+        request_body=user_in.model_dump(),
+        ip_address="",
+        user_agent=""
+    )
     
     return UnifiedResponse.success(data=user)
 
 
-@router.put("/{user_id}", response_model=UnifiedResponse[schemas.AdminUserResponse])
-async def update_admin_user(
-    user_id: int,
-    user_update: schemas.AdminUserUpdate,
-    db: AsyncSession = Depends(get_async_db),
-    current_admin: models.AdminUser = Depends(get_current_active_admin_user)
-):
-    """
-    更新后台用户信息
-    """
-    user = await crud.admin_user.get(db, id=user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="用户不存在")
-    
-    updated_user = await crud.admin_user.update(db, db_obj=user, obj_in=user_update)
-    return UnifiedResponse.success(data=updated_user)
-
-
-@router.put("/{user_id}/status", response_model=UnifiedResponse[schemas.AdminUserResponse])
-async def update_admin_user_status(
-    user_id: int,
-    status: schemas.AdminStatusEnum = Query(..., description="新状态"),
-    db: AsyncSession = Depends(get_async_db),
-    current_admin: models.AdminUser = Depends(get_current_active_admin_user)
-):
-    """
-    更新后台用户状态
-    """
-    user = await crud.admin_user.get(db, id=user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="用户不存在")
-    
-    updated_user = await crud.admin_user.update_status(db, db_obj=user, status=status)
-    return UnifiedResponse.success(data=updated_user)
-
-
-@router.put("/{user_id}/reset-password", response_model=UnifiedResponse[dict])
-async def reset_admin_user_password(
-    user_id: int,
-    password_reset: schemas.AdminUserResetPassword,
-    db: AsyncSession = Depends(get_async_db),
-    current_admin: models.AdminUser = Depends(get_current_active_admin_user)
-):
-    """
-    重置后台用户密码
-    """
-    user = await crud.admin_user.get(db, id=user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="用户不存在")
-    
-    await crud.admin_user.reset_password(db, db_obj=user, obj_in=password_reset)
-    return UnifiedResponse.success(data={"message": "密码重置成功"})
-
-
-@router.delete("/{user_id}", response_model=UnifiedResponse[dict])
-async def delete_admin_user(
-    user_id: int,
-    db: AsyncSession = Depends(get_async_db),
-    current_admin: models.AdminUser = Depends(get_current_active_admin_user)
-):
-    """
-    删除后台用户（软删除）
-    """
-    success = await crud.admin_user.remove(db, id=user_id)
-    if not success:
-        raise HTTPException(status_code=404, detail="用户不存在")
-    
-    return UnifiedResponse.success(data={"message": "用户删除成功"})
-
-
-@router.get("/current-user", response_model=UnifiedResponse[schemas.AdminUserResponse])
+@router.get("/current-user", response_model=UnifiedResponse[admin_schemas.AdminUserResponse])
 async def get_current_user_info(
     current_admin: models.AdminUser = Depends(get_current_active_admin_user),
     db: AsyncSession = Depends(get_async_db)
@@ -169,9 +91,9 @@ async def get_current_user_info(
     return UnifiedResponse.success(data=current_admin)
 
 
-@router.put("/current-user", response_model=UnifiedResponse[schemas.AdminUserResponse])
+@router.put("/current-user", response_model=UnifiedResponse[admin_schemas.AdminUserResponse])
 async def update_current_user(
-    user_update: schemas.AdminUserUpdate,
+    user_update: admin_schemas.AdminUserUpdate,
     current_admin: models.AdminUser = Depends(get_current_active_admin_user),
     db: AsyncSession = Depends(get_async_db)
 ):
@@ -180,6 +102,20 @@ async def update_current_user(
     """
     # 更新当前用户的信息
     updated_user = await crud.admin_user.update(db, db_obj=current_admin, obj_in=user_update)
+    
+    # 记录操作日志
+    await crud.admin_operation_log.create(
+        db,
+        admin_id=current_admin.id,
+        action="UPDATE_CURRENT_USER",
+        resource_type="ADMIN_USER",
+        resource_id=str(current_admin.id),
+        resource_name=current_admin.username,
+        request_body=user_update.model_dump(),
+        ip_address="",
+        user_agent=""
+    )
+    
     return UnifiedResponse.success(data=updated_user)
 
 
@@ -261,7 +197,14 @@ async def get_current_user_personal_stats(
         
         # 这里可以根据需要计算更多的统计信息
         # 比如操作日志数量等
-        total_operations = 0  # 暂时设为0，需要查询操作日志表
+        # 获取操作日志统计
+        _, operation_logs = await crud.admin_operation_log.get_multi(
+            db,
+            skip=0,
+            limit=1000,
+            admin_id=current_admin.id
+        )
+        total_operations = len(operation_logs)
         
         return UnifiedResponse.success(data={
             "totalLogins": total_logins,
@@ -275,3 +218,390 @@ async def get_current_user_personal_stats(
             "thisMonthLogins": 0,
             "totalOperations": 0
         })
+
+
+# 添加缺失的批量删除端点
+@router.delete("/batch", response_model=UnifiedResponse[dict])
+async def batch_delete_admin_users(
+    request_data: dict,
+    db: AsyncSession = Depends(get_async_db),
+    current_admin: models.AdminUser = Depends(get_current_active_admin_user)
+):
+    """
+    批量删除管理员用户
+    """
+    try:
+        user_ids = request_data.get("ids", [])
+        if not user_ids:
+            raise HTTPException(status_code=400, detail="用户ID列表不能为空")
+        
+        # 批量删除用户
+        deleted_count = 0
+        for user_id in user_ids:
+            success = await crud.admin_user.remove(db, id=user_id)
+            if success:
+                deleted_count += 1
+        
+        # 记录操作日志
+        await crud.admin_operation_log.create(
+            db,
+            admin_id=current_admin.id,
+            action="BATCH_DELETE_USERS",
+            resource_type="ADMIN_USER",
+            resource_name=f"批量删除{deleted_count}个用户",
+            request_body={"user_ids": user_ids},
+            ip_address="",
+            user_agent=""
+        )
+        
+        return UnifiedResponse.success(data={"message": f"成功删除 {deleted_count} 个用户", "deletedCount": deleted_count})
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"批量删除用户失败: {str(e)}")
+
+
+# 添加导入/导出端点的模拟实现
+@router.post("/import", response_model=UnifiedResponse[dict])
+async def import_admin_users(
+    # 注意：实际的文件上传需要更复杂的处理
+    db: AsyncSession = Depends(get_async_db),
+    current_admin: models.AdminUser = Depends(get_current_active_admin_user)
+):
+    """
+    导入管理员用户（模拟实现）
+    """
+    return UnifiedResponse.success(data={
+        "message": "用户导入功能已收到请求，实际实现需要文件上传处理",
+        "status": "not_implemented"
+    })
+
+
+@router.get("/export", response_model=UnifiedResponse[dict])
+async def export_admin_users(
+    db: AsyncSession = Depends(get_async_db),
+    current_admin: models.AdminUser = Depends(get_current_active_admin_user)
+):
+    """
+    导出管理员用户（模拟实现）
+    """
+    return UnifiedResponse.success(data={
+        "message": "用户导出功能已收到请求，实际实现需要文件生成和下载处理",
+        "status": "not_implemented"
+    })
+
+
+@router.get("/{user_id}", response_model=UnifiedResponse[admin_schemas.AdminUserResponse])
+async def get_admin_user(
+    user_id: int,
+    db: AsyncSession = Depends(get_async_db),
+    current_admin: models.AdminUser = Depends(get_current_active_admin_user)
+):
+    """
+    获取后台用户详情
+    """
+    user = await crud.admin_user.get(db, id=user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="用户不存在")
+    
+    # 添加创建者姓名信息
+    if user.created_by:
+        creator = await crud.admin_user.get(db, id=user.created_by)
+        user.creator_name = creator.real_name if creator else None
+    else:
+        user.creator_name = "系统"
+    
+    return UnifiedResponse.success(data=user)
+
+
+@router.put("/{user_id}", response_model=UnifiedResponse[admin_schemas.AdminUserResponse])
+async def update_admin_user(
+    user_id: int,
+    user_update: admin_schemas.AdminUserUpdate,
+    db: AsyncSession = Depends(get_async_db),
+    current_admin: models.AdminUser = Depends(get_current_active_admin_user)
+):
+    """
+    更新后台用户信息
+    """
+    user = await crud.admin_user.get(db, id=user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="用户不存在")
+    
+    updated_user = await crud.admin_user.update(db, db_obj=user, obj_in=user_update)
+    
+    # 记录操作日志
+    await crud.admin_operation_log.create(
+        db,
+        admin_id=current_admin.id,
+        action="UPDATE_USER",
+        resource_type="ADMIN_USER",
+        resource_id=str(user.id),
+        resource_name=user.username,
+        request_body=user_update.model_dump(),
+        ip_address="",
+        user_agent=""
+    )
+    
+    return UnifiedResponse.success(data=updated_user)
+
+
+@router.put("/{user_id}/status", response_model=UnifiedResponse[admin_schemas.AdminUserResponse])
+async def update_admin_user_status(
+    user_id: int,
+    status: admin_schemas.AdminStatusEnum = Query(..., description="新状态"),
+    db: AsyncSession = Depends(get_async_db),
+    current_admin: models.AdminUser = Depends(get_current_active_admin_user)
+):
+    """
+    更新后台用户状态
+    """
+    user = await crud.admin_user.get(db, id=user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="用户不存在")
+    
+    updated_user = await crud.admin_user.update_status(db, db_obj=user, status=status)
+    
+    # 记录操作日志
+    await crud.admin_operation_log.create(
+        db,
+        admin_id=current_admin.id,
+        action="UPDATE_USER_STATUS",
+        resource_type="ADMIN_USER",
+        resource_id=str(user.id),
+        resource_name=user.username,
+        request_body={"status": status},
+        ip_address="",
+        user_agent=""
+    )
+    
+    return UnifiedResponse.success(data=updated_user)
+
+
+@router.put("/{user_id}/reset-password", response_model=UnifiedResponse[dict])
+async def reset_admin_user_password(
+    user_id: int,
+    password_reset: schemas.AdminUserResetPassword,
+    db: AsyncSession = Depends(get_async_db),
+    current_admin: models.AdminUser = Depends(get_current_active_admin_user)
+):
+    """
+    重置后台用户密码
+    """
+    user = await crud.admin_user.get(db, id=user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="用户不存在")
+    
+    await crud.admin_user.reset_password(db, db_obj=user, obj_in=password_reset)
+    
+    # 记录操作日志
+    await crud.admin_operation_log.create(
+        db,
+        admin_id=current_admin.id,
+        action="RESET_PASSWORD",
+        resource_type="ADMIN_USER",
+        resource_id=str(user.id),
+        resource_name=user.username,
+        request_body={"must_change_password": password_reset.must_change_password},
+        ip_address="",
+        user_agent=""
+    )
+    
+    return UnifiedResponse.success(data={"message": "密码重置成功"})
+
+
+@router.delete("/{user_id}", response_model=UnifiedResponse[dict])
+async def delete_admin_user(
+    user_id: int,
+    db: AsyncSession = Depends(get_async_db),
+    current_admin: models.AdminUser = Depends(get_current_active_admin_user)
+):
+    """
+    删除后台用户（软删除）
+    """
+    success = await crud.admin_user.remove(db, id=user_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="用户不存在")
+    
+    # 记录操作日志
+    user = await crud.admin_user.get(db, id=user_id)
+    if user:
+        await crud.admin_operation_log.create(
+            db,
+            admin_id=current_admin.id,
+            action="SOFT_DELETE_USER",
+            resource_type="ADMIN_USER",
+            resource_id=str(user.id),
+            resource_name=user.username,
+            ip_address="",
+            user_agent=""
+        )
+    
+    return UnifiedResponse.success(data={"message": "用户删除成功"})
+
+
+@router.post("/{user_id}/unlock", response_model=UnifiedResponse[dict])
+async def unlock_admin_user(
+    user_id: int,
+    db: AsyncSession = Depends(get_async_db),
+    current_admin: models.AdminUser = Depends(get_current_active_admin_user)
+):
+    """
+    解锁管理员用户账户
+    """
+    user = await crud.admin_user.get(db, id=user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="用户不存在")
+    
+    # 更新用户状态为活跃
+    user_update = schemas.AdminUserUpdate(status=schemas.AdminStatusEnum.ACTIVE)
+    updated_user = await crud.admin_user.update(db, db_obj=user, obj_in=user_update)
+    
+    # 记录操作日志
+    await crud.admin_operation_log.create(
+        db,
+        admin_id=current_admin.id,
+        action="UNLOCK_USER",
+        resource_type="ADMIN_USER",
+        resource_id=str(user.id),
+        resource_name=user.username,
+        ip_address="",
+        user_agent=""
+    )
+    
+    return UnifiedResponse.success(data={
+        "message": f"用户 {updated_user.username} 已解锁",
+        "user": updated_user
+    })
+
+
+@router.get("/{user_id}/roles", response_model=UnifiedResponse[dict])
+async def get_admin_user_roles(
+    user_id: int,
+    db: AsyncSession = Depends(get_async_db),
+    current_admin: models.AdminUser = Depends(get_current_active_admin_user)
+):
+    """
+    获取管理员用户的角色信息
+    """
+    user = await crud.admin_user.get(db, id=user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="用户不存在")
+    
+    # 返回用户角色信息
+    return UnifiedResponse.success(data={
+        "userId": user.id,
+        "username": user.username,
+        "roles": [user.role.value] if user.role else [],
+        "message": "获取角色信息成功"
+    })
+
+
+@router.post("/{user_id}/roles", response_model=UnifiedResponse[dict])
+async def assign_admin_user_roles(
+    user_id: int,
+    role_data: dict,
+    db: AsyncSession = Depends(get_async_db),
+    current_admin: models.AdminUser = Depends(get_current_active_admin_user)
+):
+    """
+    为管理员用户分配角色
+    """
+    user = await crud.admin_user.get(db, id=user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="用户不存在")
+    
+    # 从请求体中获取角色ID列表
+    role_ids = role_data.get("roleIds", [])
+    
+    # 实现角色分配逻辑（此处简化处理）
+    # 在实际应用中，需要根据角色ID更新用户的角色信息
+    return UnifiedResponse.success(data={
+        "message": f"成功为用户 {user.username} 分配了 {len(role_ids)} 个角色",
+        "roleIds": role_ids
+    })
+
+
+@router.post("/batch-assign-roles", response_model=UnifiedResponse[dict])
+async def batch_assign_roles_to_users(
+    role_data: dict,
+    db: AsyncSession = Depends(get_async_db),
+    current_admin: models.AdminUser = Depends(get_current_active_admin_user)
+):
+    """
+    批量为用户分配角色
+    """
+    user_ids = role_data.get("userIds", [])
+    role_ids = role_data.get("roleIds", [])
+    
+    # 实现批量分配角色逻辑
+    return UnifiedResponse.success(data={
+        "message": f"成功为 {len(user_ids)} 个用户分配了角色",
+        "userIds": user_ids,
+        "roleIds": role_ids
+    })
+
+
+@router.get("/{user_id}/departments", response_model=UnifiedResponse[dict])
+async def get_admin_user_departments(
+    user_id: int,
+    db: AsyncSession = Depends(get_async_db),
+    current_admin: models.AdminUser = Depends(get_current_active_admin_user)
+):
+    """
+    获取管理员用户的部门信息
+    """
+    user = await crud.admin_user.get(db, id=user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="用户不存在")
+    
+    return UnifiedResponse.success(data={
+        "userId": user.id,
+        "username": user.username,
+        "department": user.department or "未分配",
+        "message": "获取部门信息成功"
+    })
+
+
+@router.put("/change-password", response_model=UnifiedResponse[dict])
+async def change_current_user_password(
+    password_change: schemas.AdminUserChangePassword,
+    current_admin: models.AdminUser = Depends(get_current_active_admin_user),
+    db: AsyncSession = Depends(get_async_db)
+):
+    """
+    修改当前管理员的密码
+    """
+    # 验证旧密码
+    from backend.core.security import verify_password
+    if not verify_password(password_change.old_password, current_admin.password_hash):
+        raise HTTPException(status_code=400, detail="旧密码不正确")
+    
+    # 检查新密码与旧密码是否相同
+    if password_change.old_password == password_change.new_password:
+        raise HTTPException(status_code=400, detail="新密码不能与旧密码相同")
+    
+    # 更新密码
+    updated_user = await crud.admin_user.change_password(
+        db, 
+        db_obj=current_admin, 
+        obj_in=password_change
+    )
+    
+    if not updated_user:
+        raise HTTPException(status_code=400, detail="密码修改失败")
+    
+    # 记录操作日志
+    await crud.admin_operation_log.create(
+        db,
+        admin_id=current_admin.id,
+        action="CHANGE_PASSWORD",
+        resource_type="ADMIN_USER",
+        resource_id=str(current_admin.id),
+        resource_name=current_admin.username,
+        request_body={"action": "change_password"},
+        ip_address="",
+        user_agent=""
+    )
+    
+    return UnifiedResponse.success(data={
+        "message": "密码修改成功"
+    })

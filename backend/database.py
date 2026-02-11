@@ -4,10 +4,20 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import os
+from pathlib import Path
 
-# 数据库URL配置
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./test.db")
+# 项目根目录 - 从当前文件向上一级
+PROJECT_ROOT = Path(__file__).parent.parent
+DATABASE_PATH = PROJECT_ROOT / "sport_lottery.db"
 
+# 数据库URL配置 - 优先使用环境变量，否则使用项目根目录下的数据库文件
+# 在Windows上需要将路径分隔符转换为正斜杠
+if os.name == 'nt':  # Windows
+    database_url_path = str(DATABASE_PATH.absolute()).replace('\\', '/')
+else:
+    database_url_path = str(DATABASE_PATH)
+
+DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{database_url_path}")
 # 创建数据库引擎
 engine = create_engine(
     DATABASE_URL,

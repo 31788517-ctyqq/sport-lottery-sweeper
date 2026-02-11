@@ -21,6 +21,8 @@ class Ip89Fetcher:
     def __init__(self):
         self.base_url = "https://www.89ip.cn"
         self.session = requests.Session()
+        # 禁用系统代理，避免被环境变量污染
+        self.session.trust_env = False
         # 使用更真实的请求头
         self.session.headers.update({
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36',
@@ -48,10 +50,22 @@ class Ip89Fetcher:
             # 添加延时以模拟人类行为
             time.sleep(random.uniform(1, 3))
             
-            response = self.session.get(url, timeout=15)
+            response = self.session.get(
+                url,
+                timeout=15,
+                proxies={"http": None, "https": None}
+            )
             response.encoding = 'utf-8'
             
             if response.status_code == 200:
+                # 记录页面片段，便于排查结构变化
+                try:
+                    logger.info(f"页面长度: {len(response.text)}")
+                    logger.info(f"页面片段(前500): {response.text[:500]}")
+                    with open("debug/89ip_sample.html", "w", encoding="utf-8") as f:
+                        f.write(response.text)
+                except Exception as e:
+                    logger.warning(f"保存页面样本失败: {e}")
                 soup = BeautifulSoup(response.text, 'html.parser')
                 return soup
             else:
@@ -63,7 +77,11 @@ class Ip89Fetcher:
                 })
                 
                 # 再次尝试请求
-                response = self.session.get(url, timeout=15)
+                response = self.session.get(
+                    url,
+                    timeout=15,
+                    proxies={"http": None, "https": None}
+                )
                 if response.status_code == 200:
                     soup = BeautifulSoup(response.text, 'html.parser')
                     return soup
@@ -86,18 +104,18 @@ class Ip89Fetcher:
         """
         try:
             # 使用公共代理获取页面
-            proxies = {
-                'http': 'http://127.0.0.1:8080',  # 可以替换为真实可用的代理
-                'https': 'http://127.0.0.1:8080'
-            }
-            
             # 使用不同的请求头
             temp_headers = self.session.headers.copy()
             temp_headers.update({
                 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36'
             })
             
-            response = requests.get(url, headers=temp_headers, timeout=15, proxies=None)  # 暂时不用代理测试
+            response = requests.get(
+                url,
+                headers=temp_headers,
+                timeout=15,
+                proxies={"http": None, "https": None}
+            )
             if response.status_code == 200:
                 soup = BeautifulSoup(response.text, 'html.parser')
                 return soup

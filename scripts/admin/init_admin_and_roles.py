@@ -15,7 +15,9 @@ sys.path.insert(0, project_root)
 
 # 现在可以导入backend模块
 from backend.core.database import SessionLocal
-from backend.models.user import User, Role, Permission, user_roles, UserRoleEnum, UserStatusEnum, UserTypeEnum
+from backend.models.user import User, UserRole, UserStatus, UserType
+from backend.models.role import Role
+from backend.models.permission import Permission
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
 from backend.config import settings

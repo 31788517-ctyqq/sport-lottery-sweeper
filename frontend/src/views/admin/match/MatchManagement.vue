@@ -329,22 +329,10 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import axios from 'axios'
-import { 
-  Refresh, 
-  Plus, 
-  Search, 
-  Football, 
-  Calendar, 
-  VideoPlay, 
-  Finished, 
-  Warning, 
-  Trophy, 
-  WarningFilled, 
-  CircleCheck 
-} from '@element-plus/icons-vue'
+import request from '@/utils/request'
+import { Search, Edit, Delete, Plus, Refresh, Download, Upload, InfoFilled, Calendar, Clock, Flag } from '@element-plus/icons-vue'
 
 // 响应式数据
 const loading = ref(false)
@@ -405,7 +393,7 @@ const filteredMatches = computed(() => {
 const loadMatches = async () => {
   loading.value = true
   try {
-    const response = await axios.get('/api/admin/v1/matches', {
+    const response = await request.get('/api/admin/v1/matches', {
       params: {
         page: pagination.currentPage,
         size: pagination.pageSize
@@ -428,7 +416,7 @@ const loadMatches = async () => {
 
 const loadLeagues = async () => {
   try {
-    const response = await axios.get('/api/admin/v1/matches/leagues')
+    const response = await request.get('/api/admin/v1/matches/leagues')
     
     if (response.data.success) {
       leagues.value = response.data.data
@@ -443,7 +431,7 @@ const loadLeagues = async () => {
 
 const loadStats = async () => {
   try {
-    const response = await axios.get('/api/admin/v1/matches/stats')
+    const response = await request.get('/api/admin/v1/matches/stats')
     
     if (response.data.success) {
       Object.assign(matchStats, response.data.data)

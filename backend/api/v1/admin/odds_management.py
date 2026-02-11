@@ -7,11 +7,11 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime, timedelta
 import json
 
-from ....api.deps import get_db
+from ....database_async import get_async_db
 from ....models.odds import Odds, Bookmaker
 from ....models.match import Match
 # from ....models.bookmaker import Bookmaker  # 此模块不存在
-from ....models.odds_provider import OddsProvider
+from ....models.odds import OddsProvider
 from ...deps import get_current_admin
 
 
@@ -24,14 +24,6 @@ class UnifiedResponse(BaseModel):
     message: Optional[str] = None
     error: Optional[Dict[str, Any]] = None
 
-    @classmethod
-    def success(cls, data: Any, message: str = "操作成功"):
-        return cls(success=True, data=data, message=message)
-
-    @classmethod
-    def error(cls, message: str, error_code: Optional[str] = None):
-        return cls(success=False, message=message, error={"code": error_code, "message": message})
-
 router = APIRouter(prefix="/odds", tags=["admin-odds"])
 
 
@@ -42,7 +34,7 @@ async def get_odds_monitoring(
     league_id: Optional[int] = Query(None, description="联赛ID筛选"),
     date_from: Optional[str] = Query(None, description="开始日期(YYYY-MM-DD)"),
     date_to: Optional[str] = Query(None, description="结束日期(YYYY-MM-DD)"),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """
     获取赔率监控数据
@@ -55,10 +47,10 @@ async def get_odds_monitoring(
         if league_id:
             conditions.append(Match.league_id == league_id)
         if date_from:
-            from_date = datetime.strptime(date_from, "%Y-%M-%D").date()
+            from_date = datetime.strptime(date_from, "%Y-%m-%d").date()
             conditions.append(Match.match_date >= from_date)
         if date_to:
-            to_date = datetime.strptime(date_to, "%Y-%M-%D").date()
+            to_date = datetime.strptime(date_to, "%Y-%m-%d").date()
             conditions.append(Match.match_date <= to_date)
         
         # 查询最新的赔率记录
@@ -132,13 +124,17 @@ async def get_odds_monitoring(
         total_result = await db.execute(count_query)
         total = total_result.scalar()
         
-        return UnifiedResponse.success({
+        return UnifiedResponse(
+            success=True,
+            data={
             "items": formatted_odds,
             "total": total,
             "page": page,
             "size": size,
             "pages": (total + size - 1) // size
-        }, "获取赔率监控数据成功")
+        },
+            message="获取赔率监控数据成功"
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -148,7 +144,7 @@ async def get_odds_history(
     match_id: int = Query(..., description="比赛ID"),
     time_from: Optional[str] = Query(None, description="开始时间(YYYY-MM-DD HH:MM:SS)"),
     time_to: Optional[str] = Query(None, description="结束时间(YYYY-MM-DD HH:MM:SS)"),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """
     获取赔率历史数据
@@ -185,10 +181,14 @@ async def get_odds_history(
                 "change": change
             })
         
-        return UnifiedResponse.success({
+        return UnifiedResponse(
+            success=True,
+            data={
             "items": formatted_history,
             "matchId": match_id
-        }, "获取赔率历史数据成功")
+        },
+            message="获取赔率历史数据成功"
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -199,7 +199,7 @@ async def get_anomaly_odds(
     size: int = Query(20, ge=1, le=100, description="每页数量"),
     anomaly_type: Optional[str] = Query(None, description="异常类型"),
     severity: Optional[str] = Query(None, description="严重程度"),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """
     获取异常赔率数据
@@ -241,20 +241,24 @@ async def get_anomaly_odds(
         total_result = await db.execute(count_query)
         total = total_result.scalar()
         
-        return UnifiedResponse.success({
+        return UnifiedResponse(
+            success=True,
+            data={
             "items": formatted_anomalies,
             "total": total,
             "page": page,
             "size": size,
             "pages": (total + size - 1) // size
-        }, "获取异常赔率数据成功")
+        },
+            message="获取异常赔率数据成功"
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/stats", response_model=UnifiedResponse)
 async def get_odds_stats(
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """
     获取赔率统计数据
@@ -299,7 +303,11 @@ async def get_odds_stats(
             "changesToday": changes_today
         }
         
-        return UnifiedResponse.success(stats, "获取统计数据成功")
+        return UnifiedResponse(
+            success=True,
+            data=stats,
+            message="获取统计数据成功"
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -309,17 +317,21 @@ async def set_odds_alert(
     match_id: int = Query(..., description="比赛ID"),
     bookmaker_id: int = Query(..., description="庄家ID"),
     threshold: float = Query(..., description="阈值"),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """
     设置赔率提醒
     """
     try:
         # 这里只是模拟设置提醒，实际实现可能需要通知服务
-        return UnifiedResponse.success({
-            "match_id": match_id,
-            "bookmaker_id": bookmaker_id,
-            "threshold": threshold
-        }, f"已为比赛 {match_id} 设置赔率提醒，阈值 {threshold}")
+        return UnifiedResponse(
+            success=True,
+            data={
+                "match_id": match_id,
+                "bookmaker_id": bookmaker_id,
+                "threshold": threshold
+            },
+            message=f"?????? {match_id} ??????????????{threshold}"
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

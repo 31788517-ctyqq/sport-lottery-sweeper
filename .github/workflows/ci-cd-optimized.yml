@@ -136,7 +136,60 @@ jobs:
         npm audit --audit-level moderate || true
 
   # ============================================================================
-  # 2. 单元测试（前后端并行执行）
+  # 2. API扫描（质量门，检测401/422/404/403/409问题）
+  # ============================================================================
+  api-scan:
+    name: API Security & Quality Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [python-quality]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Cache Python dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('backend/requirements-dev.txt', 'backend/requirements.txt') }}
+    
+    - name: Install Python dependencies
+      run: |
+        cd backend
+        pip install -r requirements-dev.txt
+        pip install -r requirements.txt
+    
+    - name: Run API Scanner
+      run: |
+        cd backend
+        echo "🔍 运行API安全与质量扫描器..."
+        python -m scanner.cli scan \
+          --config-file ../scanner_config.yaml \
+          --api-dir api/v1 \
+          --output-dir ../reports \
+          --generate-tests \
+          --test-output-dir ../generated_tests
+    
+    - name: Upload Scan Report
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: api-scan-report
+        path: |
+          reports/
+          generated_tests/
+        retention-days: 30
+
+  # ============================================================================
+  # 3. 单元测试（前后端并行执行）
   # ============================================================================
   frontend-unit-tests:
     name: Frontend Unit Tests
@@ -187,7 +240,7 @@ jobs:
     name: Backend Unit Tests
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    needs: [python-quality]
+    needs: [python-quality, api-scan]
     
     services:
       postgres:
@@ -281,7 +334,7 @@ jobs:
         retention-days: 7
 
   # ============================================================================
-  # 3. 集成测试（依赖单元测试）
+  # 4. 集成测试（依赖单元测试）
   # ============================================================================
   backend-integration-tests:
     name: Backend Integration Tests
@@ -363,7 +416,7 @@ jobs:
         retention-days: 7
 
   # ============================================================================
-  # 4. 端到端测试（依赖前后端单元测试）
+  # 5. 端到端测试（依赖前后端单元测试）
   # ============================================================================
   e2e-tests:
     name: E2E Tests
@@ -434,7 +487,7 @@ jobs:
         retention-days: 7
 
   # ============================================================================
-  # 5. 测试汇总和报告
+  # 6. 测试汇总和报告
   # ============================================================================
   test-summary:
     name: Test Summary
@@ -485,7 +538,7 @@ jobs:
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
   # ============================================================================
-  # 6. 构建和部署（仅在main/develop分支且测试通过时执行）
+  # 7. 构建和部署（仅在main/develop分支且测试通过时执行）
   # ============================================================================
   build-images:
     name: Build Docker Images

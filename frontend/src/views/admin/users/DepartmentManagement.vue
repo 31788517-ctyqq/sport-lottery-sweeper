@@ -167,8 +167,8 @@
                 
                 <el-form-item label="状态">
                   <el-radio-group v-model="selectedDept.status">
-                    <el-radio label="active">正常</el-radio>
-                    <el-radio label="inactive">停用</el-radio>
+                    <el-radio value="active">正常</el-radio>
+                    <el-radio value="inactive">停用</el-radio>
                   </el-radio-group>
                 </el-form-item>
               </el-form>
@@ -509,9 +509,10 @@ const handleRemoveMember = async (user) => {
       }
     )
     
-    // TODO: 调用API将用户从部门移除
+    // 调用API将用户从部门移除
+    await removeUserFromDepartment(selectedDept.value.id, user.id)
     ElMessage.success('移除成功')
-    loadUsers()
+    loadUsers()  // 重新加载用户数据
   } catch (error) {
     if (error !== 'cancel') {
       console.error('移除失败:', error)

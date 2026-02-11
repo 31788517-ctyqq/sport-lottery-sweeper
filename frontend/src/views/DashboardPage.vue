@@ -42,7 +42,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
 import LoginForm from '@/components/LoginForm.vue'
 import DashboardStats from '@/components/DashboardStats.vue'

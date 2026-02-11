@@ -6,7 +6,7 @@ from typing import Optional
 import logging
 from fastapi import Depends
 
-from ...core.config import get_settings
+from backend.core.config import get_settings
 from ...app.cache.cache_manager import HybridCache, init_cache
 
 logger = logging.getLogger(__name__)

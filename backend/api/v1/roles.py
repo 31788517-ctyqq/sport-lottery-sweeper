@@ -37,6 +37,36 @@ async def get_roles(
     }
 
 
+@router.get("/options", response_model=List[dict])
+async def get_role_options(
+    db: AsyncSession = Depends(get_async_db)
+):
+    """
+    获取角色选项（扁平结构），用于下拉选择
+    """
+    roles, _ = await crud_role.get_multi_with_filter(db)
+    options = [{"id": r.id, "label": r.name, "value": r.id} for r in roles]
+    return options
+
+
+@router.get("/stats", response_model=dict)
+async def get_role_stats(
+    db: AsyncSession = Depends(get_async_db)
+):
+    """
+    获取角色统计信息
+    """
+    roles, total = await crud_role.get_multi_with_filter(db)
+
+    stats = {
+        "total_roles": total,
+        "active_roles": sum(1 for r in roles if r.status),
+        "inactive_roles": sum(1 for r in roles if not r.status)
+    }
+
+    return stats
+
+
 @router.get("/{id}", response_model=RoleWithPermissions)
 async def get_role(
     *,
@@ -132,31 +162,38 @@ async def update_role_status(
     return {"msg": f"Role status updated to {status}"}
 
 
-@router.get("/options", response_model=List[dict])
-async def get_role_options(
+@router.get("/{id}/permissions", response_model=List[int])
+async def get_role_permissions(
+    *,
+    id: int,
     db: AsyncSession = Depends(get_async_db)
 ):
     """
-    获取角色选项（扁平结构），用于下拉选择
+    获取角色的权限列表
     """
-    roles, _ = await crud_role.get_multi_with_filter(db)
-    options = [{"id": r.id, "label": r.name, "value": r.id} for r in roles]
-    return options
+    role = await crud_role.get(db, id=id)
+    if not role:
+        raise HTTPException(status_code=404, detail="Role not found")
+    
+    # 返回角色拥有的权限ID列表
+    permission_ids = [perm.id for perm in role.permissions] if role.permissions else []
+    return permission_ids
 
 
-@router.get("/stats", response_model=dict)
-async def get_role_stats(
+@router.post("/{id}/permissions")
+async def assign_role_permissions(
+    *,
+    id: int,
+    permission_ids: List[int],
     db: AsyncSession = Depends(get_async_db)
 ):
     """
-    获取角色统计信息
+    为角色分配权限
     """
-    roles, total = await crud_role.get_multi_with_filter(db)
-
-    stats = {
-        "total_roles": total,
-        "active_roles": sum(1 for r in roles if r.status == "active"),
-        "inactive_roles": sum(1 for r in roles if r.status != "active")
-    }
-
-    return stats
+    role = await crud_role.get(db, id=id)
+    if not role:
+        raise HTTPException(status_code=404, detail="Role not found")
+    
+    # 更新角色权限
+    updated_role = await crud_role.assign_permissions(db, role=role, permission_ids=permission_ids)
+    return {"msg": "Permissions assigned successfully", "role_id": id, "permission_ids": permission_ids}

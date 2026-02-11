@@ -4,7 +4,7 @@
 """
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import and_
+from sqlalchemy import and_, func
 from typing import List, Optional
 import logging
 from datetime import datetime, timedelta
@@ -289,7 +289,7 @@ async def get_top_issues(
         source_failures_query = db.query(
             CrawlerTaskLog.source_id,
             CrawlerConfig.name.label("source_name"),
-            db.func.count(CrawlerTaskLog.id).label("failure_count")
+            func.count(CrawlerTaskLog.id).label("failure_count")
         ).join(
             CrawlerConfig, CrawlerTaskLog.source_id == CrawlerConfig.id
         ).filter(
@@ -297,7 +297,7 @@ async def get_top_issues(
         ).group_by(
             CrawlerTaskLog.source_id, CrawlerConfig.name
         ).order_by(
-            db.func.count(CrawlerTaskLog.id).desc()
+            func.count(CrawlerTaskLog.id).desc()
         ).limit(limit)
         
         top_failing_sources = [
@@ -312,13 +312,13 @@ async def get_top_issues(
         # 获取最常见的错误消息
         common_errors_query = db.query(
             CrawlerTaskLog.error_message,
-            db.func.count(CrawlerTaskLog.id).label("error_count")
+            func.count(CrawlerTaskLog.id).label("error_count")
         ).filter(
             CrawlerTaskLog.error_message.isnot(None)
         ).group_by(
             CrawlerTaskLog.error_message
         ).order_by(
-            db.func.count(CrawlerTaskLog.id).desc()
+            func.count(CrawlerTaskLog.id).desc()
         ).limit(limit)
         
         common_errors = [
@@ -334,13 +334,13 @@ async def get_top_issues(
             CrawlerAlertRecord.rule_id,
             CrawlerAlertRule.name.label("rule_name"),
             CrawlerAlertRule.metric_type,
-            db.func.count(CrawlerAlertRecord.id).label("alert_count")
+            func.count(CrawlerAlertRecord.id).label("alert_count")
         ).join(
             CrawlerAlertRule, CrawlerAlertRecord.rule_id == CrawlerAlertRule.id
         ).group_by(
             CrawlerAlertRecord.rule_id, CrawlerAlertRule.name, CrawlerAlertRule.metric_type
         ).order_by(
-            db.func.count(CrawlerAlertRecord.id).desc()
+            func.count(CrawlerAlertRecord.id).desc()
         ).limit(limit)
         
         top_alert_rules = [

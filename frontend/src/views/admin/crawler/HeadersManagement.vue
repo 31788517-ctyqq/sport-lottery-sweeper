@@ -31,7 +31,35 @@
         </el-form-item>
       </el-form>
 
-      <el-table :data="headersList" style="width: 100%" v-loading="loading">
+      <div class="stats-row">
+        <el-card class="stat-card">
+          <div class="stat-title">总数</div>
+          <div class="stat-value">{{ stats.total }}</div>
+        </el-card>
+        <el-card class="stat-card">
+          <div class="stat-title">启用</div>
+          <div class="stat-value">{{ stats.enabled }}</div>
+        </el-card>
+        <el-card class="stat-card">
+          <div class="stat-title">禁用</div>
+          <div class="stat-value">{{ stats.disabled }}</div>
+        </el-card>
+        <el-card class="stat-card">
+          <div class="stat-title">成功率</div>
+          <div class="stat-value">{{ stats.successRate }}%</div>
+        </el-card>
+      </div>
+
+      <div class="batch-actions">
+        <el-button size="small" type="primary" :disabled="selectedIds.length === 0" @click="batchEnable">批量启用</el-button>
+        <el-button size="small" type="warning" :disabled="selectedIds.length === 0" @click="batchDisable">批量禁用</el-button>
+        <el-button size="small" :disabled="selectedIds.length === 0" @click="batchTest">批量测试</el-button>
+        <el-button size="small" type="danger" :disabled="selectedIds.length === 0" @click="batchRemove">批量删除</el-button>
+        <el-button size="small" :disabled="selectedIds.length === 0" @click="openBindDialog()">批量绑定</el-button>
+      </div>
+
+      <el-table :data="headersList" style="width: 100%" v-loading="loading" @selection-change="onSelectionChange">
+        <el-table-column type="selection" width="48" />
         <el-table-column prop="domain" label="目标域名" width="200" />
         <el-table-column prop="name" label="请求头名称" width="150" />
         <el-table-column prop="value" label="请求头值" width="250" show-tooltip-when-overflow />
@@ -80,6 +108,7 @@
             >
               {{ scope.row.status === 'enabled' ? '禁用' : '启用' }}
             </el-button>
+            <el-button size="small" @click="openBindDialog(scope.row)">绑定</el-button>
             <el-button size="small" @click="duplicateHeader(scope.row)">复制</el-button>
           </template>
         </el-table-column>
@@ -178,20 +207,94 @@
         <el-button type="primary" @click="doBatchImport">导入</el-button>
       </template>
     </el-dialog>
+
+    <!-- 绑定对话框 -->
+    <el-dialog title="绑定请求头" v-model="bindDialogVisible" width="520px">
+      <el-form :model="bindForm" label-width="110px">
+        <el-form-item label="数据源ID">
+          <el-input v-model="bindForm.dataSourceId" placeholder="可选，绑定到数据源" />
+        </el-form-item>
+        <el-form-item label="任务ID">
+          <el-input v-model="bindForm.taskId" placeholder="可选，绑定到任务" />
+        </el-form-item>
+        <el-form-item label="优先级覆盖">
+          <el-select v-model="bindForm.priorityOverride" placeholder="可选">
+            <el-option label="高" :value="3" />
+            <el-option label="中" :value="2" />
+            <el-option label="低" :value="1" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="启用">
+          <el-switch v-model="bindForm.enabled" />
+        </el-form-item>
+      </el-form>
+      <div class="binding-preview">
+        <div class="binding-title">当前绑定预览</div>
+        <div class="binding-section">
+          <div class="binding-section-title">数据源绑定</div>
+          <div v-if="bindingInfo.dataSourceBindings.length === 0" class="binding-empty">暂无</div>
+          <div v-else class="binding-list">
+            <div v-for="item in bindingInfo.dataSourceBindings" :key="`ds-${item.headerId}`">
+              {{ item.header?.name }} ({{ item.header?.domain }})
+            </div>
+          </div>
+        </div>
+        <div class="binding-section">
+          <div class="binding-section-title">任务绑定</div>
+          <div v-if="bindingInfo.taskBindings.length === 0" class="binding-empty">暂无</div>
+          <div v-else class="binding-list">
+            <div v-for="item in bindingInfo.taskBindings" :key="`task-${item.headerId}`">
+              {{ item.header?.name }} ({{ item.header?.domain }})
+            </div>
+          </div>
+        </div>
+      </div>
+      <template #footer>
+        <el-button @click="bindDialogVisible = false">取消</el-button>
+        <el-button @click="loadBindings()">加载绑定</el-button>
+        <el-button type="primary" @click="confirmBind">绑定</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+// AI_WORKING: coder1 @2026-02-04T18:46:06 - 修复导入错误：将getHeaderDetail改为getHeaderById，getHeadersStats改为getHeaderStats，batchImportHeaders改为importHeaders
+import {
+  getHeadersList as getHeadersListApi,
+  getHeaderById,
+  createHeader,
+  updateHeader,
+  deleteHeader as deleteHeaderApi,
+  batchDeleteHeaders,
+  testHeader,
+  batchTestHeaders,
+  getHeaderStats,
+  exportHeaders,
+  importHeaders,
+  bindHeadersToDataSource,
+  bindHeadersToTask,
+  getHeaderBindings
+} from '@/api/headers'
+// AI_DONE: coder1 @2026-02-04T18:46:06
 
 const loading = ref(false)
 const dialogVisible = ref(false)
 const batchImportVisible = ref(false)
+const bindDialogVisible = ref(false)
 const dialogTitle = ref('')
 const currentPage = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
+const selectedIds = ref([])
+const stats = reactive({
+  total: 0,
+  enabled: 0,
+  disabled: 0,
+  successRate: 100
+})
 
 // 查询参数
 const queryParams = reactive({
@@ -220,6 +323,19 @@ const batchImportForm = reactive({
   content: ''
 })
 
+const bindForm = reactive({
+  dataSourceId: '',
+  taskId: '',
+  priorityOverride: null,
+  enabled: true,
+  headerIds: []
+})
+
+const bindingInfo = reactive({
+  dataSourceBindings: [],
+  taskBindings: []
+})
+
 // 表格数据
 const headersList = ref([])
 
@@ -237,38 +353,46 @@ const headerRules = {
 }
 
 // 获取请求头列表
-const getHeadersList = () => {
+const getHeadersList = async () => {
   loading.value = true
-  
-  // 模拟获取数据
-  setTimeout(() => {
-    // 根据查询条件过滤数据
-    let data = mockHeadersData
+  try {
+    const res = await getHeadersListApi({
+      page: currentPage.value,
+      size: pageSize.value,
+      ...queryParams
+    })
     
-    if (queryParams.domain) {
-      data = data.filter(item => item.domain.toLowerCase().includes(queryParams.domain.toLowerCase()))
-    }
-    
-    if (queryParams.status) {
-      data = data.filter(item => item.status === queryParams.status)
-    }
-    
-    // 计算总数
-    total.value = data.length
-    
-    // 计算当前页数据
-    const start = (currentPage.value - 1) * pageSize.value
-    const end = start + pageSize.value
-    headersList.value = data.slice(start, end)
-    
+    // 假设API返回格式为 { data: { items: [], total: number } }
+    const data = res.data?.items || res.items || []
+    headersList.value = data
+    total.value = res.data?.total || res.total || 0
+  } catch (error) {
+    ElMessage.error('加载请求头列表失败')
+    console.error('Error loading headers list:', error)
+  } finally {
     loading.value = false
-  }, 500)
+  }
+}
+
+const loadStats = async () => {
+  try {
+    const res = await getHeaderStats()
+    const data = res.data || {}
+    stats.total = data.total || 0
+    stats.enabled = data.enabled || 0
+    stats.disabled = data.disabled || 0
+    const total = data.total || 0
+    stats.successRate = total > 0 ? Math.round((data.enabled / total) * 100) : 100
+  } catch (error) {
+    console.error('Error loading header stats:', error)
+  }
 }
 
 // 搜索
 const onQuery = () => {
   currentPage.value = 1
   getHeadersList()
+  loadStats()
 }
 
 // 重置查询
@@ -277,6 +401,122 @@ const resetQuery = () => {
   queryParams.status = ''
   currentPage.value = 1
   getHeadersList()
+  loadStats()
+}
+
+const onSelectionChange = (rows) => {
+  selectedIds.value = rows.map(row => row.id)
+}
+
+const batchEnable = async () => {
+  try {
+    await Promise.all(selectedIds.value.map(id => updateHeader(id, { status: 'enabled' })))
+    ElMessage.success('批量启用成功')
+    getHeadersList()
+    loadStats()
+    loadStats()
+  } catch (error) {
+    ElMessage.error('批量启用失败')
+  }
+}
+
+const batchDisable = async () => {
+  try {
+    await Promise.all(selectedIds.value.map(id => updateHeader(id, { status: 'disabled' })))
+    ElMessage.success('批量禁用成功')
+    getHeadersList()
+    loadStats()
+  } catch (error) {
+    ElMessage.error('批量禁用失败')
+  }
+}
+
+const batchTest = async () => {
+  try {
+    await batchTestHeaders({ ids: selectedIds.value })
+    ElMessage.success('批量测试已提交')
+    loadStats()
+  } catch (error) {
+    ElMessage.error('批量测试失败')
+  }
+}
+
+const batchRemove = async () => {
+  try {
+    await ElMessageBox.confirm('确定删除选中的请求头吗？', '确认删除', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+    await batchDeleteHeaders({ ids: selectedIds.value })
+    ElMessage.success('批量删除成功')
+    getHeadersList()
+    loadStats()
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('批量删除失败')
+    }
+  }
+}
+
+const openBindDialog = (row) => {
+  if (row) {
+    bindForm.headerIds = [row.id]
+  } else {
+    bindForm.headerIds = [...selectedIds.value]
+  }
+  bindForm.dataSourceId = ''
+  bindForm.taskId = ''
+  bindForm.priorityOverride = null
+  bindForm.enabled = true
+  bindDialogVisible.value = true
+}
+
+const loadBindings = async () => {
+  try {
+    bindingInfo.dataSourceBindings = []
+    bindingInfo.taskBindings = []
+    if (bindForm.dataSourceId) {
+      const res = await getHeaderBindings({ data_source_id: Number(bindForm.dataSourceId) })
+      bindingInfo.dataSourceBindings = res.data?.dataSourceBindings || []
+    }
+    if (bindForm.taskId) {
+      const res = await getHeaderBindings({ task_id: Number(bindForm.taskId) })
+      bindingInfo.taskBindings = res.data?.taskBindings || []
+    }
+  } catch (error) {
+    console.error('Error loading bindings:', error)
+  }
+}
+
+const confirmBind = async () => {
+  try {
+    if (!bindForm.dataSourceId && !bindForm.taskId) {
+      ElMessage.warning('请填写数据源ID或任务ID')
+      return
+    }
+    if (bindForm.dataSourceId) {
+      await bindHeadersToDataSource({
+        dataSourceId: Number(bindForm.dataSourceId),
+        headerIds: bindForm.headerIds,
+        enabled: bindForm.enabled,
+        priorityOverride: bindForm.priorityOverride
+      })
+    }
+    if (bindForm.taskId) {
+      await bindHeadersToTask({
+        taskId: Number(bindForm.taskId),
+        headerIds: bindForm.headerIds,
+        enabled: bindForm.enabled,
+        priorityOverride: bindForm.priorityOverride
+      })
+    }
+    ElMessage.success('绑定成功')
+    loadBindings()
+    bindDialogVisible.value = false
+  } catch (error) {
+    ElMessage.error('绑定失败')
+  }
 }
 
 // 添加请求头
@@ -315,12 +555,25 @@ const duplicateHeader = (row) => {
 }
 
 // 保存请求头
-const saveHeader = () => {
-  // 这里应该是实际的保存逻辑
-  console.log('保存请求头:', currentHeader)
-  dialogVisible.value = false
-  ElMessage.success('保存成功')
-  getHeadersList()
+const saveHeader = async () => {
+  try {
+    if (currentHeader.id) {
+      // 更新现有请求头
+      await updateHeader(currentHeader.id, currentHeader)
+      ElMessage.success('更新成功')
+    } else {
+      // 创建新请求头
+      await createHeader(currentHeader)
+      ElMessage.success('创建成功')
+    }
+    
+    dialogVisible.value = false
+    getHeadersList()
+    loadStats()
+  } catch (error) {
+    ElMessage.error(currentHeader.id ? '更新失败' : '创建失败')
+    console.error('Error saving header:', error)
+  }
 }
 
 // 删除请求头
@@ -336,22 +589,31 @@ const deleteHeader = async (row) => {
       }
     )
     
-    // 实际删除逻辑
-    console.log('删除请求头:', row)
+    await deleteHeaderApi(row.id)
     ElMessage.success('删除成功')
     getHeadersList()
+    loadStats()
   } catch (error) {
     if (error !== 'cancel') {
       ElMessage.error('删除失败')
+      console.error('Error deleting header:', error)
     }
   }
 }
 
 // 切换状态
-const toggleStatus = (row) => {
-  row.status = row.status === 'enabled' ? 'disabled' : 'enabled'
-  const statusText = row.status === 'enabled' ? '启用' : '禁用'
-  ElMessage.success(`请求头 ${statusText}成功`)
+const toggleStatus = async (row) => {
+  try {
+    const newStatus = row.status === 'enabled' ? 'disabled' : 'enabled'
+    await updateHeader(row.id, { status: newStatus })
+    row.status = newStatus
+    const statusText = row.status === 'enabled' ? '启用' : '禁用'
+    ElMessage.success(`请求头 ${statusText}成功`)
+    loadStats()
+  } catch (error) {
+    ElMessage.error('切换状态失败')
+    console.error('Error toggling header status:', error)
+  }
 }
 
 // 批量导入
@@ -361,28 +623,67 @@ const batchImport = () => {
 }
 
 // 执行批量导入
-const doBatchImport = () => {
-  // 模拟导入过程
-  console.log('执行批量导入:', batchImportForm)
-  batchImportVisible.value = false
-  ElMessage.success('批量导入成功')
-  getHeadersList()
+const doBatchImport = async () => {
+  try {
+    // 根据格式解析内容
+    let importData
+    try {
+      if (batchImportForm.format === 'json') {
+        importData = JSON.parse(batchImportForm.content)
+      } else if (batchImportForm.format === 'text') {
+        // 文本格式解析逻辑
+        const lines = batchImportForm.content.split('\n').filter(line => line.trim())
+        importData = lines.map(line => {
+          const [domain, name, value, type = 'common', priority = 'medium'] = line.split('|')
+          return { domain, name, value, type, priority, status: 'enabled' }
+        })
+      } else if (batchImportForm.format === 'csv') {
+        // CSV格式解析逻辑
+        const lines = batchImportForm.content.split('\n').filter(line => line.trim())
+        const headers = lines[0].split(',').map(h => h.trim())
+        importData = lines.slice(1).map(line => {
+          const values = line.split(',').map(v => v.trim())
+          const obj = {}
+          headers.forEach((header, index) => {
+            obj[header] = values[index] || ''
+          })
+          return obj
+        })
+      }
+    } catch (parseError) {
+      ElMessage.error('数据格式错误，请检查输入内容')
+      return
+    }
+    
+    await importHeaders(importData)  // AI_MODIFIED: coder1 @2026-02-04T18:46:06
+    batchImportVisible.value = false
+    ElMessage.success('批量导入成功')
+    getHeadersList()
+    loadStats()
+  } catch (error) {
+    ElMessage.error('批量导入失败')
+    console.error('Error batch importing headers:', error)
+  }
 }
 
 // 刷新列表
 const refreshList = () => {
   getHeadersList()
+  loadStats()
 }
 
 // 分页处理
 const handleSizeChange = (size) => {
   pageSize.value = size
+  currentPage.value = 1
   getHeadersList()
+  loadStats()
 }
 
 const handleCurrentChange = (page) => {
   currentPage.value = page
   getHeadersList()
+  loadStats()
 }
 
 // 获取状态文本
@@ -431,20 +732,9 @@ const getSuccessRateColor = (rate) => {
   return '#f56c6c' // red
 }
 
-// 模拟数据
-const mockHeadersData = [
-  { id: 1, domain: 'sports.data.com', name: 'User-Agent', value: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36', type: 'desktop', priority: 'high', status: 'enabled', lastUsed: '2026-01-30 10:30:00', usageCount: 245, successRate: 92, remarks: 'Chrome浏览器模拟' },
-  { id: 2, domain: 'odds.api.com', name: 'Accept', value: 'application/json, text/plain, */*', type: 'common', priority: 'medium', status: 'enabled', lastUsed: '2026-01-30 09:45:20', usageCount: 180, successRate: 88, remarks: '接受JSON格式响应' },
-  { id: 3, domain: 'api.soccer.com', name: 'Authorization', value: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...', type: 'specific', priority: 'high', status: 'enabled', lastUsed: '2026-01-30 08:20:15', usageCount: 150, successRate: 95, remarks: 'API访问令牌' },
-  { id: 4, domain: 'mobile.data.com', name: 'User-Agent', value: 'Mozilla/5.0 (iPhone; CPU iPhone OS 15_4 like Mac OS X) AppleWebKit/605.1.15', type: 'mobile', priority: 'medium', status: 'disabled', lastUsed: '2026-01-29 16:30:45', usageCount: 95, successRate: 78, remarks: 'iOS移动设备模拟' },
-  { id: 5, domain: 'live.score.net', name: 'Content-Type', value: 'application/json;charset=utf-8', type: 'common', priority: 'low', status: 'enabled', lastUsed: '2026-01-30 11:15:30', usageCount: 320, successRate: 90, remarks: 'POST请求内容类型' },
-  { id: 6, domain: 'proxy.service.org', name: 'Proxy-Authorization', value: 'Basic dXNlcjpwYXNzd29yZA==', type: 'specific', priority: 'high', status: 'enabled', lastUsed: '2026-01-30 07:45:10', usageCount: 210, successRate: 85, remarks: '代理服务器认证' },
-  { id: 7, domain: 'cache.data.com', name: 'Cache-Control', value: 'no-cache', type: 'common', priority: 'medium', status: 'enabled', lastUsed: '2026-01-29 14:20:05', usageCount: 175, successRate: 82, remarks: '跳过缓存获取最新数据' },
-  { id: 8, domain: 'secure.api.com', name: 'X-Requested-With', value: 'XMLHttpRequest', type: 'common', priority: 'low', status: 'disabled', lastUsed: '2026-01-28 12:10:30', usageCount: 60, successRate: 75, remarks: '标识AJAX请求' }
-]
-
 onMounted(() => {
   getHeadersList()
+  loadStats()
 })
 </script>
 
@@ -477,5 +767,62 @@ onMounted(() => {
 
 .search-form {
   margin-bottom: 20px;
+}
+
+.stats-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.stat-card {
+  flex: 1;
+}
+
+.stat-title {
+  color: #909399;
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+
+.stat-value {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.batch-actions {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.binding-preview {
+  border-top: 1px solid #ebeef5;
+  padding-top: 10px;
+  margin-top: 10px;
+}
+
+.binding-title {
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.binding-section {
+  margin-bottom: 8px;
+}
+
+.binding-section-title {
+  color: #909399;
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+.binding-empty {
+  color: #c0c4cc;
+  font-size: 12px;
+}
+
+.binding-list {
+  font-size: 12px;
 }
 </style>

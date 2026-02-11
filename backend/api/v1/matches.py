@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from backend.api.deps import get_db, get_current_user
 from backend.models.user import User
-from backend.services.crawler_service import crawler_service
+from backend.services.service_registry import get_crawler_service
 from backend.schemas.response import UnifiedResponse, PageResponse, ErrorResponse
 from backend.schemas.match import MatchResponse
 from backend.scrapers.sporttery_scraper import sporttery_scraper
@@ -36,6 +36,7 @@ async def get_matches(
     """
     try:
         # 使用爬虫服务获取比赛数据
+        crawler_service = get_crawler_service(db)
         matches = await crawler_service.crawl_matches()
         
         # 过滤数据
@@ -113,6 +114,7 @@ async def get_match_by_id(
     """
     try:
         # 获取所有比赛数据
+        crawler_service = get_crawler_service(db)
         all_matches = await crawler_service.crawl_matches()
         
         # 查找指定比赛

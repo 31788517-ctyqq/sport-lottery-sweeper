@@ -4,7 +4,7 @@
 import logging
 from datetime import datetime, timedelta
 from typing import Dict, Any, List
-from celery import Task
+from celery import Task, shared_task
 from backend.tasks import DatabaseTask, celery_app
 from backend.services.analytics_service import AnalyticsService
 from backend.services.match_service import MatchService

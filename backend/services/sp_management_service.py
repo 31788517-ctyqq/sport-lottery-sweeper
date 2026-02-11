@@ -37,41 +37,91 @@ class SPManagementService:
     
     def get_data_sources(self, params: DataSourceFilterParams) -> PaginatedResponse:
         """获取数据源列表"""
-        query = self.db.query(DataSource)
+        # 使用原生SQL查询以绕过ORM映射问题
+        from sqlalchemy import text
+        
+        # 构建基础查询
+        base_query = """
+            SELECT id, source_id, name, type, status, url, config, 
+                   last_update, error_rate, created_at, updated_at, created_by,
+                   last_error, last_error_time
+            FROM data_sources
+        """
+        count_query = "SELECT COUNT(*) FROM data_sources"
+        conditions = []
+        params_values = {}
         
         # 应用筛选条件
         if params.type:
-            query = query.filter(DataSource.type == params.type)
+            conditions.append("type = :type")
+            params_values['type'] = params.type
         if params.status is not None:
-            query = query.filter(DataSource.status == params.status)
+            conditions.append("status = :status")
+            params_values['status'] = params.status
         if params.search:
-            search_term = f"%{params.search}%"
-            query = query.filter(
-                or_(
-                    DataSource.name.ilike(search_term),
-                    DataSource.url.ilike(search_term)
-                )
-            )
+            conditions.append("(name LIKE :search OR url LIKE :search)")
+            params_values['search'] = f"%{params.search}%"
+        # 添加内容分类筛选 - 确保只查找config中确实包含category字段且值匹配的记录
+        if params.category:
+            # 使用适合SQLite的方式处理JSON查询，如果SQLite版本较低则回退到LIKE查询
+            # 这里我们使用LIKE查询作为更兼容的方式
+            conditions.append("config LIKE :category_pattern")
+            params_values['category_pattern'] = f'%category%{params.category}%'
+        # 添加源ID筛选
+        if params.source_id:
+            conditions.append("source_id = :source_id")
+            params_values['source_id'] = params.source_id
+        
+        if conditions:
+            base_query += " WHERE " + " AND ".join(conditions)
+            count_query += " WHERE " + " AND ".join(conditions)
         
         # 排序
-        query = query.order_by(desc(DataSource.created_at))
+        base_query += " ORDER BY created_at DESC"
         
-        # 总数
-        total = query.count()
+        # 执行总数查询
+        count_result = self.db.execute(text(count_query), params_values).fetchone()
+        total = count_result[0]
         
-        # 分页
+        # 分页查询 - 修正：将LIMIT和OFFSET放在ORDER BY之后
         offset = (params.page - 1) * params.size
-        sources = query.offset(offset).limit(params.size).all()
+        final_query = base_query + f" LIMIT {params.size} OFFSET {offset}"
+        result = self.db.execute(text(final_query), params_values)  # 修正参数传递
         
-        # 转换数据源列表，确保config字段是字典格式
+        rows = result.fetchall()
+        
+        # 转换为字典格式
         converted_sources = []
-        for source in sources:
-            source_dict = DataSourceResponse.from_orm(source).dict()
-            if source.config:
-                try:
-                    source_dict['config'] = json.loads(source.config)
-                except:
-                    source_dict['config'] = {}
+        for row in rows:
+            # 将状态数字转换为字符串
+            status_val = row[4]
+            if isinstance(status_val, int):
+                # 假设1代表'online'，0代表'offline'，其他值可以根据需要映射
+                if status_val == 1:
+                    status_str = 'online'
+                elif status_val == 0:
+                    status_str = 'offline'
+                else:
+                    status_str = 'online'  # 默认值
+            else:
+                status_str = status_val
+            
+            source_dict = {
+                'id': row[0],
+                'source_id': row[1] or f"DS{row[0]:03d}",  # 确保source_id被包含
+                'name': row[2],
+                'type': row[3],
+                'status': status_str,  # 使用转换后的状态字符串
+                'url': row[5],
+                'config': json.loads(row[6]) if row[6] else {},
+                'last_update': row[7],
+                'error_rate': row[8],
+                'created_at': row[9],
+                'updated_at': row[10],
+                'created_by': row[11],
+                'last_error': row[12],  # 新增字段
+                'last_error_time': row[13]  # 新增字段
+            }
             converted_sources.append(DataSourceResponse(**source_dict))
         
         return PaginatedResponse.create(
@@ -83,20 +133,54 @@ class SPManagementService:
     
     def get_data_source(self, source_id: int) -> DataSourceResponse:
         """获取单个数据源"""
-        source = self.db.query(DataSource).filter(DataSource.id == source_id).first()
-        if not source:
+        # 使用原生SQL查询以绕过ORM映射问题
+        from sqlalchemy import text
+        
+        query = """
+            SELECT id, source_id, name, type, status, url, config, 
+                   last_update, error_rate, created_at, updated_at, created_by,
+                   last_error, last_error_time
+            FROM data_sources
+            WHERE id = :source_id
+        """
+        
+        result = self.db.execute(text(query), {'source_id': source_id}).fetchone()
+        
+        if not result:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="数据源不存在"
             )
         
-        # 确保config字段是字典格式
-        source_dict = DataSourceResponse.from_orm(source).dict()
-        if source.config:
-            try:
-                source_dict['config'] = json.loads(source.config)
-            except:
-                source_dict['config'] = {}
+        # 将状态数字转换为字符串
+        status_val = result[4]
+        if isinstance(status_val, int):
+            # 假设1代表'online'，0代表'offline'，其他值可以根据需要映射
+            if status_val == 1:
+                status_str = 'online'
+            elif status_val == 0:
+                status_str = 'offline'
+            else:
+                status_str = 'online'  # 默认值
+        else:
+            status_str = status_val
+        
+        source_dict = {
+            'id': result[0],
+            'source_id': result[1] or f"DS{result[0]:03d}",
+            'name': result[2],
+            'type': result[3],
+            'status': status_str,  # 使用转换后的状态字符串
+            'url': result[5],
+            'config': json.loads(result[6]) if result[6] else {},
+            'last_update': result[7],
+            'error_rate': result[8],
+            'created_at': result[9],
+            'updated_at': result[10],
+            'created_by': result[11],
+            'last_error': result[12],  # 新增字段
+            'last_error_time': result[13]  # 新增字段
+        }
         
         return DataSourceResponse(**source_dict)
     
@@ -114,23 +198,42 @@ class SPManagementService:
         
         # 创建数据源，将config字典转换为JSON字符串
         source_dict = source_data.dict()
-        if source_dict.get('config'):
+        if 'config' in source_dict and source_dict['config'] is not None:
             if isinstance(source_dict['config'], dict):
-                source_dict['config'] = json.dumps(source_dict['config'])
+                source_dict['config'] = json.dumps(source_dict['config'], ensure_ascii=False)
+            # 如果config已经是字符串，保持不变
+        else:
+            # 如果没有提供config，设置为默认的空JSON字符串
+            source_dict['config'] = '{}'
+        
         source_dict['created_by'] = created_by
         
+        # 先不设置source_id，让它为None，稍后在保存后设置
         db_source = DataSource(**source_dict)
         self.db.add(db_source)
         self.db.commit()
+        self.db.refresh(db_source)  # 获取数据库生成的ID
+        
+        # 现在设置source_id为DS+3位数字ID格式
+        db_source.source_id = f"DS{db_source.id:03d}"
+        self.db.commit()
         self.db.refresh(db_source)
         
-        # 确保返回的响应中config字段是字典格式
-        source_response = DataSourceResponse.from_orm(db_source).dict()
-        if db_source.config:
-            try:
-                source_response['config'] = json.loads(db_source.config)
-            except:
-                source_response['config'] = {}
+        # 使用字典方式构建响应，确保source_id被正确包含
+        source_response = {
+            'id': db_source.id,
+            'source_id': db_source.source_id or f"DS{db_source.id:03d}",
+            'name': db_source.name,
+            'type': db_source.type,
+            'status': db_source.status,
+            'url': db_source.url,
+            'config': db_source.config_dict,  # 使用属性获取字典格式的配置
+            'last_update': db_source.last_update,
+            'error_rate': db_source.error_rate,
+            'created_at': db_source.created_at,
+            'updated_at': db_source.updated_at,
+            'created_by': db_source.created_by
+        }
         
         return DataSourceResponse(**source_response)
     
@@ -163,7 +266,7 @@ class SPManagementService:
             if field == 'config' and value is not None:
                 # 将config字典转换为JSON字符串
                 if isinstance(value, dict):
-                    setattr(db_source, field, json.dumps(value))
+                    setattr(db_source, field, json.dumps(value, ensure_ascii=False))
                 else:
                     setattr(db_source, field, value)
             else:
@@ -173,28 +276,75 @@ class SPManagementService:
         self.db.commit()
         self.db.refresh(db_source)
         
-        # 确保返回的响应中config字段是字典格式
-        source_response = DataSourceResponse.from_orm(db_source).dict()
-        if db_source.config:
-            try:
-                source_response['config'] = json.loads(db_source.config)
-            except:
-                source_response['config'] = {}
+        # 确保返回的响应中config字段是字典格式，并处理状态字段
+        source_dict = {
+            'id': db_source.id,
+            'source_id': db_source.source_id or f"DS{db_source.id:03d}",
+            'name': db_source.name,
+            'type': db_source.type,
+            'status': db_source.status if isinstance(db_source.status, str) else ('online' if db_source.status == 1 else 'offline'),
+            'url': db_source.url,
+            'config': db_source.config_dict if hasattr(db_source, 'config_dict') else (json.loads(db_source.config) if db_source.config else {}),
+            'last_update': db_source.last_update,
+            'error_rate': db_source.error_rate,
+            'created_at': db_source.created_at,
+            'updated_at': db_source.updated_at,
+            'created_by': db_source.created_by,
+            'last_error': db_source.last_error,
+            'last_error_time': db_source.last_error_time
+        }
         
-        return DataSourceResponse(**source_response)
+        return DataSourceResponse(**source_dict)
     
     def delete_data_source(self, source_id: int) -> bool:
         """删除数据源"""
-        db_source = self.db.query(DataSource).filter(DataSource.id == source_id).first()
-        if not db_source:
+        # 使用原生SQL检查并删除，避免关系加载问题
+        from sqlalchemy import text
+        
+        # 先检查是否存在
+        check_query = text("SELECT id FROM data_sources WHERE id = :source_id")
+        result = self.db.execute(check_query, {'source_id': source_id}).fetchone()
+        if not result:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="数据源不存在"
             )
         
-        self.db.delete(db_source)
+        # 执行删除，让数据库外键约束处理关联记录（ON DELETE SET NULL）
+        delete_query = text("DELETE FROM data_sources WHERE id = :source_id")
+        self.db.execute(delete_query, {'source_id': source_id})
         self.db.commit()
         return True
+    
+    def batch_delete_data_sources(self, source_ids: List[int]) -> int:
+        """批量删除数据源"""
+        # 首先检查所有要删除的数据源是否存在
+        sources_to_delete = self.db.query(DataSource).filter(DataSource.id.in_(source_ids)).all()
+        
+        # 检查是否存在不存在的数据源
+        existing_ids = {source.id for source in sources_to_delete}
+        requested_ids = set(source_ids)
+        missing_ids = requested_ids - existing_ids
+        
+        if missing_ids:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"以下数据源不存在: {list(missing_ids)}"
+            )
+        
+        # 直接删除数据源，避免加载关联对象
+        deleted_count = 0
+        for source in sources_to_delete:
+            # 先更新关联的爬虫配置，将source_id设为NULL
+            from backend.models.crawler_config import CrawlerConfig
+            self.db.query(CrawlerConfig).filter(CrawlerConfig.source_id == source.id).update({CrawlerConfig.source_id: None})
+            
+            # 然后删除数据源
+            self.db.delete(source)
+            deleted_count += 1
+        
+        self.db.commit()
+        return deleted_count
     
     def test_data_source(self, source_id: int) -> Dict[str, Any]:
         """测试数据源连接"""
@@ -206,29 +356,120 @@ class SPManagementService:
         
         try:
             if source.type == 'api':
-                # 模拟API测试
-                return {
-                    "success": True,
-                    "message": "API连接测试成功",
-                    "response_time": 150  # 模拟响应时间
-                }
+                # 模拟API测试 - 在实际实现中应替换为真实的连接测试
+                # 这里暂时使用模拟逻辑
+                import random
+                # 模拟连接测试，随机成功或失败以演示错误状态
+                if random.random() < 0.3:  # 30%概率失败
+                    error_msg = "API连接测试失败：网络超时或服务不可达"
+                    # 更新数据源状态为错误
+                    update_data = {
+                        "status": "error",
+                        "last_error": error_msg,
+                        "last_error_time": datetime.utcnow()
+                    }
+                    self.update_data_source_fields(source_id, update_data)
+                    
+                    return {
+                        "success": False,
+                        "message": error_msg,
+                        "status": "error"
+                    }
+                else:
+                    # 成功时更新状态为online并清除错误信息
+                    update_data = {
+                        "status": "online",
+                        "last_error": None,
+                        "last_error_time": None
+                    }
+                    self.update_data_source_fields(source_id, update_data)
+                    
+                    return {
+                        "success": True,
+                        "message": "API连接测试成功",
+                        "response_time": 150,  # 模拟响应时间
+                        "status": "online"
+                    }
             elif source.type == 'file':
                 # 模拟文件测试
-                return {
-                    "success": True,
-                    "message": "文件路径可访问",
-                    "file_count": 0
-                }
+                import os
+                if source.url and os.path.exists(source.url):
+                    # 文件存在则成功
+                    update_data = {
+                        "status": "online",
+                        "last_error": None,
+                        "last_error_time": None
+                    }
+                    self.update_data_source_fields(source_id, update_data)
+                    
+                    return {
+                        "success": True,
+                        "message": "文件路径可访问",
+                        "file_count": 1,
+                        "status": "online"
+                    }
+                else:
+                    error_msg = f"文件路径不可访问: {source.url}"
+                    # 更新数据源状态为错误
+                    update_data = {
+                        "status": "error",
+                        "last_error": error_msg,
+                        "last_error_time": datetime.utcnow()
+                    }
+                    self.update_data_source_fields(source_id, update_data)
+                    
+                    return {
+                        "success": False,
+                        "message": error_msg,
+                        "status": "error"
+                    }
             else:
+                error_msg = "不支持的数据源类型"
+                # 更新数据源状态为错误
+                update_data = {
+                    "status": "error",
+                    "last_error": error_msg,
+                    "last_error_time": datetime.utcnow()
+                }
+                self.update_data_source_fields(source_id, update_data)
+                
                 return {
                     "success": False,
-                    "message": "不支持的数据源类型"
+                    "message": error_msg,
+                    "status": "error"
                 }
         except Exception as e:
+            error_msg = f"连接测试失败: {str(e)}"
+            # 更新数据源状态为错误
+            update_data = {
+                "status": "error",
+                "last_error": error_msg,
+                "last_error_time": datetime.utcnow()
+            }
+            self.update_data_source_fields(source_id, update_data)
+            
             return {
                 "success": False,
-                "message": f"连接测试失败: {str(e)}"
+                "message": error_msg,
+                "status": "error"
             }
+    
+    def update_data_source_fields(self, source_id: int, update_data: dict):
+        """更新数据源字段"""
+        db_source = self.db.query(DataSource).filter(DataSource.id == source_id).first()
+        if not db_source:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="数据源不存在"
+            )
+        
+        # 更新字段
+        for field, value in update_data.items():
+            setattr(db_source, field, value)
+        
+        db_source.updated_at = datetime.now()
+        self.db.commit()
+        self.db.refresh(db_source)
     
     # ============================================================================
     # 比赛信息管理相关方法

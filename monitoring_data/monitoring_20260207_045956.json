@@ -1,0 +1,42 @@
+{
+  "timestamp": "2026-02-07T04:59:56.775473",
+  "metrics": {
+    "timestamp": "2026-02-07T04:59:44.989010",
+    "cpu_percent": 47.5,
+    "memory_percent": 67.1,
+    "disk_percent": 70.4,
+    "load_average": [
+      0,
+      0,
+      0
+    ],
+    "process_count": 441,
+    "network_io": {
+      "bytes_sent": 289081147,
+      "bytes_recv": 406305313,
+      "packets_sent": 408548,
+      "packets_recv": 713091,
+      "errin": 0,
+      "errout": 0,
+      "dropin": 0,
+      "dropout": 0
+    }
+  },
+  "api_health": {
+    "timestamp": "2026-02-07T04:59:46.011892",
+    "api_health": {
+      "/health": 404,
+      "/api/v1/datasources": 404,
+      "/api/v1/tasks": 404,
+      "/api/auth/login": 200
+    },
+    "response_times": {
+      "/health": 2.08,
+      "/api/v1/datasources": 2.07,
+      "/api/v1/tasks": 2.08,
+      "/api/auth/login": 2.28
+    },
+    "errors": []
+  },
+  "alerts": []
+}

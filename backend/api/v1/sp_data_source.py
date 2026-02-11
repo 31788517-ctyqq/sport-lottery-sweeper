@@ -26,7 +26,7 @@ class DataSourceCreate(BaseModel):
     type: str
     url: str
     config: Optional[str] = '{}'
-    status: bool = True
+    status: str = 'online'
 
 
 class DataSourceUpdate(BaseModel):
@@ -34,7 +34,7 @@ class DataSourceUpdate(BaseModel):
     type: Optional[str] = None
     url: Optional[str] = None
     config: Optional[str] = None
-    status: Optional[bool] = None
+    status: Optional[str] = None
 
 
 class DataSourceResponse(BaseModel):
@@ -43,7 +43,7 @@ class DataSourceResponse(BaseModel):
     type: str
     url: str
     config: str
-    status: bool
+    status: str  # 修改为字符串类型
     last_update: Optional[str] = None
     error_rate: float = 0.0
 

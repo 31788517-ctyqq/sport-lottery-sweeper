@@ -1,75 +1,73 @@
 import request from '@/utils/request'
 
-// 获取爬虫系统状态
+// 获取爬虫状态
 export function getCrawlerStatus() {
   return request({
-    url: '/api/admin/crawler/status',
+    // 修正：使用新版API路径
+    url: '/api/v1/admin/crawler/status',
     method: 'get'
   })
 }
 
-// 获取爬虫任务列表
-export function getCrawlerTasks(params) {
+// 获取任务列表
+export function getTasks() {
   return request({
-    url: '/api/admin/crawler/tasks',
-    method: 'get',
-    params
+    // 修正：使用新版API路径
+    url: '/api/v1/admin/crawler/tasks',
+    method: 'get'
   })
 }
 
-// 启动爬虫任务
-export function startCrawlerTask(data) {
+// 开始任务
+export function startTask() {
   return request({
-    url: '/api/admin/crawler/tasks/start',
-    method: 'post',
-    data
-  })
-}
-
-// 停止爬虫任务
-export function stopCrawlerTask(taskId) {
-  return request({
-    url: `/api/admin/crawler/tasks/${taskId}/stop`,
+    // 修正：使用新版API路径
+    url: '/api/v1/admin/crawler/tasks/start',
     method: 'post'
   })
 }
 
-// 获取爬虫统计信息
-export function getCrawlerStats(params) {
+// 停止任务
+export function stopTask(taskId) {
   return request({
-    url: '/api/admin/crawler/stats',
-    method: 'get',
-    params
-  })
-}
-
-// 获取爬虫日志
-export function getCrawlerLogs(params) {
-  return request({
-    url: '/api/admin/crawler/logs',
-    method: 'get',
-    params
-  })
-}
-
-// 清空爬虫队列
-export function clearCrawlerQueue() {
-  return request({
-    url: '/api/admin/crawler/queue/clear',
+    // 修正：使用新版API路径
+    url: `/api/v1/admin/crawler/tasks/${taskId}/stop`,
     method: 'post'
   })
 }
 
-// 重新启动爬虫服务
-export function restartCrawlerService() {
+// 获取统计数据
+export function getStats() {
   return request({
-    url: '/api/admin/crawler/restart',
+    // 修正：使用新版API路径
+    url: '/api/v1/admin/crawler/stats',
+    method: 'get'
+  })
+}
+
+// 获取日志
+export function getLogs() {
+  return request({
+    // 修正：使用新版API路径
+    url: '/api/v1/admin/crawler/logs',
+    method: 'get'
+  })
+}
+
+// 清空队列
+export function clearQueue() {
+  return request({
+    // 修正：使用新版API路径
+    url: '/api/v1/admin/crawler/queue/clear',
     method: 'post'
   })
 }
 
-// 兼容前端页面导入的别名
-export const getStatus = getCrawlerStatus
-export const getTasks = getCrawlerTasks
-export const getStats = getCrawlerStats
-export const getLogs = getCrawlerLogs
+// 重启爬虫
+export function restartCrawler() {
+  return request({
+    // 修正：使用新版API路径
+    url: '/api/v1/admin/crawler/restart',
+    method: 'post'
+  })
+}

@@ -70,6 +70,27 @@ class IPProxyPool:
         
         self.logger.info("IP代理池已初始化")
 
+    @property
+    def proxy_list(self):
+        """兼容老代码的属性，返回简化后的代理信息列表"""
+        return [
+            {
+                "ip": proxy.ip,
+                "port": proxy.port,
+                "protocol": proxy.protocol,
+                "response_time": getattr(proxy, "response_time", None),
+                "last_checked": getattr(proxy, "last_checked", None)
+            }
+            for proxy in self.proxies
+        ]
+
+    def refresh_proxy_pool(self, count: int = 15, validate: bool = False) -> int:
+        """
+        简单的刷新入口，默认从89ip抓取代理，兼容 DynamicProxyUpdater 的调用方式
+        """
+        pages = max(1, count // 5)
+        return self.fetch_ips_from_89ip(pages=pages, validate=validate)
+
     def add_proxy(self, ip: str, port: int, protocol: str = "http") -> bool:
         """添加代理到池中"""
         with self.lock:

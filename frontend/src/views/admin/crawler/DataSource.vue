@@ -21,11 +21,21 @@
         </el-table-column>
         <el-table-column prop="success_rate" label="成功率(%)" width="100" />
         <el-table-column prop="response_time" label="响应时间(ms)" width="120" />
-        <el-table-column label="操作" width="220">
+        <el-table-column label="操作" width="300">
           <template #default="scope">
             <el-button size="small" @click="checkHealth(scope.row.id)">健康检查</el-button>
             <el-button size="small" :type="scope.row.status==='online'?'warning':'success'" @click="toggleStatus(scope.row)">
               {{ scope.row.status==='online'?'停用':'启用' }}
+            </el-button>
+            <!-- 100qiu数据源特有的获取按钮 -->
+            <el-button 
+              v-if="scope.row.name && scope.row.name.includes('100qiu')" 
+              size="small" 
+              type="success" 
+              @click="handleFetch(scope.row.id)"
+              :loading="fetchingIds.includes(scope.row.id)"
+            >
+              获取
             </el-button>
           </template>
         </el-table-column>
@@ -48,10 +58,23 @@ import { ref, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getSources as listSources, healthCheck, updateStatus } from '@/api/crawlerSource'
 
+// 添加100qiu API调用
+const fetch100qiu = async (id) => {
+  const response = await fetch(`/api/v1/data-source-100qiu/${id}/fetch`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    credentials: 'include'
+  })
+  return response.json()
+}
+
 const tableData = ref([])
 const filterStatus = ref('')
 const healthDialogVisible = ref(false)
 const healthResult = ref({})
+const fetchingIds = ref([])
 
 const filteredTableData = computed(() => {
   if (!filterStatus.value) return tableData.value
@@ -74,6 +97,33 @@ const toggleStatus = async (row) => {
   await updateStatus(row.id, { status: newStatus })
   ElMessage.success(`已${newStatus==='online'?'启用':'停用'}`)
   loadData()
+}
+
+// 100qiu数据源获取功能
+const handleFetch = async (id) => {
+  fetchingIds.value.push(id)
+  try {
+    const response = await fetch100qiu(id)
+    
+    // 检查响应格式 - 这里是关键修复点
+    if (response.success) {
+      // 新的响应格式: { success, message, total_fetched, sample_data }
+      ElMessage.success(`获取成功，获取数量：${response.total_fetched}；${response.message}`)
+    } else {
+      throw new Error('获取失败')
+    }
+  } catch (error) {
+    console.error('获取数据失败:', error)
+    let errorMessage = '获取失败'
+    if (typeof error === 'string') {
+      errorMessage = error
+    } else if (error.message) {
+      errorMessage = error.message
+    }
+    ElMessage.error(errorMessage)
+  } finally {
+    fetchingIds.value = fetchingIds.value.filter(itemId => itemId !== id)
+  }
 }
 
 onMounted(loadData)

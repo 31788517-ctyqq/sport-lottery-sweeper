@@ -7,6 +7,7 @@ from typing import List, Dict, Any, Optional
 from celery import Task, shared_task
 from backend.services.match_service import MatchService
 from backend.services.crawler_service import CrawlerService
+from . import DatabaseTask  # 导入DatabaseTask
 
 
 class MatchTask(Task):
@@ -192,7 +193,10 @@ def process_match_batch(self, match_ids: List[int]):
         
         db.commit()
         
-        logger.info(f"批量处理比赛数据完成: 处理={processed}, 错误={len(errors)}")
+        if len(errors) > 0:
+            logger.warning(f"批量处理比赛数据完成: 处理={processed}, 错误={len(errors)}")
+        else:
+            logger.info(f"批量处理比赛数据完成: 处理={processed}, 错误={len(errors)}")
         
         return {
             "success": True,

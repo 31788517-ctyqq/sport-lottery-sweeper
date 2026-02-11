@@ -15,6 +15,7 @@ from jose import jwt, JWTError
 from sqlalchemy.orm import Session
 
 from ..models.user import User # Assuming your User model is defined here
+from ..models.admin_user import AdminUser, AdminRoleEnum, AdminStatusEnum
 from ..schemas.user import UserResponse as UserSchema # Using the correct schema
 from .database import get_db
 from ..config import settings
@@ -128,7 +129,7 @@ def get_current_user_from_token(
 
 
 def get_current_user(token: str = Depends(oauth2_scheme),
-                     db: Session = Depends(get_db)) -> User:
+                     db: Session = Depends(get_db)) -> User | AdminUser:
     """
     Get current user based on the provided token in the request header
     """
@@ -138,8 +139,9 @@ def get_current_user(token: str = Depends(oauth2_scheme),
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        payload = jwt.decode(token, settings.secret_key, algorithms=[settings.ALGORITHM])
-        username: str = payload.get("sub")
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        # Support both "sub" (standard) and "username" for compatibility
+        username: str = payload.get("sub") or payload.get("username")
         if username is None:
             raise credentials_exception
         token_data = {"username": username}
@@ -147,9 +149,24 @@ def get_current_user(token: str = Depends(oauth2_scheme),
         raise credentials_exception
     
     user = db.query(User).filter(User.username == username).first()
-    if user is None:
+    if user is not None:
+        return user
+
+    # Fallback to admin users table for admin tokens
+    admin_user = db.query(AdminUser).filter(AdminUser.username == username).first()
+    if admin_user is None:
         raise credentials_exception
-    return user
+
+    # Provide compatibility flags expected by admin-only guards
+    try:
+        setattr(admin_user, "is_admin", admin_user.role in [AdminRoleEnum.ADMIN, AdminRoleEnum.SUPER_ADMIN])
+    except Exception:
+        setattr(admin_user, "is_admin", True)
+    try:
+        setattr(admin_user, "is_active", admin_user.status == AdminStatusEnum.ACTIVE)
+    except Exception:
+        setattr(admin_user, "is_active", True)
+    return admin_user
 
 
 def verify_websocket_token(websocket_token: str):
@@ -176,16 +193,55 @@ def verify_websocket_token(websocket_token: str):
     return token_data
 
 
-def get_current_admin_user(current_user: User = Depends(get_current_user)) -> User:
+def get_current_admin_user(current_user: User | AdminUser = Depends(get_current_user)) -> User | AdminUser:
     """
     Get current admin user, raises an exception if the user is not an admin
     """
-    if not current_user.is_active:
+    # 安全地访问属性，支持字典和对象
+    def get_attr(obj, attr_name):
+        if isinstance(obj, dict):
+            return obj.get(attr_name)
+        else:
+            return getattr(obj, attr_name, None)
+    
+    # 检查是否是 AdminUser（有 status 和 role 属性）
+    status_val = get_attr(current_user, "status")
+    role_val = get_attr(current_user, "role")
+    
+    if status_val is not None and role_val is not None:
+        # 处理枚举值：可能是 AdminStatusEnum.ACTIVE 或字符串 "active"
+        def get_enum_value(val):
+            if hasattr(val, 'value'):
+                return val.value
+            else:
+                return val
+        
+        status_str = get_enum_value(status_val)
+        role_str = get_enum_value(role_val)
+        
+        # 类似 AdminUser 的处理
+        if status_str != "active":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Inactive user"
+            )
+        if role_str not in ["admin", "super_admin"]:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="The user doesn't have enough privileges"
+            )
+        return current_user
+
+    # 否则按普通 User 处理（有 is_active 和 is_admin 属性）
+    is_active = get_attr(current_user, "is_active")
+    is_admin = get_attr(current_user, "is_admin")
+    
+    if is_active is False:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Inactive user"
         )
-    if not hasattr(current_user, 'is_admin') or not current_user.is_admin:
+    if is_admin is not True:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="The user doesn't have enough privileges"

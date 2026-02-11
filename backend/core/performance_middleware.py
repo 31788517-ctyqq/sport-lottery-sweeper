@@ -53,6 +53,7 @@ class PerformanceMiddleware(BaseHTTPMiddleware):
                     
                     # 创建响应对象
                     response = Response(content=body, headers=headers)
+                    response.headers["content-length"] = str(len(body))
                     response.headers["X-Cache"] = "HIT"
                     
                     return response
@@ -84,6 +85,7 @@ class PerformanceMiddleware(BaseHTTPMiddleware):
             
             # 重置响应体
             response.body_iterator = self._create_body_iterator(response_body)
+            response.headers["content-length"] = str(len(response_body))
             
             # 设置缓存
             cache_ttl = self._get_cache_ttl(request)
@@ -151,7 +153,7 @@ class PerformanceMiddleware(BaseHTTPMiddleware):
                 return False
                 
         # 检查路径是否应该被缓存
-        exclude_paths = ["/admin/", "/auth/"]
+        exclude_paths = ["/admin/", "/auth/", "/openapi.json"]
         for path in exclude_paths:
             if path in request.url.path:
                 return False
@@ -195,16 +197,7 @@ class PerformanceMiddleware(BaseHTTPMiddleware):
         """
         创建响应体迭代器
         """
-        async def app(scope, receive, send):
-            await send({
-                'type': 'http.response.start',
-                'status': 200,
-                'headers': [(b'content-length', str(len(body)).encode())]
-            })
-            await send({
-                'type': 'http.response.body',
-                'body': body,
-                'more_body': False
-            })
+        async def body_iterator():
+            yield body
 
-        return app
+        return body_iterator()

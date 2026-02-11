@@ -39,7 +39,12 @@ class HybridCache:
                 await self.redis_client.ping()
                 logger.info("Redis缓存连接成功")
             except Exception as e:
-                logger.error(f"Redis连接失败: {e}, 回退到内存缓存")
+                # 在开发环境中，Redis可能未安装，所以降低错误级别为info
+                import os
+                if os.getenv("ENVIRONMENT") == "production":
+                    logger.error(f"Redis连接失败: {e}, 回退到内存缓存")
+                else:
+                    logger.info(f"Redis未运行({e})，回退到内存缓存 (开发环境中正常)")
                 self.use_redis = False
                 self.redis_client = None
         else:

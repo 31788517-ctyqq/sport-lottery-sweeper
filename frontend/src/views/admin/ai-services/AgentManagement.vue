@@ -42,8 +42,119 @@
         </el-col>
       </el-row>
 
+      <!-- 智能体监控面板 -->
+      <div class="agent-dashboard">
+        <el-row :gutter="20" class="agent-monitor">
+          <el-col :span="6">
+            <el-card class="monitor-card">
+              <div class="monitor-header">
+                <i class="el-icon-video-camera"></i>
+                <span>活跃智能体</span>
+              </div>
+              <div class="monitor-value">{{ activeAgentsCount }}</div>
+              <div class="monitor-trend">
+                <el-tag :type="trendType">{{ trendText }}</el-tag>
+              </div>
+            </el-card>
+          </el-col>
+          <el-col :span="6">
+            <el-card class="monitor-card">
+              <div class="monitor-header">
+                <i class="el-icon-time"></i>
+                <span>平均响应时间</span>
+              </div>
+              <div class="monitor-value">{{ avgResponseTime }}ms</div>
+              <el-progress :percentage="performanceScore" :stroke-width="8"/>
+            </el-card>
+          </el-col>
+          <el-col :span="6">
+            <el-card class="monitor-card">
+              <div class="monitor-header">
+                <i class="el-icon-warning"></i>
+                <span>待处理任务</span>
+              </div>
+              <div class="monitor-value">{{ pendingTasksCount }}</div>
+              <el-button size="mini" type="primary" @click="viewTaskQueue">查看队列</el-button>
+            </el-card>
+          </el-col>
+          <el-col :span="6">
+            <el-card class="monitor-card">
+              <div class="monitor-header">
+                <i class="el-icon-chat-line-round"></i>
+                <span>智能体协作</span>
+              </div>
+              <div class="monitor-value">{{ collaborationScore }}%</div>
+              <el-button size="mini" @click="optimizeCollaboration">优化协作</el-button>
+            </el-card>
+          </el-col>
+        </el-row>
+      </div>
+
+      <!-- 批量操作工具栏 -->
+      <div v-if="selectedAgents.length > 0" class="batch-operations">
+        <el-alert
+          :title="`已选择 ${selectedAgents.length} 个智能体`"
+          type="info"
+          :closable="false"
+          show-icon
+          style="margin-bottom: 15px;"
+        />
+        <div class="batch-buttons">
+          <el-button 
+            type="success" 
+            size="small" 
+            @click="startSelected"
+            :disabled="!hasStoppedAgents"
+          >
+            <i class="el-icon-video-play"></i>
+            批量启动
+          </el-button>
+          <el-button 
+            type="warning" 
+            size="small" 
+            @click="stopSelected"
+            :disabled="!hasRunningAgents"
+          >
+            <i class="el-icon-video-pause"></i>
+            批量停止
+          </el-button>
+          <el-button 
+            type="primary" 
+            size="small" 
+            @click="restartSelected"
+            :disabled="!hasRunningAgents"
+          >
+            <i class="el-icon-refresh"></i>
+            批量重启
+          </el-button>
+          <el-button 
+            type="danger" 
+            size="small" 
+            @click="deleteSelected"
+            :disabled="selectedAgents.length === 0"
+          >
+            <i class="el-icon-delete"></i>
+            批量删除
+          </el-button>
+          <el-button 
+            size="small" 
+            @click="clearSelection"
+          >
+            <i class="el-icon-close"></i>
+            取消选择
+          </el-button>
+        </div>
+      </div>
+
       <!-- 智能体表格 -->
-      <el-table :data="filteredAgents" style="width: 100%" stripe v-loading="loading">
+      <el-table 
+        :data="filteredAgents" 
+        style="width: 100%" 
+        stripe 
+        v-loading="loading"
+        @selection-change="handleSelectionChange"
+      >
+        <el-table-column type="selection" width="55" />
         <el-table-column prop="id" label="ID" width="150" />
         <el-table-column prop="name" label="名称" width="200" />
         <el-table-column prop="type" label="类型" width="150">
@@ -66,7 +177,7 @@
         <el-table-column prop="lastUpdated" label="更新时间" width="180" />
         <el-table-column label="操作" width="250" fixed="right">
           <template #default="scope">
-            <el-button size="small" @click="viewAgentLogs(scope.row)">查看日志</el-button>
+            <el-button size="small" @click="viewAgentDetail(scope.row)">详情</el-button>
             <el-button 
               size="small" 
               :type="scope.row.status === 'running' ? 'warning' : 'success'"
@@ -91,6 +202,28 @@
         @current-change="handleCurrentChange"
         style="margin-top: 20px; justify-content: center;"
       />
+
+      <!-- 智能体工作流可视化 -->
+      <el-card class="workflow-card" style="margin-top: 20px;">
+        <template #header>
+          <div class="workflow-header">
+            <span>🤖 智能体工作流可视化</span>
+            <div class="workflow-actions">
+              <el-button size="small" @click="refreshWorkflow">刷新</el-button>
+              <el-button size="small" type="primary" @click="showWorkflowDialog">全屏查看</el-button>
+            </div>
+          </div>
+        </template>
+        
+        <AgentWorkflowVisualization
+          :workflow-data="workflowData"
+          title="智能体协作工作流"
+          :width="800"
+          :height="400"
+          :interactive="true"
+          :show-grid="true"
+        />
+      </el-card>
 
       <!-- 添加/编辑智能体对话框 -->
       <el-dialog 
@@ -139,6 +272,136 @@
           <el-button type="primary" @click="saveAgent">确定</el-button>
         </template>
       </el-dialog>
+
+      <!-- AI_WORKING: coder1 @2026-02-01T14:15:00 - 添加智能体详情视图对话框 -->
+      <!-- 智能体详情对话框 -->
+      <el-dialog 
+        v-model="agentDetailDialogVisible" 
+        title="智能体详情"
+        width="800px"
+      >
+        <div v-if="currentAgentDetail" class="agent-detail-container">
+          <!-- 基本信息 -->
+          <el-card class="detail-section" shadow="never">
+            <template #header>
+              <div class="detail-header">
+                <span>基本信息</span>
+                <el-button 
+                  size="small" 
+                  type="primary" 
+                  @click="analyzeAgentPerformance(currentAgentDetail.id)"
+                >
+                  性能分析
+                </el-button>
+              </div>
+            </template>
+            <el-descriptions :column="2" border>
+              <el-descriptions-item label="智能体ID">{{ currentAgentDetail.id }}</el-descriptions-item>
+              <el-descriptions-item label="名称">{{ currentAgentDetail.name }}</el-descriptions-item>
+              <el-descriptions-item label="类型">
+                <el-tag :type="getAgentTypeTag(currentAgentDetail.type)">
+                  {{ currentAgentDetail.type }}
+                </el-tag>
+              </el-descriptions-item>
+              <el-descriptions-item label="状态">
+                <el-tag :type="getAgentStatusTag(currentAgentDetail.status)">
+                  {{ currentAgentDetail.status }}
+                </el-tag>
+              </el-descriptions-item>
+              <el-descriptions-item label="上次执行">{{ currentAgentDetail.lastExecuted }}</el-descriptions-item>
+              <el-descriptions-item label="执行次数">{{ currentAgentDetail.executions }}</el-descriptions-item>
+              <el-descriptions-item label="错误数">{{ currentAgentDetail.errors }}</el-descriptions-item>
+              <el-descriptions-item label="更新时间">{{ currentAgentDetail.lastUpdated }}</el-descriptions-item>
+            </el-descriptions>
+          </el-card>
+
+          <!-- 性能指标 -->
+          <el-card class="detail-section" shadow="never" style="margin-top: 20px;">
+            <template #header>
+              <span>性能指标</span>
+            </template>
+            <el-row :gutter="20">
+              <el-col :span="8">
+                <div class="metric-item">
+                  <div class="metric-label">成功率</div>
+                  <div class="metric-value">{{ calculateSuccessRate(currentAgentDetail) }}%</div>
+                  <el-progress :percentage="calculateSuccessRate(currentAgentDetail)" :stroke-width="6" />
+                </div>
+              </el-col>
+              <el-col :span="8">
+                <div class="metric-item">
+                  <div class="metric-label">平均执行时间</div>
+                  <div class="metric-value">245ms</div>
+                  <el-progress :percentage="85" :stroke-width="6" status="success" />
+                </div>
+              </el-col>
+              <el-col :span="8">
+                <div class="metric-item">
+                  <div class="metric-label">资源使用率</div>
+                  <div class="metric-value">42%</div>
+                  <el-progress :percentage="42" :stroke-width="6" status="warning" />
+                </div>
+              </el-col>
+            </el-row>
+          </el-card>
+
+          <!-- 操作记录 -->
+          <el-card class="detail-section" shadow="never" style="margin-top: 20px;">
+            <template #header>
+              <div class="detail-header">
+                <span>最近操作记录</span>
+                <el-button size="small" @click="viewAgentLogs(currentAgentDetail)">查看完整日志</el-button>
+              </div>
+            </template>
+            <el-table :data="agentLogs" style="width: 100%" size="small">
+              <el-table-column prop="time" label="时间" width="180" />
+              <el-table-column prop="action" label="操作" width="120" />
+              <el-table-column prop="result" label="结果" width="100">
+                <template #default="scope">
+                  <el-tag :type="scope.row.result === '成功' ? 'success' : 'danger'" size="small">
+                    {{ scope.row.result }}
+                  </el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column prop="details" label="详情" />
+            </el-table>
+          </el-card>
+        </div>
+        
+        <template #footer>
+          <el-button @click="agentDetailDialogVisible = false">关闭</el-button>
+          <el-button type="primary" @click="editAgent(currentAgentDetail)">编辑</el-button>
+          <el-button 
+            :type="currentAgentDetail?.status === 'running' ? 'warning' : 'success'"
+            @click="toggleAgentStatus(currentAgentDetail)"
+          >
+            {{ currentAgentDetail?.status === 'running' ? '停止' : '启动' }}
+          </el-button>
+        </template>
+      </el-dialog>
+
+      <!-- 工作流全屏查看对话框 -->
+      <el-dialog
+        v-model="workflowDialogVisible"
+        title="智能体工作流可视化 - 全屏模式"
+        fullscreen
+        :close-on-click-modal="false"
+      >
+        <AgentWorkflowVisualization
+          :workflow-data="workflowData"
+          title="智能体协作工作流"
+          :width="1200"
+          :height="700"
+          :interactive="true"
+          :show-grid="true"
+        />
+        
+        <template #footer>
+          <el-button @click="workflowDialogVisible = false">关闭</el-button>
+          <el-button type="primary" @click="refreshWorkflow">刷新</el-button>
+        </template>
+      </el-dialog>
+      <!-- AI_DONE: coder1 @2026-02-01T14:15:00 -->
     </el-card>
   </div>
 </template>
@@ -146,11 +409,77 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import AgentWorkflowVisualization from '@/components/visualization/AgentWorkflowVisualization.vue'
 
 // 响应式数据
 const loading = ref(false)
 const agentDialogVisible = ref(false)
 const editingAgent = ref(null)
+
+// 智能体监控面板数据
+const activeAgentsCount = ref(0)
+const avgResponseTime = ref(245)
+const performanceScore = ref(85)
+const pendingTasksCount = ref(12)
+const collaborationScore = ref(78)
+const trendType = ref('success')
+const trendText = ref('+2 个')
+
+// 智能体详情对话框数据
+const agentDetailDialogVisible = ref(false)
+const currentAgentDetail = ref(null)
+const agentLogs = ref([
+  {
+    time: '2026-01-30 03:30:15',
+    action: '赔率监控',
+    result: '成功',
+    details: '监控了15场比赛的赔率变化'
+  },
+  {
+    time: '2026-01-30 03:25:10',
+    action: '数据同步',
+    result: '成功',
+    details: '同步了3个数据源的比赛信息'
+  },
+  {
+    time: '2026-01-30 03:20:05',
+    action: '异常检测',
+    result: '失败',
+    details: '检测到网络连接超时，已重试'
+  },
+  {
+    time: '2026-01-30 03:15:00',
+    action: '定时任务',
+    result: '成功',
+    details: '执行了每日数据备份'
+  }
+])
+
+// 工作流可视化数据
+const workflowData = ref({
+  nodes: [
+    { id: '1', name: '数据采集', type: 'crawler', status: 'completed' },
+    { id: '2', name: '数据处理', type: 'process', status: 'running' },
+    { id: '3', name: '特征提取', type: 'analysis', status: 'pending' },
+    { id: '4', name: '模型预测', type: 'prediction', status: 'pending' },
+    { id: '5', name: '结果输出', type: 'output', status: 'pending' }
+  ],
+  edges: [
+    { source: '1', target: '2', type: 'data', status: 'success' },
+    { source: '2', target: '3', type: 'data', status: 'active' },
+    { source: '3', target: '4', type: 'data', status: null },
+    { source: '4', target: '5', type: 'result', status: null }
+  ],
+  metadata: {
+    name: '智能体协作工作流',
+    description: '展示智能体之间的协作关系和数据流向'
+  }
+})
+
+const workflowDialogVisible = ref(false)
+
+// 批量操作数据
+const selectedAgents = ref([])
 
 // 智能体数据
 const agents = ref([
@@ -296,6 +625,32 @@ const viewAgentLogs = (agent) => {
   // 实际应用中可以打开日志查看器
 }
 
+// 智能体详情相关方法
+const viewAgentDetail = (agent) => {
+  currentAgentDetail.value = agent
+  agentDetailDialogVisible.value = true
+}
+
+const analyzeAgentPerformance = async (agentId) => {
+  try {
+    ElMessage.info(`正在分析智能体 ${agentId} 的性能...`)
+    // 实际应用中可以调用API获取性能数据
+    // const response = await api.get(`/api/v1/agents/${agentId}/performance`)
+    // showPerformanceDialog(response.data)
+    setTimeout(() => {
+      ElMessage.success('性能分析完成！')
+    }, 1500)
+  } catch (error) {
+    ElMessage.error('性能分析失败')
+  }
+}
+
+const calculateSuccessRate = (agent) => {
+  if (!agent || !agent.executions) return 0
+  const successRate = ((agent.executions - agent.errors) / agent.executions) * 100
+  return Math.round(successRate * 100) / 100 // 保留两位小数
+}
+
 const toggleAgentStatus = async (agent) => {
   try {
     const newStatus = agent.status === 'running' ? 'stopped' : 'running'
@@ -396,6 +751,9 @@ const applyFilters = () => {
   
   filteredAgents.value = result
   totalAgents.value = result.length
+  
+  // 更新监控面板数据
+  activeAgentsCount.value = agents.value.filter(agent => agent.status === 'running').length
 }
 
 const handleSizeChange = (size) => {
@@ -406,9 +764,31 @@ const handleCurrentChange = (page) => {
   currentPage.value = page
 }
 
+// 监控面板方法
+const viewTaskQueue = () => {
+  ElMessage.info('查看任务队列功能待实现')
+}
+
+const optimizeCollaboration = () => {
+  ElMessage.success('智能体协作优化功能待实现')
+}
+
 const refreshAgents = () => {
   applyFilters()
   ElMessage.success('智能体列表已刷新')
+}
+
+// 工作流相关方法
+const refreshWorkflow = () => {
+  ElMessage.info('刷新工作流数据...')
+  // 实际应用中这里可以调用API获取最新的工作流数据
+  setTimeout(() => {
+    ElMessage.success('工作流数据已刷新')
+  }, 1000)
+}
+
+const showWorkflowDialog = () => {
+  workflowDialogVisible.value = true
 }
 
 // 初始化数据
@@ -442,5 +822,84 @@ onMounted(() => {
 .header-actions {
   display: flex;
   gap: 10px;
+}
+
+/* 智能体监控面板样式 */
+.agent-dashboard {
+  margin-bottom: 24px;
+}
+
+.agent-monitor {
+  margin-bottom: 20px;
+}
+
+.monitor-card {
+  height: 140px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.monitor-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+  color: #606266;
+}
+
+.monitor-header i {
+  font-size: 18px;
+  margin-right: 8px;
+}
+
+.monitor-header span {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.monitor-value {
+  font-size: 28px;
+  font-weight: bold;
+  color: #303133;
+  margin: 8px 0;
+}
+
+.monitor-trend {
+  margin-top: 8px;
+}
+
+/* 智能体详情对话框样式 */
+.agent-detail-container {
+  max-height: 70vh;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+.detail-section {
+  margin-bottom: 20px;
+}
+
+.detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.metric-item {
+  text-align: center;
+  padding: 15px;
+}
+
+.metric-label {
+  font-size: 14px;
+  color: #606266;
+  margin-bottom: 8px;
+}
+
+.metric-value {
+  font-size: 24px;
+  font-weight: bold;
+  color: #303133;
+  margin-bottom: 10px;
 }
 </style>

@@ -19,9 +19,9 @@ engine = create_engine('sqlite:///:memory:')
 # 创建所有表
 try:
     Base.metadata.create_all(engine)
-    print("✓ 数据库表创建成功")
+    print("[OK] 数据库表创建成功")
 except Exception as e:
-    print(f"✗ 数据库表创建失败: {e}")
+    print(f"[FAIL] 数据库表创建失败: {e}")
     sys.exit(1)
 
 # 测试映射器配置
@@ -29,29 +29,29 @@ models_to_test = [User, UserPrediction, Prediction]
 for model in models_to_test:
     try:
         mapper = class_mapper(model)
-        print(f"✓ {model.__name__} 映射器配置成功")
+        print(f"[OK] {model.__name__} 映射器配置成功")
     except Exception as e:
-        print(f"✗ {model.__name__} 映射器配置失败: {e}")
+        print(f"[FAIL] {model.__name__} 映射器配置失败: {e}")
 
 # 测试关系
 print("\n=== 测试关系 ===")
 if hasattr(User, 'user_predictions'):
     rel = User.user_predictions
-    print(f"✓ User.user_predictions 关系存在: {rel}")
+    print(f"[OK] User.user_predictions 关系存在: {rel}")
 else:
-    print("✗ User.user_predictions 关系缺失")
+    print("[FAIL] User.user_predictions 关系缺失")
 
 if hasattr(UserPrediction, 'user'):
     rel = UserPrediction.user
-    print(f"✓ UserPrediction.user 关系存在: {rel}")
+    print(f"[OK] UserPrediction.user 关系存在: {rel}")
 else:
-    print("✗ UserPrediction.user 关系缺失")
+    print("[FAIL] UserPrediction.user 关系缺失")
 
 if hasattr(Prediction, 'user_predictions'):
     rel = Prediction.user_predictions
-    print(f"✓ Prediction.user_predictions 关系存在: {rel}")
+    print(f"[OK] Prediction.user_predictions 关系存在: {rel}")
 else:
-    print("✗ Prediction.user_predictions 关系缺失")
+    print("[FAIL] Prediction.user_predictions 关系缺失")
 
 # 创建一个会话并测试基本操作
 Session = sessionmaker(bind=engine)
@@ -67,15 +67,15 @@ try:
     )
     session.add(test_user)
     session.commit()
-    print(f"✓ 用户创建成功: id={test_user.id}")
+    print(f"[OK] 用户创建成功: id={test_user.id}")
     
     # 清理
     session.query(User).delete()
     session.commit()
-    print("✓ 清理成功")
+    print("[OK] 清理成功")
     
 except Exception as e:
-    print(f"✗ 数据库操作失败: {e}")
+    print(f"[FAIL] 数据库操作失败: {e}")
     session.rollback()
 
 print("\n=== 测试完成 ===")

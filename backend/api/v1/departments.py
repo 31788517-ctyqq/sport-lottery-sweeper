@@ -46,6 +46,46 @@ async def get_departments_tree(db: AsyncSession = Depends(get_async_db)):
     return departments
 
 
+@router.get("/options", response_model=List[dict])
+async def get_department_options(
+    db: AsyncSession = Depends(get_async_db)
+):
+    """
+    获取部门选项（扁平结构），用于下拉选择
+    """
+    departments, _ = await crud_department.get_multi_with_filter(db, tree=False)
+    options = [{"id": dept.id, "label": dept.name, "value": dept.id, "parentId": dept.parent_id} for dept in departments]
+    return options
+
+
+@router.get("/stats", response_model=dict)
+async def get_department_stats(
+    db: AsyncSession = Depends(get_async_db)
+):
+    """
+    获取部门统计信息
+    """
+    departments, total = await crud_department.get_multi_with_filter(db, tree=False)
+    
+    # 计算每个部门的用户数
+    from backend.models.admin_user import AdminUser
+    dept_user_counts = {}
+    for dept in departments:
+        count_stmt = select(func.count(AdminUser.id)).where(AdminUser.department_id == dept.id)
+        count_result = await db.execute(count_stmt)
+        dept_user_counts[dept.id] = count_result.scalar()
+    
+    stats = {
+        "total_departments": total,
+        "active_departments": sum(1 for d in departments if d.status),
+        "inactive_departments": sum(1 for d in departments if not d.status),
+        "department_user_counts": dept_user_counts,
+        "total_users_in_departments": sum(dept_user_counts.values())
+    }
+    
+    return stats
+
+
 @router.get("/{id}", response_model=Department)
 async def get_department(
     *,
@@ -121,20 +161,17 @@ async def delete_department(
     if children:
         raise HTTPException(status_code=400, detail="Cannot delete department with children")
     
+    # 检查是否有用户属于该部门
+    from backend.models.admin_user import AdminUser
+    user_count_stmt = select(func.count(AdminUser.id)).where(AdminUser.department_id == id)
+    user_count_result = await db.execute(user_count_stmt)
+    user_count = user_count_result.scalar()
+    
+    if user_count > 0:
+        raise HTTPException(status_code=400, detail="Cannot delete department with users assigned")
+    
     await crud_department.remove(db, id=id)
     return {"msg": "Department deleted successfully"}
-
-
-@router.get("/options", response_model=List[dict])
-async def get_department_options(
-    db: AsyncSession = Depends(get_async_db)
-):
-    """
-    获取部门选项（扁平结构），用于下拉选择
-    """
-    departments, _ = await crud_department.get_multi_with_filter(db, tree=False)
-    options = [{"id": dept.id, "label": dept.name, "value": dept.id} for dept in departments]
-    return options
 
 
 @router.get("/{id}/members", response_model=dict)
@@ -176,19 +213,60 @@ async def get_department_members(
     }
 
 
-@router.get("/stats", response_model=dict)
-async def get_department_stats(
+@router.post("/{department_id}/members/{user_id}")
+async def assign_user_to_department(
+    department_id: int,
+    user_id: int,
     db: AsyncSession = Depends(get_async_db)
 ):
     """
-    获取部门统计信息
+    将用户分配到部门
     """
-    departments, total = await crud_department.get_multi_with_filter(db, tree=False)
+    from backend.models.admin_user import AdminUser
     
-    stats = {
-        "total_departments": total,
-        "active_departments": sum(1 for d in departments if d.status),
-        "inactive_departments": sum(1 for d in departments if not d.status)
-    }
+    department = await crud_department.get(db, id=department_id)
+    if not department:
+        raise HTTPException(status_code=404, detail="Department not found")
     
-    return stats
+    # 获取用户
+    user_stmt = select(AdminUser).where(AdminUser.id == user_id)
+    user_result = await db.execute(user_stmt)
+    user = user_result.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # 更新用户部门
+    user.department_id = department_id
+    await db.commit()
+    await db.refresh(user)
+    
+    return {"msg": "User assigned to department successfully", "user_id": user_id, "department_id": department_id}
+
+
+@router.delete("/{department_id}/members/{user_id}")
+async def remove_user_from_department(
+    department_id: int,
+    user_id: int,
+    db: AsyncSession = Depends(get_async_db)
+):
+    """
+    将用户从部门移除
+    """
+    from backend.models.admin_user import AdminUser
+    
+    department = await crud_department.get(db, id=department_id)
+    if not department:
+        raise HTTPException(status_code=404, detail="Department not found")
+    
+    # 获取用户
+    user_stmt = select(AdminUser).where(AdminUser.id == user_id).where(AdminUser.department_id == department_id)
+    user_result = await db.execute(user_stmt)
+    user = user_result.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found in this department")
+    
+    # 从部门移除用户
+    user.department_id = None
+    await db.commit()
+    
+    return {"msg": "User removed from department successfully", "user_id": user_id, "department_id": department_id}

@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """
 数据库工具模块 - 封装常用的数据库操作
+
+注意：根据数据库路径规范，数据库文件应位于项目根目录，并通过 backend.database.DATABASE_PATH 配置。
+本模块优先使用统一的 DATABASE_PATH 配置，保持向后兼容性。
 """
 import sqlite3
 import bcrypt
@@ -9,24 +12,31 @@ from typing import Optional, Dict, Any, List
 from contextlib import contextmanager
 from datetime import datetime
 
-# 获取项目根目录的数据库路径 - 优先使用根目录，如果不存在则使用data目录
-PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# 优先使用统一的数据库路径配置
+try:
+    from backend.database import DATABASE_PATH
+    # DATABASE_PATH 可能是 pathlib.Path 对象，转换为字符串
+    DB_PATH = str(DATABASE_PATH)
+except ImportError:
+    # 回退到原来的路径查找逻辑
+    # 获取项目根目录的数据库路径 - 优先使用根目录，如果不存在则使用data目录
+    PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-# 尝试多个可能的数据库路径
-possible_paths = [
-    os.path.join(PROJECT_ROOT, "sport_lottery.db"),  # 根目录
-    os.path.join(PROJECT_ROOT, "data", "sport_lottery.db"),  # data目录
-]
+    # 尝试多个可能的数据库路径
+    possible_paths = [
+        os.path.join(PROJECT_ROOT, "sport_lottery.db"),  # 根目录
+        os.path.join(PROJECT_ROOT, "data", "sport_lottery.db"),  # data目录
+    ]
 
-DB_PATH = None
-for path in possible_paths:
-    if os.path.exists(path):
-        DB_PATH = path
-        break
+    DB_PATH = None
+    for path in possible_paths:
+        if os.path.exists(path):
+            DB_PATH = path
+            break
 
-if DB_PATH is None:
-    # 如果都不存在，使用根目录的默认路径
-    DB_PATH = os.path.join(PROJECT_ROOT, "sport_lottery.db")
+    if DB_PATH is None:
+        # 如果都不存在，使用根目录的默认路径
+        DB_PATH = os.path.join(PROJECT_ROOT, "sport_lottery.db")
 
 def get_db_connection():
     """获取数据库连接"""
@@ -103,17 +113,26 @@ def get_dashboard_stats() -> Dict[str, Any]:
         cursor = conn.cursor()
         
         # 获取用户统计
-        cursor.execute("SELECT COUNT(*) as total_users FROM users WHERE status = 'active'")
-        total_users = cursor.fetchone()['total_users']
+        try:
+            cursor.execute("SELECT COUNT(*) as total_users FROM users WHERE status = 'active'")
+            total_users = cursor.fetchone()['total_users']
+        except sqlite3.OperationalError:
+            total_users = 0
         
         # 获取今日比赛数量
         today = datetime.now().strftime('%Y-%m-%d')
-        cursor.execute("SELECT COUNT(*) as today_matches FROM matches WHERE match_date LIKE ?", (f'{today}%',))
-        today_matches = cursor.fetchone()['today_matches']
+        try:
+            cursor.execute("SELECT COUNT(*) as today_matches FROM matches WHERE match_date LIKE ?", (f'{today}%',))
+            today_matches = cursor.fetchone()['today_matches']
+        except sqlite3.OperationalError:
+            today_matches = 0
         
         # 获取活跃数据源数量
-        cursor.execute("SELECT COUNT(*) as active_sources FROM crawler_sources WHERE status = 'online'")
-        active_sources = cursor.fetchone()['active_sources']
+        try:
+            cursor.execute("SELECT COUNT(*) as active_sources FROM crawler_sources WHERE status = 'online'")
+            active_sources = cursor.fetchone()['active_sources']
+        except sqlite3.OperationalError:
+            active_sources = 0
         
         return {
             "total_users": total_users,
@@ -129,10 +148,13 @@ def get_intelligence_screening_list() -> Dict[str, Any]:
     conn = get_db_connection()
     try:
         cursor = conn.cursor()
-        cursor.execute(
-            "SELECT id, title, category, priority, status, created_at FROM intelligence_data ORDER BY created_at DESC LIMIT 10"
-        )
-        items = [dict(row) for row in cursor.fetchall()]
+        try:
+            cursor.execute(
+                "SELECT id, title, category, priority, status, created_at FROM intelligence_data ORDER BY created_at DESC LIMIT 10"
+            )
+            items = [dict(row) for row in cursor.fetchall()]
+        except sqlite3.OperationalError:
+            items = []
         
         return {
             "items": items,

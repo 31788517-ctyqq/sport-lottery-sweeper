@@ -6,66 +6,7 @@
       <p>管理和查看北京单场足球赛事赛程信息</p>
     </div>
 
-    <!-- 统计卡片区域 -->
-    <div class="stats-section">
-      <el-row :gutter="20">
-        <el-col :span="6">
-          <el-card class="stat-card">
-            <el-statistic
-              title="总期次"
-              :value="new Set(filteredMatches.map(m => m.round_number)).size"
-              :precision="0"
-            >
-              <template #prefix>
-                <el-icon><Document /></el-icon>
-              </template>
-            </el-statistic>
-          </el-card>
-        </el-col>
-        <el-col :span="6">
-          <el-card class="stat-card">
-            <el-statistic
-              title="今日比赛"
-              :value="filteredMatches.filter(m => isToday(m.scheduled_kickoff)).length"
-              :precision="0"
-              style="color: #67c23a"
-            >
-              <template #prefix>
-                <el-icon><Calendar /></el-icon>
-              </template>
-            </el-statistic>
-          </el-card>
-        </el-col>
-        <el-col :span="6">
-          <el-card class="stat-card">
-            <el-statistic
-              title="进行中期次"
-              :value="filteredMatches.filter(m => ['live','halftime'].includes(m.status)).length"
-              :precision="0"
-              style="color: #409eff"
-            >
-              <template #prefix>
-                <el-icon><VideoPlay /></el-icon>
-              </template>
-            </el-statistic>
-          </el-card>
-        </el-col>
-        <el-col :span="6">
-          <el-card class="stat-card">
-            <el-statistic
-              title="已发布"
-              :value="filteredMatches.filter(m => m.is_published).length"
-              :precision="0"
-              style="color: #e6a23c"
-            >
-              <template #prefix>
-                <el-icon><Star /></el-icon>
-              </template>
-            </el-statistic>
-          </el-card>
-        </el-col>
-      </el-row>
-    </div>
+    <!-- AI_WORKING: coder1 @2026-01-31T20:04:38 - 移除统计卡片区域（总期次、今日开奖、进行中期次、平均奖金卡片） -->
 
     <!-- 操作栏 -->
     <div class="operation-bar">
@@ -77,10 +18,7 @@
         <el-icon><Upload /></el-icon>
         导入数据
       </el-button>
-      <el-button type="warning" @click="fetchCrawlerData">
-        <el-icon><Search /></el-icon>
-        爬取数据
-      </el-button>
+      <!-- AI_WORKING: coder1 @2026-01-31T20:05:12 - 移除爬取数据按钮 -->
       <el-button type="info" @click="exportData">
         <el-icon><Document /></el-icon>
         导出数据
@@ -94,16 +32,7 @@
             :close-on-click-modal="false"
           >
             <el-form :model="importForm" label-width="120px">
-              <el-form-item label="选择联赛">
-                <el-select v-model="importForm.leagueId" placeholder="请选择联赛" style="width: 100%">
-                  <el-option
-                    v-for="league in leagues"
-                    :key="league.id"
-                    :label="league.name"
-                    :value="league.id"
-                  />
-                </el-select>
-              </el-form-item>
+              <!-- AI_WORKING: coder1 @2026-01-31T20:11:45 - 移除选择联赛表单项 -->
               
               <el-form-item label="导入方式">
                 <el-radio-group v-model="importForm.importType">
@@ -175,20 +104,10 @@
               <el-option label="近3天" :value="3" />
               <el-option label="近7天" :value="7" />
               <el-option label="近30天" :value="30" />
-              <el-option label="近5天" :value="5" />
-              <el-option label="近15天" :value="15" />
+              <!-- AI_WORKING: coder1 @2026-01-31T20:06:18 - 移除近5天和近15天选项 -->
             </el-select>
           </el-form-item>
-          <el-form-item label="联赛筛选">
-            <el-select v-model="selectedLeague" placeholder="选择联赛" clearable @change="handleLeagueChange" style="width: 150px">
-              <el-option
-                v-for="league in leagues"
-                :key="league.id"
-                :label="league.name"
-                :value="league.id"
-              />
-            </el-select>
-          </el-form-item>
+          <!-- AI_WORKING: coder1 @2026-01-31T20:05:45 - 移除联赛筛选 -->
           <el-form-item>
             <el-button type="primary" @click="handleSearch">查询</el-button>
             <el-button @click="resetFilters">重置</el-button>
@@ -205,24 +124,44 @@
             stripe
             border
           >
-              <el-table-column label="比赛编号" width="80">
-                <template #default="scope">
-                  {{ scope.$index + 1 }}
-                </template>
-              </el-table-column>
+              <!-- AI_WORKING: coder1 @2026-01-31T20:07:01 - 更新表格列结构 -->
+              <el-table-column prop="match_identifier" label="编号" width="80" />
               <el-table-column prop="league_name" label="联赛" width="120" />
-              <el-table-column label="比赛时间" width="180">
+              <el-table-column label="开赛日期" width="120">
                 <template #default="scope">
-                  {{ formatDateTime(scope.row.scheduled_kickoff) }}
+                  {{ formatDate(scope.row.scheduled_kickoff) }}
                 </template>
               </el-table-column>
-              <el-table-column label="对阵" min-width="160">
+              <el-table-column label="开赛时间" width="100">
+                <template #default="scope">
+                  {{ formatTime(scope.row.scheduled_kickoff) }}
+                </template>
+              </el-table-column>
+              <el-table-column label="主队 VS 客队" min-width="180">
                 <template #default="scope">
                   <div class="match-teams">
                     <span class="home-team">{{ scope.row.home_team }}</span>
                     <span class="vs">VS</span>
                     <span class="away-team">{{ scope.row.away_team }}</span>
                   </div>
+                </template>
+              </el-table-column>
+              <el-table-column label="主胜（赔率）" width="120">
+                <template #default="scope">
+                  <span v-if="scope.row.home_win_odds">{{ scope.row.home_win_odds }}</span>
+                  <span v-else class="text-muted">-</span>
+                </template>
+              </el-table-column>
+              <el-table-column label="平（赔率）" width="100">
+                <template #default="scope">
+                  <span v-if="scope.row.draw_odds">{{ scope.row.draw_odds }}</span>
+                  <span v-else class="text-muted">-</span>
+                </template>
+              </el-table-column>
+              <el-table-column label="主负（赔率）" width="120">
+                <template #default="scope">
+                  <span v-if="scope.row.away_win_odds">{{ scope.row.away_win_odds }}</span>
+                  <span v-else class="text-muted">-</span>
                 </template>
               </el-table-column>
               <el-table-column label="状态" width="100">
@@ -277,25 +216,21 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Search, Refresh, Upload, UploadFilled, Connection, Star, Document, Calendar, VideoPlay, CircleCheck, CircleClose } from '@element-plus/icons-vue'
-import BaseCard from '@/components/common/BaseCard.vue'
-import axios from 'axios'
+import request from '@/utils/request'  // 替代axios
+import { Search, Edit, Delete, Plus, Refresh, Download, Upload, InfoFilled, Calendar, Clock, Flag } from '@element-plus/icons-vue'
 
 // 筛选表单
 const filters = reactive({
   name: '',
-  league_id: '',
   days: 5
 })
 
 // 响应式数据
 const loading = ref(false)
 const matches = ref([])
-const leagues = ref([])
 const selectedDays = ref(3)  // 修改为默认3天
-const selectedLeague = ref('')
 const searchKeyword = ref('')
 const showImportDialog = ref(false)
 const importLoading = ref(false)
@@ -309,19 +244,17 @@ const pagination = reactive({
 
 // 导入表单
 const importForm = reactive({
-  leagueId: '',
   importType: 'file',
-  apiUrl: ''
+  apiUrl: '',
+  apiMethod: 'GET',
+  apiHeaders: '',
+  apiParams: ''
 })
 
 // 计算属性
 const filteredMatches = computed(() => {
   let filtered = matches.value
-  
-  // 联赛筛选
-  if (selectedLeague.value) {
-    filtered = filtered.filter(match => match.league_id === selectedLeague.value)
-  }
+  // AI_WORKING: coder1 @2026-01-31T20:08:22 - 移除联赛筛选逻辑
   
   // 关键词搜索
   if (searchKeyword.value) {
@@ -342,18 +275,9 @@ const uploadUrl = computed(() => `/api/admin/matches/import/file`)
 const uploadHeaders = computed(() => ({
   'Authorization': `Bearer ${localStorage.getItem('token')}`
 }))
-const uploadData = computed(() => ({
-  league_id: importForm.leagueId
-}))
+const uploadData = computed(() => ({}))
 
-// 状态分布
-const statusDistribution = computed(() => {
-  const dist = {}
-  filteredMatches.value.forEach(m => {
-    dist[m.status] = (dist[m.status] || 0) + 1
-  })
-  return Object.keys(dist).map(status => ({ status, count: dist[status] }))
-})
+// 状态分布（未使用）
 
 // 方法
 const handleSearch = () => {
@@ -364,10 +288,8 @@ const handleSearch = () => {
 const resetFilters = () => {
   searchKeyword.value = ''
   selectedDays.value = 3  // 默认设置为3天
-  selectedLeague.value = ''
   filters.name = ''
   filters.days = 3  // 默认设置为3天
-  filters.league_id = ''
   handleSearch()
 }
 
@@ -377,19 +299,9 @@ const handleDaysChange = (days) => {
   handleSearch()
 }
 
-const handleLeagueChange = (leagueId) => {
-  selectedLeague.value = leagueId
-  filters.league_id = leagueId
-  handleSearch()
-}
+  // AI_WORKING: coder1 @2026-01-31T20:09:15 - 移除联赛变更处理方法
 
-// 日期判断辅助函数
-const isToday = (dateStr) => {
-  if (!dateStr) return false
-  const today = new Date()
-  const date = new Date(dateStr)
-  return date.toDateString() === today.toDateString()
-}
+// 日期判断辅助函数（未使用）
 
 // 方法
 const fetchMatches = async () => {
@@ -399,11 +311,14 @@ const fetchMatches = async () => {
       page: pagination.page,
       size: pagination.size,
       days: selectedDays.value,
-      keyword: searchKeyword.value || undefined,
-      league_id: selectedLeague.value || undefined
+      keyword: searchKeyword.value || undefined
     }
     
-    const response = await axios.get('/api/admin/v1/beidan-schedules/', { params })
+    const response = await request.get('/api/admin/v1/beidan-schedules/', {
+      params
+    })
+    schedules.value = response.data.items || []
+    total.value = response.data.total || 0
     
     if (response.data.success) {
       matches.value = response.data.data.items
@@ -419,19 +334,7 @@ const fetchMatches = async () => {
   }
 }
 
-const fetchLeagues = async () => {
-  try {
-    const response = await axios.get('/api/admin/v1/beidan-schedules/leagues')
-    
-    if (response.data.success) {
-      leagues.value = response.data.data.items
-    } else {
-      console.error('获取联赛列表失败:', response.data.message)
-    }
-  } catch (error) {
-    console.error('获取联赛列表失败:', error)
-  }
-}
+  // AI_WORKING: coder1 @2026-01-31T20:10:05 - 移除获取联赛列表方法
 
 
 
@@ -441,9 +344,7 @@ const refreshData = () => {
   ElMessage.success('北单数据已刷新')
 }
 
-const fetchCrawlerData = () => {
-  ElMessage.info('爬取数据功能待实现')
-}
+// AI_WORKING: coder1 @2026-01-31T20:14:30 - 移除爬取数据函数
 
 const handleView = (row) => {
   console.log('查看北单比赛详情:', row)
@@ -467,7 +368,7 @@ const handleDelete = async (row) => {
       }
     )
     
-    await axios.delete(`/api/admin/v1/beidan-schedules/${row.id}`)
+    await request.delete(`/api/admin/v1/beidan-schedules/${row.id}`)
     
     const index = matches.value.findIndex(item => item.id === row.id)
     if (index > -1) {
@@ -485,7 +386,7 @@ const handleDelete = async (row) => {
 
 const togglePublish = async (row) => {
   try {
-    const response = await axios.put(`/api/admin/v1/beidan-schedules/${row.id}/publish`, {}, {
+    const response = await request.put(`/api/admin/v1/beidan-schedules/${row.id}/publish`, {}, {
       params: { publish: !row.is_published }
     })
     
@@ -508,7 +409,6 @@ const exportData = async () => {
       size: 9999,  // 获取所有数据
       days: selectedDays.value,
       keyword: searchKeyword.value || undefined,
-      league_id: selectedLeague.value || undefined,
       export: true
     }
     
@@ -535,10 +435,7 @@ const exportData = async () => {
 }
 
 const handleImport = async () => {
-  if (!importForm.leagueId) {
-    ElMessage.warning('请选择联赛')
-    return
-  }
+  // AI_WORKING: coder1 @2026-01-31T20:12:30 - 移除联赛ID检查
   
   importLoading.value = true
   
@@ -553,9 +450,8 @@ const handleImport = async () => {
       }
       
       ElMessage.info('正在从外部API获取数据...')
-      await axios.post('/api/admin/v1/beidan-schedules/import/api', {
-        api_url: importForm.apiUrl,
-        league_id: importForm.leagueId
+      await request.post('/api/admin/v1/beidan-schedules/import/api', {
+        api_url: importForm.apiUrl
       })
       
       ElMessage.success('API数据获取成功')
@@ -590,7 +486,7 @@ const beforeUpload = (file) => {
   return true
 }
 
-const handleUploadSuccess = (response) => {
+const handleUploadSuccess = (_response) => {
   ElMessage.success('文件上传成功')
   showImportDialog.value = false
   fetchMatches()
@@ -601,9 +497,16 @@ const handleUploadError = (error) => {
   ElMessage.error('文件上传失败')
 }
 
-const formatDateTime = (datetime) => {
+// formatDateTime 函数未使用，已移除
+
+const formatDate = (datetime) => {
   if (!datetime) return '-'
-  return new Date(datetime).toLocaleString('zh-CN')
+  return new Date(datetime).toLocaleDateString('zh-CN')
+}
+
+const formatTime = (datetime) => {
+  if (!datetime) return '-'
+  return new Date(datetime).toLocaleTimeString('zh-CN')
 }
 
 const getStatusTagType = (status) => {
@@ -634,25 +537,9 @@ const getStatusText = (status) => {
   return statusMap[status] || status
 }
 
-const getImportanceTagType = (importance) => {
-  const importanceMap = {
-    low: 'info',
-    medium: '',
-    high: 'warning',
-    very_high: 'danger'
-  }
-  return importanceMap[importance] || ''
-}
+// getImportanceTagType 函数未使用，已移除
 
-const getImportanceText = (importance) => {
-  const importanceMap = {
-    low: '普通',
-    medium: '中等',
-    high: '重要',
-    very_high: '非常重要'
-  }
-  return importanceMap[importance] || importance
-}
+// getImportanceText 函数未使用，已移除
 
 const handleSizeChange = (size) => {
   pagination.size = size
@@ -668,7 +555,7 @@ const handleCurrentChange = (page) => {
 // 生命周期
 onMounted(() => {
   fetchMatches()
-  fetchLeagues()
+  // AI_WORKING: coder1 @2026-01-31T20:13:45 - 移除获取联赛列表调用
 })
 </script>
 

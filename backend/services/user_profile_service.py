@@ -2,6 +2,7 @@ from typing import Dict, List, Any
 from sqlalchemy.orm import Session
 from ..models.user import User
 from ..models.betting_record import BettingRecord
+from sqlalchemy.exc import OperationalError
 from datetime import datetime
 
 
@@ -11,7 +12,11 @@ class UserProfileService:
     
     def build_profile(self, user_id: int) -> Dict[str, Any]:
         # 获取用户历史投注记录
-        records = self.db.query(BettingRecord).filter(BettingRecord.user_id == user_id).all()
+        try:
+            records = self.db.query(BettingRecord).filter(BettingRecord.user_id == user_id).all()
+        except OperationalError:
+            # 表不存在或未初始化时，回退为空记录
+            records = []
         
         profile = {
             "risk_tolerance": self.calculate_risk_tolerance(records),

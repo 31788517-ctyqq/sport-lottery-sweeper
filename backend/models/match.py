@@ -3,10 +3,11 @@
 """
 from datetime import datetime
 from typing import List, Optional
+import json
 from sqlalchemy import (
     Column, Integer, String, Boolean, DateTime, 
     ForeignKey, Float, Text, Enum, Date, Time,
-    CheckConstraint, Index, JSON
+    CheckConstraint, Index, JSON, UniqueConstraint
 )
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.sql import func
@@ -258,8 +259,14 @@ class Match(BaseFullModel):
     external_id = Column(String(100), nullable=True, index=True)  # 外部系统ID
     external_source = Column(String(50), nullable=True, index=True)  # 外部数据来源
     
+    # 多数据源支持（阶段一改造）
+    data_source = Column(String(50), default='default', nullable=False, index=True)  # 数据源标识
+    source_match_id = Column(String(255), nullable=True, index=True)  # 数据源原始ID
+    data_version = Column(Integer, default=1, nullable=False)  # 数据版本号
+    source_attributes = Column(JSON, default=lambda: {}, nullable=False)  # 数据源特有字段
+
     # 配置信息
-    config = Column(MutableDict.as_mutable(Text), default=lambda: {}, nullable=False)  # 比赛配置
+    config = Column(Text, default=lambda: json.dumps({}), nullable=False)  # 比赛配置
     
     # 关系
     league = relationship("League", back_populates="matches")
@@ -281,6 +288,7 @@ class Match(BaseFullModel):
         Index('idx_matches_venue_date', 'venue_id', 'match_date'),
         Index('idx_matches_published_date', 'is_published', 'match_date'),
         Index('idx_matches_type_importance', 'type', 'importance'),
+        UniqueConstraint('data_source', 'source_match_id', name='uq_matches_data_source_source_match_id'),
         {'extend_existing': True}  # 确保支持表扩展
     )
     

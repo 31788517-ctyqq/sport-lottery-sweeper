@@ -1,0 +1,3 @@
+issue_type,severity,route,method,file,description,recommendation
+"missing_auth","high","/config","GET","api\v1\hedging.py","敏感接口缺少认证保护","添加Depends(get_current_user)或Depends(get_current_admin_user)"
+"missing_auth","high","/config","GET","api\v1\simple_hedging.py","敏感接口缺少认证保护","添加Depends(get_current_user)或Depends(get_current_admin_user)"

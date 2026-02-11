@@ -18,14 +18,16 @@ def get_by_name(db: Session, name: str) -> Optional[CrawlerConfig]:
     return db.query(CrawlerConfig).filter(CrawlerConfig.name == name).first()
 
 
-def get_multi(db: Session, skip: int = 0, limit: int = 100) -> List[CrawlerConfig]:
+def get_multi(db: Session, skip: int = 0, limit: int = 100) -> tuple[List[CrawlerConfig], int]:
     """获取多条爬虫配置"""
-    return db.query(CrawlerConfig).offset(skip).limit(limit).all()
+    configs = db.query(CrawlerConfig).offset(skip).limit(limit).all()
+    total = db.query(CrawlerConfig).count()
+    return configs, total
 
 
 def get_enabled_configs(db: Session) -> List[CrawlerConfig]:
     """获取启用的爬虫配置"""
-    return db.query(CrawlerConfig).filter(CrawlerConfig.enabled == True).all()
+    return db.query(CrawlerConfig).filter(CrawlerConfig.is_active == True).all()
 
 
 def create(db: Session, *, obj_in: CrawlerConfigCreate) -> CrawlerConfig:

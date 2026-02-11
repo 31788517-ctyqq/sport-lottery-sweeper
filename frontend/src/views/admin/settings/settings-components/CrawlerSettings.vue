@@ -144,10 +144,10 @@
         
         <el-form-item label="数据验证规则">
           <el-checkbox-group v-model="form.validationRules">
-            <el-checkbox label="check_data_integrity">检查数据完整性</el-checkbox>
-            <el-checkbox label="validate_format">验证数据格式</el-checkbox>
-            <el-checkbox label="detect_anomalies">异常数据检测</el-checkbox>
-            <el-checkbox label="duplicate_filter">重复数据过滤</el-checkbox>
+            <el-checkbox value="check_data_integrity">检查数据完整性</el-checkbox>
+            <el-checkbox value="validate_format">验证数据格式</el-checkbox>
+            <el-checkbox value="detect_anomalies">异常数据检测</el-checkbox>
+            <el-checkbox value="duplicate_filter">重复数据过滤</el-checkbox>
           </el-checkbox-group>
         </el-form-item>
         

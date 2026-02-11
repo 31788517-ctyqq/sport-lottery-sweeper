@@ -47,11 +47,15 @@ class Settings(BaseSettings):
     }
 
     # --- Security Settings ---
-    SECRET_KEY: str = os.getenv("SECRET_KEY", secrets.token_urlsafe(32))  # 从环境变量读取或生成随机密钥
-    
+    SECRET_KEY: str = Field(default="C_Ks04hg6nT8NC3ZEKG6pQsm7jC_2shXMMm9nhhTY1M=", description="Secret key for encryption")
+
+    # --- Backend CORS Origins ---
+    BACKEND_CORS_ORIGINS: List[str] = ["*"]
+
     # --- JWT Settings ---
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+    ALGORITHM: str = "HS256"  # 添加JWT算法设置
 
     # --- Database Pool Settings ---
     # Connection pool sizes
@@ -95,8 +99,8 @@ class Settings(BaseSettings):
     LOG_ACCESS_ROTATION: str = Field(default="H", description="Access log rotation interval")
     LOG_ACCESS_BACKUP_COUNT: int = Field(default=168, description="Access log backup count")
 
-    # --- Backend CORS Origins ---
-    BACKEND_CORS_ORIGINS: List[str] = ["*"]
+    # --- Redis URL ---
+    REDIS_URL: str = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 
     @field_validator("DATABASE_URL", mode='before')
     def validate_database_url(cls, v):

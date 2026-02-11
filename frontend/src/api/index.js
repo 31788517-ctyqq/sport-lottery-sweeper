@@ -130,6 +130,23 @@ export * from './intelligence'
 export * from './lottery'
 export * from './proxy'
 export * from './system'
+// AI_WORKING: coder1 @2026-02-01 - 添加通用数据管理API模块
+export * from './modules/data-manager'
+// AI_DONE: coder1 @2026-02-01
 
 // 导出实例
 export default apiClient
+
+import user from './user'
+import article from './article'
+import remoteSearch from './remote-search'
+import transaction from './transaction'
+import multiStrategy from './multiStrategy'  // 新增多策略API
+
+export {
+  user,
+  article,
+  remoteSearch,
+  transaction,
+  multiStrategy  // 导出多策略API
+}

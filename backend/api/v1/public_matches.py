@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 from fastapi import APIRouter, Query
 
 # AI_WORKING: coder1 @2026-01-25T00:00:00 - 修复public_matches.py导入路径错误
-from services.service_registry import get_crawler_service
+from backend.services.service_registry import get_crawler_service
 from backend.schemas.response import UnifiedResponse
 # AI_DONE: coder1 @2026-01-25T00:00:00
 

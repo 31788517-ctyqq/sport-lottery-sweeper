@@ -85,7 +85,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getCrawlerConfigList, createCrawlerConfig, deleteCrawlerConfig } from '@/api/crawlerConfig'
+import { getDataSources, createDataSource, deleteDataSource, updateDataSource } from '@/api/spManagement'
 
 const tableData = ref([])
 const loading = ref(false)
@@ -95,10 +95,10 @@ const formRef = ref(null)
 const search = ref('')
 
 const stats = reactive({
-  total: 12,
-  enabled: 9,
-  disabled: 3,
-  avgInterval: 55
+  total: 0,
+  enabled: 0,
+  disabled: 0,
+  avgInterval: 0
 })
 
 const form = reactive({
@@ -113,17 +113,49 @@ const rules = {
 
 const filteredTableData = computed(() =>
   tableData.value.filter(row =>
-    row.sourceName.includes(search.value) || row.urlPattern.includes(search.value)
+    row.sourceName?.includes(search.value) || row.urlPattern?.includes(search.value)
   )
 )
 
 const loadData = async () => {
   loading.value = true
   try {
-    const res = await getCrawlerConfigList()
-    tableData.value = res.data || []
+    // 调用正确的API获取数据源列表
+    const res = await getDataSources({ page: 1, size: 100 })
+    console.log('API Response:', res) // 调试信息
+    
+    if (res && res.data && res.data.items) {
+      // 转换数据结构以适配表格显示
+      tableData.value = res.data.items.map(item => {
+        console.log('Processing item:', item) // 调试信息
+        return {
+          id: item.id,
+          sourceName: item.name,
+          urlPattern: item.url,
+          interval: item.config?.interval || item.config?.timeout || 60,
+          enabled: item.status
+        }
+      })
+      
+      // 更新统计数据
+      stats.total = res.data.total || tableData.value.length
+      stats.enabled = res.data.items.filter(item => item.status).length
+      stats.disabled = res.data.items.filter(item => !item.status).length
+      const intervals = res.data.items.map(item => item.config?.interval || item.config?.timeout || 60)
+      stats.avgInterval = Math.round(intervals.reduce((sum, val) => sum + val, 0) / intervals.length) || 0
+      
+      console.log(`Loaded ${tableData.value.length} data sources`) // 调试信息
+    } else {
+      console.log('No data received or wrong response format:', res) // 调试信息
+      tableData.value = []
+      stats.total = 0
+      stats.enabled = 0
+      stats.disabled = 0
+      stats.avgInterval = 0
+    }
   } catch (e) {
-    ElMessage.error('加载失败')
+    console.error('加载数据源失败:', e)
+    ElMessage.error('加载失败: ' + e.message)
   } finally {
     loading.value = false
   }
@@ -144,11 +176,12 @@ const handleEdit = (row) => {
 const handleDelete = (id) => {
   ElMessageBox.confirm('确定删除该配置？', '提示', { type: 'warning' }).then(async () => {
     try {
-      await deleteCrawlerConfig(id)
+      await deleteDataSource(id)
       ElMessage.success('删除成功')
       loadData()
     } catch (e) {
-      ElMessage.error('删除失败')
+      console.error('删除失败:', e)
+      ElMessage.error('删除失败: ' + e.message)
     }
   })
 }
@@ -157,15 +190,32 @@ const submitForm = async () => {
   await formRef.value.validate()
   try {
     if (form.id) {
-      ElMessage.info('编辑功能待实现')
+      // 更新现有数据源
+      const updateData = {
+        name: form.sourceName,
+        url: form.urlPattern,
+        config: { interval: form.interval, timeout: 30 }, // 添加必需的timeout字段
+        status: form.enabled
+      }
+      await updateDataSource(form.id, updateData)
+      ElMessage.success('更新成功')
     } else {
-      await createCrawlerConfig(form)
+      // 创建新数据源
+      const createData = {
+        name: form.sourceName,
+        type: 'api', // 默认类型为API
+        url: form.urlPattern,
+        config: { interval: form.interval, timeout: 30 }, // 添加必需的timeout字段
+        status: form.enabled
+      }
+      await createDataSource(createData)
       ElMessage.success('新增成功')
     }
     dialogVisible.value = false
     loadData()
   } catch (e) {
-    ElMessage.error('保存失败')
+    console.error('保存失败:', e)
+    ElMessage.error('保存失败: ' + e.message)
   }
 }
 
