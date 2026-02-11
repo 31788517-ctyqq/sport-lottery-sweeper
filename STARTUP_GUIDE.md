@@ -57,8 +57,12 @@ npm run dev
 ## 🔧 环境配置
 
 ### 必需环境变量
-- **后端**: `backend/.env` (DATABASE_URL, SECRET_KEY, DEBUG, PORT=8000)
+- **后端**: `backend/.env` (DATABASE_URL=sqlite:///data/sport_lottery.db, SECRET_KEY, DEBUG, PORT=8000)
 - **前端**: `frontend/.env` (VITE_API_BASE_URL=http://localhost:8000)
+
+### 数据库配置
+- **开发环境数据库**: `data/sport_lottery.db`
+- **数据库路径验证**: 所有代码必须通过配置系统访问数据库，禁止硬编码路径
 
 ### 端口规范
 - 前端开发服务器: **3000**

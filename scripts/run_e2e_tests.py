@@ -12,8 +12,8 @@ from datetime import datetime
 def run_command(cmd, description):
     """执行命令并输出结果"""
     print(f"\n{'='*60}")
-    print(f"执行: {description}")
-    print(f"命令: {cmd}")
+    print(f"[EXECUTE] {description}")
+    print(f"[CMD] {cmd}")
     print(f"{'='*60}")
     
     result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
@@ -27,8 +27,8 @@ def run_command(cmd, description):
 
 def main():
     """主函数"""
-    print("🚀 开始执行端到端测试套件")
-    print(f"⏰ 执行时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print("[START] 开始执行端到端测试套件")
+    print(f"[TIME] 执行时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     
     os.chdir(os.path.dirname(os.path.abspath(__file__)) + "/..")
     
@@ -82,23 +82,23 @@ def main():
     
     # 生成测试报告
     print(f"\n{'='*60}")
-    print("📊 测试结果汇总")
+    print("[RESULTS] 测试结果汇总")
     print(f"{'='*60}")
     
     passed = sum(1 for _, success in test_results if success)
     total = len(test_results)
     
     for test_name, success in test_results:
-        status = "✅ 通过" if success else "❌ 失败"
+        status = "[PASS] 通过" if success else "[FAIL] 失败"
         print(f"{status} - {test_name}")
     
     print(f"\n总计: {passed}/{total} 个测试通过")
     
     if passed == total:
-        print("\n🎉 所有端到端测试通过！")
+        print("\n[SUCCESS] 所有端到端测试通过！")
         return 0
     else:
-        print(f"\n⚠️  {total - passed} 个测试失败，请检查并修复")
+        print(f"\n[WARNING] {total - passed} 个测试失败，请检查并修复")
         return 1
 
 if __name__ == "__main__":

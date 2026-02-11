@@ -156,8 +156,17 @@ def main():
     """主函数"""
     print("开始填充日志数据...")
     
+    # 导入配置获取数据库URL
+    try:
+        from backend.config import settings
+        database_url = settings.DATABASE_URL
+    except ImportError:
+        # 回退方案
+        from backend.config import DATA_DIR, ABS_DB_PATH
+        database_url = f"sqlite:///{ABS_DB_PATH}"
+    
     # 直接创建数据库引擎和会话，绕过get_db
-    engine = create_engine("sqlite:///./sport_lottery.db")
+    engine = create_engine(database_url)
     Base.metadata.create_all(engine)  # 创建所有表（如果不存在）
     SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
     db = SessionLocal()

@@ -51,9 +51,22 @@ except ImportError:
 # 配置
 # ============================================================================
 
-PROJECT_ROOT = Path(__file__).parent.parent.parent
-BACKEND_DIR = PROJECT_ROOT / "backend"
-DB_PATH = BACKEND_DIR / "sport_lottery.db"
+import sys
+from pathlib import Path
+
+# 添加backend目录到Python路径
+backend_dir = Path(__file__).parent.parent
+sys.path.insert(0, str(backend_dir))
+
+# 导入配置
+try:
+    from backend.config import DATABASE_PATH, PROJECT_ROOT
+    DB_PATH = DATABASE_PATH
+except ImportError:
+    # 回退方案
+    PROJECT_ROOT = Path(__file__).parent.parent.parent
+    BACKEND_DIR = PROJECT_ROOT / "backend"
+    DB_PATH = BACKEND_DIR / "sport_lottery.db"
 
 # ============================================================================
 # 工具函数

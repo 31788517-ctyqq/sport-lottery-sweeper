@@ -489,6 +489,16 @@ except Exception as e:
     import traceback
     logger.error(f"详细堆栈: {traceback.format_exc()}")
 
+# 注册多策略筛选API路由
+try:
+    from backend.app.api_v1.endpoints.multi_strategy_api import router as multi_strategy_router
+    app.include_router(multi_strategy_router, prefix="/api/v1", tags=["multi-strategy"])
+    logger.info("Multi strategy API routes registered (/api/v1/multi-strategy)")
+except Exception as e:
+    logger.error(f"多策略API路由注册失败: {e}")
+    import traceback
+    logger.error(f"详细堆栈: {traceback.format_exc()}")
+
 # 注册admin登录端点 - 注意这里不需要重复注册，因为auth模块已经处理了登录
 # 登录API应通过auth模块注册，而不是在admin模块中重复注册
 # 如果需要admin特定的登录功能，请确保不要与auth模块冲突

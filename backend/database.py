@@ -6,9 +6,11 @@ from sqlalchemy.orm import sessionmaker
 import os
 from pathlib import Path
 
-# 项目根目录 - 从当前文件向上一级
+# 项目根目录 - 使用data目录作为数据库存储位置
 PROJECT_ROOT = Path(__file__).parent.parent
-DATABASE_PATH = PROJECT_ROOT / "sport_lottery.db"
+DATA_DIR = PROJECT_ROOT / "data"
+DATA_DIR.mkdir(exist_ok=True)  # 确保data目录存在
+DATABASE_PATH = DATA_DIR / "sport_lottery.db"
 
 # 数据库URL配置 - 优先使用环境变量，否则使用项目根目录下的数据库文件
 # 在Windows上需要将路径分隔符转换为正斜杠

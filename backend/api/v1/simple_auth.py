@@ -23,8 +23,22 @@ def create_access_token(data: dict):
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 def get_user_by_username(username: str):
-    project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-    db_path = os.path.join(project_root, "sport_lottery.db")
+    import sys
+    from pathlib import Path
+    
+    # 添加backend目录到Python路径
+    backend_dir = Path(__file__).parent.parent.parent
+    sys.path.insert(0, str(backend_dir))
+    
+    # 导入配置获取数据库路径
+    try:
+        from backend.config import DATABASE_PATH
+        db_path = str(DATABASE_PATH)
+    except ImportError:
+        # 回退方案
+        project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+        db_path = os.path.join(project_root, "data", "sport_lottery.db")
+    
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     cursor.execute("SELECT id, username, email, password_hash, role, status FROM admin_users WHERE username = ?", (username,))

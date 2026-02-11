@@ -126,7 +126,17 @@ repos:
       - id: check-symlinks
       - id: detect-private-key
 
-  # 12. 自定义Python代码检查
+  # 12. Main.py入口保护检查
+  - repo: local
+    hooks:
+      - id: check-main-entry
+        name: Check main.py entry variants
+        entry: python .codebuddy/hooks/check_main_entry.py
+        language: system
+        files: \.py$
+        pass_filenames: false
+
+# 13. 自定义Python代码检查
   - repo: local
     hooks:
       - id: pylint-custom

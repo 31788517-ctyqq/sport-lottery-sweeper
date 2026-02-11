@@ -7,7 +7,16 @@ import os
 
 # 项目根目录 - 使用当前文件所在目录
 PROJECT_ROOT = Path(__file__).parent.parent
-DATABASE_PATH = PROJECT_ROOT / "sport_lottery.db"
+DATA_DIR = PROJECT_ROOT / "data"
+DATA_DIR.mkdir(exist_ok=True)  # 确保data目录存在
+DATABASE_PATH = DATA_DIR / "sport_lottery.db"
+
+# 计算数据库URL（在类定义外部）- 使用绝对路径
+ABS_DB_PATH = str(DATABASE_PATH.absolute()).replace(chr(92), '/')
+
+# 默认数据库URL常量（在类定义之前定义）
+DEFAULT_DATABASE_URL = f"sqlite:///{ABS_DB_PATH}"
+DEFAULT_ASYNC_DATABASE_URL = f"sqlite+aiosqlite:///{ABS_DB_PATH}"
 
 
 class Settings(BaseSettings):
@@ -66,13 +75,19 @@ class Settings(BaseSettings):
     DB_POOL_PRE_PING: bool = Field(default=True, description="Enable connection health checks")
     
     # --- Database Settings ---
-    # 从环境变量读取数据库URL，如果没有则使用默认的SQLite
-    DATABASE_URL: str = os.getenv("DATABASE_URL", f"sqlite:///{DATABASE_PATH}")
+    # 从环境变量读取数据库URL，如果没有则使用data目录下的SQLite
+    DATABASE_URL: str = Field(
+        default=DEFAULT_DATABASE_URL,
+        description="Database connection URL"
+    )
     DATABASE_ECHO: bool = False
 
     # --- Async Database Settings ---
     # 同样从环境变量读取异步数据库URL
-    ASYNC_DATABASE_URL: str = os.getenv("ASYNC_DATABASE_URL", f"sqlite+aiosqlite:///{DATABASE_PATH}")
+    ASYNC_DATABASE_URL: str = Field(
+        default=DEFAULT_ASYNC_DATABASE_URL,
+        description="Async database connection URL"
+    )
     
     # Async connection pool settings
     ASYNC_DB_POOL_SIZE: int = Field(default=5, description="Async pool size")

@@ -1,104 +1,53 @@
+#!/usr/bin/env python
 """
-测试API端点是否正确注册和响应
+Test script to verify API endpoints are working properly
 """
 import requests
+import sys
 
 def test_api_endpoints():
-    base_url = "http://localhost:8002"
+    base_url = "http://localhost:8000"
     
-    print("测试API端点...")
+    print("Testing API endpoints...")
     
-    # 测试管理任务API - GET请求
+    # Test data-source-100qiu endpoint
     try:
-        response = requests.get(f"{base_url}/api/v1/admin/tasks?page=1&size=1", timeout=10)
-        print(f"GET /api/v1/admin/tasks: {response.status_code}")
+        response = requests.get(f"{base_url}/api/v1/data-source-100qiu/latest-matches?limit=5&include_raw=true")
+        print(f"✓ /api/v1/data-source-100qiu/latest-matches: Status {response.status_code}")
         if response.status_code == 200:
-            print("  ✓ GET /api/v1/admin/tasks 返回成功")
-        elif response.status_code == 422:
-            print("  ✓ GET /api/v1/admin/tasks 存在，参数验证错误")
+            data = response.json()
+            print(f"  Response data keys: {list(data.keys()) if isinstance(data, dict) else 'Non-dict response'}")
         else:
-            print(f"  ✗ GET /api/v1/admin/tasks 错误: {response.status_code}")
+            print(f"  Error: {response.text[:200]}")
     except Exception as e:
-        print(f"  ✗ GET /api/v1/admin/tasks 连接失败: {e}")
+        print(f"✗ /api/v1/data-source-100qiu/latest-matches: Error - {e}")
     
-    # 测试管理任务API - POST请求
+    # Test beidan-filter statistics endpoint
     try:
-        response = requests.post(f"{base_url}/api/v1/admin/tasks", json={
-            "name": "Test Task",
-            "source_id": "1",
-            "task_type": "crawl",
-            "cron_expression": "0 * * * *",
-            "config": "{}"
-        }, timeout=10)
-        print(f"POST /api/v1/admin/tasks: {response.status_code}")
+        payload = {}
+        response = requests.post(f"{base_url}/api/v1/beidan-filter/statistics", json=payload)
+        print(f"✓ /api/v1/beidan-filter/statistics: Status {response.status_code}")
         if response.status_code == 200:
-            print("  ✓ POST /api/v1/admin/tasks 返回成功")
+            data = response.json()
+            print(f"  Response data keys: {list(data.keys()) if isinstance(data, dict) else 'Non-dict response'}")
         elif response.status_code == 422:
-            print("  ✓ POST /api/v1/admin/tasks 存在，参数验证错误")
-        elif response.status_code == 405:
-            print("  ✗ POST /api/v1/admin/tasks 方法不允许 - 路由未注册或不支持POST")
+            print("  Note: 422 status likely due to validation error with empty payload, which is expected")
         else:
-            print(f"  ✗ POST /api/v1/admin/tasks 错误: {response.status_code}")
+            print(f"  Error: {response.text[:200]}")
     except Exception as e:
-        print(f"  ✗ POST /api/v1/admin/tasks 连接失败: {e}")
+        print(f"✗ /api/v1/beidan-filter/statistics: Error - {e}")
 
-    # 测试统计API
+    # Test date-time-options endpoint
     try:
-        response = requests.get(f"{base_url}/api/v1/admin/tasks/statistics", timeout=10)
-        print(f"GET /api/v1/admin/tasks/statistics: {response.status_code}")
+        response = requests.get(f"{base_url}/api/v1/data-source-100qiu/date-time-options")
+        print(f"✓ /api/v1/data-source-100qiu/date-time-options: Status {response.status_code}")
         if response.status_code == 200:
-            print("  ✓ GET /api/v1/admin/tasks/statistics 返回成功")
-        elif response.status_code == 404:
-            print("  ✗ GET /api/v1/admin/tasks/statistics 不存在")
+            data = response.json()
+            print(f"  Response data keys: {list(data.keys()) if isinstance(data, dict) else 'Non-dict response'}")
         else:
-            print(f"  ? GET /api/v1/admin/tasks/statistics: {response.status_code}")
+            print(f"  Error: {response.text[:200]}")
     except Exception as e:
-        print(f"  ✗ GET /api/v1/admin/tasks/statistics 连接失败: {e}")
-
-    # 测试爬虫任务API - GET请求
-    try:
-        response = requests.get(f"{base_url}/api/v1/admin/crawler/tasks", timeout=10)
-        print(f"GET /api/v1/admin/crawler/tasks: {response.status_code}")
-        if response.status_code == 200:
-            print("  ✓ GET /api/v1/admin/crawler/tasks 返回成功")
-        elif response.status_code == 422:
-            print("  ✓ GET /api/v1/admin/crawler/tasks 存在，参数验证错误")
-        else:
-            print(f"  ? GET /api/v1/admin/crawler/tasks: {response.status_code}")
-    except Exception as e:
-        print(f"  ✗ GET /api/v1/admin/crawler/tasks 连接失败: {e}")
-
-    # 测试爬虫任务API - POST请求
-    try:
-        response = requests.post(f"{base_url}/api/v1/admin/crawler/tasks", json={
-            "name": "Test Task",
-            "source_id": 1,
-            "cron_expr": "0 * * * *"
-        }, timeout=10)
-        print(f"POST /api/v1/admin/crawler/tasks: {response.status_code}")
-        if response.status_code == 200:
-            print("  ✓ POST /api/v1/admin/crawler/tasks 返回成功")
-        elif response.status_code == 422:
-            print("  ✓ POST /api/v1/admin/crawler/tasks 存在，参数验证错误")
-        elif response.status_code == 405:
-            print("  ✗ POST /api/v1/admin/crawler/tasks 方法不允许")
-        else:
-            print(f"  ? POST /api/v1/admin/crawler/tasks: {response.status_code}")
-    except Exception as e:
-        print(f"  ✗ POST /api/v1/admin/crawler/tasks 连接失败: {e}")
-    
-    # 测试健康检查
-    try:
-        response = requests.get(f"{base_url}/api/v1/health", timeout=10)
-        print(f"GET /api/v1/health: {response.status_code}")
-        if response.status_code == 200:
-            print("  ✓ GET /api/v1/health 返回成功")
-        else:
-            print(f"  ✗ GET /api/v1/health 错误: {response.status_code}")
-    except Exception as e:
-        print(f"  ✗ GET /api/v1/health 连接失败: {e}")
-
-    print("\nAPI测试完成")
+        print(f"✗ /api/v1/data-source-100qiu/date-time-options: Error - {e}")
 
 if __name__ == "__main__":
     test_api_endpoints()

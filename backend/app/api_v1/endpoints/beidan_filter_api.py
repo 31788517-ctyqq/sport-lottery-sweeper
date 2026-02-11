@@ -32,7 +32,8 @@ class AdvancedFilterRequest(BaseModel):
     date_range: Optional[List[str]] = None
     include_derating: bool = True
 
-router = APIRouter(prefix="/beidan-filter", tags=["beidan-filter"])
+# 注意：不要在这里定义prefix，因为外部已经添加了
+router = APIRouter(tags=["beidan-filter"])
 
 # 辅助函数（简化版）
 def calculate_p_level(power_diff: float, win_pan_diff: float, stability: float) -> int:
@@ -292,3 +293,13 @@ async def get_filter_statistics_public(
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+# 添加缺失的statistics端点，与statistics-public功能相同
+@router.post("/statistics", response_model=FilterStatsResponse)
+async def get_filter_statistics(
+    filter_request: AdvancedFilterRequest
+):
+    """获取筛选结果的统计信息（需要认证）"""
+    # 由于这个端点与statistics-public功能相同，只是可能有不同的认证要求，
+    # 我们可以直接调用相同的逻辑
+    return await get_filter_statistics_public(filter_request)

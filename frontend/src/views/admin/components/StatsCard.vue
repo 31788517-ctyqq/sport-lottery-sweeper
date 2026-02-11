@@ -39,8 +39,16 @@
 </template>
 
 <script>
-export default {
-  name: 'FilterStatistics',
+import { defineComponent } from 'vue';
+import { ElCard, ElRow, ElCol } from 'element-plus';
+
+export default defineComponent({
+  name: 'StatsCard',
+  components: {
+    ElCard,
+    ElRow,
+    ElCol
+  },
   props: {
     statistics: {
       type: Object,
@@ -51,17 +59,10 @@ export default {
       required: true
     }
   }
-};
+});
 </script>
 
 <style scoped>
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-}
-
 .stats-card {
   margin-bottom: 24px;
   border: 1px solid #d6d2cb;

@@ -1,11 +1,25 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import sys
+from pathlib import Path
 import sqlite3
 from datetime import datetime
 
+# 添加backend目录到Python路径
+backend_dir = Path(__file__).parent
+sys.path.insert(0, str(backend_dir))
+
+# 导入数据库工具
+try:
+    from backend.database_utils import get_db_connection
+    conn = get_db_connection()
+except ImportError:
+    # 回退方案
+    import sqlite3
+    conn = sqlite3.connect('data/sport_lottery.db')
+
 def insert_test_record():
-    conn = sqlite3.connect('sport_lottery.db')
     cursor = conn.cursor()
     
     # 插入测试记录

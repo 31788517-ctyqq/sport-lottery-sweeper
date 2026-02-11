@@ -4,6 +4,8 @@
 
 ```
 sport-lottery-sweeper/                 # 项目根目录
+├── data/                              # 🗄️ 数据存储目录
+│   └── sport_lottery.db               # SQLite 数据库文件（统一位置）
 ├── backend/                           # 🎯 后端服务目录（重要！）
 │   ├── main.py                        # 主应用入口文件
 │   ├── database_utils.py              # 数据库工具模块
@@ -13,7 +15,6 @@ sport-lottery-sweeper/                 # 项目根目录
 │   │   └── api/
 │   │       └── v1/
 │   │           └── router.py          # API v1 路由定义
-│   ├── sport_lottery.db               # SQLite 数据库文件
 │   └── ...
 ├── frontend/                          # 前端应用目录
 ├── docs/                              # 文档目录
@@ -21,6 +22,11 @@ sport-lottery-sweeper/                 # 项目根目录
 ```
 
 ## 🔑 关键记忆点
+
+### 数据库文件位置
+- **路径**: `项目根目录/data/sport_lottery.db`
+- **重要性**: ⭐⭐⭐⭐⭐ 所有数据库操作都应指向此位置
+- **注意**: 项目根目录的旧数据库文件已删除，避免数据不一致
 
 ### 后端目录位置
 - **路径**: `项目根目录/backend/`

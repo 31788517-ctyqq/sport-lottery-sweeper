@@ -45,10 +45,11 @@ except ImportError as e:
         logger.debug(f"[Alembic] Successfully loaded settings via importlib")
     except Exception as e2:
         logger.debug(f"[Alembic] Failed to load settings via importlib: {e2}")
-        # 最后的备用方案
+        # 最后的备用方案 - 使用data目录
         from pathlib import Path
+        from backend.config import DATA_DIR, ABS_DB_PATH
         class FallbackSettings:
-            DATABASE_URL = f"sqlite:///{project_root / 'sport_lottery.db'}"
+            DATABASE_URL = f"sqlite:///{ABS_DB_PATH}"
             PROJECT_NAME = "Sport Lottery Sweeper (Fallback)"
         
         settings = FallbackSettings()

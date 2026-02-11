@@ -50,86 +50,32 @@ from .llm_provider import LLMProvider, LLMProviderTypeEnum, LLMProviderStatusEnu
 # 日志模型
 from .log_entry import LogEntry
 
+from .user import User
+from .role import Role
+from .department import Department
+from .log_entry import LogEntry
+from .data_sources import DataSource
+from .crawler_config import CrawlerConfig
+from .crawler_tasks import CrawlerTask
+from .headers import RequestHeader
+from .ip_pool import IPPool
+from .llm_provider import LLMProvider
+from .llm_provider_config import LLMProviderConfig
+from .ai_log import AILog
+from .multi_strategy import MultiStrategyTask  # 新增多策略任务模型
+
 __all__ = [
-    # Base models
-    "Base", "BaseModel", "BaseAuditModel", "BaseSoftDeleteModel", "BaseFullModel", "BaseUUIDModel",
-    
-    # Match-related models
-    "Match", "Team", "League", 
-    "MatchStatusEnum", "MatchTypeEnum", "MatchImportanceEnum",
-    
-    # Intelligence models
-    "Intelligence", "IntelligenceType", "IntelligenceSource", "IntelligenceTypeEnum", "IntelligenceSourceEnum",
-    
-    # User models
-    "User", "UserRole", "UserStatus", "SocialProvider", "UserPrediction",
-    
-    # Admin user models
-    "AdminUser", "AdminRoleEnum", "AdminStatusEnum",
+    "User",
+    "Role", 
     "Department",
-    
-    # Venues models
-    "Venue", "VenueTypeEnum", "VenueSurfaceEnum",
-    
-    # Predictions models (excluding UserPrediction since it's now in user_models)
-    "Prediction", "PredictionMethodEnum", "PredictionTypeEnum", "PredictionAccuracyEnum",
-    
-    # Odds models
-    "Odds", "Bookmaker", "OddsProviderEnum", "OddsTypeEnum", "OddsMovementTypeEnum",
-    # Added missing OddsProvider to exports
-    "OddsProvider",
-    
-    # Data review models
-    "DataReview", "DataTypeEnum", "ReviewStatusEnum",
-    
-    # Data models
-    "AdminData", "DataCategoryEnum",
-    
-    # System config models
-    "SystemConfig",
-    
-    # Crawler config models
-    "CrawlerConfig",
-    
-    # Crawler alert models
-    "CrawlerAlertRule",
-    "CrawlerAlertRecord",
-    "CrawlerMetric",
-    
-    # Intelligence record models
-    "IntelligenceRecord",
-    
-    # Crawler task models
-    "CrawlerTask",
-    "CrawlerTaskHeader",
-    
-    # Crawler log models
-    "CrawlerTaskLog",
-    "CrawlerSourceStat",
-    
-    # SP管理模块新添加的模型
+    "LogEntry",
     "DataSource",
-    "DataSourceHeader",
-    "FootballMatch",
-    "OddsCompany", 
-    "SPRecord",
-    "SPModificationLog",
-    
-    # 请求头和IP池管理模型
+    "CrawlerConfig",
+    "CrawlerTask",
     "RequestHeader",
     "IPPool",
-    
-    # 平局预测管理模块模型
-    "DrawFeature",
-    "DrawTrainingJob",
-    "DrawModelVersion",
-    "DrawPredictionResult",
-    
-    # AI服务模型
     "LLMProvider",
-    "LLMProviderTypeEnum",
-    "LLMProviderStatusEnum",
-    
-    # 日志模型
-    "LogEntry"
+    "LLMProviderConfig",
+    "AILog",
+    "MultiStrategyTask"  # 添加到导出列表
 ]

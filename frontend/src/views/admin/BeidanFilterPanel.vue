@@ -1,628 +1,101 @@
 <template>
   <div class="beidan-filter-panel">
-    <el-card class="filter-card">
-      <template #header>
-        <div class="card-header">
-          <div class="header-title">
-            <div class="title">三维精算筛选器</div>
-            <div class="subtitle">基于 ΔP / ΔWP / P-Tier 的联动筛选</div>
-          </div>
-          <div class="header-actions">
-            <div class="match-count">实时匹配 <span>{{ totalResults }}</span> 场</div>
-            <el-button type="primary" @click="fetchRealData" :loading="loading">获取实时数据</el-button>
-          </div>
-        </div>
-      </template>
-
-      <!-- 筛选条件区域 -->
-      <div class="filter-section">
-        <el-row :gutter="20" class="dimension-row">
-          <el-col :span="8">
-            <div class="filter-group">
-              <div class="group-title">
-                <span>实力等级差 ΔP</span>
-                <span class="group-hint">主客实力差分层</span>
-              </div>
-              <el-checkbox-group v-model="filterForm.powerDiffs" class="checkbox-grid">
-                <el-checkbox-button
-                  v-for="option in strengthOptions"
-                  :key="option.value"
-                  :value="option.value"
-                >
-                  <div class="option-tile">
-                    <div class="option-value">{{ option.label }}</div>
-                    <div class="option-desc">{{ option.desc }}</div>
-                    <div class="option-range">{{ option.range }}</div>
-                  </div>
-                </el-checkbox-button>
-              </el-checkbox-group>
-            </div>
-          </el-col>
-
-          <el-col :span="8">
-            <div class="filter-group">
-              <div class="group-title">
-                <span>赢盘等级差 ΔWP</span>
-                <span class="group-hint">盘路兑现力对撞</span>
-              </div>
-              <el-checkbox-group v-model="filterForm.winPanDiffs" class="checkbox-grid">
-                <el-checkbox-button
-                  v-for="option in winPanOptions"
-                  :key="option.value"
-                  :value="option.value"
-                >
-                  <div class="option-tile">
-                    <div class="option-value">{{ option.label }}</div>
-                    <div class="option-desc">{{ option.desc }}</div>
-                    <div class="option-range">{{ option.range }}</div>
-                  </div>
-                </el-checkbox-button>
-              </el-checkbox-group>
-            </div>
-          </el-col>
-
-          <el-col :span="8">
-            <div class="filter-group">
-              <div class="group-title">
-                <span>一赔稳定性 P-Tier</span>
-                <span class="group-hint">正路可信度等级</span>
-              </div>
-              <el-checkbox-group v-model="filterForm.stabilityTiers" class="tier-grid">
-                <el-checkbox-button
-                  v-for="option in stabilityOptions"
-                  :key="option.value"
-                  :value="option.value"
-                >
-                  <div class="tier-tile">
-                    <div class="tier-label">{{ option.label }}</div>
-                    <div class="tier-desc">{{ option.desc }}</div>
-                    <div class="tier-range">{{ option.range }}</div>
-                  </div>
-                </el-checkbox-button>
-              </el-checkbox-group>
-            </div>
-          </el-col>
-        </el-row>
-
-        <el-row :gutter="20" class="control-row">
-          <el-col :span="8">
-            <div class="filter-group">
-              <div class="group-title">
-                <span>高级筛选</span>
-                <span class="group-hint">多维叠加</span>
-              </div>
-              <div class="filter-item">
-                <label>联赛筛选</label>
-                <el-select
-                  v-model="filterForm.leagues"
-                  placeholder="请选择联赛"
-                  multiple
-                  collapse-tags
-                  style="width: 100%"
-                >
-                  <el-option
-                    v-for="league in availableLeagues"
-                    :key="league"
-                    :label="league"
-                    :value="league"
-                  />
-                </el-select>
-              </div>
-              <div class="filter-item">
-                <label>date_time</label>
-                <el-select
-                  v-model="filterForm.dateTime"
-                  placeholder="date_time"
-                  clearable
-                  style="width: 100%"
-                >
-                  <el-option
-                    v-for="value in dateTimeOptions"
-                    :key="value"
-                    :label="value"
-                    :value="value"
-                  />
-                </el-select>
-              </div>
-              <div class="filter-item">
-                <label>日期范围</label>
-                <el-date-picker
-                  v-model="filterForm.dateRange"
-                  type="daterange"
-                  range-separator="至"
-                  start-placeholder="开始日期"
-                  end-placeholder="结束日期"
-                  style="width: 100%"
-                />
-              </div>
-            </div>
-          </el-col>
-
-          <el-col :span="8">
-            <div class="filter-group">
-              <div class="group-title">
-                <span>筛选策略</span>
-                <span class="group-hint">排序与规则</span>
-              </div>
-              <div class="filter-item">
-                <label>排序方式</label>
-                <el-radio-group v-model="filterForm.sortBy">
-                  <el-radio label="p_level">P级</el-radio>
-                  <el-radio label="delta_wp">ΔWP</el-radio>
-                  <el-radio label="power_diff">ΔP</el-radio>
-                </el-radio-group>
-              </div>
-              <div class="filter-item">
-                <label>排序顺序</label>
-                <el-radio-group v-model="filterForm.sortOrder">
-                  <el-radio label="asc">升序</el-radio>
-                  <el-radio label="desc">降序</el-radio>
-                </el-radio-group>
-              </div>
-              <div class="filter-item switch-item">
-                <label>应用降级规则</label>
-                <el-switch v-model="filterForm.includeDerating" />
-              </div>
-              <div class="rule-preview">排序预览：P级降序 → ΔWP降序</div>
-            </div>
-          </el-col>
-
-          <el-col :span="8">
-            <div class="filter-group">
-              <div class="group-title">
-                <span>快捷组合</span>
-                <span class="group-hint">一键应用</span>
-              </div>
-              <div class="preset-grid">
-                <el-button @click="applyPreset('strong')">强势正路</el-button>
-                <el-button @click="applyPreset('upset')">冷门潜质</el-button>
-                <el-button @click="applyPreset('balance')">均衡博弈</el-button>
-              </div>
-
-              <el-alert
-                v-if="directionWarning"
-                title="方向背离预警：实力与盘路选择方向相反，可能触发降级"
-                type="warning"
-                :closable="false"
-                class="direction-alert"
-              />
-
-              <div class="filter-actions">
-                <el-button type="primary" @click="applyAdvancedFilter" :loading="loading">应用筛选</el-button>
-                <el-button @click="resetFilters">重置</el-button>
-                <el-dropdown @command="handleSaveStrategy">
-                  <el-button type="success">
-                    保存策略<i class="el-icon-arrow-down el-icon--right"></i>
-                  </el-button>
-                  <template #dropdown>
-                    <el-dropdown-menu>
-                      <el-dropdown-item command="save">保存当前策略</el-dropdown-item>
-                      <el-dropdown-item command="load">加载策略</el-dropdown-item>
-                    </el-dropdown-menu>
-                  </template>
-                </el-dropdown>
-              </div>
-            </div>
-          </el-col>
-        </el-row>
-      </div>
-    </el-card>
-
-    <!-- 统计信息区域 -->
+    <FilterCardHeader 
+      :total-results="totalResults" 
+      :loading="loading"
+      @fetch-real-data="fetchRealData"
+    />
     
+    <FilterSection
+      :filter-form="filterForm"
+      :strength-options="strengthOptions"
+      :win-pan-options="winPanOptions"
+      :stability-options="stabilityOptions"
+      :available-leagues="availableLeagues"
+      :date-time-options="dateTimeOptions"
+      :loading="loading"
+      :direction-warning="directionWarning"
+      @apply-preset="handlePreset"
+      @handle-save-strategy="handleSaveStrategy"
+      @apply-advanced-filter="applyAdvancedFilter"
+      @reset-filters="resetFilters"
+    />
     
+    <StrategySection
+      :selected-strategy-name="selectedStrategyName"
+      :strategy-options="strategyOptions"
+      :strategy-detail-items="strategyDetailItems"
+      @handle-select-strategy="handleSelectStrategy"
+      @load-strategy-options="loadStrategyOptions"
+    />
+    <StatsCard 
+      v-if="showStats && strategyApplied"
+      :statistics="statistics"
+      :filter-form="filterForm"
+    />
+
+    <ResultsSection
+      v-if="strategyApplied"
+      :paged-results="pagedResults"
+      :loading="loading"
+      :show-stats="showStats"
+      :total-results="totalResults"
+      :current-page="currentPage"
+      :page-size="pageSize"
+      @toggle-stats="toggleStats"
+      @export-results="exportResults"
+      @handle-sort-change="handleSortChange"
+      @handle-size-change="handleSizeChange"
+      @handle-current-change="handleCurrentChange"
+      @open-analysis="openAnalysis"
+    />
+
+    <RulesDialog 
+      v-model:visible="showRulesDialog"
+      :rules="pLevelRules"
+    />
+
+    <AnalysisDialog 
+      v-model:visible="showAnalysisDialog"
+      :analysis-data="analysisData"
+    />
     
-    
-    <el-card class="strategy-card">
-      <div class="strategy-bar">
-        <div class="strategy-select">
-          <span class="strategy-label">策略筛选</span>
-          <el-select
-            v-model="selectedStrategyName"
-            placeholder="选择已保存的策略"
-            clearable
-            filterable
-            style="width: 260px"
-            @change="handleSelectStrategy"
-          >
-            <el-option
-              v-for="name in strategyOptions"
-              :key="name"
-              :label="name"
-              :value="name"
-            />
-          </el-select>
-          <el-button size="small" @click="loadStrategyOptions">刷新</el-button>
-        </div>
-        <div class="strategy-detail" v-if="strategyDetailItems.length">
-          <div class="detail-item" v-for="item in strategyDetailItems" :key="item.label">
-            <span class="detail-label">{{ item.label }}:</span>
-            <span class="detail-value">{{ item.value }}</span>
-          </div>
-        </div>
-        <div class="strategy-empty" v-else>
-          选择策略后将显示详情
-        </div>
-      </div>
-      <div class="strategy-list" v-if="strategyOptions.length">
-        <div class="strategy-list-title">策略列表</div>
-        <div class="strategy-grid">
-          <div
-            class="strategy-item"
-            v-for="name in strategyOptions"
-            :key="name"
-            :class="{ active: name === selectedStrategyName }"
-            @click="handleSelectStrategy(name)"
-          >
-            <div class="strategy-item-header">
-              <span class="strategy-item-name">{{ name }}</span>
-              <span class="strategy-item-tag" v-if="name === selectedStrategyName">已选</span>
-            </div>          </div>
-        </div>
-      </div>
-      <div class="strategy-list-empty" v-else>
-        暂无已保存策略
-      </div>
-    </el-card>
-
-
-
-
-    <el-card class="stats-card" v-if="showStats && strategyApplied">
-      <template #header>
-        <div class="card-header">
-          <span>筛选统计</span>
-        </div>
-      </template>
-
-      <el-row :gutter="20">
-        <el-col :span="6">
-          <div class="stat-item">
-            <div class="stat-number">{{ statistics.total_matches }}</div>
-            <div class="stat-label">符合条件场次</div>
-          </div>
-        </el-col>
-
-        <el-col :span="6">
-          <div class="stat-item">
-            <div class="stat-number">{{ filterForm.powerDiffs.length > 0 ? statistics.delta_p_count || 0 : '未设置' }}</div>
-            <div class="stat-label">实力等级差 ΔP</div>
-          </div>
-        </el-col>
-
-        <el-col :span="6">
-          <div class="stat-item">
-            <div class="stat-number">{{ filterForm.winPanDiffs.length > 0 ? statistics.delta_wp_count || 0 : '未设置' }}</div>
-            <div class="stat-label">赢盘等级差 ΔWP</div>
-          </div>
-        </el-col>
-
-        <el-col :span="6">
-          <div class="stat-item">
-            <div class="stat-number">{{ filterForm.stabilityTiers.length > 0 ? statistics.p_tier_count || 0 : '未设置' }}</div>
-            <div class="stat-label">一赔稳定性 P-Tier</div>
-          </div>
-        </el-col>
-      </el-row>
-    </el-card>
-
-    <!-- 结果展示区域 -->
-    <el-card class="result-card" v-if="strategyApplied">
-      <template #header>
-        <div class="card-header">
-          <span>筛选结果</span>
-          <div>
-            <el-button @click="exportResults('excel')">导出Excel</el-button>
-            <el-button @click="exportResults('csv')">导出CSV</el-button>
-            <el-button @click="toggleStats">{{ showStats ? '隐藏统计' : '显示统计' }}</el-button>
-          </div>
-        </div>
-      </template>
-
-      <el-table
-        :data="pagedResults"
-        style="width: 100%"
-        v-loading="loading"
-        @sort-change="handleSortChange"
-      >
-        <el-table-column prop="match_id" label="比赛ID" width="120" sortable>
-          <template #default="{ row }">{{ formatMatchId(row.match_id) }}</template>
-        </el-table-column>
-        <el-table-column prop="home_team" label="主队" width="120">
-          <template #default="{ row }">{{ displayValue(row.home_team) }}</template>
-        </el-table-column>
-        <el-table-column prop="away_team" label="客队" width="120">
-          <template #default="{ row }">{{ displayValue(row.away_team) }}</template>
-        </el-table-column>
-        <el-table-column prop="league" label="联赛" width="120">
-          <template #default="{ row }">{{ displayValue(row.league) }}</template>
-        </el-table-column>
-        <el-table-column prop="match_time" label="比赛时间" width="170">
-          <template #default="{ row }">{{ formatMatchTime(row.match_time) }}</template>
-        </el-table-column>
-        <el-table-column prop="power_diff" label="ΔP" width="80" sortable>
-          <template #default="{ row }">{{ displayValue(row.power_diff) }}</template>
-        </el-table-column>
-        <el-table-column prop="delta_wp" label="ΔWP" width="100" sortable>
-          <template #default="{ row }">{{ displayValue(row.delta_wp) }}</template>
-        </el-table-column>
-        <el-table-column prop="p_level" label="P级" width="80" sortable>
-          <template #default="{ row }">
-            <el-tag v-if="row.p_level" :type="getPLevelTagType(row.p_level)">P{{ row.p_level }}</el-tag>
-            <span v-else>-</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="power_home" label="主队实力" width="100" sortable>
-          <template #default="{ row }">{{ displayValue(row.power_home) }}</template>
-        </el-table-column>
-        <el-table-column prop="power_away" label="客队实力" width="100" sortable>
-          <template #default="{ row }">{{ displayValue(row.power_away) }}</template>
-        </el-table-column>
-        <el-table-column prop="win_pan_home" label="主队赢盘" width="100" sortable>
-          <template #default="{ row }">{{ displayValue(row.win_pan_home) }}</template>
-        </el-table-column>
-        <el-table-column prop="win_pan_away" label="客队赢盘" width="100" sortable>
-          <template #default="{ row }">{{ displayValue(row.win_pan_away) }}</template>
-        </el-table-column>
-        <el-table-column prop="home_feature" label="主队特征" width="120">
-          <template #default="{ row }">{{ displayValue(row.home_feature) }}</template>
-        </el-table-column>
-        <el-table-column prop="away_feature" label="客队特征" width="120">
-          <template #default="{ row }">{{ displayValue(row.away_feature) }}</template>
-        </el-table-column>
-        <el-table-column label="操作" width="150">
-          <template #default="{ row }">
-            <el-button size="small" type="success" @click="openAnalysis(row)">分析</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-
-
-
-
-
-
-      
-      <el-pagination
-        @size-change="handleSizeChange"
-        @current-change="handleCurrentChange"
-        :current-page="currentPage"
-        :page-sizes="[10, 20, 50, 100]"
-        :page-size="pageSize"
-        :total="totalResults"
-        layout="slot, sizes, prev, pager, next, jumper"
-        prev-text="上一页"
-        next-text="下一页"
-        style="margin-top: 20px; text-align: right;"
-      >
-        <span class="pagination-total">共 {{ totalResults }} 条</span>
-      </el-pagination>
-
-    </el-card>
-    
-    <!-- P级规则说明弹窗 -->
-    <el-dialog title="P级计算规则" v-model="showRulesDialog" width="60%">
-      <div v-if="pLevelRules">
-        <h3>评级标准</h3>
-        <ul>
-          <li><strong>P1：</strong>{{ pLevelRules.p1_criteria }}</li>
-          <li><strong>P2：</strong>{{ pLevelRules.p2_criteria }}</li>
-          <li><strong>P3：</strong>{{ pLevelRules.p3_criteria }}</li>
-          <li><strong>P4：</strong>{{ pLevelRules.p4_criteria }}</li>
-          <li><strong>P5：</strong>{{ pLevelRules.p5_criteria }}</li>
-        </ul>
-        
-        <h3>降级规则</h3>
-        <ol>
-          <li v-for="(rule, index) in pLevelRules.derating_rules" :key="index">{{ rule }}</li>
-        </ol>
-        
-        <h3>排序规则</h3>
-        <ol>
-          <li v-for="(rule, index) in pLevelRules.sort_rules" :key="'sort'+index">{{ rule }}</li>
-        </ol>
-      </div>
-    </el-dialog>
-
-    <el-dialog title="比赛分析" v-model="showAnalysisDialog" width="70%" class="analysis-dialog">
-      <div v-if="analysisData">
-        <div class="analysis-sim-container">
-          <div class="analysis-sim-header">
-            <div class="analysis-sim-title">比赛分析模拟</div>
-            <div class="analysis-sim-subtitle">基于100球数据的比赛分析展示</div>
-          </div>
-
-          <div class="analysis-sim-card">
-            <div class="analysis-sim-card-title">比赛基本信息</div>
-            <div class="analysis-sim-basic">
-              <div class="analysis-sim-team">
-                <div class="analysis-sim-team-name">{{ analysisData.homeTeam || '-' }}</div>
-                <div class="analysis-sim-team-meta">实力值: {{ analysisData.homePower ?? '-' }}</div>
-              </div>
-              <div class="analysis-sim-vs">
-                <div class="analysis-sim-league">{{ analysisData.gameShortName || '-' }}</div>
-                <div class="analysis-sim-vs-text">VS</div>
-                <div class="analysis-sim-time">{{ analysisData.matchTimeStr || '-' }}</div>
-              </div>
-              <div class="analysis-sim-team">
-                <div class="analysis-sim-team-name">{{ analysisData.guestTeam || '-' }}</div>
-                <div class="analysis-sim-team-meta">实力值: {{ analysisData.guestPower ?? '-' }}</div>
-              </div>
-            </div>
-            <div class="analysis-sim-odds">
-              <div class="analysis-sim-odds-item"><span>主胜</span><strong>{{ analysisData.homeWinAward ?? '-' }}</strong></div>
-              <div class="analysis-sim-odds-item"><span>平局</span><strong>{{ analysisData.drawAward ?? '-' }}</strong></div>
-              <div class="analysis-sim-odds-item"><span>客胜</span><strong>{{ analysisData.guestWinAward ?? '-' }}</strong></div>
-              <div class="analysis-sim-odds-item"><span>让球</span><strong>{{ analysisData.rq ?? '-' }}</strong></div>
-            </div>
-          </div>
-
-          <div class="analysis-sim-card">
-            <div class="analysis-sim-card-title">球队实力对比</div>
-            <div class="analysis-sim-progress">
-              <div class="analysis-sim-progress-labels">
-                <span>{{ analysisData.homeTeam || '-' }}</span>
-                <span>{{ analysisData.guestTeam || '-' }}</span>
-              </div>
-              <div class="analysis-sim-progress-bars">
-                <el-progress :percentage="getProgressValue(analysisData.homePower)" :show-text="false" :color="'#a4b2a4'" />
-                <el-progress :percentage="getProgressValue(analysisData.guestPower)" :show-text="false" :color="'#b9a7a0'" />
-              </div>
-            </div>
-            <div class="analysis-sim-table">
-              <div class="analysis-sim-table-row analysis-sim-table-head">
-                <span>指标</span><span>主队</span><span>客队</span><span>优势方</span>
-              </div>
-              <div class="analysis-sim-table-row">
-                <span>积分（主场/总）</span>
-                <span>{{ analysisData.homeJiFenHome || '-' }}/{{ analysisData.homeJiFenHomeAll || '-' }}</span>
-                <span>{{ analysisData.awayJiFenHome || '-' }}/{{ analysisData.awayJiFenHomeAll || '-' }}</span>
-                <span>{{ compareAdvantage(analysisData.homeJiFenHome, analysisData.awayJiFenHome) }}</span>
-              </div>
-              <div class="analysis-sim-table-row">
-                <span>客场积分</span>
-                <span>-</span>
-                <span>{{ analysisData.awayJiFenGuest || '-' }}</span>
-                <span>客队</span>
-              </div>
-              <div class="analysis-sim-table-row">
-                <span>特征</span>
-                <span>{{ analysisData.homeFeature || '-' }}</span>
-                <span>{{ analysisData.guestFeature || '-' }}</span>
-                <span>{{ compareAdvantage(getPercentValue(analysisData.homeFeature), getPercentValue(analysisData.guestFeature)) }}</span>
-              </div>
-              <div class="analysis-sim-table-row">
-                <span>进攻效率</span>
-                <span>{{ analysisData.homeEnterEfficiency || '-' }}</span>
-                <span>{{ analysisData.guestEnterEfficiency || '-' }}</span>
-                <span>{{ compareAdvantage(getEfficiencyValue(analysisData.homeEnterEfficiency), getEfficiencyValue(analysisData.guestEnterEfficiency)) }}</span>
-              </div>
-              <div class="analysis-sim-table-row">
-                <span>防守效率</span>
-                <span>{{ analysisData.homePreventEfficiency || '-' }}</span>
-                <span>{{ analysisData.guestPreventEfficiency || '-' }}</span>
-                <span>{{ compareAdvantage(getEfficiencyValue(analysisData.homePreventEfficiency), getEfficiencyValue(analysisData.guestPreventEfficiency)) }}</span>
-              </div>
-              <div class="analysis-sim-table-row">
-                <span>近期战绩</span>
-                <span>{{ analysisData.homeSpf || '-' }}</span>
-                <span>{{ analysisData.guestSpf || '-' }}</span>
-                <span>{{ compareAdvantage(getSpfWins(analysisData.homeSpf), getSpfWins(analysisData.guestSpf)) }}</span>
-              </div>
-              <div class="analysis-sim-table-row">
-                <span>大球百分比</span>
-                <span>{{ analysisData.homeDxqPercentStr || '-' }}</span>
-                <span>{{ analysisData.guestDxqPercentStr || '-' }}</span>
-                <span>{{ compareAdvantage(getPercentValue(analysisData.homeDxqPercentStr), getPercentValue(analysisData.guestDxqPercentStr)) }}</span>
-              </div>
-              <div class="analysis-sim-table-row">
-                <span>近期进球/失球</span>
-                <span>{{ analysisData.homeDxqDesc || '-' }}</span>
-                <span>{{ analysisData.guestDxqDesc || '-' }}</span>
-                <span>需分析</span>
-              </div>
-              <div class="analysis-sim-table-row">
-                <span>主场/客场表现</span>
-                <span>{{ analysisData.homeDxqSame10Desc || '-' }}</span>
-                <span>{{ analysisData.awayDxqSame10Desc || '-' }}</span>
-                <span>需分析</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="analysis-sim-card">
-            <div class="analysis-sim-card-title">赔率对比分析</div>
-            <div class="analysis-sim-odds-panels">
-              <div class="analysis-sim-odds-panel">
-                <div class="analysis-sim-panel-title">主胜盘</div>
-                <div class="analysis-sim-panel-value">{{ analysisData.homeWinPan ?? '-' }}</div>
-                <div class="analysis-sim-panel-grid">
-                  <div>进0球 {{ analysisData.homeWinQiu_0 ?? '-' }}</div>
-                  <div>进1球 {{ analysisData.homeWinQiu_1 ?? '-' }}</div>
-                  <div>进2球 {{ analysisData.homeWinQiu_2 ?? '-' }}</div>
-                </div>
-                <div class="analysis-sim-panel-grid">
-                  <div>赢1球差距 {{ analysisData.homeWinGap_1 ?? '-' }}</div>
-                  <div>赢2球差距 {{ analysisData.homeWinGap_2 ?? '-' }}</div>
-                  <div>-</div>
-                </div>
-              </div>
-              <div class="analysis-sim-odds-panel">
-                <div class="analysis-sim-panel-title">客胜盘</div>
-                <div class="analysis-sim-panel-value">{{ analysisData.guestWinPan ?? '-' }}</div>
-                <div class="analysis-sim-panel-grid">
-                  <div>进0球 {{ analysisData.awayWinQiu_0 ?? '-' }}</div>
-                  <div>进1球 {{ analysisData.awayWinQiu_1 ?? '-' }}</div>
-                  <div>进2球 {{ analysisData.awayWinQiu_2 ?? '-' }}</div>
-                </div>
-                <div class="analysis-sim-panel-grid">
-                  <div>赢1球差距 {{ analysisData.awayWinGap_1 ?? '-' }}</div>
-                  <div>赢2球差距 {{ analysisData.awayWinGap_2 ?? '-' }}</div>
-                  <div>-</div>
-                </div>
-              </div>
-            </div>
-            <div class="analysis-sim-lose">
-              <div class="analysis-sim-lose-panel">
-                <div class="analysis-sim-panel-title">主队失球</div>
-                <div class="analysis-sim-panel-grid">
-                  <div>失0球 {{ analysisData.homeLoseQiu_0 ?? '-' }}</div>
-                  <div>失1球 {{ analysisData.homeLoseQiu_1 ?? '-' }}</div>
-                  <div>失2球 {{ analysisData.homeLoseQiu_2 ?? '-' }}</div>
-                </div>
-                <div class="analysis-sim-panel-grid">
-                  <div>输1球差距 {{ analysisData.homeLoseGap_1 ?? '-' }}</div>
-                  <div>输2球差距 {{ analysisData.homeLoseGap_2 ?? '-' }}</div>
-                  <div>-</div>
-                </div>
-              </div>
-              <div class="analysis-sim-lose-panel">
-                <div class="analysis-sim-panel-title">客队失球</div>
-                <div class="analysis-sim-panel-grid">
-                  <div>失0球 {{ analysisData.awayLoseQiu_0 ?? '-' }}</div>
-                  <div>失1球 {{ analysisData.awayLoseQiu_1 ?? '-' }}</div>
-                  <div>失2球 {{ analysisData.awayLoseQiu_2 ?? '-' }}</div>
-                </div>
-                <div class="analysis-sim-panel-grid">
-                  <div>输1球差距 {{ analysisData.awayLoseGap_1 ?? '-' }}</div>
-                  <div>输2球差距 {{ analysisData.awayLoseGap_2 ?? '-' }}</div>
-                  <div>-</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="analysis-sim-card">
-            <div class="analysis-sim-card-title">历史交锋</div>
-            <div class="analysis-sim-summary">{{ analysisData.jiaoFenDesc || '-' }}</div>
-            <div class="analysis-sim-history">
-              <div v-for="item in getJiaoFenMatches(analysisData)" :key="item" class="analysis-sim-history-item">{{ item }}</div>
-              <div v-if="!getJiaoFenMatches(analysisData).length" class="analysis-sim-history-item">暂无交锋记录</div>
-            </div>
-          </div>
-
-          <div class="analysis-sim-card">
-            <div class="analysis-sim-card-title">数据源信息</div>
-            <div class="analysis-sim-source">
-              <div><span>lineId:</span><strong>{{ analysisData.lineId || '-' }}</strong></div>
-              <div><span>数据来源:</span><strong>100球分析页面</strong></div>
-              <div><span>URL:</span><strong>https://m.100qiu.com/analysis/detail.php?lotteryType=40&term=26023&lineId={{ analysisData.lineId || '-' }}</strong></div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div v-else class="analysis-empty">暂无原始数据，请先通过数据源配置抓取入库。</div>
-    </el-dialog>
+    <!-- 新增多策略配置组件 -->
+    <MultiStrategyConfig
+      :show-multi-strategy-panel="showMultiStrategyPanel"
+      @update:show-multi-strategy-panel="handleUpdateShowMultiStrategyPanel"
+      @strategy-configured="handleStrategyConfigured"
+    />
   </div>
 </template>
 
 <script>
 import { ref, reactive, onMounted, computed } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
-import request from '@/utils/request'; // 使用项目中的request实例
+import request from '@/utils/request';
+
+// 引入拆分的子组件
+import FilterCardHeader from './components/FilterCardHeader.vue';
+import FilterSection from './components/FilterSection.vue';
+import StrategySection from './components/StrategySection.vue';
+import StatsCard from './components/StatsCard.vue';
+import ResultsSection from './components/ResultsSection.vue';
+import RulesDialog from './components/RulesDialog.vue';
+import AnalysisDialog from './components/AnalysisDialog.vue';
+import MultiStrategyConfig from './components/MultiStrategyConfig.vue';  // 新增多策略配置组件
 
 export default {
   name: 'BeidanFilterPanel',
+  components: {
+    FilterCardHeader,
+    FilterSection,
+    StrategySection,
+    StatsCard,
+    ResultsSection,
+    RulesDialog,
+    AnalysisDialog,
+    MultiStrategyConfig  // 注册新组件
+  },
   setup() {
     // 筛选表单数据
     const filterForm = reactive({
@@ -669,20 +142,13 @@ export default {
       { value: 'E', label: 'E', range: 'P7', desc: '正路缺失' }
     ];
 
-    // 移除 pLevelOptions，因为P级筛选已从界面中移除
-    // const pLevelOptions = [
-    //   { label: 'P1', value: 1 },
-    //   { label: 'P2', value: 2 },
-    //   { label: 'P3', value: 3 },
-    //   { label: 'P4', value: 4 },
-    //   { label: 'P5', value: 5 },
-    //   { label: 'P6', value: 6 },
-    //   { label: 'P7', value: 7 }
-    // ];
-
-    // 筛选结果
-
-    // 控制统计信息显示
+    // 数据状态
+    const loading = ref(false);
+    const rawMatches = ref([]);
+    const filterResults = ref([]);
+    const totalResults = ref(0);
+    const currentPage = ref(1);
+    const pageSize = ref(10);
     const showStats = ref(true);
     const showAnalysisDialog = ref(false);
     const analysisData = ref(null);
@@ -695,13 +161,32 @@ export default {
     const selectedStrategy = ref(null);
     const strategyApplied = ref(false);
 
-    const strategyPreviewMap = ref({});
+    // P级规则弹窗
+    const showRulesDialog = ref(false);
+    const pLevelRules = ref(null);
 
+    // 统计数据
+    const statistics = ref({
+      total_matches: 0,
+      average_power_diff: 0,
+      average_win_pan_diff: 0,
+      average_stability: 0,
+      delta_p_count: 0,
+      delta_wp_count: 0,
+      p_tier_count: 0
+    });
+
+    // 计算属性
     const pagedResults = computed(() => {
       const start = (currentPage.value - 1) * pageSize.value;
       return filterResults.value.slice(start, start + pageSize.value);
     });
 
+    const strategyPreviewMap = ref({});
+
+    const CURRENT_STRATEGY = '当前应用';
+
+    // 在这里保留所有的业务逻辑函数
     const displayValue = (value) => {
       if (value === null || value === undefined || value === '') return '-';
       return value;
@@ -729,7 +214,7 @@ export default {
 
     const getPercentValue = (value) => {
       if (!value) return 0;
-      const match = String(value).match(/(\\d+)(?:\\.\\d+)?%/);
+      const match = String(value).match(/(\d+)(?:\.\d+)?%/);
       if (match) return Math.min(100, Number(match[1]));
       return 0;
     };
@@ -750,7 +235,7 @@ export default {
 
     const getSpfWins = (value) => {
       if (!value) return 0;
-      const match = String(value).match(/(\\d+)胜/);
+      const match = String(value).match(/(\d+)胜/);
       if (!match) return 0;
       return Number(match[1]);
     };
@@ -946,12 +431,6 @@ export default {
       });
     };
 
-
-    // P级规则弹窗
-    const showRulesDialog = ref(false);
-    const pLevelRules = ref(null);
-
-    // 获取P级规则
     const fetchPLevelRules = async () => {
       try {
         const response = await request.get('/api/v1/beidan-filter/p-level-rules');
@@ -976,7 +455,6 @@ export default {
       }
     };
 
-    
     const buildStrategyPreview = (strategy) => {
       if (!strategy) return '未设置';
       const parts = [];
@@ -1008,9 +486,6 @@ export default {
       includeDerating: filterForm.includeDerating
     });
 
-    
-    const CURRENT_STRATEGY = '当前应用';
-
     const loadStrategyOptions = () => {
       const keys = Object.keys(localStorage).filter(key => key.startsWith('beidan_strategy_'));
       const names = keys.map(key => key.replace('beidan_strategy_', ''));
@@ -1027,8 +502,6 @@ export default {
       strategyPreviewMap.value = map;
     };
 
-
-    
     const formatDateRange = (range) => {
       if (!Array.isArray(range) || range.length !== 2) return '未设置';
       return range.map((item) => {
@@ -1054,13 +527,11 @@ export default {
     });
 
     const clearResults = () => {
-
       filterResults.value = [];
       totalResults.value = 0;
       currentPage.value = 1;
     };
 
-    
     const handleSelectStrategy = async (name) => {
       if (!name) {
         selectedStrategy.value = null;
@@ -1097,9 +568,6 @@ export default {
       }
     };
 
-
-
-    // 获取实时数据
     const fetchRealData = async () => {
       loading.value = true;
       try {
@@ -1130,7 +598,6 @@ export default {
       }
     };
 
-    // 应用高级筛选
     const applyAdvancedFilter = async () => {
       if (!strategyApplied.value && !selectedStrategyName.value) {
         ElMessage.info('请先从策略筛选栏选择策略');
@@ -1251,7 +718,6 @@ export default {
       }
     };
 
-    // 获取统计信息
     const updateStatistics = async () => {
       // 检查是否有有效的token
       const token = localStorage.getItem('access_token') || localStorage.getItem('token');
@@ -1356,8 +822,6 @@ export default {
       }
     };
 
-    // 重置筛选条件
-    
     const resetFilters = () => {
       filterForm.powerDiffs = [];
       filterForm.winPanDiffs = [];
@@ -1369,25 +833,20 @@ export default {
       }
     };
 
-
-    // 切换统计信息显示
     const toggleStats = () => {
       showStats.value = !showStats.value;
     };
 
-    // 导出结果
     const exportResults = (format) => {
       ElMessage.info(`导出功能开发中，格式: ${format}`);
       // 实际应用中应实现具体的导出逻辑
     };
 
-    // 查看详情
     const viewDetails = (row) => {
       console.log('查看比赛详情:', row);
       ElMessage.info(`查看比赛 ${row.home_team} vs ${row.away_team} 的详情`);
     };
 
-    // 获取P级标签类型
     const getPLevelTagType = (level) => {
       switch (level) {
         case 1: return 'success'; // P1级用绿色
@@ -1399,25 +858,20 @@ export default {
       }
     };
 
-    // 处理排序变化
     const handleSortChange = (params) => {
       console.log('排序变化:', params);
       // 实现客户端排序或重新请求数据
     };
 
-    // 处理每页大小变化
     const handleSizeChange = (size) => {
       pageSize.value = size;
       currentPage.value = 1;
     };
 
-    // 处理当前页变化
     const handleCurrentChange = (page) => {
       currentPage.value = page;
     };
 
-    // 处理保存策略
-    
     const handleSaveStrategy = (command) => {
       if (command === 'save') {
         ElMessageBox.prompt('请输入策略名称', '保存策略', {
@@ -1548,14 +1002,58 @@ export default {
       
       ElMessage.success(`已应用"${preset === 'strong' ? '强势正路' : preset === 'upset' ? '冷门潜质' : '均衡博弈'}"预设`);
     };
-      formatMatchTime,
+
+    // 在setup函数末尾返回所有需要暴露给模板的属性和方法
+    return {
+      filterForm,
+      loading,
+      rawMatches,
+      filterResults,
+      totalResults,
+      currentPage,
+      pageSize,
+      showStats,
+      showAnalysisDialog,
+      analysisData,
       availableLeagues,
       dateTimeOptions,
-      fetchRealData,
-      loadStrategyOptions,
-      handleSelectStrategy,
+      strategyOptions,
+      selectedStrategyName,
+      selectedStrategy,
+      strategyApplied,
+      showRulesDialog,
+      pLevelRules,
+      statistics,
+      pagedResults,
+      displayValue,
+      formatSourceAttributes,
+      getJiaoFenMatches,
+      getPercentValue,
+      getProgressValue,
+      getEfficiencyValue,
+      getSpfWins,
+      compareAdvantage,
+      getStatusLabel,
+      openAnalysis,
+      formatMatchId,
+      formatMatchTime,
+      parsePercents,
+      calcDeltaPLevel,
+      wpToScore,
+      calcDeltaWp,
+      calcStabilityTier,
+      fetchPLevelRules,
       fetchDateTimeOptions,
+      buildStrategyPreview,
+      serializeStrategy,
+      loadStrategyOptions,
+      formatDateRange,
+      strategyDetailItems,
+      clearResults,
+      handleSelectStrategy,
+      fetchRealData,
       applyAdvancedFilter,
+      updateStatistics,
       resetFilters,
       toggleStats,
       exportResults,
@@ -1567,9 +1065,10 @@ export default {
       handleSaveStrategy,
       directionWarning,
       applyPreset,
-      showRulesDialog,
-      pLevelRules,
-      fetchPLevelRules
+      strengthOptions,
+      winPanOptions,
+      stabilityOptions,
+      CURRENT_STRATEGY
     };
   }
 };
@@ -1743,7 +1242,6 @@ export default {
   border-radius: 999px;
   font-size: 12px;
 }
-
 
 .strategy-list-empty {
   font-size: 13px;
@@ -2277,6 +1775,7 @@ export default {
     row-gap: 6px;
   }
 }
+
 .analysis-tabs {
   margin-top: 14px;
 }

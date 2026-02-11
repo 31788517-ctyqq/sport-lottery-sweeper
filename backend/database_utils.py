@@ -2,8 +2,8 @@
 """
 数据库工具模块 - 封装常用的数据库操作
 
-注意：根据数据库路径规范，数据库文件应位于项目根目录，并通过 backend.database.DATABASE_PATH 配置。
-本模块优先使用统一的 DATABASE_PATH 配置，保持向后兼容性。
+注意：根据数据库路径规范，数据库文件应位于 data/ 目录，并通过 backend.database.DATABASE_PATH 配置。
+本模块使用统一的 DATABASE_PATH 配置。
 """
 import sqlite3
 import bcrypt
@@ -12,21 +12,15 @@ from typing import Optional, Dict, Any, List
 from contextlib import contextmanager
 from datetime import datetime
 
-# 优先使用统一的数据库路径配置
+# 使用统一的数据库路径配置
 try:
     from backend.database import DATABASE_PATH
     # DATABASE_PATH 可能是 pathlib.Path 对象，转换为字符串
     DB_PATH = str(DATABASE_PATH)
 except ImportError:
-    # 回退到原来的路径查找逻辑
-    # 获取项目根目录的数据库路径 - 优先使用根目录，如果不存在则使用data目录
+    # 回退逻辑：直接使用data目录
     PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
-    # 尝试多个可能的数据库路径
-    possible_paths = [
-        os.path.join(PROJECT_ROOT, "sport_lottery.db"),  # 根目录
-        os.path.join(PROJECT_ROOT, "data", "sport_lottery.db"),  # data目录
-    ]
+    DB_PATH = os.path.join(PROJECT_ROOT, "data", "sport_lottery.db")
 
     DB_PATH = None
     for path in possible_paths:

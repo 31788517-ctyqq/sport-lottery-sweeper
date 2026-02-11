@@ -9,7 +9,7 @@
           clearable
           filterable
           style="width: 260px"
-          @change="handleSelectStrategy"
+          @change="onHandleSelectStrategy"
         >
           <el-option
             v-for="name in strategyOptions"
@@ -18,7 +18,7 @@
             :value="name"
           />
         </el-select>
-        <el-button size="small" @click="loadStrategyOptions">刷新</el-button>
+        <el-button size="small" @click="onLoadStrategyOptions">刷新</el-button>
       </div>
       <div class="strategy-detail" v-if="strategyDetailItems.length">
         <div class="detail-item" v-for="item in strategyDetailItems" :key="item.label">
@@ -38,7 +38,7 @@
           v-for="name in strategyOptions"
           :key="name"
           :class="{ active: name === selectedStrategyName }"
-          @click="handleSelectStrategy(name)"
+          @click="onHandleSelectStrategy(name)"
         >
           <div class="strategy-item-header">
             <span class="strategy-item-name">{{ name }}</span>
@@ -54,65 +54,47 @@
 </template>
 
 <script>
-import { computed } from 'vue';
+import { defineComponent } from 'vue';
+import { ElCard, ElSelect, ElOption, ElButton } from 'element-plus';
 
-export default {
-  name: 'StrategyManager',
+export default defineComponent({
+  name: 'StrategySection',
+  components: {
+    ElCard,
+    ElSelect,
+    ElOption,
+    ElButton
+  },
   props: {
-    strategyOptions: {
-      type: Array,
-      required: true
-    },
     selectedStrategyName: {
       type: String,
       required: true
     },
-    selectedStrategy: {
-      type: Object,
+    strategyOptions: {
+      type: Array,
+      required: true
+    },
+    strategyDetailItems: {
+      type: Array,
       required: true
     }
   },
-  emits: ['update:selectedStrategyName', 'update:selectedStrategy', 'load-strategy-options', 'select-strategy'],
+  emits: ['handleSelectStrategy', 'loadStrategyOptions'],
   setup(props, { emit }) {
-    const handleSelectStrategy = (name) => {
-      emit('select-strategy', name);
+    const onHandleSelectStrategy = (name) => {
+      emit('handleSelectStrategy', name);
     };
 
-    const loadStrategyOptions = () => {
-      emit('load-strategy-options');
+    const onLoadStrategyOptions = () => {
+      emit('loadStrategyOptions');
     };
-
-    const formatDateRange = (range) => {
-      if (!Array.isArray(range) || range.length !== 2) return '未设置';
-      return range.map((item) => {
-        if (!item) return '';
-        if (typeof item === 'string') return item.split('T')[0];
-        if (item.toISOString) return item.toISOString().split('T')[0];
-        return String(item);
-      }).join(' ~ ');
-    };
-
-    const strategyDetailItems = computed(() => {
-      if (!props.selectedStrategy) return [];
-      const detail = props.selectedStrategy;
-      return [
-        { label: 'P等级', value: detail.pLevels?.length ? detail.pLevels.map(v => `P${v}`).join(', ') : '未设置' },
-        { label: '联赛', value: detail.leagues?.length ? detail.leagues.join(', ') : '未设置' },
-        { label: 'date_time', value: detail.dateTime || '未设置' },
-        { label: '日期范围', value: formatDateRange(detail.dateRange) },
-        { label: '实力差', value: detail.powerDiffs?.length ? detail.powerDiffs.join(', ') : '未设置' },
-        { label: '赢盘差', value: detail.winPanDiffs?.length ? detail.winPanDiffs.join(', ') : '未设置' },
-        { label: 'P-Tier', value: detail.stabilityTiers?.length ? detail.stabilityTiers.join(', ') : '未设置' }
-      ];
-    });
 
     return {
-      handleSelectStrategy,
-      loadStrategyOptions,
-      strategyDetailItems
+      onHandleSelectStrategy,
+      onLoadStrategyOptions
     };
   }
-};
+});
 </script>
 
 <style scoped>

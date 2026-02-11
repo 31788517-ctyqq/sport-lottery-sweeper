@@ -149,11 +149,12 @@ pnpm run dev
 
 ## 项目结构
 
-**数据库文件位置规范**：主数据库文件 `sport_lottery.db` 应位于项目根目录。为保持向后兼容性，在 `backend/` 和 `data/` 目录下创建硬链接指向根目录的同一物理文件。所有数据库访问应通过 `backend.database.DATABASE_PATH` 配置，禁止硬编码路径。
+**数据库文件位置规范**：主数据库文件 `sport_lottery.db` 统一位于 `data/` 目录下（`data/sport_lottery.db`）。所有代码应通过配置系统访问数据库，禁止硬编码路径。项目根目录的旧数据库文件已删除，避免数据不一致。
 
 ```
 sport-lottery-sweeper/
-├── sport_lottery.db       # 主数据库文件（位于项目根目录）
+├── data/
+│   └── sport_lottery.db  # 主数据库文件（统一位置）
 ├── backend/               # 后端源代码
 │   ├── main.py           # 应用入口点
 │   ├── api/              # API路由定义

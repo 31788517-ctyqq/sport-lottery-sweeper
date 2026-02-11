@@ -62,6 +62,30 @@ jobs:
       with:
         fetch-depth: 0
     
+    - name: Database Path Validation
+      run: |
+        echo "🔍 Validating database path configuration..."
+        
+        # 检查是否存在硬编码的数据库路径
+        if grep -r "sport_lottery\.db" --include="*.py" --include="*.bat" --include="*.sh" --exclude-dir=.git --exclude-dir=__pycache__ --exclude-dir=.pytest_cache .; then
+          echo "❌ ERROR: Found hardcoded database paths in code"
+          echo "Please use configuration system instead of hardcoded paths"
+          exit 1
+        fi
+        
+        # 检查配置文件中的数据库路径
+        if [ ! -f "backend/config.py" ]; then
+          echo "❌ ERROR: backend/config.py not found"
+          exit 1
+        fi
+        
+        # 验证配置文件中是否使用data/sport_lottery.db
+        if ! grep -q "data/sport_lottery.db" backend/config.py; then
+          echo "⚠️ WARNING: Database path in config.py may not point to data/sport_lottery.db"
+        fi
+        
+        echo "✅ Database path validation passed"
+    
     - name: Setup Python
       uses: actions/setup-python@v4
       with:
@@ -427,6 +451,27 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+    
+    - name: Pre-flight Database Validation
+      run: |
+        echo "🔍 Pre-flight database validation for E2E tests..."
+        
+        # 检查测试数据库配置
+        if [ ! -f "data/sport_lottery.db" ]; then
+          echo "❌ ERROR: Test database data/sport_lottery.db not found"
+          echo "Creating test database..."
+          mkdir -p data
+          sqlite3 data/sport_lottery.db "CREATE TABLE IF NOT EXISTS test_table (id INTEGER PRIMARY KEY, name TEXT);"
+          echo "✅ Test database created"
+        fi
+        
+        # 验证数据库可访问性
+        if ! sqlite3 data/sport_lottery.db "SELECT COUNT(*) FROM sqlite_master WHERE type='table';" > /dev/null 2>&1; then
+          echo "❌ ERROR: Cannot access test database"
+          exit 1
+        fi
+        
+        echo "✅ Pre-flight database validation passed"
     
     - name: Setup Node.js
       uses: actions/setup-node@v4

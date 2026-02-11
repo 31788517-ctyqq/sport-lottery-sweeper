@@ -17,8 +17,13 @@ from backend.core.security import get_password_hash
 def init_admin_user():
     """初始化管理员用户 - 直接操作数据库"""
     try:
-        # 使用项目配置的数据库路径
-        db_path = os.path.join(project_root, "sport_lottery.db")
+        # 导入配置获取数据库路径
+        try:
+            from backend.config import DATABASE_PATH
+            db_path = str(DATABASE_PATH)
+        except ImportError:
+            # 回退方案
+            db_path = os.path.join(project_root, "data", "sport_lottery.db")
         print(f"数据库路径: {db_path}")
         
         conn = sqlite3.connect(db_path)

@@ -2,12 +2,24 @@
 """
 查看数据库表结构和内容
 """
+import sys
+from pathlib import Path
 import sqlite3
 import logging
 logger = logging.getLogger(__name__)
 import os
 
-db_path = "sport_lottery.db"
+# 添加backend目录到Python路径
+backend_dir = Path(__file__).parent
+sys.path.insert(0, str(backend_dir))
+
+# 导入配置获取数据库路径
+try:
+    from backend.config import DATABASE_PATH
+    db_path = str(DATABASE_PATH)
+except ImportError:
+    # 回退方案
+    db_path = "data/sport_lottery.db"
 
 if not os.path.exists(db_path):
     logger.debug(f"数据库文件 {db_path} 不存在")
