@@ -68,6 +68,10 @@ export default defineComponent({
   border: 1px solid #d6d2cb;
   background: #fbfaf8;
   box-shadow: 0 14px 24px rgba(107, 103, 99, 0.12);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  display: block;
 }
 
 .stat-item {

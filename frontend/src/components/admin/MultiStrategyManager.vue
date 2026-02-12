@@ -391,12 +391,13 @@ export default {
   margin: 20px 0;
   width: 100%;
   max-width: 100%;
-  border: 1px solid #e4e7ed;
+  border: 1px solid #d6d2cb;
   background: #fbfaf8;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 12px 20px rgba(107, 103, 99, 0.1);
   border-radius: 12px;
   box-sizing: border-box;
   display: block;
+  overflow: hidden;
 }
 
 .strategy-selection {
@@ -409,6 +410,8 @@ export default {
 
 .task-table, .history-table {
   margin-top: 10px;
+  width: 100%;
+  table-layout: fixed;
 }
 
 .webhook-masked {

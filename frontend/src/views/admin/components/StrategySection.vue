@@ -105,6 +105,8 @@ export default defineComponent({
   box-shadow: 0 12px 20px rgba(107, 103, 99, 0.1);
   width: 100%;
   max-width: 100%;
+  box-sizing: border-box;
+  display: block;
 }
 
 .strategy-bar {
