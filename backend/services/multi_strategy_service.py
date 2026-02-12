@@ -144,13 +144,24 @@ class MultiStrategyScheduler:
         self.scheduler = BackgroundScheduler()
         self.strategy_manager = StrategyManager()
         self._setup_default_strategies()
-        self.scheduler.start()
 
     def _setup_default_strategies(self):
         """设置默认策略"""
         self.strategy_manager.register_strategy('high_probability_winning', high_probability_winning_strategy)
         self.strategy_manager.register_strategy('balanced_odds', balanced_odds_strategy)
         self.strategy_manager.register_strategy('recent_form', recent_form_strategy)
+
+    def start(self):
+        """启动调度器"""
+        if not self.scheduler.running:
+            self.scheduler.start()
+            logger.info("多策略调度器已启动")
+
+    def shutdown(self):
+        """关闭调度器"""
+        if self.scheduler.running:
+            self.scheduler.shutdown()
+            logger.info("多策略调度器已关闭")
 
     def add_scheduled_task(self, task_config: Dict[str, Any]):
         """
@@ -255,3 +266,5 @@ class MultiStrategyScheduler:
 
 # 创建全局实例
 multi_strategy_scheduler = MultiStrategyScheduler()
+# 启动调度器
+multi_strategy_scheduler.start()

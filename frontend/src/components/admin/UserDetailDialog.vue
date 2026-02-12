@@ -72,8 +72,8 @@
         <el-col :span="12">
           <el-form-item label="状态" prop="status">
             <el-radio-group v-model="userData.status" :disabled="mode === 'view'">
-              <el-radio label="active">正常</el-radio>
-              <el-radio label="inactive">禁用</el-radio>
+              <el-radio value="active">正常</el-radio>
+              <el-radio value="inactive">禁用</el-radio>
             </el-radio-group>
           </el-form-item>
         </el-col>

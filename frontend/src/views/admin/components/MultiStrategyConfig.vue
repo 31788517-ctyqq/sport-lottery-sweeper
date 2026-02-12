@@ -1,252 +1,201 @@
 <template>
-  <el-card class="multi-strategy-card" v-if="showMultiStrategyPanel">
-    <div slot="header" class="clearfix">
-      <span>多策略筛选配置</span>
-    </div>
-    
-    <el-form :model="multiStrategyForm" label-width="120px">
-      <el-form-item label="任务名称">
-        <el-input 
-          v-model="multiStrategyForm.taskName" 
-          placeholder="请输入任务名称"
-        ></el-input>
-      </el-form-item>
-      
-      <el-form-item label="选择策略">
-        <el-checkbox-group v-model="multiStrategyForm.selectedStrategies">
-          <el-checkbox 
-            v-for="strategy in availableStrategies" 
-            :key="strategy.id" 
-            :label="strategy.id"
-          >
-            {{ strategy.name }}
-          </el-checkbox>
-        </el-checkbox-group>
-      </el-form-item>
-      
-      <el-form-item label="执行频率">
-        <el-select v-model="multiStrategyForm.cronType" @change="updateCronExpression">
-          <el-option label="每小时" value="hourly"></el-option>
-          <el-option label="每天" value="daily"></el-option>
-          <el-option label="每周" value="weekly"></el-option>
-          <el-option label="自定义" value="custom"></el-option>
-        </el-select>
-        
-        <el-input 
-          v-if="multiStrategyForm.cronType === 'custom'"
-          v-model="multiStrategyForm.cronExpression" 
-          placeholder="请输入Cron表达式"
-          style="margin-top: 10px;"
-        ></el-input>
-      </el-form-item>
-      
-      <el-form-item label="消息格式">
-        <el-radio-group v-model="multiStrategyForm.messageFormat">
-          <el-radio label="text">纯文本</el-radio>
-          <el-radio label="table">表格形式</el-radio>
-        </el-radio-group>
-      </el-form-item>
-      
-      <el-form-item label="钉钉通知">
-        <el-switch v-model="multiStrategyForm.dingtalkEnabled"></el-switch>
-        <div v-if="multiStrategyForm.dingtalkEnabled" style="margin-top: 10px;">
-          <el-input 
-            v-model="multiStrategyForm.dingtalkWebhook" 
-            placeholder="请输入钉钉机器人Webhook URL"
-            style="width: 80%;"
-          ></el-input>
+  <div class="multi-strategy-config">
+    <el-card class="config-card">
+      <template #header>
+        <div class="card-header">
+          <span class="title">多策略筛选配置</span>
+          <el-button class="button" type="primary" :loading="isRunning" @click="toggleScheduledTask">
+            {{ isRunning ? '停止任务' : '启动任务' }}
+          </el-button>
         </div>
-      </el-form-item>
-      
-      <el-form-item>
-        <el-button type="primary" @click="saveMultiStrategyConfig">保存配置</el-button>
-        <el-button @click="executeNow">立即执行</el-button>
-        <el-button @click="togglePanel">取消</el-button>
-      </el-form-item>
-    </el-form>
-  </el-card>
+      </template>
 
-  <el-button 
-    v-else 
-    type="info" 
-    @click="togglePanel"
-    style="margin-bottom: 20px;"
-  >
-    配置多策略筛选
-  </el-button>
+      <el-form :model="form" label-width="120px" class="config-form">
+        <el-form-item label="选择策略">
+          <el-select
+            v-model="form.selectedStrategies"
+            multiple
+            collapse-tags
+            collapse-tags-tooltip
+            placeholder="请选择要执行的策略"
+            style="width: 100%"
+          >
+            <el-option
+              v-for="strategy in availableStrategies"
+              :key="strategy.value"
+              :label="strategy.label"
+              :value="strategy.value"
+            />
+          </el-select>
+        </el-form-item>
+
+        <el-form-item label="消息格式">
+          <el-radio-group v-model="form.messageFormat">
+            <el-radio value="table">表格</el-radio>
+            <el-radio value="markdown">Markdown</el-radio>
+            <el-radio value="text">纯文本</el-radio>
+          </el-radio-group>
+        </el-form-item>
+
+        <el-form-item label="执行间隔(分钟)">
+          <el-input-number
+            v-model="form.intervalMinutes"
+            :min="1"
+            :max="60"
+            controls-position="right"
+            style="width: 200px"
+          />
+        </el-form-item>
+
+        <el-form-item>
+          <el-button type="primary" @click="executeNow" :loading="executing">
+            立即执行
+          </el-button>
+          <el-button @click="resetForm">重置</el-button>
+        </el-form-item>
+      </el-form>
+
+      <div class="execution-results" v-if="executionResult">
+        <h4>最近执行结果:</h4>
+        <pre class="result-content">{{ executionResult }}</pre>
+      </div>
+    </el-card>
+  </div>
 </template>
 
-<script>
-import { ref, reactive, onMounted } from 'vue';
-import { ElMessage } from 'element-plus';
-import request from '@/utils/request';
+<script setup>
+import { ref, reactive, onMounted } from 'vue'
+import { ElMessage } from 'element-plus'
+import { getAvailableStrategies, executeMultiStrategy, toggleTask } from '@/api/modules/multiStrategy'
 
-export default {
-  name: 'MultiStrategyConfig',
-  props: {
-    showMultiStrategyPanel: {
-      type: Boolean,
-      default: false
+// 表单数据
+const form = reactive({
+  selectedStrategies: [],
+  messageFormat: 'table',
+  intervalMinutes: 5
+})
+
+// 状态变量
+const isRunning = ref(false)
+const executing = ref(false)
+const availableStrategies = ref([])
+const executionResult = ref(null)
+
+// 获取可用策略列表
+const fetchAvailableStrategies = async () => {
+  try {
+    const response = await getAvailableStrategies()
+    if (response.success) {
+      availableStrategies.value = response.data.map(strategy => ({
+        value: strategy,
+        label: getStrategyLabel(strategy)
+      }))
     }
-  },
-  emits: ['update:showMultiStrategyPanel', 'strategy-configured'],
-  setup(props, { emit }) {
-    const availableStrategies = ref([]);
-    
-    const multiStrategyForm = reactive({
-      taskName: '',
-      selectedStrategies: [],
-      cronType: 'daily',
-      cronExpression: '0 9 * * *', // 默认每天上午9点
-      messageFormat: 'table',
-      dingtalkEnabled: false,
-      dingtalkWebhook: ''
-    });
-
-    // 获取可用策略列表
-    const loadAvailableStrategies = async () => {
-      try {
-        const response = await request({
-          url: '/v1/multi-strategy/strategies',
-          method: 'GET'
-        });
-        
-        if (response.success) {
-          availableStrategies.value = response.data.map(id => ({
-            id,
-            name: id.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) // 转换为标题格式
-          }));
-        } else {
-          console.error('获取策略列表失败:', response.message);
-        }
-      } catch (error) {
-        console.error('获取策略列表失败:', error);
-        ElMessage.error('获取策略列表失败');
-      }
-    };
-
-    // 更新cron表达式
-    const updateCronExpression = (type) => {
-      switch(type) {
-        case 'hourly':
-          multiStrategyForm.cronExpression = '0 * * * *'; // 每小时
-          break;
-        case 'daily':
-          multiStrategyForm.cronExpression = '0 9 * * *'; // 每天上午9点
-          break;
-        case 'weekly':
-          multiStrategyForm.cronExpression = '0 9 * * 1'; // 每周一上午9点
-          break;
-        default:
-          multiStrategyForm.cronExpression = '';
-      }
-    };
-
-    // 保存多策略配置
-    const saveMultiStrategyConfig = async () => {
-      if (!multiStrategyForm.taskName) {
-        ElMessage.error('请输入任务名称');
-        return;
-      }
-
-      if (multiStrategyForm.selectedStrategies.length === 0) {
-        ElMessage.error('请至少选择一个策略');
-        return;
-      }
-
-      if (multiStrategyForm.dingtalkEnabled && !multiStrategyForm.dingtalkWebhook) {
-        ElMessage.error('请输入钉钉机器人Webhook URL');
-        return;
-      }
-
-      try {
-        const payload = {
-          task_name: multiStrategyForm.taskName,
-          strategy_ids: multiStrategyForm.selectedStrategies,
-          cron_expression: multiStrategyForm.cronExpression,
-          message_format: multiStrategyForm.messageFormat,
-          user_id: 'current_user_id', // 这里需要获取当前用户ID
-          dingtalk_webhook: multiStrategyForm.dingtalkEnabled ? multiStrategyForm.dingtalkWebhook : null,
-          enabled: true
-        };
-
-        const response = await request({
-          url: '/v1/multi-strategy/config',
-          method: 'POST',
-          data: payload
-        });
-
-        if (response.success) {
-          ElMessage.success(response.message || '多策略配置保存成功');
-          togglePanel(); // 关闭面板
-          emit('strategy-configured', payload);
-        } else {
-          ElMessage.error(response.message || '保存配置失败');
-        }
-      } catch (error) {
-        console.error('保存多策略配置失败:', error);
-        ElMessage.error('保存配置失败: ' + error.message);
-      }
-    };
-
-    // 立即执行
-    const executeNow = async () => {
-      if (multiStrategyForm.selectedStrategies.length === 0) {
-        ElMessage.error('请至少选择一个策略');
-        return;
-      }
-
-      try {
-        const response = await request({
-          url: '/v1/multi-strategy/execute',
-          method: 'POST',
-          data: {
-            strategy_ids: multiStrategyForm.selectedStrategies,
-            message_format: multiStrategyForm.messageFormat
-          }
-        });
-
-        if (response.success) {
-          ElMessage.success('多策略筛选执行成功');
-          
-          // 如果启用了钉钉通知，模拟发送
-          if (multiStrategyForm.dingtalkEnabled && multiStrategyForm.dingtalkWebhook) {
-            // 这里在实际应用中会调用后端发送钉钉消息
-            console.log('模拟发送钉钉消息:', response.formatted_message);
-          }
-        } else {
-          ElMessage.error(response.message || '执行失败');
-        }
-      } catch (error) {
-        console.error('执行多策略筛选失败:', error);
-        ElMessage.error('执行失败: ' + error.message);
-      }
-    };
-
-    // 切换面板显示状态
-    const togglePanel = () => {
-      emit('update:showMultiStrategyPanel', !props.showMultiStrategyPanel);
-    };
-
-    onMounted(() => {
-      loadAvailableStrategies();
-    });
-
-    return {
-      availableStrategies,
-      multiStrategyForm,
-      updateCronExpression,
-      saveMultiStrategyConfig,
-      executeNow,
-      togglePanel
-    };
+  } catch (error) {
+    console.error('获取策略列表失败:', error)
+    ElMessage.error('获取策略列表失败')
   }
-};
+}
+
+// 获取策略标签
+const getStrategyLabel = (strategy) => {
+  const labels = {
+    'high_probability_winning': '高概率胜平负',
+    'balanced_odds': '均衡赔率',
+    'recent_form': '近期表现'
+  }
+  return labels[strategy] || strategy
+}
+
+// 立即执行
+const executeNow = async () => {
+  if (!form.selectedStrategies.length) {
+    ElMessage.warning('请至少选择一个策略')
+    return
+  }
+
+  executing.value = true
+  try {
+    const response = await executeMultiStrategy({
+      strategy_ids: form.selectedStrategies,
+      message_format: form.messageFormat
+    })
+    
+    if (response.success) {
+      ElMessage.success('策略执行成功')
+      executionResult.value = response.formatted_message || JSON.stringify(response.results, null, 2)
+    } else {
+      ElMessage.error(response.message || '执行失败')
+    }
+  } catch (error) {
+    console.error('执行策略失败:', error)
+    ElMessage.error('执行失败: ' + error.message)
+  } finally {
+    executing.value = false
+  }
+}
+
+// 切换定时任务
+const toggleScheduledTask = async () => {
+  try {
+    const response = await toggleTask({ enabled: !isRunning.value })
+    if (response.success) {
+      isRunning.value = !isRunning.value
+      ElMessage.success(isRunning.value ? '任务已启动' : '任务已停止')
+    } else {
+      ElMessage.error(response.message || '操作失败')
+    }
+  } catch (error) {
+    console.error('切换任务状态失败:', error)
+    ElMessage.error('操作失败: ' + error.message)
+  }
+}
+
+// 重置表单
+const resetForm = () => {
+  form.selectedStrategies = []
+  form.messageFormat = 'table'
+  form.intervalMinutes = 5
+  executionResult.value = null
+}
+
+// 初始化
+onMounted(() => {
+  fetchAvailableStrategies()
+})
 </script>
 
 <style scoped>
-.multi-strategy-card {
+.config-card {
+  margin-bottom: 20px;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.title {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.config-form {
+  padding-top: 10px;
+}
+
+.execution-results {
   margin-top: 20px;
-  max-width: 800px;
+  padding: 15px;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+}
+
+.result-content {
+  white-space: pre-wrap;
+  overflow-x: auto;
+  max-height: 300px;
+  overflow-y: auto;
 }
 </style>

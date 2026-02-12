@@ -6,6 +6,9 @@ from .dingtalk_integration import send_markdown_table_to_dingtalk
 from sqlalchemy.orm import Session
 from ..database import get_db
 from ..models.matches import FootballMatch
+from ..crud.multi_strategy_crud import get_multi_strategy_tasks
+from ..models import MultiStrategyTask
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -17,6 +20,33 @@ class MultiStrategyScheduler:
         self._register_default_strategies()
         self.scheduler.start()
         logger.info("多策略调度器已启动")
+        
+        # 启动时加载所有启用的任务
+        self.load_tasks_from_db()
+    
+    def load_tasks_from_db(self):
+        """从数据库加载所有启用的定时任务"""
+        try:
+            db: Session = next(get_db())
+            tasks = db.query(MultiStrategyTask).filter(MultiStrategyTask.enabled == True).all()
+            
+            for task in tasks:
+                try:
+                    strategy_ids = json.loads(task.strategy_ids)
+                    task_config = {
+                        'user_id': task.user_id,
+                        'strategy_ids': strategy_ids,
+                        'cron_expression': task.cron_expression,
+                        'dingtalk_webhook': task.dingtalk_webhook,
+                        'message_format': task.message_format or 'text'
+                    }
+                    self.add_scheduled_task(task_config)
+                    logger.info(f"已加载定时任务: {task.task_name} (user_id={task.user_id})")
+                except Exception as e:
+                    logger.error(f"加载任务失败 {task.task_name}: {str(e)}")
+                    
+        except Exception as e:
+            logger.error(f"从数据库加载任务配置时出错: {str(e)}", exc_info=True)
 
     def _register_default_strategies(self):
         """注册默认策略"""
@@ -179,7 +209,87 @@ class MultiStrategyScheduler:
             logger.info(f"已移除多策略定时任务: {job_id}")
         except:
             logger.warning(f"尝试移除不存在的多策略定时任务: {job_id}")
+    
+    def update_task(self, task_config):
+        """更新定时任务"""
+        # 先移除旧任务
+        self.remove_task(task_config['user_id'])
+        # 添加新任务
+        if task_config.get('enabled', True):
+            self.add_scheduled_task(task_config)
+    
+    def reload_all_tasks(self):
+        """重新加载所有任务（用于配置变更时）"""
+        # 移除所有现有任务
+        for job in self.scheduler.get_jobs():
+            if job.id.startswith('multi_filter_task_'):
+                self.scheduler.remove_job(job.id)
+        
+        # 重新从数据库加载
+        self.load_tasks_from_db()
+        logger.info("已重新加载所有定时任务")
 
+    def execute_multiple_strategies_now(self, strategy_ids, message_format='text'):
+        """立即执行多个策略（手动触发）"""
+        try:
+            # 获取最新的比赛数据
+            latest_matches = self._get_latest_matches_from_db()
+            
+            if not latest_matches:
+                logger.warning("未能获取到最新的比赛数据")
+                return {
+                    'success': False,
+                    'error': '未能获取到比赛数据',
+                    'results': {},
+                    'formatted_message': '暂无比赛数据'
+                }
+            
+            results_map = {}
+            for strategy_id in strategy_ids:
+                try:
+                    # 使用最新的比赛数据执行策略
+                    results = self.strategy_manager.execute_strategy(strategy_id, latest_matches)
+                    if results:
+                        results_map[strategy_id] = results
+                except Exception as e:
+                    logger.error(f"执行策略 {strategy_id} 时出错: {str(e)}")
+                    results_map[strategy_id] = []
+            
+            # 格式化消息
+            if message_format == 'table':
+                formatted_message = self._format_results_as_table(results_map)
+            else:
+                formatted_message = self._format_multi_strategy_results('manual', results_map)
+            
+            return {
+                'success': True,
+                'results': results_map,
+                'formatted_message': formatted_message
+            }
+            
+        except Exception as e:
+            logger.error(f"手动执行多策略时出错: {str(e)}", exc_info=True)
+            return {
+                'success': False,
+                'error': str(e),
+                'results': {},
+                'formatted_message': '执行失败'
+            }
+    
+    def execute_multiple_strategies(self, strategy_ids, data):
+        """执行多个策略筛选（基于给定数据）"""
+        results = {}
+        for strategy_id in strategy_ids:
+            try:
+                result = self.strategy_manager.execute_strategy(strategy_id, data)
+                if result:
+                    results[strategy_id] = result
+            except Exception as e:
+                logger.error(f"执行策略 {strategy_id} 时出错: {str(e)}")
+                results[strategy_id] = []
+        
+        return results
+    
     def shutdown(self):
         """关闭调度器"""
         self.scheduler.shutdown()

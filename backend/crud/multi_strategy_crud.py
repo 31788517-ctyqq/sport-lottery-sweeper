@@ -4,12 +4,16 @@
 多策略任务的CRUD操作
 """
 
+import logging
+
 from sqlalchemy.orm import Session
 from typing import List, Optional
 import json
 from datetime import datetime
 
-from backend.models import MultiStrategyTask
+from backend.models.multi_strategy_new import MultiStrategyTask
+
+logger = logging.getLogger(__name__)
 
 
 def get_multi_strategy_tasks(db: Session, user_id: str) -> List[MultiStrategyTask]:
@@ -39,12 +43,17 @@ def create_multi_strategy_task(
         strategy_ids=json.dumps(strategy_ids),
         cron_expression=cron_expression,
         message_format=message_format,
-        dingtalk_webhook=dingtalk_webhook,
         enabled=enabled
     )
+    
+    # 设置Webhook（会自动加密）
+    if dingtalk_webhook:
+        task.dingtalk_webhook = dingtalk_webhook
+    
     db.add(task)
     db.commit()
     db.refresh(task)
+    logger.info(f"创建多策略任务: {task_name} (user_id={user_id})")
     return task
 
 
@@ -73,7 +82,8 @@ def update_multi_strategy_task(
     if message_format is not None:
         update_data["message_format"] = message_format
     if dingtalk_webhook is not None:
-        update_data["dingtalk_webhook"] = dingtalk_webhook
+        # 设置Webhook（会自动加密）
+        task.dingtalk_webhook = dingtalk_webhook
     if enabled is not None:
         update_data["enabled"] = enabled
     
@@ -82,6 +92,7 @@ def update_multi_strategy_task(
     
     task.updated_at = datetime.utcnow()
     db.commit()
+    logger.info(f"更新多策略任务: id={task_id}")
     return True
 
 

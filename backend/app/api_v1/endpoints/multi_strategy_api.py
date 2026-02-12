@@ -4,7 +4,7 @@
 多策略筛选与钉钉通知API端点
 """
 
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, status
 from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
 from datetime import datetime
@@ -12,12 +12,13 @@ import json
 
 from backend.services.multi_strategy_service import multi_strategy_scheduler
 from backend.database import get_db
-from backend.models import MultiStrategyTask
+from backend.models.multi_strategy_new import MultiStrategyTask
 from backend.crud.multi_strategy_crud import (
     get_multi_strategy_tasks,
     create_multi_strategy_task,
     delete_multi_strategy_tasks
 )
+from backend.core.auth_service import oauth2_scheme, verify_token, get_current_user
 from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/multi-strategy", tags=["multi-strategy"])
@@ -36,6 +37,10 @@ class MultiStrategyConfigRequest(BaseModel):
 class ExecuteMultipleStrategiesRequest(BaseModel):
     strategy_ids: List[str]
     message_format: str = "text"
+
+
+class ToggleTaskRequest(BaseModel):
+    enabled: bool
 
 
 # 响应模型
@@ -59,10 +64,21 @@ class ExecuteMultipleStrategiesResponse(BaseModel):
 
 
 @router.post("/config", summary="保存多策略配置")
-async def save_multi_strategy_config(config: MultiStrategyConfigRequest, db: Session = Depends(get_db)):
+async def save_multi_strategy_config(
+    config: MultiStrategyConfigRequest, 
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
     """
     保存多策略配置
     """
+    # 验证用户权限：只能操作自己的配置
+    if current_user["username"] != config.user_id and not current_user.get("is_admin", False):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="无权操作用户的配置"
+        )
+    
     try:
         # 创建数据库记录
         task_record = create_multi_strategy_task(
@@ -113,7 +129,17 @@ async def save_multi_strategy_config(config: MultiStrategyConfigRequest, db: Ses
 
 
 @router.get("/config", summary="获取用户的所有多策略配置")
-async def get_multi_strategy_config(user_id: str, db: Session = Depends(get_db)):
+async def get_multi_strategy_config(
+    user_id: str, 
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    # 验证用户权限：只能查看自己的配置
+    if current_user["username"] != user_id and not current_user.get("is_admin", False):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="无权查看其他用户的配置"
+        )
     """
     获取用户的所有多策略配置
     """
@@ -145,7 +171,17 @@ async def get_multi_strategy_config(user_id: str, db: Session = Depends(get_db))
 
 
 @router.delete("/config/{user_id}", summary="删除多策略配置")
-async def delete_multi_strategy_config(user_id: str, db: Session = Depends(get_db)):
+async def delete_multi_strategy_config(
+    user_id: str, 
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    # 验证用户权限：只能删除自己的配置
+    if current_user["username"] != user_id and not current_user.get("is_admin", False):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="无权删除其他用户的配置"
+        )
     """
     删除多策略配置
     """
@@ -166,24 +202,82 @@ async def delete_multi_strategy_config(user_id: str, db: Session = Depends(get_d
 
 
 @router.post("/execute", summary="手动执行多策略筛选")
-async def execute_multiple_strategies_manual(request: ExecuteMultipleStrategiesRequest):
+async def execute_multiple_strategies_manual(
+    request: ExecuteMultipleStrategiesRequest,
+    current_user: dict = Depends(get_current_user)
+):
     """
     手动执行多策略筛选
     """
     try:
-        results = multi_strategy_scheduler.execute_multiple_strategies_now(
+        # 使用调度器的执行方法
+        execution_result = multi_strategy_scheduler.execute_multiple_strategies_now(
             request.strategy_ids, 
             request.message_format
         )
         
-        return {
-            "success": True,
-            "message": "多策略筛选执行成功",
-            "results": results['results'],
-            "formatted_message": results['formatted_message']
-        }
+        if execution_result['success']:
+            return {
+                "success": True,
+                "message": "多策略筛选执行成功",
+                "results": execution_result['results'],
+                "formatted_message": execution_result['formatted_message']
+            }
+        else:
+            raise HTTPException(
+                status_code=500, 
+                detail=f"执行失败: {execution_result.get('error', '未知错误')}"
+            )
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"执行多策略筛选失败: {str(e)}")
+
+
+@router.post("/toggle-task/{user_id}", summary="启动/停止定时任务")
+async def toggle_scheduled_task(
+    user_id: str,
+    request: ToggleTaskRequest,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    启动或停止多策略的定时任务
+    """
+    # 验证用户权限
+    if current_user["username"] != user_id and not current_user.get("is_admin", False):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="无权操作其他用户的任务"
+        )
+    
+    try:
+        if request.enabled:
+            # 重新加载用户任务
+            tasks = get_multi_strategy_tasks(db, user_id)
+            for task in tasks:
+                if task.enabled:
+                    strategy_ids = json.loads(task.strategy_ids)
+                    task_config = {
+                        'user_id': task.user_id,
+                        'strategy_ids': strategy_ids,
+                        'cron_expression': task.cron_expression,
+                        'dingtalk_webhook': task.dingtalk_webhook,
+                        'message_format': task.message_format or 'text'
+                    }
+                    multi_strategy_scheduler.add_scheduled_task(task_config)
+            message = "定时任务已启动"
+        else:
+            # 停止用户的定时任务
+            multi_strategy_scheduler.remove_task(user_id)
+            message = "定时任务已停止"
+            
+        return {
+            "success": True,
+            "message": message
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"切换定时任务失败: {str(e)}")
 
 
 @router.get("/strategies", summary="获取所有可用策略")

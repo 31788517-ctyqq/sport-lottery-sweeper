@@ -1,7 +1,7 @@
 // Unit tests for BeidanFilterPanel component
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { mount } from '@vue/test-utils';
-import BeidanFilterPanel from '@/views/admin/BeidanFilterPanel.vue';
+import BeidanFilterPanel from '../../../../src/views/admin/BeidanFilterPanel.vue';
 import { createTestingPinia } from '@pinia/testing';
 
 // Mock the request utility

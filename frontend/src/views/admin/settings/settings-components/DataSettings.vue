@@ -16,9 +16,9 @@
         
         <el-form-item label="数据源类型" prop="dataSourceType">
           <el-radio-group v-model="form.dataSourceType">
-            <el-radio label="primary">主数据源</el-radio>
-            <el-radio label="backup">备用数据源</el-radio>
-            <el-radio label="combined">组合数据源</el-radio>
+            <el-radio value="primary">主数据源</el-radio>
+            <el-radio value="backup">备用数据源</el-radio>
+            <el-radio value="combined">组合数据源</el-radio>
           </el-radio-group>
         </el-form-item>
         
@@ -81,9 +81,9 @@
         
         <el-form-item label="数据备份策略" prop="backupStrategy">
           <el-radio-group v-model="form.backupStrategy">
-            <el-radio label="daily">每日备份</el-radio>
-            <el-radio label="weekly">每周备份</el-radio>
-            <el-radio label="monthly">每月备份</el-radio>
+            <el-radio value="daily">每日备份</el-radio>
+            <el-radio value="weekly">每周备份</el-radio>
+            <el-radio value="monthly">每月备份</el-radio>
           </el-radio-group>
           <div class="setting-description">数据备份的频率策略</div>
         </el-form-item>

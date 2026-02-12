@@ -13,12 +13,11 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./src/tests/setup.js'],
-    include: ['src/**/*.{test,spec}.{js,ts}', 'tests/**/*.{test,spec}.{js,ts}'],
+    include: ['src/**/*.{test,spec}.{js,ts}', 'tests/**/*.{test,spec}.{js,ts}', 'frontend/tests/**/*.{test,spec}.{js,ts}'],
     exclude: [
       'node_modules', 
       'dist',
       '**/*.md',           // 排除所有markdown文件
-      '**/*.vue',         // 排除所有vue文件（除非在特定目录）
       'tests/e2e/**',     // 排除e2e测试目录
       'tests/unit/temp/**',  // 排除临时测试目录
       '**/backup/**',     // 排除备份目录

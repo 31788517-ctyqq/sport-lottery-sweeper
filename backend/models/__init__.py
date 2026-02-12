@@ -60,8 +60,6 @@ from .crawler_tasks import CrawlerTask
 from .headers import RequestHeader
 from .ip_pool import IPPool
 from .llm_provider import LLMProvider
-from .llm_provider_config import LLMProviderConfig
-from .ai_log import AILog
 from .multi_strategy import MultiStrategyTask  # 新增多策略任务模型
 
 __all__ = [
@@ -75,7 +73,5 @@ __all__ = [
     "RequestHeader",
     "IPPool",
     "LLMProvider",
-    "LLMProviderConfig",
-    "AILog",
     "MultiStrategyTask"  # 添加到导出列表
 ]

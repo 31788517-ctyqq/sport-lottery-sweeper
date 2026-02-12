@@ -56,11 +56,11 @@
                       <span class="page-name">{{ pageName }}</span>
                     </div>
                   </template>
-                  <el-button
-                    type="text"
-                    class="page-link"
-                    @click="openPage(moduleName, pageName)"
-                  >
+<el-button
+    type="link"
+    class="page-link"
+    @click="openPage(moduleName, pageName)"
+  >
                     访问页面
                   </el-button>
                 </el-card>

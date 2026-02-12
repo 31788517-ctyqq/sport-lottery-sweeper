@@ -82,9 +82,9 @@
             
             <el-form-item label="导入方式">
               <el-radio-group v-model="importForm.importType">
-                <el-radio label="file">文件导入</el-radio>
-                <el-radio label="crawler">爬虫导入</el-radio>
-                <el-radio label="api">外部接口</el-radio>
+                <el-radio value="file">文件导入</el-radio>
+                <el-radio value="crawler">爬虫导入</el-radio>
+                <el-radio value="api">外部接口</el-radio>
               </el-radio-group>
             </el-form-item>
 

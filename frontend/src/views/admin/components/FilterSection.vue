@@ -72,7 +72,7 @@
       <el-col :span="8">
         <div class="filter-group">
           <div class="group-title">
-            <span>高级筛选</span>
+            <span>其它条件</span>
             <span class="group-hint">多维叠加</span>
           </div>
           <div class="filter-item">
@@ -125,7 +125,7 @@
       <el-col :span="8">
         <div class="filter-group">
           <div class="group-title">
-            <span>筛选策略</span>
+            <span>策略筛选</span>
             <span class="group-hint">排序与规则</span>
           </div>
           <div class="filter-item">
@@ -154,7 +154,7 @@
       <el-col :span="8">
         <div class="filter-group">
           <div class="group-title">
-            <span>快捷组合</span>
+            <span>策略应用和保存</span>
             <span class="group-hint">一键应用</span>
           </div>
           <div class="preset-grid">
@@ -181,11 +181,11 @@
               <template #dropdown>
                 <el-dropdown-menu>
                   <el-dropdown-item command="save">保存当前策略</el-dropdown-item>
-                  <el-dropdown-item command="load">加载策略</el-dropdown-item>
+                  <el-dropdown-item command="manage">修改和删除策略</el-dropdown-item>
                 </el-dropdown-menu>
               </template>
-            </el-dropdown>
-          </div>
+          </el-dropdown>
+        </div>
         </div>
       </el-col>
     </el-row>
@@ -283,11 +283,16 @@ export default defineComponent({
       emit('resetFilters');
     };
 
+    const onLoadExampleStrategy = (exampleName) => {
+      emit('loadExampleStrategy', exampleName);
+    };
+
     return {
       onApplyPreset,
       onHandleSaveStrategy,
       onApplyAdvancedFilter,
-      onResetFilters
+      onResetFilters,
+      onLoadExampleStrategy
     };
   }
 });

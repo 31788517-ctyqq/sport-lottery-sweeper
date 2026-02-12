@@ -239,9 +239,9 @@
         
         <el-form-item label="数据源">
           <el-radio-group v-model="importForm.dataSource">
-            <el-radio label="official">官方接口</el-radio>
-            <el-radio label="crawler">爬虫抓取</el-radio>
-            <el-radio label="file">文件上传</el-radio>
+            <el-radio value="official">官方接口</el-radio>
+            <el-radio value="crawler">爬虫抓取</el-radio>
+            <el-radio value="file">文件上传</el-radio>
           </el-radio-group>
         </el-form-item>
 

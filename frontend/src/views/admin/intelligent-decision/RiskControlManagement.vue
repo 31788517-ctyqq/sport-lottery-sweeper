@@ -71,9 +71,9 @@
               
               <el-form-item label="风控等级">
                 <el-radio-group v-model="riskConfig.riskLevel">
-                  <el-radio label="low">低风险</el-radio>
-                  <el-radio label="medium">中风险</el-radio>
-                  <el-radio label="high">高风险</el-radio>
+                  <el-radio value="low">低风险</el-radio>
+                  <el-radio value="medium">中风险</el-radio>
+                  <el-radio value="high">高风险</el-radio>
                 </el-radio-group>
               </el-form-item>
               

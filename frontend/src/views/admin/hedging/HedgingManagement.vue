@@ -223,9 +223,9 @@
         </el-form-item>
         <el-form-item label="风险等级" prop="riskLevel">
           <el-radio-group v-model="strategyForm.riskLevel">
-            <el-radio label="low">低风险</el-radio>
-            <el-radio label="medium">中风险</el-radio>
-            <el-radio label="high">高风险</el-radio>
+            <el-radio value="low">低风险</el-radio>
+            <el-radio value="medium">中风险</el-radio>
+            <el-radio value="high">高风险</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item label="描述" prop="description">

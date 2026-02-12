@@ -105,8 +105,8 @@
             
             <el-form-item label="健康检查方法">
               <el-radio-group v-model="config.health.checkMethod">
-                <el-radio label="ping">Ping测试</el-radio>
-                <el-radio label="full">完整请求测试</el-radio>
+                <el-radio value="ping">Ping测试</el-radio>
+                <el-radio value="full">完整请求测试</el-radio>
               </el-radio-group>
               <div class="form-help">
                 选择健康检查的方式：简单ping或完整API请求

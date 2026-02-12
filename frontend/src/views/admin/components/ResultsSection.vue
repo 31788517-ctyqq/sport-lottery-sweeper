@@ -67,9 +67,16 @@
           <el-button size="small" type="success" @click="onOpenAnalysis(row)">分析</el-button>
         </template>
       </el-table-column>
-    </el-table>
+      </el-table>
 
-    <el-pagination
+      <!-- 新增空状态处理 -->
+      <template #empty>
+        <div class="empty-state" style="text-align: center; padding: 40px 0;">
+          <el-empty description="没有符合场次" />
+        </div>
+      </template>
+
+      <el-pagination
       @size-change="onHandleSizeChange"
       @current-change="onHandleCurrentChange"
       :current-page="currentPage"

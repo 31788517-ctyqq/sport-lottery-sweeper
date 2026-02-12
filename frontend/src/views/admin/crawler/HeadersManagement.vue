@@ -188,9 +188,9 @@
       <el-form :model="batchImportForm" label-width="100px">
         <el-form-item label="导入格式">
           <el-radio-group v-model="batchImportForm.format">
-            <el-radio label="json">JSON格式</el-radio>
-            <el-radio label="text">文本格式</el-radio>
-            <el-radio label="csv">CSV格式</el-radio>
+            <el-radio value="json">JSON格式</el-radio>
+            <el-radio value="text">文本格式</el-radio>
+            <el-radio value="csv">CSV格式</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item label="数据内容">
