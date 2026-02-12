@@ -9,6 +9,7 @@
         <div class="header-actions">
           <div class="match-count">实时匹配 <span>{{ totalResults }}</span> 场</div>
           <el-button type="primary" @click="onFetchRealData" :loading="loading">获取实时数据</el-button>
+          <slot name="extra-actions"></slot>
         </div>
       </div>
     </template>

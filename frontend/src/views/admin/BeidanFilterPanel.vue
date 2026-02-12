@@ -1,19 +1,18 @@
 <template>
   <div class="beidan-filter-panel">
-    <!-- 多策略管理按钮 -->
-    <div style="margin-bottom: 20px; text-align: right;">
-      <el-button type="primary" @click="multiStrategyVisible = true">
-        <i class="el-icon-setting"></i>
-        多策略管理
-      </el-button>
-    </div>
-    
     <FilterCardHeader 
       :total-results="totalResults" 
       :loading="loading"
       @fetch-real-data="fetchRealData"
       @show-p-level-rules="showPLevelRules"
-    />
+    >
+      <template #extra-actions>
+        <el-button type="primary" @click="multiStrategyVisible = true">
+          <i class="el-icon-setting"></i>
+          多策略管理
+        </el-button>
+      </template>
+    </FilterCardHeader>
     
     <FilterSection
       :filter-form="filterForm"
