@@ -389,6 +389,8 @@ export default {
 <style scoped>
 .multi-strategy-card {
   margin: 20px 0;
+  width: 100%;
+  max-width: 100%;
 }
 
 .strategy-selection {
