@@ -1,5 +1,13 @@
 <template>
   <div class="beidan-filter-panel">
+    <!-- 多策略管理按钮 -->
+    <div style="margin-bottom: 20px; text-align: right;">
+      <el-button type="primary" @click="multiStrategyVisible = true">
+        <i class="el-icon-setting"></i>
+        多策略管理
+      </el-button>
+    </div>
+    
     <FilterCardHeader 
       :total-results="totalResults" 
       :loading="loading"
@@ -100,6 +108,12 @@
     <el-button @click="closeEditStrategy">取消</el-button>
   </div>
 </el-dialog>
+    
+    <!-- 多策略管理弹窗 -->
+    <MultiStrategyManager 
+      :visible="multiStrategyVisible" 
+      @close="multiStrategyVisible = false"
+    />
 </template>
 
 <script setup>
@@ -158,6 +172,7 @@ import FilterSection from './components/FilterSection.vue'
 import StrategySection from './components/StrategySection.vue'
 import StatsCard from './components/StatsCard.vue'
 import ResultsSection from './components/ResultsSection.vue'
+import MultiStrategyManager from '@/components/admin/MultiStrategyManager.vue'
 
 const router = useRouter()
 
@@ -171,6 +186,7 @@ const showStats = ref(true)
 const strategyApplied = ref(false)
 const strategySelected = ref(false) // 是否选择了策略（控制统计和结果卡片显示）
 const hasResults = ref(false) // 是否有筛选结果
+const multiStrategyVisible = ref(false) // 多策略管理弹窗可见性
 
 // 筛选表单
 const filterForm = reactive({
@@ -629,49 +645,11 @@ watch(() => filterForm.powerDiffs, (newVal) => {
   }, { deep: true })
     </script>
 
-    <!-- 多策略管理组件引入 -->
-    <script setup>
-    import MultiStrategyManager from '@/components/admin/MultiStrategyManager.vue'
-    import { ref } from 'vue'
-    
-    const multiStrategyVisible = ref(false)
-    </script>
 
-    <style scoped>
-.beidan-filter-panel {
-  padding: 20px;
-  background: #f5f5f5;
-  min-height: 100vh;
-}
 
-<!-- 在模板中添加多策略管理入口 -->
-<template>
-  <div class="beidan-filter-panel">
-    <!-- 在适当位置添加多策略管理按钮 -->
-    <div style="margin-bottom: 20px; text-align: right;">
-      <el-button type="primary" @click="multiStrategyVisible = true">
-        <i class="el-icon-setting"></i>
-        多策略管理
-      </el-button>
-    </div>
-    
-    <!-- 原有内容保持不变 -->
-    <FilterCardHeader 
-      :total-results="totalResults" 
-      :loading="loading"
-      @fetch-real-data="fetchRealData"
-      @show-p-level-rules="showPLevelRules"
-    />
-    
-    <!-- ... 其他原有内容 ... -->
-    
-    <!-- 多策略管理弹窗 -->
-    <MultiStrategyManager 
-      :visible="multiStrategyVisible" 
-      @close="multiStrategyVisible = false"
-    />
-  </div>
-</template>
+
+
+
 
 <style scoped>
 .beidan-filter-panel {
