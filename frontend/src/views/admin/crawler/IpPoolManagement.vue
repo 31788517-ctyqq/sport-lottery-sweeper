@@ -401,7 +401,7 @@ const batchDelete = async () => {
 const exportIps = async () => {
   try {
     const token = localStorage.getItem('token')
-    const resp = await fetch('/api/v1/admin/ip-pools/export', {
+    const resp = await fetch('/api/admin/ip-pools/export', {
       headers: token ? { Authorization: `Bearer ${token}` } : {}
     })
     if (!resp.ok) {

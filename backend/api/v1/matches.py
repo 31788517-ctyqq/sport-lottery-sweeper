@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from backend.api.deps import get_db, get_current_user
 from backend.models.user import User
 from backend.services.service_registry import get_crawler_service
+# 修正导入路径
 from backend.schemas.response import UnifiedResponse, PageResponse, ErrorResponse
 from backend.schemas.match import MatchResponse
 from backend.scrapers.sporttery_scraper import sporttery_scraper

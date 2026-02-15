@@ -1,7 +1,7 @@
 import sqlite3
 
 # 连接数据库
-conn = sqlite3.connect('sport_lottery.db')
+conn = sqlite3.connect('data/sport_lottery.db')
 cursor = conn.cursor()
 
 # 查询ID为9的数据源

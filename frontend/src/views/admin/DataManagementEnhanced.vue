@@ -76,7 +76,7 @@
         <el-form-item label="上传文件">
           <el-upload
             drag
-            action="/api/v1/admin/data/upload"
+            action="/api/admin/data/upload"
             :on-success="handleUploadSuccess"
             :on-error="handleUploadError"
             :auto-upload="false"

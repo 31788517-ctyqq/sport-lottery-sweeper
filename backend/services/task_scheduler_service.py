@@ -515,7 +515,9 @@ class TaskSchedulerService(BaseCrawlerService):
         处理100qiu数据格式
         """
         try:
-            # 示例处理逻辑，根据实际API响应结构调整
+            from datetime import datetime
+            
+            # 提取基本字段
             match_id = str(item.get('id', item.get('matchId', item.get('_id', 'unknown'))))
             league = item.get('league', item.get('competition', ''))
             home_team = item.get('homeTeam', item.get('home', ''))
@@ -523,36 +525,59 @@ class TaskSchedulerService(BaseCrawlerService):
             match_time_str = item.get('matchTime', item.get('time', ''))
             status = item.get('status', item.get('matchStatus', ''))
             
+            # 关键修复：提取date_time字段（期号）
+            # 从match_id中解析期号，格式如 "26022_001" -> 26022
+            date_time = None
+            if match_id and '_' in match_id:
+                try:
+                    date_time = int(match_id.split('_')[0])  # 提取期号部分
+                except (ValueError, IndexError):
+                    pass
+            
+            # 如果无法从match_id解析，尝试从其他字段获取
+            if date_time is None:
+                # 尝试从source_attributes中提取date_time
+                source_attrs = item.get('source_attributes', {})
+                if isinstance(source_attrs, dict):
+                    date_time_str = source_attrs.get('date_time') or source_attrs.get('dateTime')
+                    if date_time_str:
+                        try:
+                            date_time = int(date_time_str)
+                        except (ValueError, TypeError):
+                            pass
+            
+            # 如果仍然无法获取，使用默认值（当前年份的后两位+当前天数）
+            if date_time is None:
+                now = datetime.now()
+                date_time = int(now.strftime('%y%j'))  # 年(后两位)+年内天数
+                print(f"⚠️  无法解析date_time，使用默认值: {date_time}")
+            
             # 解析比赛时间
             match_time = None
             if match_time_str:
-                try:
-                    from datetime import datetime
-                    # 尝试多种日期格式
-                    for fmt in ['%Y-%m-%d %H:%M:%S', '%Y/%m/%d %H:%M:%S', '%Y-%m-%dT%H:%M:%S', '%Y-%m-%d %H:%M']:
-                        try:
-                            match_time = datetime.strptime(match_time_str, fmt)
-                            break
-                        except ValueError:
-                            continue
-                    # 如果以上格式都不匹配，尝试作为时间戳
-                    if match_time is None:
-                        try:
-                            import time
-                            match_time = datetime.fromtimestamp(int(match_time_str))
-                        except:
-                            match_time = None
-                except:
-                    match_time = None
+                # 尝试多种日期格式
+                for fmt in ['%Y-%m-%d %H:%M:%S', '%Y/%m/%d %H:%M:%S', '%Y-%m-%dT%H:%M:%S', '%Y-%m-%d %H:%M']:
+                    try:
+                        match_time = datetime.strptime(match_time_str, fmt)
+                        break
+                    except ValueError:
+                        continue
+                # 如果以上格式都不匹配，尝试作为时间戳
+                if match_time is None:
+                    try:
+                        match_time = datetime.fromtimestamp(int(match_time_str))
+                    except:
+                        match_time = None
             
-            # 构建处理后的数据 - 只包含FootballMatch模型中存在的字段
+            # 构建处理后的数据 - 包含FootballMatch模型中的所有必需字段
             processed_data = {
                 'match_id': match_id,
+                'date_time': date_time,  # 关键修复：添加date_time字段
                 'league': league,
                 'home_team': home_team,
                 'away_team': away_team,
-                'match_time': match_time,
-                'status': status
+                'match_time': match_time or datetime.now(),  # 确保不为None
+                'status': status or 'pending'
             }
             
             return processed_data

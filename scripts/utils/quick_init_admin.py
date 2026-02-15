@@ -7,7 +7,7 @@ import sqlite3
 import hashlib
 import os
 
-DB_PATH = 'sport_lottery.db'
+DB_PATH = 'data/sport_lottery.db'
 
 def hash_password(password):
     # 使用SHA256简单哈希（仅用于测试，生产请用bcrypt）

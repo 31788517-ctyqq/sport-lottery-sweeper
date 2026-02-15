@@ -29,13 +29,17 @@ export default defineConfig({
     })
   ],
   server: {
-    port: 3000,           // 设置默认端口为3000
-    host: '0.0.0.0',      // 允许外部访问
-    proxy: {              // 配置代理
+    port: 3000,
+    host: '0.0.0.0',
+    proxy: {
+      '/api/v1': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true
+      },
       '/api': {
-        target: 'http://127.0.0.1:8000',  // 修改后端API地址为正确的端口8000
+        target: 'http://127.0.0.1:8000',
         changeOrigin: true,
-        // 保留/api前缀，因为后端路由是以/api开头的
+        rewrite: (path) => path.replace(/^\/api/, '/api/v1')
       }
     }
   },

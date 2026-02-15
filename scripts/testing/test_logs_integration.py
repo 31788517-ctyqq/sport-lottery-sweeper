@@ -142,7 +142,7 @@ def check_database_logs():
     """检查数据库中的真实日志数据"""
     print("\n🔍 检查数据库中的真实日志数据...")
     
-    db_path = os.path.join(os.path.dirname(__file__), 'backend', 'sport_lottery.db')
+    db_path = os.path.join(os.path.dirname(__file__), '..', '..', 'data', 'data/sport_lottery.db')
     
     if not os.path.exists(db_path):
         print("❌ 数据库文件不存在")

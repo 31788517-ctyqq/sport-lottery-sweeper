@@ -2,7 +2,7 @@
 import sqlite3
 from backend.core.security import get_password_hash
 
-conn = sqlite3.connect('sport_lottery.db')
+conn = sqlite3.connect('data/sport_lottery.db')
 cursor = conn.cursor()
 
 # 生成密码哈希

@@ -4,7 +4,8 @@ import router from '@/router'
 
 // 创建axios实例
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api',
+  // 强制使用空字符串，通过 Vite proxy 转发到后端，避免重复/api路径
+  baseURL: '',
   timeout: parseInt(import.meta.env.VITE_API_TIMEOUT) || 30000,
   headers: {
     'Content-Type': 'application/json',
@@ -49,6 +50,12 @@ apiClient.interceptors.response.use(
   },
   async (error) => {
     const originalRequest = error.config
+    
+    // 开发环境下简化处理401错误，避免刷新循环
+    if (import.meta.env.MODE === 'development') {
+      console.log('🔧 开发模式：跳过401错误处理')
+      return Promise.reject(error)
+    }
     
     // 处理401错误 - token过期
     if (error.response?.status === 401 && !originalRequest._retry) {
@@ -136,17 +143,3 @@ export * from './modules/data-manager'
 
 // 导出实例
 export default apiClient
-
-import user from './user'
-import article from './article'
-import remoteSearch from './remote-search'
-import transaction from './transaction'
-import multiStrategy from './multiStrategy'  // 新增多策略API
-
-export {
-  user,
-  article,
-  remoteSearch,
-  transaction,
-  multiStrategy  // 导出多策略API
-}

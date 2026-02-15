@@ -3,7 +3,7 @@ import sqlite3
 import sys
 
 def main():
-    db_path = "sport_lottery.db"
+    db_path = "data/sport_lottery.db"
     print(f"Checking database at {db_path}")
     
     try:

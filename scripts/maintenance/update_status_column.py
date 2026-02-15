@@ -9,7 +9,8 @@ import os
 from pathlib import Path
 
 # 连接到数据库
-db_path = Path(__file__).resolve().parent / 'sport_lottery.db'
+project_root = Path(__file__).resolve().parent.parent.parent
+db_path = project_root / 'data' / 'data/sport_lottery.db'
 conn = sqlite3.connect(db_path)
 cursor = conn.cursor()
 

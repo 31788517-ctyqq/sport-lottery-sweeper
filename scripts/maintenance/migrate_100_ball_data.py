@@ -42,7 +42,7 @@ def migrate_100_ball_data():
     print(f"Found {len(value_groups)} match records to migrate")
     
     # 连接数据库
-    conn = sqlite3.connect('sport_lottery.db')
+    conn = sqlite3.connect('data/sport_lottery.db')
     cursor = conn.cursor()
     
     now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')

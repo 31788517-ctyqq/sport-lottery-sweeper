@@ -7,7 +7,7 @@ import os
 print("🔍 数据库扫描开始")
 print("="*50)
 
-db_path = "sport_lottery.db"
+db_path = "data/sport_lottery.db"
 conn = sqlite3.connect(db_path)
 cursor = conn.cursor()
 

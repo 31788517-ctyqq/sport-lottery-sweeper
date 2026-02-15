@@ -22,9 +22,9 @@ export const useAdminStore = defineStore('admin', () => {
       console.log('[Admin Login] 开始登录请求:', credentials.username);
       
       // 调用后端登录API - 使用配置好的request实例
-      console.log('[Admin Login] 请求路径: /api/v1/auth/login');
+      console.log('[Admin Login] 请求路径: /api/auth/login');
 
-      const response = await request.post('/api/v1/auth/login', {
+      const response = await request.post('/api/auth/login', {
         username: credentials.username,
         password: credentials.password
       });
@@ -112,8 +112,13 @@ export const useAdminStore = defineStore('admin', () => {
       console.warn('[Admin Store] 清除user store时出错:', err);
     }
     
-    // 跳转到登录页面
-    window.location.href = '/admin/login';
+    // 开发环境下跳过强制跳转，避免循环
+    if (import.meta.env.MODE !== 'development') {
+      // 跳转到登录页面
+      window.location.href = '/admin/login';
+    } else {
+      console.warn('🔧 开发模式：跳过admin logout跳转')
+    }
   };
 
   const initializeAuth = () => {
@@ -148,7 +153,7 @@ export const useAdminStore = defineStore('admin', () => {
   const refreshToken = async () => {
     try {
       // 调用后端刷新token的API
-      const response = await request.post('/api/v1/auth/refresh');
+      const response = await request.post('/api/auth/refresh');
 
       if (response && response.code === 200) {
         const { access_token } = response.data;

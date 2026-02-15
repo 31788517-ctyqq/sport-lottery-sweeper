@@ -3,7 +3,6 @@ import Layout from '@/layout/Index.vue'
 import userRoutes from './modules/user-routes.js' // AI_WORKING: coder1 @1770224919 - 导入用户管理模块路由
 import matchRoutes from './modules/match-routes.js' // AI_WORKING: coder1 @1770224919 - 导入比赛数据管理模块路由
 import drawPredictionRoutes from './modules/draw-prediction-routes.js' // AI_WORKING: coder1 @1770224919 - 导入平局预测模块路由
-import BeidanFilterPanel from '@/views/admin/BeidanFilterPanel.vue' // 导入北单过滤面板
 import systemRoutes from './modules/system-routes.js' // AI_WORKING: coder1 @1770224919 - 导入系统管理模块路由
 import crawlerRoutes from './modules/crawler-routes.js' // AI_WORKING: coder1 @1770224919 - 导入爬虫管理模块路由
 import intelligenceRoutes from './modules/intelligence-routes.js' // AI_WORKING: coder1 @1770224919 - 导入情报分析模块路由
@@ -12,7 +11,6 @@ import decisionRoutes from './modules/decision-routes.js' // AI_WORKING: coder1 
 import authRoutes from './modules/auth-routes.js' // AI_WORKING: coder1 @1770224919 - 导入认证模块路由
 import reportRoutes from './modules/report-routes.js' // AI_WORKING: coder1 @1770224919 - 导入报告生成模块路由
 import frontendRoutes from './modules/frontend-routes.js' // AI_WORKING: coder1 @1770224919 - 导入前台用户页面模块路由
-
 
 const routes = [
   // 认证路由 (已移至 modules/auth-routes.js)
@@ -44,40 +42,39 @@ const routes = [
       ...matchRoutes,
       // 5. 平局预测管理 (已移至 modules/draw-prediction-routes.js)
       ...drawPredictionRoutes,
-      // 6. 比赛视图
+      // 6. 情报分析 (已移至 modules/intelligence-routes.js)
+      ...intelligenceRoutes,
+      // 7. AI服务管理 (已移至 modules/ai-routes.js)
+      ...aiRoutes,
+      // 8. 智能决策 (已移至 modules/decision-routes.js)
+      ...decisionRoutes,
+      // 9. 报告生成 (已移至 modules/report-routes.js)
+      ...reportRoutes,
+      // 10. 系统管理 (已移至 modules/system-routes.js)
+      ...systemRoutes,
+      // 11. 比赛视图
       {
         path: 'match-view',
         name: 'MatchView',
-        component: () => import('@/views/admin/MatchView.vue'),  // 新增的比赛视图页面
+        component: () => import('@/views/MatchView.vue'),  // 使用根目录下的比赛视图
         meta: {
           title: '比赛视图',
           icon: 'Football',
           roles: ['admin', 'manager']
         }
       },
-      // 7. 情报分析 (已移至 modules/intelligence-routes.js)
-      ...intelligenceRoutes,
-      // 8. AI服务管理 (已移至 modules/ai-routes.js)
-      ...aiRoutes,
-      // 9. 智能决策 (已移至 modules/decision-routes.js)
-      ...decisionRoutes,
-      // 11. 报告生成 (已移至 modules/report-routes.js)
-      ...reportRoutes,
-      // 12. 系统管理 (已移至 modules/system-routes.js)
-      ...systemRoutes,
-
-      // 14. 统计视图
+      // 12. 数据统计
       {
         path: 'stats',
         name: 'StatsView',
-        component: () => import('@/views/admin/StatsView.vue'),  // 新增的统计视图页面
+        component: () => import('@/views/StatsView.vue'),  // 使用根目录下的统计视图
         meta: {
           title: '数据统计',
           icon: 'DataAnalysis',
           roles: ['admin', 'manager']
         }
       },
-      // 16. 北单过滤
+      // 13. 北单过滤
       {
         path: 'beidan-filter',
         name: 'BeidanFilterPanel',
@@ -88,7 +85,7 @@ const routes = [
           roles: ['admin', 'manager']
         }
       },
-      // 17. 日志管理
+      // 14. 日志管理
       {
         path: 'logs',
         name: 'LogManagement',
@@ -166,7 +163,7 @@ const routes = [
           }
         ]
       },
-      // 18. 比赛分析模拟
+      // 19. 比赛分析模拟
       {
         path: 'match-analysis-simulation',
         name: 'MatchAnalysisSimulation',
@@ -219,21 +216,9 @@ const routes = [
       icon: 'User',
       roles: ['admin']
     }
-  },
-  // 北单过滤面板路由
-  {
-    path: '/admin/beidan-filter',
-    name: 'BeidanFilterPanelPage',
-    component: () => import('@/views/admin/BeidanFilterPanel.vue'),
-    meta: {
-      title: '北单过滤',
-      icon: 'filter',
-      roles: ['admin']
-    }
   }
 ]
 
-// AI_DONE: coder1 @1770224919 - 用户管理路由模块化重构完成
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes

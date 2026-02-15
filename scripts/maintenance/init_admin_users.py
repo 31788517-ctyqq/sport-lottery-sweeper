@@ -7,7 +7,7 @@ import bcrypt
 import os
 
 # 数据库路径
-DB_PATH = "sport_lottery.db"
+DB_PATH = "data/sport_lottery.db"
 
 def init_admin_users():
     """初始化管理员用户"""

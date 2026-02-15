@@ -67,14 +67,13 @@
           <el-button size="small" type="success" @click="onOpenAnalysis(row)">分析</el-button>
         </template>
       </el-table-column>
-      </el-table>
 
-      <!-- 新增空状态处理 -->
       <template #empty>
-        <div class="empty-state" style="text-align: center; padding: 40px 0;">
-          <el-empty description="没有符合场次" />
+        <div class="empty-state" style="text-align: center; padding: 40px 0; color: #8b8680;">
+          没有符合条件的比赛场次
         </div>
       </template>
+    </el-table>
 
       <el-pagination
       @size-change="onHandleSizeChange"

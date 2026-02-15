@@ -106,7 +106,7 @@
 <script>
 import http from '@/utils/http';  // 使用配置了拦截器的实例
 
-const API_BASE = '/api/v1/admin/system';
+const API_BASE = '/api/admin/system';
 
 export default {
   name: 'AILogs',
@@ -199,8 +199,14 @@ export default {
         }
       } catch (error) {
         if (error.response?.status === 401) {
-          this.$message.error('登录已过期，请重新登录');
-          this.$router.push('/login'); // 跳转登录页
+          // 开发环境下只显示提示，不跳转避免循环
+          if (import.meta.env.MODE === 'development') {
+            console.warn('🔧 开发模式：跳过401跳转')
+            this.$message.warning('开发模式：模拟登录过期状态')
+          } else {
+            this.$message.error('登录已过期，请重新登录');
+            this.$router.push('/login');
+          }
         } else {
           console.error('加载AI服务日志失败:', error);
           this.$message.error('加载AI服务日志失败');

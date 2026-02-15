@@ -47,7 +47,7 @@ def compare_databases():
     """对比两个数据库"""
     project_root = Path(__file__).resolve().parent
     
-    db1_path = project_root / "sport_lottery.db"
+    db1_path = project_root / "data/sport_lottery.db"
     db2_path = project_root / "test.db"
     
     print(f"=== 对比数据库 ===")

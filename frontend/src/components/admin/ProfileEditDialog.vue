@@ -45,9 +45,9 @@
       
       <el-form-item label="性别" prop="gender">
         <el-radio-group v-model="formData.gender" name="gender">
-          <el-radio :label="1">男</el-radio>
-          <el-radio :label="2">女</el-radio>
-          <el-radio :label="0">保密</el-radio>
+          <el-radio :value="1">男</el-radio>
+          <el-radio :value="2">女</el-radio>
+          <el-radio :value="0">保密</el-radio>
         </el-radio-group>
       </el-form-item>
       
@@ -204,7 +204,7 @@ const handleSubmit = async () => {
     delete submitData.id // 不提交ID
     
     // 调用更新当前用户信息的API，使用固定端点
-    const response = await http.put('/api/v1/admin/current-user', submitData)
+    const response = await http.put('/api/admin/current-user', submitData)
     
     if (response && (response.code === 200 || response.status === 200 || response.data)) {
       ElMessage.success('个人信息更新成功')

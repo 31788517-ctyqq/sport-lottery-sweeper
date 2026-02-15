@@ -3,7 +3,7 @@ import sqlite3
 import sys
 import os
 
-db_path = os.path.join(os.path.dirname(__file__), 'sport_lottery.db')
+db_path = os.path.join(os.path.dirname(__file__), '..', '..', 'data', 'data/sport_lottery.db')
 print(f'Database path: {db_path}')
 print(f'Exists: {os.path.exists(db_path)}')
 

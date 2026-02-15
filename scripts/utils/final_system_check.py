@@ -12,7 +12,7 @@ def check_database_tables():
     """检查数据库表是否完整"""
     print("=== 数据库表检查 ===")
     try:
-        conn = sqlite3.connect('sport_lottery.db')
+        conn = sqlite3.connect('data/sport_lottery.db')
         c = conn.cursor()
         c.execute('SELECT name FROM sqlite_master WHERE type="table" ORDER BY name;')
         tables = [row[0] for row in c.fetchall()]

@@ -4,7 +4,7 @@ import request from '@/utils/request'
 export function getIpPoolList(params) {
   return request({
     // 修正：使用实际API路径
-    url: '/api/v1/admin/ip-pools',  // 由后端路由定义决定
+    url: '/api/admin/ip-pools',  // 由后端路由定义决定
     method: 'get',
     params
   })
@@ -14,7 +14,7 @@ export function getIpPoolList(params) {
 export function getIpById(id) {
   return request({
     // 修正：使用实际API路径
-    url: `/api/v1/admin/ip-pools/${id}`,  // 由后端路由定义决定
+    url: `/api/admin/ip-pools/${id}`,  // 由后端路由定义决定
     method: 'get'
   })
 }
@@ -23,7 +23,7 @@ export function getIpById(id) {
 export function createIp(data) {
   return request({
     // 修正：使用实际API路径
-    url: '/api/v1/admin/ip-pools',  // 由后端路由定义决定
+    url: '/api/admin/ip-pools',  // 由后端路由定义决定
     method: 'post',
     data
   })
@@ -33,7 +33,7 @@ export function createIp(data) {
 export function updateIp(id, data) {
   return request({
     // 修正：使用实际API路径
-    url: `/api/v1/admin/ip-pools/${id}`,  // 由后端路由定义决定
+    url: `/api/admin/ip-pools/${id}`,  // 由后端路由定义决定
     method: 'put',
     data
   })
@@ -43,7 +43,7 @@ export function updateIp(id, data) {
 export function deleteIp(id) {
   return request({
     // 修正：使用实际API路径
-    url: `/api/v1/admin/ip-pools/${id}`,  // 由后端路由定义决定
+    url: `/api/admin/ip-pools/${id}`,  // 由后端路由定义决定
     method: 'delete'
   })
 }
@@ -52,7 +52,7 @@ export function deleteIp(id) {
 export function batchDeleteIps(data) {
   return request({
     // 修正：使用实际API路径
-    url: '/api/v1/admin/ip-pools/batch/delete',  // 批量删除
+    url: '/api/admin/ip-pools/batch/delete',  // 批量删除
     method: 'post',
     data
   })
@@ -62,7 +62,7 @@ export function batchDeleteIps(data) {
 export function testIp(id) {
   return request({
     // 修正：使用实际API路径
-    url: `/api/v1/admin/ip-pools/${id}/test-connection`,  // 由后端适配器提供
+    url: `/api/admin/ip-pools/${id}/test-connection`,  // 由后端适配器提供
     method: 'post'
   })
 }
@@ -71,7 +71,7 @@ export function testIp(id) {
 export function batchTestIps(data) {
   return request({
     // 修正：使用实际API路径
-    url: '/api/v1/admin/ip-pools/batch/test',  // 批量测试
+    url: '/api/admin/ip-pools/batch/test',  // 批量测试
     method: 'post',
     data
   })
@@ -81,7 +81,7 @@ export function batchTestIps(data) {
 export function getIpStats() {
   return request({
     // 修正：使用实际API路径
-    url: '/api/v1/admin/ip-pools/stats',  // 由后端路由定义决定
+    url: '/api/admin/ip-pools/stats',  // 由后端路由定义决定
     method: 'get'
   })
 }
@@ -90,7 +90,7 @@ export function getIpStats() {
 export function exportIpPool() {
   return request({
     // 修正：使用实际API路径
-    url: '/api/v1/admin/ip-pools/export',
+    url: '/api/admin/ip-pools/export',
     method: 'get',
     responseType: 'blob'
   })

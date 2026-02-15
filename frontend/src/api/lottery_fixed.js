@@ -7,7 +7,7 @@ import apiClient from './index';
 export const getLotteryMatches = async (params = {}) => {
   try {
     // 修复API路径 - 使用正确的后端路径
-    const response = await apiClient.get('/api/v1/lottery/matches', { params });
+    const response = await apiClient.get('/api/lottery/matches', { params });
     return response.data;
   } catch (error) {
     console.error('Failed to fetch lottery match data:', error);

@@ -18,7 +18,7 @@ def verify_bcrypt_hash(password: str, hashed: str) -> bool:
 def main():
     print("=== 修复admin登录问题 ===")
     
-    conn = sqlite3.connect('sport_lottery.db')
+    conn = sqlite3.connect('data/sport_lottery.db')
     c = conn.cursor()
     
     # 1. 检查users表结构

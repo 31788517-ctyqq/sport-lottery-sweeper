@@ -13,41 +13,45 @@ const reportRoutes = [
       {
         path: 'auto',
         name: 'AutoReports',
-        component: () => import('@/views/admin/Dashboard.vue'),
+        component: () => import('@/views/admin/reports/ReportCenter.vue'),
         meta: {
           title: '自动报告',
           icon: 'document-checked',
-          roles: ['admin', 'manager']
+          roles: ['admin', 'manager'],
+          tab: 'auto'
         }
       },
       {
         path: 'custom',
         name: 'CustomReports',
-        component: () => import('@/views/admin/Dashboard.vue'),
+        component: () => import('@/views/admin/reports/ReportCenter.vue'),
         meta: {
           title: '自定义报告',
           icon: 'edit',
-          roles: ['admin', 'manager']
+          roles: ['admin', 'manager'],
+          tab: 'custom'
         }
       },
       {
         path: 'templates',
         name: 'ReportTemplates',
-        component: () => import('@/views/admin/Dashboard.vue'),
+        component: () => import('@/views/admin/reports/ReportCenter.vue'),
         meta: {
           title: '模板管理',
           icon: 'folder',
-          roles: ['admin', 'manager']
+          roles: ['admin', 'manager'],
+          tab: 'templates'
         }
       },
       {
         path: 'distribution',
         name: 'ReportDistribution',
-        component: () => import('@/views/admin/Dashboard.vue'),
+        component: () => import('@/views/admin/reports/ReportCenter.vue'),
         meta: {
           title: '报告分发',
           icon: 'position',
-          roles: ['admin', 'manager']
+          roles: ['admin', 'manager'],
+          tab: 'distribution'
         }
       }
     ]

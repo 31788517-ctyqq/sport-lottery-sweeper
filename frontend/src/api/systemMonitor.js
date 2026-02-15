@@ -3,14 +3,14 @@ import request from '@/utils/request'
 
 export function getSystemHealth() {
   return request({
-    url: '/api/v1/system/monitor/health',
+    url: '/api/system/monitor/health',
     method: 'get'
   })
 }
 
 export function getSystemResources() {
   return request({
-    url: '/api/v1/system/monitor/resources',
+    url: '/api/system/monitor/resources',
     method: 'get'
   })
 }

@@ -10,7 +10,7 @@ import sys
 
 # 项目根目录
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-DB_PATH = os.path.join(PROJECT_ROOT, 'sport_lottery.db')
+DB_PATH = os.path.join(PROJECT_ROOT, 'data', 'data/sport_lottery.db')
 SQL_SEED_PATH = os.path.join(PROJECT_ROOT, 'data', 'seed', 'sport_lottery_sample_data.sql')
 
 def db_has_data(conn):
@@ -37,11 +37,11 @@ def run_seed():
 
     conn = sqlite3.connect(DB_PATH)
     if db_has_data(conn):
-        print("✅ 数据库中已有数据，跳过种子数据导入")
+        print("[INFO] 数据库中已有数据，跳过种子数据导入")
         conn.close()
         return
 
-    print("🌱 正在导入种子数据...")
+    print("[INFO] 正在导入种子数据...")
     with open(SQL_SEED_PATH, 'r', encoding='utf-8') as f:
         sql_script = f.read()
     cur = conn.cursor()
@@ -49,7 +49,7 @@ def run_seed():
     try:
         cur.executescript(sql_script)
         conn.commit()
-        print("✅ 种子数据导入完成")
+        print("[INFO] 种子数据导入完成")
     except Exception as e:
         conn.rollback()
         print(f"❌ 导入种子数据失败: {e}")

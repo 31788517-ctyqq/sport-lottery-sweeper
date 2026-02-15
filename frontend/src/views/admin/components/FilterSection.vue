@@ -7,7 +7,7 @@
             <span>实力等级差 ΔP</span>
             <span class="group-hint">主客实力差分层</span>
           </div>
-          <el-checkbox-group v-model="filterForm.powerDiffs" class="checkbox-grid">
+          <el-checkbox-group v-model="filterForm.powerDiffs" class="checkbox-grid strength-options">
             <el-checkbox-button
               v-for="option in strengthOptions"
               :key="option.value"
@@ -29,7 +29,7 @@
             <span>赢盘等级差 ΔWP</span>
             <span class="group-hint">盘路兑现力对撞</span>
           </div>
-          <el-checkbox-group v-model="filterForm.winPanDiffs" class="checkbox-grid">
+          <el-checkbox-group v-model="filterForm.winPanDiffs" class="checkbox-grid win-pan-options">
             <el-checkbox-button
               v-for="option in winPanOptions"
               :key="option.value"
@@ -51,7 +51,7 @@
             <span>一赔稳定性 P-Tier</span>
             <span class="group-hint">正路可信度等级</span>
           </div>
-          <el-checkbox-group v-model="filterForm.stabilityTiers" class="tier-grid">
+          <el-checkbox-group v-model="filterForm.stabilityTiers" class="tier-grid stability-options">
             <el-checkbox-button
               v-for="option in stabilityOptions"
               :key="option.value"
@@ -155,12 +155,15 @@
         <div class="filter-group">
           <div class="group-title">
             <span>策略应用和保存</span>
-            <span class="group-hint">一键应用</span>
+            <span class="group-hint">策略管理操作区</span>
           </div>
-          <div class="preset-grid">
-            <el-button @click="onApplyPreset('strong')">强势正路</el-button>
-            <el-button @click="onApplyPreset('upset')">冷门潜质</el-button>
-            <el-button @click="onApplyPreset('balance')">均衡博弈</el-button>
+          <div class="example-strategies">
+            <div class="group-title">示例策略</div>
+            <div class="preset-grid">
+              <el-button @click="onLoadExampleStrategy('strong')">强势正路</el-button>
+              <el-button @click="onLoadExampleStrategy('upset')">冷门潜质</el-button>
+              <el-button @click="onLoadExampleStrategy('balance')">均衡博弈</el-button>
+            </div>
           </div>
 
           <el-alert
@@ -172,20 +175,22 @@
           />
 
           <div class="filter-actions">
-            <el-button type="primary" @click="onApplyAdvancedFilter" :loading="loading">应用筛选</el-button>
-            <el-button @click="onResetFilters">重置</el-button>
-            <el-dropdown @command="onHandleSaveStrategy">
-              <el-button type="success">
-                保存策略<i class="el-icon-arrow-down el-icon--right"></i>
-              </el-button>
-              <template #dropdown>
-                <el-dropdown-menu>
-                  <el-dropdown-item command="save">保存当前策略</el-dropdown-item>
-                  <el-dropdown-item command="manage">修改和删除策略</el-dropdown-item>
-                </el-dropdown-menu>
-              </template>
-          </el-dropdown>
-        </div>
+            <el-tooltip content="根据当前条件生成临时策略" placement="top">
+              <el-button type="primary" @click="onApplyAdvancedFilter" :loading="loading">生成当前策略</el-button>
+            </el-tooltip>
+            
+            <el-tooltip content="清除所有筛选条件" placement="top">
+              <el-button @click="onResetFilters">重置</el-button>
+            </el-tooltip>
+            
+            <el-tooltip content="将当前三维筛选条件保存为永久策略" placement="top">
+              <el-button type="success" @click="onSaveStrategy">保存策略</el-button>
+            </el-tooltip>
+            
+            <el-tooltip content="修改或删除已保存的策略" placement="top">
+              <el-button @click="onManageStrategies">管理策略</el-button>
+            </el-tooltip>
+          </div>
         </div>
       </el-col>
     </el-row>
@@ -193,7 +198,7 @@
 </template>
 
 <script>
-import { defineComponent, computed } from 'vue';
+import { defineComponent } from 'vue';
 import { 
   ElRow, 
   ElCol, 
@@ -209,7 +214,8 @@ import {
   ElButton, 
   ElDropdown, 
   ElDropdownMenu, 
-  ElDropdownItem 
+  ElDropdownItem,
+  ElTooltip
 } from 'element-plus';
 
 export default defineComponent({
@@ -229,7 +235,8 @@ export default defineComponent({
     ElButton,
     ElDropdown,
     ElDropdownMenu,
-    ElDropdownItem
+    ElDropdownItem,
+    ElTooltip
   },
   props: {
     filterForm: {
@@ -265,14 +272,18 @@ export default defineComponent({
       required: true
     }
   },
-  emits: ['applyPreset', 'handleSaveStrategy', 'applyAdvancedFilter', 'resetFilters'],
+  emits: ['applyPreset', 'saveStrategy', 'manageStrategies', 'applyAdvancedFilter', 'resetFilters', 'loadExampleStrategy'],
   setup(props, { emit }) {
     const onApplyPreset = (preset) => {
       emit('applyPreset', preset);
     };
 
-    const onHandleSaveStrategy = (command) => {
-      emit('handleSaveStrategy', command);
+    const onSaveStrategy = () => {
+      emit('saveStrategy');
+    };
+
+    const onManageStrategies = () => {
+      emit('manageStrategies');
     };
 
     const onApplyAdvancedFilter = () => {
@@ -289,7 +300,8 @@ export default defineComponent({
 
     return {
       onApplyPreset,
-      onHandleSaveStrategy,
+      onSaveStrategy,
+      onManageStrategies,
       onApplyAdvancedFilter,
       onResetFilters,
       onLoadExampleStrategy
@@ -438,6 +450,17 @@ export default defineComponent({
 
 .direction-alert {
   margin-bottom: 20px;
+}
+
+.example-strategies {
+  margin-bottom: 20px;
+}
+
+.example-strategies .group-title {
+  font-size: 14px;
+  color: #8b8680;
+  margin-bottom: 8px;
+  font-weight: 600;
 }
 
 .filter-actions {

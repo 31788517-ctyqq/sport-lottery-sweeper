@@ -15,7 +15,15 @@ from backend.models.match import Match, Team, League, MatchStatusEnum, MatchType
 from backend.models.intelligence import Intelligence, IntelligenceTypeEnum, IntelligenceSourceEnum
 from backend.models.odds import Odds, OddsTypeEnum, OddsMovementTypeEnum
 from backend.models.predictions import Prediction, PredictionTypeEnum
-from backend.core.exceptions import ValidationException, NotFoundException, BusinessException
+
+# 延迟导入core.exceptions，避免循环依赖
+def get_exceptions():
+    """延迟导入异常类，避免循环依赖"""
+    from backend.core.exceptions import ValidationException, NotFoundException, BusinessException
+    return ValidationException, NotFoundException, BusinessException
+
+ValidationException, NotFoundException, BusinessException = get_exceptions()
+
 from backend.core.security import get_password_hash
 
 logger = logging.getLogger(__name__)
@@ -270,7 +278,7 @@ class MatchService:
         ).count()
         
         # 获取赔率数量
-        odds_count = self.db.query(Ords).filter(
+        odds_count = self.db.query(Odds).filter(
             Odds.match_id == match_id
         ).count()
         

@@ -11,7 +11,7 @@ print("🔄 重新开始 - 体育彩票扫盘系统数据初始化")
 print("="*70)
 
 # 连接数据库
-conn = sqlite3.connect('backend/sport_lottery.db')
+conn = sqlite3.connect('data/sport_lottery.db')
 cursor = conn.cursor()
 
 # 1. 清空现有数据

@@ -4,7 +4,7 @@ import request from '@/utils/request'
 export function listDataSources(params) {
   return request({
     // 修正：使用实际API路径
-    url: '/api/v1/admin/sources',
+    url: '/api/admin/sources',
     method: 'get',
     params
   })
@@ -14,7 +14,7 @@ export function listDataSources(params) {
 export function createDataSource(data) {
   return request({
     // 修正：使用实际API路径
-    url: '/api/v1/admin/sources',
+    url: '/api/admin/sources',
     method: 'post',
     data
   })
@@ -24,7 +24,7 @@ export function createDataSource(data) {
 export function updateDataSource(id, data) {
   return request({
     // 修正：使用实际API路径
-    url: `/api/v1/admin/sources/${id}`,
+    url: `/api/admin/sources/${id}`,
     method: 'put',
     data
   })
@@ -33,7 +33,7 @@ export function updateDataSource(id, data) {
 // 删除数据源
 export function deleteDataSource(id) {
   return request({
-    url: `/api/v1/admin/sources/${id}`,
+    url: `/api/admin/sources/${id}`,
     method: 'delete'
   })
 }
@@ -41,7 +41,7 @@ export function deleteDataSource(id) {
 // 获取数据源详情
 export function getDataSource(id) {
   return request({
-    url: `/api/v1/admin/sources/${id}`,
+    url: `/api/admin/sources/${id}`,
     method: 'get'
   })
 }
@@ -49,7 +49,7 @@ export function getDataSource(id) {
 // 测试数据源连接
 export function testConnection(id) {
   return request({
-    url: `/api/v1/admin/sources/${id}/health`,
+    url: `/api/admin/sources/${id}/health`,
     method: 'post'
   })
 }
@@ -57,7 +57,7 @@ export function testConnection(id) {
 // 获取数据源类型列表
 export function getDataSourceTypes() {
   return request({
-    url: '/api/v1/admin/sources/types',
+    url: '/api/admin/sources/types',
     method: 'get'
   })
 }

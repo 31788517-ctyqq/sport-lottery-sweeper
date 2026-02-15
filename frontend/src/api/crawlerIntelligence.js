@@ -4,7 +4,7 @@ import request from '@/utils/request'
 export function getIntelligenceStats(params) {
   return request({
     // 修正：使用新版API路径
-    url: '/api/v1/admin/crawler/intelligence/stats',
+    url: '/api/admin/crawler/intelligence/stats',
     method: 'get',
     params
   })
@@ -14,7 +14,7 @@ export function getIntelligenceStats(params) {
 export function getIntelligenceData(params) {
   return request({
     // 修正：使用新版API路径
-    url: '/api/v1/admin/crawler/intelligence/data',
+    url: '/api/admin/crawler/intelligence/data',
     method: 'get',
     params
   })
@@ -24,7 +24,7 @@ export function getIntelligenceData(params) {
 export function exportIntelligenceData(params) {
   return request({
     // 修正：使用新版API路径
-    url: '/api/v1/admin/crawler/intelligence/export',
+    url: '/api/admin/crawler/intelligence/export',
     method: 'get',
     params,
     responseType: 'blob'
@@ -41,7 +41,7 @@ export const markAsInvalid = markInvalid // 保留旧名兼容
 export function markInvalid(id) {
   return request({
     // 修正：使用新版API路径
-    url: `/api/v1/admin/crawler/intelligence/${id}/mark-invalid`,
+    url: `/api/admin/crawler/intelligence/${id}/mark-invalid`,
     method: 'post'
   })
 }
@@ -50,7 +50,7 @@ export function markInvalid(id) {
 export function recrawlData(id) {
   return request({
     // 修正：使用新版API路径
-    url: `/api/v1/admin/crawler/intelligence/${id}/recrawl`,
+    url: `/api/admin/crawler/intelligence/${id}/recrawl`,
     method: 'post'
   })
 }
@@ -59,7 +59,7 @@ export function recrawlData(id) {
 export function batchMarkData(ids, status) {
   return request({
     // 修正：使用新版API路径
-    url: '/api/v1/admin/crawler/intelligence/batch-mark',
+    url: '/api/admin/crawler/intelligence/batch-mark',
     method: 'put',
     data: { ids, status }
   })
@@ -69,7 +69,7 @@ export function batchMarkData(ids, status) {
 export function getTrendAnalysis(params) {
   return request({
     // 修正：使用新版API路径
-    url: '/api/v1/admin/crawler/intelligence/trend',
+    url: '/api/admin/crawler/intelligence/trend',
     method: 'get',
     params
   })

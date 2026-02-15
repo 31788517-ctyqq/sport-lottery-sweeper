@@ -8,6 +8,8 @@
         <li><strong>P3：</strong>{{ rules.p3_criteria }}</li>
         <li><strong>P4：</strong>{{ rules.p4_criteria }}</li>
         <li><strong>P5：</strong>{{ rules.p5_criteria }}</li>
+        <li><strong>P6：</strong>{{ rules.p6_criteria }}</li>
+        <li><strong>P7：</strong>{{ rules.p7_criteria }}</li>
       </ul>
       
       <h3>降级规则</h3>

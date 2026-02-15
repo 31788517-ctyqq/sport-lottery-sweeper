@@ -2,7 +2,7 @@ import sqlite3
 import os
 
 def migrate_llm_providers_table():
-    db_path = 'sport_lottery.db'
+    db_path = 'data/sport_lottery.db'
     if not os.path.exists(db_path):
         print(f"Database file {db_path} not found!")
         return

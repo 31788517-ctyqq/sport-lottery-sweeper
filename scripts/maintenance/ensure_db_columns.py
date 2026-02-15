@@ -6,7 +6,7 @@ def ensure_data_sources_columns():
     """确保data_sources表包含所有必需的列"""
     # 项目根目录
     project_root = Path(__file__).parent
-    db_path = project_root / "backend" / "sport_lottery.db"
+    db_path = project_root / "backend" / "data/sport_lottery.db"
     
     if not db_path.exists():
         print(f"数据库文件不存在: {db_path}")

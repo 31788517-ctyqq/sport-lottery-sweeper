@@ -266,11 +266,15 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
+// AI_WORKING: coder2 @2026-01-28T09:48:00Z - 移除未使用的ElMessageBox导入
 import { ElMessage } from 'element-plus'
+// AI_DONE: coder2 @2026-01-28T09:48:00Z
 import { Edit, Document, Download, Lock } from '@element-plus/icons-vue'
 import ProfileEditDialog from '@/components/admin/ProfileEditDialog.vue'
 import SessionManagementDialog from '@/components/admin/SessionManagementDialog.vue'
-import { changeCurrentPassword } from '@/api/modules/users'
+import http from '@/utils/http'
+// AI_WORKING: coder2 @2026-01-28T09:48:00Z - 移除未使用的API函数导入
+// AI_DONE: coder2 @2026-01-28T09:48:00Z
 
 const userProfile = ref({})
 const securitySettings = reactive({
@@ -369,10 +373,10 @@ const handleChangePassword = async () => {
     await securityFormRef.value.validate()
     changingPassword.value = true
     
-    const response = await changeCurrentPassword({
+    // 使用正确的密码修改API
+    const response = await http.put('/api/v1/admin/change-password', {
       old_password: securitySettings.oldPassword,
-      new_password: securitySettings.newPassword,
-      confirm_password: securitySettings.confirmPassword
+      new_password: securitySettings.newPassword
     })
     
     if (response && response.code === 200) {

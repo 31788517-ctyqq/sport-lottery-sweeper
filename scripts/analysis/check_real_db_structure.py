@@ -2,7 +2,7 @@ import sqlite3
 import os
 
 # 数据库文件路径
-db_path = "backend/sport_lottery.db"
+db_path = "data/sport_lottery.db"
 
 # 连接到SQLite数据库
 conn = sqlite3.connect(db_path)

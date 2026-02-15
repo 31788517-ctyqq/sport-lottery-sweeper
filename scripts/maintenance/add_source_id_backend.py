@@ -2,7 +2,7 @@ import sqlite3
 import os
 
 # 连接到backend目录下的数据库
-backend_db_path = os.path.join(os.getcwd(), 'backend', 'sport_lottery.db')
+backend_db_path = os.path.join(os.getcwd(), 'backend', 'data/sport_lottery.db')
 print('Backend DB路径:', backend_db_path)
 
 conn = sqlite3.connect(backend_db_path)

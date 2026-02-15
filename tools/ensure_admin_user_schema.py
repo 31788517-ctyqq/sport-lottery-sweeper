@@ -6,7 +6,7 @@ This is a lightweight SQLite migration to unblock login in dev environments.
 import sqlite3
 
 
-DB_PATH = "sport_lottery.db"
+DB_PATH = "data/sport_lottery.db"
 
 
 REQUIRED_COLUMNS = [

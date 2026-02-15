@@ -1,6 +1,6 @@
 import sqlite3
 
-conn = sqlite3.connect('sport_lottery.db')
+conn = sqlite3.connect('data/sport_lottery.db')
 cursor = conn.cursor()
 
 business_tables = ['matches', 'leagues', 'teams', 'sp_records', 'football_matches']

@@ -37,7 +37,7 @@ def get_user_by_username(username: str):
     except ImportError:
         # 回退方案
         project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-        db_path = os.path.join(project_root, "data", "sport_lottery.db")
+        db_path = os.path.join(project_root, "data", "data/sport_lottery.db")
     
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()

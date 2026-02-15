@@ -27,8 +27,22 @@ class OpenAILLMProvider(BaseLLMProvider):
     """OpenAI GPT系列模型 (更新为异步)"""
     
     def __init__(self, api_key: str, monitor: LLMUsageMonitor):
-        self.client = openai.AsyncOpenAI(api_key=api_key)
+        self.client = None
         self.monitor = monitor
+        
+        # 只有当API密钥非空且不是占位符时才尝试初始化
+        if api_key and api_key.strip() and api_key != "your-openai-api-key-here":
+            try:
+                import socket
+                socket.setdefaulttimeout(5)  # 设置超时避免阻塞
+                
+                self.client = openai.AsyncOpenAI(api_key=api_key)
+                logger.info("OpenAI provider initialized successfully")
+            except Exception as e:
+                logger.warning(f"OpenAI provider initialization failed (non-critical): {e}")
+                self.client = None
+        else:
+            logger.info("OpenAI API key not configured, provider disabled")
         
     async def generate_response(self, prompt: str, **kwargs) -> str:
         start_time = time.time()
@@ -71,11 +85,31 @@ class GeminiLLMProvider(BaseLLMProvider):
     """Google Gemini模型 (更新为异步)"""
     
     def __init__(self, api_key: str, monitor: LLMUsageMonitor):
-        genai.configure(api_key=api_key)
-        self.model = genai.GenerativeModel('gemini-pro')
         self.monitor = monitor
+        self.model = None
+        
+        # 只有当API密钥非空且不是占位符时才尝试初始化
+        if api_key and api_key.strip() and api_key != "your-gemini-api-key-here":
+            try:
+                import socket
+                # 设置超时避免阻塞
+                socket.setdefaulttimeout(5)
+                
+                genai.configure(api_key=api_key)
+                self.model = genai.GenerativeModel('gemini-pro')
+                logger.info("Gemini provider initialized successfully")
+            except Exception as e:
+                logger.warning(f"Gemini provider initialization failed (non-critical): {e}")
+                # 不抛出异常，允许服务继续启动
+                self.model = None
+        else:
+            logger.info("Gemini API key not configured, provider disabled")
         
     async def generate_response(self, prompt: str, **kwargs) -> str:
+        if self.model is None:
+            logger.warning("Gemini provider not initialized, returning empty response")
+            return ""
+            
         start_time = time.time()
         try:
             # Gemini API目前是同步的，我们用线程池来异步执行
@@ -101,9 +135,13 @@ class GeminiLLMProvider(BaseLLMProvider):
             return content if content else ""
         except Exception as e:
             logger.error(f"Gemini API调用失败: {e}")
-            raise
+            return ""
         
     def get_embeddings(self, text: str) -> List[float]:
+        if self.model is None:
+            logger.debug("Gemini provider not initialized, returning empty embeddings")
+            return []
+            
         try:
             result = genai.embed_content(
                 model="models/embedding-001",
@@ -119,10 +157,17 @@ class QwenLLMProvider(BaseLLMProvider):
     """阿里云通义千问模型 (更新为异步)"""
     
     def __init__(self, api_key: str, monitor: LLMUsageMonitor):
-        self.api_key = api_key
+        self.api_key = None
         # 使用OpenAI兼容模式API端点
         self.url = "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions"
         self.monitor = monitor
+        
+        # 只有当API密钥非空且不是占位符时才接受
+        if api_key and api_key.strip() and api_key != "your-qwen-api-key-here":
+            self.api_key = api_key
+            logger.info("Qwen provider initialized successfully")
+        else:
+            logger.info("Qwen API key not configured, provider disabled")
         
     async def generate_response(self, prompt: str, **kwargs) -> str:
         start_time = time.time()

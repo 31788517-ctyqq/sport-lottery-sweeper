@@ -1,7 +1,7 @@
 import sqlite3
 
 def check_table_structure():
-    conn = sqlite3.connect('sport_lottery.db')
+    conn = sqlite3.connect('data/sport_lottery.db')
     cursor = conn.cursor()
     cursor.execute('PRAGMA table_info(llm_providers)')
     columns = cursor.fetchall()
@@ -16,7 +16,7 @@ if __name__ == '__main__':
 import sqlite3
 import os
 
-db_path = 'backend/sport_lottery.db'
+db_path = 'data/sport_lottery.db'
 if os.path.exists(db_path):
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()

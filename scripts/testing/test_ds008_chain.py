@@ -11,7 +11,7 @@ sys.path.insert(0, str(backend_path))
 
 def test_ds008_chain():
     # 检查数据库中DS008数据源相关信息
-    db_path = backend_path / "sport_lottery.db"
+    db_path = project_root / "data" / "data/sport_lottery.db"
     if not db_path.exists():
         print(f"数据库文件不存在: {db_path}")
         return

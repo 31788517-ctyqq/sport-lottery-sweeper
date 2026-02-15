@@ -16,7 +16,7 @@ from backend.core.security import verify_password
 def test_password_verification():
     """测试密码验证"""
     # 连接数据库
-    conn = sqlite3.connect('sport_lottery.db')
+    conn = sqlite3.connect('data/sport_lottery.db')
     cursor = conn.cursor()
     
     try:

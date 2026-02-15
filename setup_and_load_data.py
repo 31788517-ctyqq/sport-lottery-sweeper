@@ -13,7 +13,7 @@ project_root = os.path.dirname(os.path.abspath(__file__))
 os.chdir(project_root)
 
 # 设置数据库路径
-db_path = os.path.join(project_root, 'backend', 'sport_lottery.db')
+db_path = os.path.join(project_root, 'data', 'data/sport_lottery.db')
 
 def create_data_source():
     """创建500万彩票数据源"""

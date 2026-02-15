@@ -4,7 +4,7 @@
 import sqlite3
 
 def check_new_id17_records():
-    conn = sqlite3.connect('sport_lottery.db')
+    conn = sqlite3.connect('data/sport_lottery.db')
     cursor = conn.cursor()
     
     # 查询2026-01-13和2026-01-14日期的新记录

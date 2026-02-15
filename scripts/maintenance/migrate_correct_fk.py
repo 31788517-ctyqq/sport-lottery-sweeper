@@ -2,7 +2,7 @@ import sqlite3
 from datetime import datetime
 
 def migrate_correct_fk():
-    conn = sqlite3.connect('sport_lottery.db')
+    conn = sqlite3.connect('data/sport_lottery.db')
     cursor = conn.cursor()
     
     # 先插入联赛并获取ID映射

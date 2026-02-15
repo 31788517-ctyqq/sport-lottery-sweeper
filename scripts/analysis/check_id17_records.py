@@ -4,7 +4,7 @@
 import sqlite3
 
 def check_id17_records():
-    conn = sqlite3.connect('sport_lottery.db')
+    conn = sqlite3.connect('data/sport_lottery.db')
     cursor = conn.cursor()
     
     # 查询ID为17数据源可能的记录（match_id为001, 002, 003等）

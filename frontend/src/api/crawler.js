@@ -4,7 +4,7 @@ import request from '@/utils/request'
 export function getCrawlerStatus() {
   return request({
     // 修正：使用新版API路径
-    url: '/api/v1/admin/crawler/status',
+    url: '/api/admin/crawler/status',
     method: 'get'
   })
 }
@@ -13,7 +13,7 @@ export function getCrawlerStatus() {
 export function getTasks() {
   return request({
     // 修正：使用新版API路径
-    url: '/api/v1/admin/crawler/tasks',
+    url: '/api/admin/crawler/tasks',
     method: 'get'
   })
 }
@@ -22,7 +22,7 @@ export function getTasks() {
 export function startTask() {
   return request({
     // 修正：使用新版API路径
-    url: '/api/v1/admin/crawler/tasks/start',
+    url: '/api/admin/crawler/tasks/start',
     method: 'post'
   })
 }
@@ -31,7 +31,7 @@ export function startTask() {
 export function stopTask(taskId) {
   return request({
     // 修正：使用新版API路径
-    url: `/api/v1/admin/crawler/tasks/${taskId}/stop`,
+    url: `/api/admin/crawler/tasks/${taskId}/stop`,
     method: 'post'
   })
 }
@@ -40,7 +40,7 @@ export function stopTask(taskId) {
 export function getStats() {
   return request({
     // 修正：使用新版API路径
-    url: '/api/v1/admin/crawler/stats',
+    url: '/api/admin/crawler/stats',
     method: 'get'
   })
 }
@@ -49,7 +49,7 @@ export function getStats() {
 export function getLogs() {
   return request({
     // 修正：使用新版API路径
-    url: '/api/v1/admin/crawler/logs',
+    url: '/api/admin/crawler/logs',
     method: 'get'
   })
 }
@@ -58,7 +58,7 @@ export function getLogs() {
 export function clearQueue() {
   return request({
     // 修正：使用新版API路径
-    url: '/api/v1/admin/crawler/queue/clear',
+    url: '/api/admin/crawler/queue/clear',
     method: 'post'
   })
 }
@@ -67,7 +67,7 @@ export function clearQueue() {
 export function restartCrawler() {
   return request({
     // 修正：使用新版API路径
-    url: '/api/v1/admin/crawler/restart',
+    url: '/api/admin/crawler/restart',
     method: 'post'
   })
 }

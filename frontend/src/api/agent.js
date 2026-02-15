@@ -3,7 +3,7 @@ import { ElMessage } from 'element-plus';
 
 // 创建axios实例用于智能体管理API
 const agentApi = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1',
+  baseURL: import.meta.env.VITE_API_BASE_URL || '', // 使用空字符串启用Vite代理
   timeout: 10000,
 });
 
@@ -42,9 +42,14 @@ agentApi.interceptors.response.use(
       // 清除本地token
       localStorage.removeItem('admin_token');
       localStorage.removeItem('auth_token');
-      // 重定向到登录页（如果在浏览器环境中）
-      if (typeof window !== 'undefined') {
-        window.location.href = '/login';
+      // 开发环境下跳过强制跳转，避免循环
+      if (import.meta.env.MODE !== 'development') {
+        // 重定向到登录页（如果在浏览器环境中）
+        if (typeof window !== 'undefined') {
+          window.location.href = '/login';
+        }
+      } else {
+        console.warn('🔧 开发模式：跳过agent.js 401跳转')
       }
     }
     

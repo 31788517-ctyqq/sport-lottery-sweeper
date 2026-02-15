@@ -23,7 +23,7 @@ import LogTable from '@/components/LogTable.vue'
 import http from '@/utils/http'
 import { processLogResponse } from '@/utils/logUtils.js'
 
-const API_BASE = '/api/v1/admin/system';
+const API_BASE = '/api/admin/system';
 
 const logs = ref([])
 const totalLogs = ref(0)

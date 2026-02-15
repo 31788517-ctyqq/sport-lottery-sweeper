@@ -9,28 +9,28 @@
     <el-row :gutter="20">
       <el-col :span="6">
         <div class="stat-item">
-          <div class="stat-number">{{ statistics.total_matches }}</div>
+          <div class="stat-number">{{ totalMatches }}</div>
           <div class="stat-label">符合条件场次</div>
         </div>
       </el-col>
 
       <el-col :span="6">
         <div class="stat-item">
-          <div class="stat-number">{{ filterForm.powerDiffs.length > 0 ? statistics.delta_p_count || 0 : '未设置' }}</div>
+          <div class="stat-number">{{ filterForm.powerDiffs.length > 0 ? deltaPCount : '未设置' }}</div>
           <div class="stat-label">实力等级差 ΔP</div>
         </div>
       </el-col>
 
       <el-col :span="6">
         <div class="stat-item">
-          <div class="stat-number">{{ filterForm.winPanDiffs.length > 0 ? statistics.delta_wp_count || 0 : '未设置' }}</div>
+          <div class="stat-number">{{ filterForm.winPanDiffs.length > 0 ? deltaWpCount : '未设置' }}</div>
           <div class="stat-label">赢盘等级差 ΔWP</div>
         </div>
       </el-col>
 
       <el-col :span="6">
         <div class="stat-item">
-          <div class="stat-number">{{ filterForm.stabilityTiers.length > 0 ? statistics.p_tier_count || 0 : '未设置' }}</div>
+          <div class="stat-number">{{ filterForm.stabilityTiers.length > 0 ? pTierCount : '未设置' }}</div>
           <div class="stat-label">一赔稳定性 P-Tier</div>
         </div>
       </el-col>
@@ -39,8 +39,8 @@
 </template>
 
 <script>
-import { defineComponent } from 'vue';
-import { ElCard, ElRow, ElCol } from 'element-plus';
+import { defineComponent, computed } from 'vue'
+import { ElCard, ElRow, ElCol } from 'element-plus'
 
 export default defineComponent({
   name: 'StatsCard',
@@ -58,8 +58,37 @@ export default defineComponent({
       type: Object,
       required: true
     }
+  },
+  setup(props) {
+    const totalMatches = computed(() => {
+      return props.statistics?.filteredMatches
+        ?? props.statistics?.filtered_matches
+        ?? props.statistics?.total_matches
+        ?? props.statistics?.totalMatches
+        ?? props.statistics?.filteredMatches
+        ?? 0
+    })
+
+    const deltaPCount = computed(() => {
+      return props.statistics?.delta_p_count ?? props.statistics?.deltaPCount ?? 0
+    })
+
+    const deltaWpCount = computed(() => {
+      return props.statistics?.delta_wp_count ?? props.statistics?.deltaWpCount ?? 0
+    })
+
+    const pTierCount = computed(() => {
+      return props.statistics?.p_tier_count ?? props.statistics?.pTierCount ?? 0
+    })
+
+    return {
+      totalMatches,
+      deltaPCount,
+      deltaWpCount,
+      pTierCount
+    }
   }
-});
+})
 </script>
 
 <style scoped>
@@ -69,9 +98,6 @@ export default defineComponent({
   background: #fbfaf8;
   box-shadow: 0 14px 24px rgba(107, 103, 99, 0.12);
   width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-  display: block;
 }
 
 .stat-item {

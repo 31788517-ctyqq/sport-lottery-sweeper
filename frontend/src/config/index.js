@@ -10,10 +10,8 @@ const isStaging = import.meta.env.MODE === 'staging'
 // API Configuration
 // =============================================================================
 export const API_CONFIG = {
-  // Base URLs
-  BASE_URL: import.meta.env.VITE_API_BASE_URL || (isDevelopment ? 'http://localhost:3000/api' : 
-              isStaging ? 'https://staging-api.sportsweeper.com/api' : 
-              'https://api.sportsweeper.com/api'),
+  // Base URLs - 强制使用空字符串，通过 Vite proxy 转发到后端，避免重复/api路径
+  BASE_URL: '',
   
   // Version
   VERSION: 'v1',

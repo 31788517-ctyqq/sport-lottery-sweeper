@@ -4,7 +4,7 @@
       <span>多策略筛选配置</span>
       <el-button 
         style="float: right; padding: 3px 0" 
-        type="text" 
+        type="link" 
         @click="showMultiStrategyPanel = false"
       >
         收起
@@ -18,7 +18,7 @@
           <el-checkbox 
             v-for="strategy in availableStrategies" 
             :key="strategy.id" 
-            :label="strategy.id"
+            :value="strategy.id"
             :disabled="loading"
           >
             {{ strategy.name }}
@@ -52,8 +52,8 @@
       <!-- 消息格式 -->
       <el-form-item label="消息格式">
         <el-radio-group v-model="multiStrategyForm.messageFormat" :disabled="loading">
-          <el-radio label="text">纯文本</el-radio>
-          <el-radio label="table">表格形式</el-radio>
+          <el-radio value="text">纯文本</el-radio>
+          <el-radio value="table">表格形式</el-radio>
         </el-radio-group>
       </el-form-item>
       
@@ -169,9 +169,9 @@
 </template>
 
 <script>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import axios from 'axios'
+import request from '@/utils/request'
 
 export default {
   name: 'MultiStrategyManager',
@@ -217,6 +217,23 @@ export default {
     // 用户任务和执行历史
     const userTasks = ref([])
     const executionHistory = ref([])
+    const hasShownLoadError = ref(false)
+
+    const unwrapApiResponse = (response) => {
+      if (Array.isArray(response)) {
+        return { success: true, data: response }
+      }
+      if (!response || typeof response !== 'object') {
+        return { success: false, data: null, message: '响应格式不正确' }
+      }
+      if (Object.prototype.hasOwnProperty.call(response, 'success')) {
+        return response
+      }
+      if (Object.prototype.hasOwnProperty.call(response, 'data')) {
+        return { success: true, data: response.data, message: response.message }
+      }
+      return { success: true, data: response }
+    }
     
     // 计算属性
     const canSave = computed(() => {
@@ -256,13 +273,19 @@ export default {
           strategy_ids: multiStrategyForm.selectedStrategies,
           cron_expression: multiStrategyForm.cronExpression,
           message_format: multiStrategyForm.messageFormat,
+          user_id: getCurrentUserId(),
           dingtalk_webhook: multiStrategyForm.dingtalkEnabled ? multiStrategyForm.dingtalkWebhook : null,
           enabled: true
         }
         
-        await axios.post('/api/v1/multi-strategy/config', config)
-        ElMessage.success('多策略配置保存成功')
-        loadUserTasks()
+        const raw = await request.post('/api/multi-strategy/config', config)
+        const response = unwrapApiResponse(raw)
+        if (response.success) {
+          ElMessage.success('多策略配置保存成功')
+          loadUserTasks()
+        } else {
+          ElMessage.error('保存失败: ' + (response.message || '未知错误'))
+        }
       } catch (error) {
         ElMessage.error('保存失败: ' + (error.response?.data?.detail || error.message))
       } finally {
@@ -273,12 +296,17 @@ export default {
     const loadUserTasks = async () => {
       loadingTasks.value = true
       try {
-        const response = await axios.get('/api/v1/multi-strategy/config?user_id=' + getCurrentUserId())
-        if (response.data.success) {
-          userTasks.value = response.data.data || []
-        }
+        const raw = await request.get('/api/multi-strategy/config?user_id=' + getCurrentUserId())
+        const response = unwrapApiResponse(raw)
+        const tasks = Array.isArray(response.data) ? response.data : []
+        userTasks.value = tasks
+        hasShownLoadError.value = false
       } catch (error) {
-        ElMessage.error('加载任务失败')
+        userTasks.value = []
+        if (!hasShownLoadError.value) {
+          ElMessage.error('加载任务失败: ' + (error.response?.data?.detail || error.message))
+          hasShownLoadError.value = true
+        }
       } finally {
         loadingTasks.value = false
       }
@@ -292,21 +320,24 @@ export default {
       
       executing.value = true
       try {
-        const request = {
+        const requestData = {
           strategy_ids: multiStrategyForm.selectedStrategies,
           message_format: multiStrategyForm.messageFormat
         }
         
-        const response = await axios.post('/api/v1/multi-strategy/execute', request)
-        if (response.data.success) {
+        const raw = await request.post('/api/multi-strategy/execute', requestData)
+        const response = unwrapApiResponse(raw)
+        if (response.success) {
           ElMessage.success('策略执行成功')
           // 添加到执行历史
           executionHistory.value.unshift({
             executed_at: new Date().toISOString(),
             strategy_ids: multiStrategyForm.selectedStrategies,
-            result_count: Object.keys(response.data.results || {}).length,
+            result_count: Object.keys(response?.data?.results || response?.results || {}).length,
             status: 'success'
           })
+        } else {
+          ElMessage.error('执行失败: ' + (response.message || '未知错误'))
         }
       } catch (error) {
         ElMessage.error('执行失败: ' + (error.response?.data?.detail || error.message))
@@ -323,10 +354,11 @@ export default {
     
     const toggleTask = async (task) => {
       try {
-        const response = await axios.post(`/api/v1/multi-strategy/toggle-task/${task.user_id}`, {
+        const raw = await request.post(`/api/multi-strategy/toggle-task/${task.user_id}`, {
           enabled: !task.enabled
         })
-        if (response.data.success) {
+        const response = unwrapApiResponse(raw)
+        if (response.success) {
           ElMessage.success(`任务已${task.enabled ? '停用' : '启用'}`)
           loadUserTasks()
         }
@@ -341,9 +373,14 @@ export default {
           type: 'warning'
         })
         
-        // 这里需要调用删除API
-        ElMessage.success('任务已删除')
-        loadUserTasks()
+        const raw = await request.delete(`/api/multi-strategy/config/${taskId}`)
+        const response = unwrapApiResponse(raw)
+        if (response.success) {
+          ElMessage.success('任务已删除')
+          loadUserTasks()
+        } else {
+          ElMessage.error('删除失败: ' + response.message)
+        }
       } catch (error) {
         if (error !== 'cancel') {
           ElMessage.error('删除失败')
@@ -356,13 +393,30 @@ export default {
     }
     
     const getCurrentUserId = () => {
-      // 从localStorage或store获取当前用户ID
-      return localStorage.getItem('username') || 'admin'
+      const username = localStorage.getItem('username')
+      if (username) return username
+      const token = localStorage.getItem('access_token') || localStorage.getItem('token')
+      if (!token) return 'admin'
+      try {
+        const payload = token.split('.')[1]
+        const decoded = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')))
+        return decoded.username || decoded.sub || 'admin'
+      } catch {
+        return 'admin'
+      }
     }
     
     // 生命周期
     onMounted(() => {
-      loadUserTasks()
+      if (props.visible) {
+        loadUserTasks()
+      }
+    })
+
+    watch(() => props.visible, (nextVisible) => {
+      if (nextVisible) {
+        loadUserTasks()
+      }
     })
     
     return {

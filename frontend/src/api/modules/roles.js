@@ -32,54 +32,54 @@ export const deleteRole = (id) => {
 
 // 批量删除角色
 export const batchDeleteRoles = (ids) => {
-  return http.delete('/api/v1/admin/roles/batch', { data: { ids } })
+  return http.delete('/api/admin/roles/batch', { data: { ids } })
 }
 
 // 更新角色状态
 export const updateRoleStatus = (id, status) => {
-  return http.patch(`/api/v1/admin/roles/${id}/status`, { status })
+  return http.patch(`/api/admin/roles/${id}/status`, { status })
 }
 
 // 获取角色权限
 export const getRolePermissions = (id) => {
-  return http.get(`/api/v1/admin/roles/${id}/permissions`)
+  return http.get(`/api/admin/roles/${id}/permissions`)
 }
 
 // 分配角色权限
 export const assignRolePermissions = (id, permissionIds) => {
-  return http.post(`/api/v1/admin/roles/${id}/permissions`, { permissionIds })
+  return http.post(`/api/admin/roles/${id}/permissions`, { permissionIds })
 }
 
 // 获取权限树
 export const getPermissionTree = () => {
-  return http.get('/api/v1/admin/permissions/tree')
+  return http.get('/api/admin/permissions/tree')
 }
 
 // 获取所有权限
 export const getAllPermissions = () => {
-  return http.get('/api/v1/admin/permissions')
+  return http.get('/api/admin/permissions')
 }
 
 // 复制角色
 export const copyRole = (id, data) => {
-  return http.post(`/api/v1/admin/roles/${id}/copy`, data)
+  return http.post(`/api/admin/roles/${id}/copy`, data)
 }
 
 // 获取角色统计信息
 export const getRoleStats = () => {
-  return http.get('/api/v1/admin/roles/stats')
+  return http.get('/api/admin/roles/stats')
 }
 
 // 导出角色
 export const exportRoles = (params) => {
-  return http.get('/api/v1/admin/roles/export', { params, responseType: 'blob' })
+  return http.get('/api/admin/roles/export', { params, responseType: 'blob' })
 }
 
 // 导入角色
 export const importRoles = (file) => {
   const formData = new FormData()
   formData.append('file', file)
-  return http.post('/api/v1/admin/roles/import', formData, {
+  return http.post('/api/admin/roles/import', formData, {
     headers: {
       'Content-Type': 'multipart/form-data'
     }

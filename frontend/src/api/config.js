@@ -6,13 +6,11 @@
 
 // 开发环境配置
 const DEVELOPMENT_CONFIG = {
-  // AI_WORKING: coder2 @2026-01-28T09:48:00Z - 修复硬编码后端地址，使用环境变量
-  // 后端API基础地址
-  BASE_URL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api',
-  // AI_DONE: coder2 @2026-01-28T09:48:00Z
+  // 强制使用空字符串，通过 Vite proxy 转发到后端，避免重复/api路径
+  BASE_URL: '',
   
-  // API版本前缀
-  API_PREFIX: '/api',
+  // API版本前缀 - 不需要，由Vite proxy处理
+  API_PREFIX: ''
   
   // 超时时间（毫秒）
   TIMEOUT: 10000,
@@ -49,14 +47,14 @@ const API_ENDPOINTS = {
   HEALTH: {
     LIVE: `${API_CONFIG.BASE_URL}/health/live`,
     READY: `${API_CONFIG.BASE_URL}/health/ready`,
-    API: `${API_CONFIG.BASE_URL}/api/v1/health`
+    API: `${API_CONFIG.BASE_URL}/api/health`
   },
   
   // 认证相关
   AUTH: {
-    LOGIN_V1: `${API_CONFIG.BASE_URL}/api/v1/auth/login`,
-    REGISTER_V1: `${API_CONFIG.BASE_URL}/api/v1/auth/register`,
-    ME_V1: `${API_CONFIG.BASE_URL}/api/v1/auth/me`,
+    LOGIN_V1: `${API_CONFIG.BASE_URL}/api/auth/login`,
+    REGISTER_V1: `${API_CONFIG.BASE_URL}/api/register`,
+    ME_V1: `${API_CONFIG.BASE_URL}/api/me`,
     LOGIN_COMPAT: `${API_CONFIG.BASE_URL}/api/auth/login`,
     PROFILE_COMPAT: `${API_CONFIG.BASE_URL}/api/auth/profile`
   },

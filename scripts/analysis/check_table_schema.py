@@ -1,6 +1,6 @@
 import sqlite3
 
-conn = sqlite3.connect('backend/sport_lottery.db')
+conn = sqlite3.connect('data/sport_lottery.db')
 cursor = conn.cursor()
 
 try:

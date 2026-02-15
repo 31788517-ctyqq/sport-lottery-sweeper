@@ -2,7 +2,7 @@ import sqlite3
 import json
 
 def fix():
-    conn = sqlite3.connect('sport_lottery.db')
+    conn = sqlite3.connect('data/sport_lottery.db')
     c = conn.cursor()
     
     # 检查当前值

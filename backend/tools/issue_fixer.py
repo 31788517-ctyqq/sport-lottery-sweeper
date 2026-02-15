@@ -66,7 +66,7 @@ except ImportError:
     # 回退方案
     PROJECT_ROOT = Path(__file__).parent.parent.parent
     BACKEND_DIR = PROJECT_ROOT / "backend"
-    DB_PATH = BACKEND_DIR / "sport_lottery.db"
+    DB_PATH = BACKEND_DIR / "data/sport_lottery.db"
 
 # ============================================================================
 # 工具函数

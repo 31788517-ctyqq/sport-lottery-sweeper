@@ -34,7 +34,7 @@ def test_password():
             
         # 直接从数据库查询哈希
         import sqlite3
-        conn = sqlite3.connect('sport_lottery.db')
+        conn = sqlite3.connect('data/sport_lottery.db')
         cursor = conn.cursor()
         cursor.execute("SELECT password_hash FROM admin_users WHERE username='admin'")
         row = cursor.fetchone()

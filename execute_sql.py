@@ -34,7 +34,7 @@ CREATE INDEX IF NOT EXISTS idx_module_level ON log_entries(module, level);
     
     try:
         # 连接到数据库
-        conn = sqlite3.connect('backend/sport_lottery.db')
+        conn = sqlite3.connect('data/sport_lottery.db')
         cursor = conn.cursor()
         
         # 执行SQL命令

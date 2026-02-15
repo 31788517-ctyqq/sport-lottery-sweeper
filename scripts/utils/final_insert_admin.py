@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 import sqlite3
 
-DB_PATH = 'sport_lottery.db'
+DB_PATH = 'data/sport_lottery.db'
 
 # MD5('admin123') = 0192023a7bbd73250516f069df18b500
 PWD_HASH = '0192023a7bbd73250516f069df18b500'

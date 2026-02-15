@@ -7,7 +7,7 @@ from backend.core.auth import authenticate_user, create_access_token
 from datetime import timedelta
 
 # 创建数据库会话
-engine = create_engine('sqlite:///sport_lottery.db')
+engine = create_engine('sqlite:///data/sport_lottery.db')
 session = Session(bind=engine)
 
 # 测试认证

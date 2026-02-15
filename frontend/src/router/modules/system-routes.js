@@ -15,7 +15,7 @@ const systemRoutes = [
       {
         path: 'config',
         name: 'SystemConfig',
-        component: () => import('@/views/admin/SystemManagement.vue'),
+        component: () => import('@/views/admin/system/SystemManagement.vue'),
         meta: {
           title: '系统配置',
           icon: 'setting',
@@ -26,7 +26,7 @@ const systemRoutes = [
       {
         path: 'monitoring',
         name: 'SystemMonitoring',
-        component: () => import('@/views/admin/SystemManagement.vue'),
+        component: () => import('@/views/admin/system/SystemManagement.vue'),
         meta: {
           title: '系统监控',
           icon: 'monitor',
@@ -37,7 +37,7 @@ const systemRoutes = [
       {
         path: 'logs',
         name: 'SystemLogs',
-        component: () => import('@/views/admin/SystemManagement.vue'),
+        component: () => import('@/views/admin/system/SystemManagement.vue'),
         meta: {
           title: '系统日志',
           icon: 'document',
@@ -48,7 +48,7 @@ const systemRoutes = [
       {
         path: 'maintenance',
         name: 'SystemMaintenance',
-        component: () => import('@/views/admin/SystemManagement.vue'),
+        component: () => import('@/views/admin/system/SystemManagement.vue'),
         meta: {
           title: '维护工具',
           icon: 'tools',
@@ -59,7 +59,7 @@ const systemRoutes = [
       {
         path: 'backup',
         name: 'SystemBackup',
-        component: () => import('@/views/admin/SystemManagement.vue'),
+        component: () => import('@/views/admin/system/SystemManagement.vue'),
         meta: {
           title: '数据备份',
           icon: 'backup',
@@ -70,7 +70,7 @@ const systemRoutes = [
       {
         path: 'api',
         name: 'SystemAPI',
-        component: () => import('@/views/admin/SystemManagement.vue'),
+        component: () => import('@/views/admin/system/SystemManagement.vue'),
         meta: {
           title: 'API管理',
           icon: 'api',

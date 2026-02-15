@@ -7,11 +7,11 @@ from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from jose import JWTError, jwt
 
-from .core.database import SessionLocal, get_db
-from .core.auth import verify_password, get_password_hash
-from .core.security import get_current_active_admin_user
-from .models.user import User
-from .config import settings
+from backend.core.database import SessionLocal, get_db
+from backend.core.auth import verify_password, get_password_hash
+from backend.core.security import get_current_active_admin_user
+from backend.models.user import User
+from backend.config import settings
 
 # OAuth2密码承载流
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")

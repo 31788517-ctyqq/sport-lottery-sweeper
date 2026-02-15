@@ -41,7 +41,7 @@ export function getBackendUsers(params) {
   }
   
   return request({
-    url: '/api/v1/admin/users/',
+    url: '/api/admin/users/',
     method: 'get',
     params
   })
@@ -60,7 +60,7 @@ export function getBackendUserDetail(userId) {
   }
   
   return request({
-    url: `/api/v1/admin/users/${userId}`,
+    url: `/api/admin/users/${userId}`,
     method: 'get'
   })
 }
@@ -72,7 +72,7 @@ export function getBackendUserDetail(userId) {
  */
 export function createBackendUser(data) {
   return request({
-    url: '/api/v1/admin-users',
+    url: '/api/admin-users',
     method: 'post',
     data
   })
@@ -86,7 +86,7 @@ export function createBackendUser(data) {
  */
 export function updateBackendUser(userId, data) {
   return request({
-    url: `/api/v1/admin-users/${userId}`,
+    url: `/api/admin-users/${userId}`,
     method: 'put',
     data
   })
@@ -100,7 +100,7 @@ export function updateBackendUser(userId, data) {
  */
 export function updateBackendUserStatus(userId, status) {
   return request({
-    url: `/api/v1/admin-users/${userId}/status`,
+    url: `/api/admin-users/${userId}/status`,
     method: 'put',
     data: { status }
   })
@@ -114,7 +114,7 @@ export function updateBackendUserStatus(userId, status) {
  */
 export function changeBackendUserPassword(userId, data) {
   return request({
-    url: `/api/v1/admin-users/${userId}/change-password`,
+    url: `/api/admin-users/${userId}/change-password`,
     method: 'post',
     data
   })
@@ -128,7 +128,7 @@ export function changeBackendUserPassword(userId, data) {
  */
 export function resetBackendUserPassword(userId, data) {
   return request({
-    url: `/api/v1/admin-users/${userId}/reset-password`,
+    url: `/api/admin-users/${userId}/reset-password`,
     method: 'post',
     data
   })
@@ -141,7 +141,7 @@ export function resetBackendUserPassword(userId, data) {
  */
 export function deleteBackendUser(userId) {
   return request({
-    url: `/api/v1/admin-users/${userId}`,
+    url: `/api/admin-users/${userId}`,
     method: 'delete'
   })
 }
@@ -163,7 +163,7 @@ export function getBackendUserStats() {
   }
   
   return request({
-    url: '/api/v1/admin/users/stats',
+    url: '/api/admin/users/stats',
     method: 'get'
   })
 }
@@ -201,7 +201,7 @@ export function getBackendUserOperationLogs(userId, params) {
   }
   
   return request({
-    url: `/api/v1/admin/users/${userId}/operation-logs`,
+    url: `/api/admin/users/${userId}/operation-logs`,
     method: 'get',
     params
   })
@@ -238,7 +238,7 @@ export function getBackendUserLoginLogs(userId, params) {
   }
   
   return request({
-    url: `/api/v1/admin/users/${userId}/login-logs`,
+    url: `/api/admin/users/${userId}/login-logs`,
     method: 'get',
     params
   })

@@ -153,9 +153,9 @@
           <div class="card-header">
             <div class="header-tabs">
               <el-radio-group v-model="viewMode" size="large">
-                <el-radio-button label="table">数据表格</el-radio-button>
-                <el-radio-button label="chart">图表分析</el-radio-button>
-                <el-radio-button label="dashboard">实时监控</el-radio-button>
+                <el-radio-button value="table">数据表格</el-radio-button>
+                <el-radio-button value="chart">图表分析</el-radio-button>
+                <el-radio-button value="dashboard">实时监控</el-radio-button>
               </el-radio-group>
             </div>
             <div class="header-actions">

@@ -6,7 +6,7 @@ from datetime import datetime
 print("正在创建500万彩票数据源...")
 
 # 连接数据库
-db_path = 'backend/sport_lottery.db'
+db_path = 'data/sport_lottery.db'
 conn = sqlite3.connect(db_path)
 cursor = conn.cursor()
 

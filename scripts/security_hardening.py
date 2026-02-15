@@ -30,7 +30,7 @@ class SecurityHardening:
     """安全加固系统"""
     
     def __init__(self, db_path: str = None):
-        self.db_path = db_path or "sport_lottery.db"
+        self.db_path = db_path or "data/sport_lottery.db"
         self.rate_limits_db = {}
         self.security_rules = {}
         self.blocked_ips = set()

@@ -41,7 +41,7 @@ def test_import_data_source():
     print("2. 测试数据源导入")
     print("=" * 60)
     
-    db_path = os.path.join(project_root, 'backend', 'sport_lottery.db')
+    db_path = os.path.join(project_root, 'backend', 'data/sport_lottery.db')
     
     try:
         import sqlite3

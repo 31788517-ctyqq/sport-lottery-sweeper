@@ -589,7 +589,7 @@ class DataCleanupManager:
 def main():
     """主函数"""
     BASE_DIR = Path(__file__).resolve().parent.parent
-    db_path = BASE_DIR / "sport_lottery.db"
+    db_path = BASE_DIR / "data/sport_lottery.db"
     
     logger.info("=== 数据库索引优化和视图管理工具 ===")
     

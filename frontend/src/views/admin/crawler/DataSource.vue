@@ -60,7 +60,7 @@ import { getSources as listSources, healthCheck, updateStatus } from '@/api/craw
 
 // 添加100qiu API调用
 const fetch100qiu = async (id) => {
-  const response = await fetch(`/api/v1/data-source-100qiu/${id}/fetch`, {
+  const response = await fetch(`/api/data-source-100qiu/${id}/fetch`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

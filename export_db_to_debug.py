@@ -11,7 +11,7 @@ from pathlib import Path
 print("正在将数据库数据导出到debug目录...")
 
 # 连接数据库
-db_path = 'backend/sport_lottery.db'
+db_path = 'data/sport_lottery.db'
 conn = sqlite3.connect(db_path)
 cursor = conn.cursor()
 

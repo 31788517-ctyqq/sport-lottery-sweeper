@@ -6,7 +6,7 @@
 
 import logging
 from typing import Optional
-from ..config import settings
+from backend.config import settings
 
 # 配置日志
 logger = logging.getLogger(__name__)

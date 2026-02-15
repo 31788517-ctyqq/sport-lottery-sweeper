@@ -145,7 +145,7 @@ class EnvValidator:
 # 数据库配置
 # =============================================================================
 # SQLite (默认开发环境)
-DATABASE_URL=sqlite:///./sport_lottery.db
+DATABASE_URL=sqlite:///./data/sport_lottery.db
 
 # PostgreSQL (生产环境推荐)
 # DATABASE_URL=postgresql://username:password@localhost:5432/sport_lottery?pool_size=10&max_overflow=20
@@ -161,7 +161,7 @@ DB_POOL_RECYCLE=3600
 DB_POOL_PRE_PING=true
 
 # 异步数据库URL
-ASYNC_DATABASE_URL=sqlite+aiosqlite:///./sport_lottery.db
+ASYNC_DATABASE_URL=sqlite+aiosqlite:///./data/sport_lottery.db
 # ASYNC_DATABASE_URL=postgresql+asyncpg://username:password@localhost:5432/sport_lottery
 
 # =============================================================================

@@ -2,7 +2,7 @@
 import sqlite3
 
 def list_admin_users():
-    conn = sqlite3.connect('sport_lottery.db')
+    conn = sqlite3.connect('data/sport_lottery.db')
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     

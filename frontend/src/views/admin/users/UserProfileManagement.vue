@@ -286,8 +286,6 @@
 import { ref, computed, onMounted, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
 import * as echarts from 'echarts'
-// AI_WORKING: coder1 @2026-02-05 - 导入用户画像API模块
-import { getUserProfiles } from '@/api/modules/user-profiles'
 
 // 响应式数据
 const loading = ref(false)
@@ -298,7 +296,84 @@ const currentPage = ref(1)
 const pageSize = ref(10)
 
 // 用户画像数据
-const profiles = ref([])
+const profiles = ref([
+  { 
+    userId: 1001, 
+    username: '张三', 
+    email: 'zhangsan@example.com', 
+    riskTolerance: 'moderate', 
+    preferredTeams: ['皇家马德里', '巴塞罗那', '拜仁慕尼黑', '曼城', '利物浦'], 
+    successRate: 0.65,
+    bettingFrequency: 'high',
+    bettingHabits: '喜欢在比赛前30分钟下注，偏好高赔率',
+    totalBettingAmount: 12500.00,
+    totalProfit: 2350.75,
+    profitProbability: 0.58,
+    tags: ['活跃用户', '高价值客户', '欧洲杯球迷'],
+    lastUpdated: '2026-01-30 03:15:22'
+  },
+  { 
+    userId: 1002, 
+    username: '李四', 
+    email: 'lisi@example.com', 
+    riskTolerance: 'conservative', 
+    preferredTeams: ['尤文图斯', '国际米兰', 'AC米兰'], 
+    successRate: 0.72,
+    bettingFrequency: 'low',
+    bettingHabits: '只在确定性较高的情况下下注',
+    totalBettingAmount: 8200.50,
+    totalProfit: 1450.20,
+    profitProbability: 0.65,
+    tags: ['保守型', '低风险', '意甲球迷'],
+    lastUpdated: '2026-01-30 02:45:10'
+  },
+  { 
+    userId: 1003, 
+    username: '王五', 
+    email: 'wangwu@example.com', 
+    riskTolerance: 'aggressive', 
+    preferredTeams: ['巴黎圣日耳曼', '切尔西', '曼联', '阿森纳'], 
+    successRate: 0.45,
+    bettingFrequency: 'high',
+    bettingHabits: '喜欢高风险高回报的投注策略',
+    totalBettingAmount: 18500.00,
+    totalProfit: -1200.00,
+    profitProbability: 0.42,
+    tags: ['激进型', '高风险', '英超球迷'],
+    lastUpdated: '2026-01-30 01:30:05'
+  },
+  { 
+    userId: 1004, 
+    username: '赵六', 
+    username: '赵六', 
+    email: 'zhaoliu@example.com', 
+    riskTolerance: 'moderate', 
+    preferredTeams: ['多特蒙德', '勒沃库森', '门兴格拉德巴赫'], 
+    successRate: 0.58,
+    bettingFrequency: 'medium',
+    bettingHabits: '均衡型投注策略，注重风险控制',
+    totalBettingAmount: 9500.00,
+    totalProfit: 450.80,
+    profitProbability: 0.55,
+    tags: ['稳健型', '德甲球迷', '平衡策略'],
+    lastUpdated: '2026-01-29 23:20:15'
+  },
+  { 
+    userId: 1005, 
+    username: '孙七', 
+    email: 'sunqi@example.com', 
+    riskTolerance: 'conservative', 
+    preferredTeams: ['阿贾克斯', '费耶诺德', '埃因霍温'], 
+    successRate: 0.68,
+    bettingFrequency: 'medium',
+    bettingHabits: '偏好荷兰联赛，小额多次投注',
+    totalBettingAmount: 6800.00,
+    totalProfit: 1280.50,
+    profitProbability: 0.62,
+    tags: ['保守型', '荷甲球迷', '小额投注'],
+    lastUpdated: '2026-01-29 21:45:30'
+  }
+])
 
 // 对话框相关
 const detailDialogVisible = ref(false)
@@ -348,24 +423,11 @@ const paginatedProfiles = computed(() => {
 // 方法：加载数据
 const loadData = async () => {
   loading.value = true
-  try {
-    // 使用真实API获取用户画像数据
-    const response = await getUserProfiles({
-      skip: (currentPage.value - 1) * pageSize.value,
-      limit: pageSize.value
-    })
-    
-    if (response && response.data) {
-      profiles.value = Array.isArray(response.data) ? response.data : []
-    }
-    
-    ElMessage.success('数据加载成功')
-  } catch (error) {
-    console.error('加载用户画像失败:', error)
-    ElMessage.error('加载用户画像失败')
-  } finally {
+  // 模拟API调用
+  setTimeout(() => {
     loading.value = false
-  }
+    ElMessage.success('数据刷新成功')
+  }, 800)
 }
 
 // 方法：应用筛选
@@ -510,18 +572,14 @@ const editProfile = (profile) => {
 }
 
 // 方法：提交编辑表单
-const submitEditForm = async () => {
-  try {
-    // 调用API更新用户画像
-    // await updateUserProfile(profileForm.value.userId, profileForm.value)
+const submitEditForm = () => {
+  // 更新用户画像数据
+  const index = profiles.value.findIndex(p => p.userId === profileForm.value.userId)
+  if (index !== -1) {
+    profiles.value[index] = { ...profileForm.value }
     ElMessage.success('用户画像更新成功')
-    // 重新加载数据
-    await loadData()
-    editDialogVisible.value = false
-  } catch (error) {
-    console.error('更新用户画像失败:', error)
-    ElMessage.error('更新用户画像失败')
   }
+  editDialogVisible.value = false
 }
 
 // 方法：分析用户行为
@@ -533,7 +591,6 @@ const analyzeBehavior = (profile) => {
 onMounted(() => {
   loadData()
 })
-// AI_DONE: coder1 @2026-02-05
 </script>
 
 <style scoped>

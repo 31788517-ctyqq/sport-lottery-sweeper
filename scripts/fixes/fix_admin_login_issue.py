@@ -27,7 +27,7 @@ except ImportError as e:
     get_password_hash = None
 
 def fix_admin_login():
-    db_path = "sport_lottery.db"
+    db_path = "data/sport_lottery.db"
     print(f"\n=== 修复管理员登录问题 ===")
     print(f"数据库: {db_path}")
     

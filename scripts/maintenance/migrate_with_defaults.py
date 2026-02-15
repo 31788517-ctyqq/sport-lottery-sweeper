@@ -2,7 +2,7 @@ import sqlite3
 from datetime import datetime
 
 def migrate_with_defaults():
-    conn = sqlite3.connect('sport_lottery.db')
+    conn = sqlite3.connect('data/sport_lottery.db')
     cursor = conn.cursor()
     
     # 联赛数据（提供所有必需字段的默认值）

@@ -6,14 +6,18 @@ import { nextTick } from 'vue'
 import BottomNav from '@/components/BottomNav.vue'
 
 // 模拟vue-router
-vi.mock('vue-router', () => ({
-  useRouter: () => ({
-    push: vi.fn()
-  }),
-  useRoute: () => ({
-    path: '/'
-  })
-}))
+vi.mock('vue-router', async (importOriginal) => {
+  const actual = await importOriginal()
+  return {
+    ...actual,
+    useRouter: () => ({
+      push: vi.fn()
+    }),
+    useRoute: () => ({
+      path: '/'
+    })
+  }
+})
 
 describe('BottomNav.vue', () => {
   it('基础测试 - 确保组件可以挂载', () => {

@@ -5,7 +5,7 @@
         <span class="strategy-label">策略筛选</span>
         <el-select
           v-model="selectedStrategyName"
-          placeholder="选择已保存的策略"
+          placeholder="请选择策略"
           clearable
           filterable
           style="width: 260px"
@@ -42,6 +42,7 @@
         >
           <div class="strategy-item-header">
             <span class="strategy-item-name">{{ name }}</span>
+            <span class="strategy-item-new" v-if="name === '当前策略'">NEW</span>
             <span class="strategy-item-tag" v-if="name === selectedStrategyName">已选</span>
           </div>
         </div>
@@ -213,6 +214,15 @@ export default defineComponent({
   padding: 2px 8px;
   border-radius: 999px;
   font-size: 12px;
+}
+
+.strategy-item-new {
+  background: #67c23a;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  margin-right: 4px;
 }
 
 .strategy-list-empty {

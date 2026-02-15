@@ -53,7 +53,7 @@
       <div class="header">
         <div class="header-left">
           <el-button 
-            type="text" 
+            type="link" 
             :icon="sidebarCollapsed ? Expand : Fold" 
             @click="toggleSidebar"
             class="collapse-btn"

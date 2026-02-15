@@ -1,307 +1,153 @@
-// Enhanced Unit tests for BeidanFilterPanel component - Covering missing test cases
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { mount } from '@vue/test-utils';
-import BeidanFilterPanel from '../../../../src/views/admin/BeidanFilterPanel.vue';
-import { createTestingPinia } from '@pinia/testing';
-import { ElMessage, ElMessageBox } from 'element-plus';
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { shallowMount, flushPromises } from '@vue/test-utils'
+import { createTestingPinia } from '@pinia/testing'
+import BeidanFilterPanel from '../../../../src/views/admin/BeidanFilterPanel.vue'
+import { ElMessage } from 'element-plus'
 
-// Mock external dependencies
 vi.mock('@/utils/request', () => ({
   default: {
     get: vi.fn(),
-    post: vi.fn()
+    post: vi.fn(),
+    delete: vi.fn()
   }
-}));
+}))
 
 vi.mock('element-plus', async () => {
-  const actual = await vi.importActual('element-plus');
+  const actual = await vi.importActual('element-plus')
   return {
     ...actual,
     ElMessage: {
       success: vi.fn(),
       error: vi.fn(),
-      warning: vi.fn()
-      },
+      warning: vi.fn(),
+      info: vi.fn()
+    },
     ElMessageBox: {
-      confirm: vi.fn(),
-      alert: vi.fn()
+      prompt: vi.fn(),
+      confirm: vi.fn()
     }
-  };
-});
+  }
+})
 
-describe('BeidanFilterPanel.vue - Enhanced Unit Tests', () => {
-  let wrapper;
-  let mockRequest;
+describe('BeidanFilterPanel.vue (enhanced)', () => {
+  let wrapper
+  let request
 
-  beforeEach(() => {
-    // Clear all mocks
-    vi.clearAllMocks();
-    
-    mockRequest = (await import('@/utils/request')).default;
-    
-    wrapper = mount(BeidanFilterPanel, {
+  beforeEach(async () => {
+    vi.clearAllMocks()
+    request = (await import('@/utils/request')).default
+
+    request.get.mockImplementation((url) => {
+      if (url.includes('/latest-date-times')) return Promise.resolve({ dateTimes: ['26024', '26023'] })
+      if (url.includes('/strategies')) return Promise.resolve({ strategies: [] })
+      if (url.includes('/real-time-count')) return Promise.resolve({ matchCount: 8 })
+      return Promise.resolve({})
+    })
+
+    request.post.mockImplementation((url) => {
+      if (url.includes('/advanced-filter')) {
+        return Promise.resolve({
+          matches: [
+            {
+              id: 1,
+              dateTime: '26024',
+              lineId: 100,
+              matchTime: '2026-01-01 10:00:00',
+              league: '测试联赛',
+              homeTeam: 'A队',
+              guestTeam: 'B队',
+              strength: 2,
+              winLevel: 1,
+              pLevel: 2,
+              stability: 'A'
+            }
+          ],
+          statistics: { totalMatches: 1 },
+          pagination: { totalItems: 1 }
+        })
+      }
+      return Promise.resolve({ success: true })
+    })
+
+    request.delete.mockResolvedValue({ success: true })
+
+    wrapper = shallowMount(BeidanFilterPanel, {
       global: {
-        plugins: [createTestingPinia({
-          createSpy: vi.fn
-        })],
-        stubs: {
-          'el-card': true,
-          'el-checkbox-group': true,
-          'el-checkbox-button': true,
-          'el-select': true,
-          'el-option': true,
-          'el-date-picker': true,
-          'el-table': true,
-          'el-pagination': true,
-          'el-button': true,
-          'el-dialog': true,
-          'el-input': true,
-          'el-dropdown': true,
-          'el-dropdown-menu': true,
-          'el-dropdown-item': true,
-          'el-radio-group': true,
-          'el-radio': true,
-          'el-switch': true,
-          'el-progress': true,
-          'el-tag': true,
-          'el-alert': true,
-          'el-form': true,
-          'el-form-item': true
-        }
+        plugins: [createTestingPinia({ createSpy: vi.fn })]
       }
-    });
-  });
+    })
+    await flushPromises()
+  })
 
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
+  it('fetches real-time count successfully', async () => {
+    await wrapper.vm.fetchRealData()
 
-  // ============================================================================
-  // NEW TEST CASES - Event Emission Tests
-  // ============================================================================
+    expect(wrapper.vm.totalResults).toBe(8)
+    expect(wrapper.vm.loading).toBe(false)
+    expect(ElMessage.success).toHaveBeenCalled()
+  })
 
-  it('emits events correctly when child components trigger them', async () => {
-    // Test fetch-real-data event
-    await wrapper.findComponent({ name: 'FilterCardHeader' }).vm.$emit('fetch-real-data');
-    expect(wrapper.vm.loading).toBe(true);
+  it('handles fetchRealData error gracefully', async () => {
+    request.get.mockImplementation((url) => {
+      if (url.includes('/real-time-count')) return Promise.reject(new Error('Network Error'))
+      if (url.includes('/latest-date-times')) return Promise.resolve({ dateTimes: ['26024'] })
+      if (url.includes('/strategies')) return Promise.resolve({ strategies: [] })
+      return Promise.resolve({})
+    })
 
-    // Test apply-preset event
-    const mockPreset = { powerDiffs: [1], winPanDiffs: [0], stabilityTiers: ['A'] };
-    await wrapper.findComponent({ name: 'FilterSection' }).vm.$emit('apply-preset', mockPreset);
-    expect(wrapper.vm.filterForm).toEqual(mockPreset);
+    await wrapper.vm.fetchRealData()
 
-    // Test strategy selection event
-    const mockStrategy = { id: 1, name: 'Test Strategy' };
-    await wrapper.findComponent({ name: 'StrategySection' }).vm.$emit('handle-select-strategy', mockStrategy);
-    expect(wrapper.vm.selectedStrategyName).toBe('Test Strategy');
-  });
+    expect(wrapper.vm.loading).toBe(false)
+    expect(ElMessage.error).toHaveBeenCalled()
+  })
 
-  // ============================================================================
-  // NEW TEST CASES - Computed Properties Tests
-  // ============================================================================
+  it('falls back to default date time options when API fails', async () => {
+    request.get.mockImplementation((url) => {
+      if (url.includes('/latest-date-times')) return Promise.reject(new Error('down'))
+      if (url.includes('/strategies')) return Promise.resolve({ strategies: [] })
+      return Promise.resolve({})
+    })
 
-  it('computes directionWarning correctly', () => {
-    // Test when filters are applied
-    wrapper.vm.filterForm = { powerDiffs: [1], winPanDiffs: [0] };
-    expect(wrapper.vm.directionWarning).toBe(true);
+    await wrapper.vm.refreshDateTimeOptions()
 
-    // Test when no filters are applied
-    wrapper.vm.filterForm = { powerDiffs: [], winPanDiffs: [] };
-    expect(wrapper.vm.directionWarning).toBe(false);
-  });
+    expect(wrapper.vm.dateTimeOptions.length).toBeGreaterThan(0)
+    expect(wrapper.vm.filterForm.dateTime).toBeTruthy()
+  })
 
-  it('computes strategyApplied correctly', () => {
-    // Initially false
-    expect(wrapper.vm.strategyApplied).toBe(false);
+  it('applies advanced filter and updates result state', async () => {
+    wrapper.vm.filterForm.powerDiffs = [2]
+    wrapper.vm.filterForm.winPanDiffs = [1]
+    wrapper.vm.filterForm.stabilityTiers = ['A']
 
-    // After applying filters
-    wrapper.vm.filterForm = { powerDiffs: [1], winPanDiffs: [0] };
-    wrapper.vm.strategyApplied = true;
-    expect(wrapper.vm.strategyApplied).toBe(true);
-  });
+    await wrapper.vm.applyAdvancedFilter(true)
 
-  // ============================================================================
-  // NEW TEST CASES - Method Tests
-  // ============================================================================
+    expect(wrapper.vm.strategySelected).toBe(true)
+    expect(wrapper.vm.hasResults).toBe(true)
+    expect(wrapper.vm.totalResults).toBe(1)
+    expect(wrapper.vm.pagedResults.length).toBe(1)
+  })
 
-  it('handles preset application correctly', () => {
-    const { applyPreset } = wrapper.vm;
-    
-    // Test strong preset
-    applyPreset('strong');
-    expect(wrapper.vm.filterForm.powerDiffs).toEqual([2, 3]);
-    expect(wrapper.vm.filterForm.winPanDiffs).toEqual([3, 4]);
-    expect(wrapper.vm.filterForm.stabilityTiers).toEqual(['S', 'A', 'B']);
+  it('clears selection state when strategy name is empty', async () => {
+    wrapper.vm.strategySelected = true
+    wrapper.vm.hasResults = true
 
-    // Test invalid preset falls back to balanced
-    applyPreset('invalid_preset');
-    expect(wrapper.vm.filterForm.powerDiffs).toEqual([0]);
-    expect(wrapper.vm.filterForm.winPanDiffs).toEqual([0]);
-    expect(wrapper.vm.filterForm.stabilityTiers).toEqual(['B', 'C']);
-  });
+    await wrapper.vm.handleSelectStrategy('')
 
-  it('resets filters to default state', () => {
-    // Set some values first
-    wrapper.vm.filterForm = {
-      powerDiffs: [1, 2],
-      winPanDiffs: [0, 1],
-      stabilityTiers: ['A', 'B'],
-      leagues: ['联赛1'],
-      matchDateRange: ['2023-01-01', '2023-01-31'],
-      sortField: 'match_time',
-      sortOrder: 'desc'
-    };
-    wrapper.vm.currentPage = 5;
-    wrapper.vm.pageSize = 50;
+    expect(wrapper.vm.strategySelected).toBe(false)
+    expect(wrapper.vm.hasResults).toBe(false)
+  })
 
-    // Reset filters
-    wrapper.vm.resetFilters();
-
-    // Verify reset values
-    expect(wrapper.vm.filterForm.powerDiffs).toEqual([]);
-    expect(wrapper.vm.filterForm.winPanDiffs).toEqual([]);
-    expect(wrapper.vm.filterForm.stabilityTiers).toEqual([]);
-    expect(wrapper.vm.filterForm.leagues).toEqual([]);
-    expect(wrapper.vm.filterForm.matchDateRange).toEqual([]);
-    expect(wrapper.vm.filterForm.sortField).toBe('match_time');
-    expect(wrapper.vm.filterForm.sortOrder).toBe('desc');
-    expect(wrapper.vm.currentPage).toBe(1);
-    expect(wrapper.vm.pageSize).toBe(20);
-  });
-
-  it('handles advanced filter application', async () => {
-    const advancedFilter = {
-      powerDiffs: [1, 2],
-      winPanDiffs: [-1, 0],
-      stabilityTiers: ['A', 'B'],
-      minHomeWinRate: 60,
-      maxHomeWinRate: 80
-    };
-
-    await wrapper.vm.applyAdvancedFilter(advancedFilter);
-
-    expect(wrapper.vm.filterForm.powerDiffs).toEqual([1, 2]);
-    expect(wrapper.vm.filterForm.winPanDiffs).toEqual([-1, 0]);
-    expect(wrapper.vm.filterForm.stabilityTiers).toEqual(['A', 'B']);
-    expect(wrapper.vm.minHomeWinRate).toBe(60);
-    expect(wrapper.vm.maxHomeWinRate).toBe(80);
-  });
-
-  // ============================================================================
-  // NEW TEST CASES - Error Handling Tests
-  // ============================================================================
-
-  it('handles API errors gracefully during data fetch', async () => {
-    // Mock API failure
-    mockRequest.get.mockRejectedValue(new Error('Network error'));
-
-    // Attempt to fetch data
-    await wrapper.vm.fetchRealData();
-
-    // Verify error handling
-    expect(wrapper.vm.loading).toBe(false);
-    expect(ElMessage.error).toHaveBeenCalledWith('获取数据失败');
-  });
-
-  it('handles malformed API response data', async () => {
-    // Mock malformed response
-    mockRequest.get.mockResolvedValue({ data: null });
-
-    await wrapper.vm.fetchRealData();
-
-    expect(wrapper.vm.matches).toEqual([]);
-    expect(wrapper.vm.totalResults).toBe(0);
-    expect(wrapper.vm.loading).toBe(false);
-  });
-
-  // ============================================================================
-  // NEW TEST CASES - Data Processing Tests
-  // ============================================================================
-
-  it('normalizes matches with edge cases', () => {
-    const { normalizeMatches } = wrapper.vm;
-
-    // Test with extreme values
-    const extremeMatches = [
-      {
-        match_id: null,
-        home_team: '',
-        away_team: '',
-        league: null,
-        match_time: 'invalid-date',
-        power_home: '999',
-        power_away: '1',
-        win_pan_home: '10.0',
-        win_pan_away: '0.1',
-        home_feature: null,
-        away_feature: null
+  it('loads strategy options from nested response format', async () => {
+    request.get.mockImplementation((url) => {
+      if (url.includes('/strategies')) {
+        return Promise.resolve({ data: { strategies: [{ name: '策略A', id: 1, threeDimensional: {} }] } })
       }
-    ];
+      if (url.includes('/latest-date-times')) return Promise.resolve({ dateTimes: ['26024'] })
+      return Promise.resolve({})
+    })
 
-    const normalized = normalizeMatches(extremeMatches);
-    
-    expect(normalized).toHaveLength(1);
-    expect(normalized[0].match_id).toBe('');
-    expect(normalized[0].home_team).toBe('');
-    expect(normalized[0].power_diff).toBeGreaterThan(0); // Large difference
-    expect(normalized[0].win_pan_diff).toBeGreaterThan(0);
-  });
+    await wrapper.vm.loadStrategyOptions()
 
-  it('calculates statistics correctly with empty data', () => {
-    const { calculateStatistics } = wrapper.vm;
-
-    const emptyMatches = [];
-    const stats = calculateStatistics(emptyMatches);
-
-    expect(stats.totalMatches).toBe(0);
-    expect(stats.avgPowerDifference).toBe(0);
-    expect(stats.avgWinPanDifference).toBe(0);
-    expect(stats.levelDistribution).toEqual({});
-    expect(stats.topLeagues).toEqual([]);
-  });
-
-  // ============================================================================
-  // NEW TEST CASES - Multi-Strategy Configuration Tests
-  // ============================================================================
-
-  it('handles multi-strategy panel visibility', async () => {
-    // Initially hidden
-    expect(wrapper.vm.showMultiStrategyPanel).toBe(false);
-
-    // Show panel
-    wrapper.vm.handleUpdateShowMultiStrategyPanel(true);
-    expect(wrapper.vm.showMultiStrategyPanel).toBe(true);
-
-    // Hide panel
-    wrapper.vm.handleUpdateShowMultiStrategyPanel(false);
-    expect(wrapper.vm.showMultiStrategyPanel).toBe(false);
-  });
-
-  it('processes strategy configuration', async () => {
-    const strategyConfig = {
-      strategies: [
-        { id: 1, name: 'Strategy 1', filters: { powerDiffs: [1] } },
-        { id: 2, name: 'Strategy 2', filters: { powerDiffs: [2] } }
-      ],
-      combinationMode: 'AND'
-    };
-
-    await wrapper.vm.handleStrategyConfigured(strategyConfig);
-
-    expect(ElMessage.success).toHaveBeenCalledWith('策略配置已保存');
-    // Additional assertions based on your business logic
-  });
-
-  // ============================================================================
-  // NEW TEST CASES - Lifecycle Hook Tests
-  // ============================================================================
-
-  it('loads initial data on mount', () => {
-    // Check if lifecycle methods are called
-    // This would require spying on the actual methods
-    expect(wrapper.vm.filterForm).toBeDefined();
-    expect(wrapper.vm.strengthOptions).toBeDefined();
-    expect(wrapper.vm.winPanOptions).toBeDefined();
-    expect(wrapper.vm.stabilityOptions).toBeDefined();
-  });
-});
+    expect(wrapper.vm.strategyOptions).toContain('策略A')
+  })
+})

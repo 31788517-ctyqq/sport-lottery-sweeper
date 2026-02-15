@@ -5,7 +5,7 @@ from datetime import datetime
 def create_admin_user():
     # 数据库路径
     # AI_WORKING: coder1 @2026-01-26 - 修正数据库路径，使用根目录下的sport_lottery.db
-    db_path = "sport_lottery.db"
+    db_path = "data/sport_lottery.db"
     
     # 创建连接
     conn = sqlite3.connect(db_path)

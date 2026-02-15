@@ -10,7 +10,7 @@ export const authAPI = {
    * @returns {Promise<Object>} - 返回包含token的对象
    */
   login(credentials) {
-    return client.post('/api/v1/auth/login', credentials);
+    return client.post('/api/auth/login', credentials);
   },
 
   /**
@@ -19,7 +19,7 @@ export const authAPI = {
    * @returns {Promise<Object>}
    */
   register(userData) {
-    return client.post('/api/v1/auth/register', userData);
+    return client.post('/api/register', userData);
   },
 
   /**
@@ -28,7 +28,7 @@ export const authAPI = {
    * @returns {Promise<Object>}
    */
   refreshToken(refreshToken) {
-    return client.post('/api/v1/auth/refresh', { refresh_token: refreshToken });
+    return client.post('/api/refresh', { refresh_token: refreshToken });
   },
 
   /**
@@ -36,7 +36,7 @@ export const authAPI = {
    * @returns {Promise<Object>}
    */
   getCurrentUser() {
-    return client.get('/api/v1/auth/me');
+    return client.get('/api/me');
   },
 
   /**
@@ -44,7 +44,7 @@ export const authAPI = {
    * @returns {Promise<Object>}
    */
   logout() {
-    return client.post('/api/v1/auth/logout');
+    return client.post('/api/logout');
   },
 };
 

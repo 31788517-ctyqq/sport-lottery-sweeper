@@ -20,8 +20,8 @@ def check_database():
     
     # 检查多个可能的数据库文件
     db_files = [
-        ('项目根目录', 'sport_lottery.db'),
-        ('backend目录', 'backend/sport_lottery.db'),
+        ('项目根目录', 'data/sport_lottery.db'),
+        ('backend目录', 'data/sport_lottery.db'),
         ('data目录', 'data/sport_lottery.db')
     ]
     
@@ -92,7 +92,7 @@ def fill_roles_table():
     print("=" * 60)
     
     # 使用项目根目录的数据库文件
-    db_file = 'sport_lottery.db'
+    db_file = 'data/sport_lottery.db'
     
     if not os.path.exists(db_file):
         print(f"[ERROR] 数据库文件不存在: {db_file}")

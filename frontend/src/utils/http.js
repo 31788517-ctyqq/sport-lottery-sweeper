@@ -5,7 +5,8 @@ import { useUserStore } from '@/stores/user'
 
 // API配置
 const API_CONFIG = {
-  BASE_URL: import.meta.env.VITE_API_BASE_URL || '',
+  // 强制使用空字符串，通过 Vite proxy 转发到后端，避免重复/api路径
+  BASE_URL: '',
   TIMEOUT: 15000,
   RETRY_TIMES: 3,
   RETRY_DELAY: 1000

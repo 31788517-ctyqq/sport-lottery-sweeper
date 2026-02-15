@@ -42,7 +42,7 @@ def create_task_and_verify():
             
             # 查询数据库验证
             print("\n=== 验证数据库记录 ===")
-            db_path = backend_path / "sport_lottery.db"
+            db_path = backend_path / "data/sport_lottery.db"
             if not db_path.exists():
                 print(f"数据库文件不存在: {db_path}")
                 return

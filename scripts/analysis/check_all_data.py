@@ -3,7 +3,7 @@ import sqlite3
 def check_all_data():
     try:
         # 连接到根目录的数据库文件
-        conn = sqlite3.connect('sport_lottery.db')
+        conn = sqlite3.connect('data/sport_lottery.db')
         cursor = conn.cursor()
         
         # 检查所有可能包含比赛数据的表

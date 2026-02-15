@@ -13,7 +13,7 @@ print("First INSERT statement:")
 print(first_insert[:500])
 
 # 连接数据库并尝试手动插入
-conn = sqlite3.connect('sport_lottery.db')
+conn = sqlite3.connect('data/sport_lottery.db')
 cursor = conn.cursor()
 
 # 手动插入一条联赛数据

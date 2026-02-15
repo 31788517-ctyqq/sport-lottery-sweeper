@@ -11,7 +11,7 @@ import request from '@/utils/request'
 export function getLLMProviders(params = {}) {
   // 使用相对路径确保通过Vite代理，添加尾部斜杠避免重定向
   return request({
-    url: '/api/v1/llm-providers/',
+    url: '/api/llm-providers/',
     method: 'get',
     params
   })
@@ -25,7 +25,7 @@ export function getLLMProviders(params = {}) {
 export function getLLMProvidersCount(params = {}) {
   // 使用相对路径确保通过Vite代理  
   return request({
-    url: '/api/v1/llm-providers/count',
+    url: '/api/llm-providers/count',
     method: 'get',
     params
   })
@@ -38,7 +38,7 @@ export function getLLMProvidersCount(params = {}) {
  */
 export function getLLMProvider(providerId) {
   return request({
-    url: `/api/v1/llm-providers/${providerId}`,
+    url: `/api/llm-providers/${providerId}`,
     method: 'get'
   })
 }
@@ -50,7 +50,7 @@ export function getLLMProvider(providerId) {
  */
 export function createLLMProvider(data) {
   return request({
-    url: '/api/v1/llm-providers/',
+    url: '/api/llm-providers/',
     method: 'post',
     data
   })
@@ -64,7 +64,7 @@ export function createLLMProvider(data) {
  */
 export function updateLLMProvider(providerId, data) {
   return request({
-    url: `/api/v1/llm-providers/${providerId}`,
+    url: `/api/llm-providers/${providerId}`,
     method: 'put',
     data
   })
@@ -77,7 +77,7 @@ export function updateLLMProvider(providerId, data) {
  */
 export function deleteLLMProvider(providerId) {
   return request({
-    url: `/api/v1/llm-providers/${providerId}`,
+    url: `/api/llm-providers/${providerId}`,
     method: 'delete'
   })
 }
@@ -89,7 +89,7 @@ export function deleteLLMProvider(providerId) {
  */
 export function enableLLMProvider(providerId) {
   return request({
-    url: `/api/v1/llm-providers/${providerId}/enable`,
+    url: `/api/llm-providers/${providerId}/enable`,
     method: 'post'
   })
 }
@@ -101,7 +101,7 @@ export function enableLLMProvider(providerId) {
  */
 export function disableLLMProvider(providerId) {
   return request({
-    url: `/api/v1/llm-providers/${providerId}/disable`,
+    url: `/api/llm-providers/${providerId}/disable`,
     method: 'post'
   })
 }
@@ -114,7 +114,7 @@ export function disableLLMProvider(providerId) {
  */
 export function testLLMProviderConnection(providerId, testData = {}) {
   return request({
-    url: `/api/v1/llm-providers/${providerId}/test`,
+    url: `/api/llm-providers/${providerId}/test`,
     method: 'post',
     data: testData
   })
@@ -126,7 +126,7 @@ export function testLLMProviderConnection(providerId, testData = {}) {
  */
 export function getLLMProvidersStats() {
   return request({
-    url: '/api/v1/llm-providers/stats/overview',
+    url: '/api/llm-providers/stats/overview',
     method: 'get'
   })
 }
@@ -138,7 +138,7 @@ export function getLLMProvidersStats() {
  */
 export function getAvailableLLMProviders(params = {}) {
   return request({
-    url: '/api/v1/llm-providers/available/list',
+    url: '/api/llm-providers/available/list',
     method: 'get',
     params
   })
@@ -151,7 +151,7 @@ export function getAvailableLLMProviders(params = {}) {
  */
 export function batchUpdateLLMProvidersStatus(data) {
   return request({
-    url: '/api/v1/llm-providers/batch/update-status',
+    url: '/api/llm-providers/batch/update-status',
     method: 'post',
     data
   })
@@ -165,7 +165,7 @@ export function batchUpdateLLMProvidersStatus(data) {
  */
 export function incrementLLMProviderCost(providerId, costCents) {
   return request({
-    url: `/api/v1/llm-providers/${providerId}/increment-cost`,
+    url: `/api/llm-providers/${providerId}/increment-cost`,
     method: 'post',
     data: { cost_cents: costCents }
   })

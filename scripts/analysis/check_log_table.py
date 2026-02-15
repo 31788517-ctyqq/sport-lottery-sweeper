@@ -3,7 +3,7 @@ import sqlite3
 def check_log_table():
     """检查数据库中的日志表"""
     try:
-        conn = sqlite3.connect('backend/sport_lottery.db')
+        conn = sqlite3.connect('data/sport_lottery.db')
         cursor = conn.cursor()
 
         # 检查所有表

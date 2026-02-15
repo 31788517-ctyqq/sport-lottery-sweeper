@@ -75,7 +75,7 @@
               <el-radio-button 
                 v-for="category in schemeCategories" 
                 :key="category.key"
-                :label="category.key"
+                :value="category.key"
               >
                 {{ category.label }}
               </el-radio-button>

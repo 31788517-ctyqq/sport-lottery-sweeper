@@ -8,7 +8,7 @@ import request from '@/utils/request'
 // 获取数据源列表
 export function getDataSources(params) {
   return request({
-    url: '/api/v1/admin/sources',
+    url: '/api/admin/sources',
     method: 'get',
     params
   })
@@ -17,7 +17,7 @@ export function getDataSources(params) {
 // 获取单个数据源
 export function getDataSourceById(id) {
   return request({
-    url: `/api/v1/admin/sources/${id}`,
+    url: `/api/admin/sources/${id}`,
     method: 'get'
   })
 }
@@ -25,7 +25,7 @@ export function getDataSourceById(id) {
 // 创建数据源
 export function createDataSource(data) {
   return request({
-    url: '/api/v1/admin/sources',
+    url: '/api/admin/sources',
     method: 'post',
     data
   })
@@ -34,7 +34,7 @@ export function createDataSource(data) {
 // 更新数据源
 export function updateDataSource(id, data) {
   return request({
-    url: `/api/v1/admin/sources/${id}`,
+    url: `/api/admin/sources/${id}`,
     method: 'put',
     data
   })
@@ -43,7 +43,7 @@ export function updateDataSource(id, data) {
 // 删除数据源
 export function deleteDataSource(id) {
   return request({
-    url: `/api/v1/admin/sources/${id}`,
+    url: `/api/admin/sources/${id}`,
     method: 'delete'
   })
 }
@@ -51,7 +51,7 @@ export function deleteDataSource(id) {
 // 测试数据源连接
 export function testDataSource(id) {
   return request({
-    url: `/api/v1/admin/sources/${id}/test`,
+    url: `/api/admin/sources/${id}/test`,
     method: 'post'
   })
 }
@@ -59,7 +59,7 @@ export function testDataSource(id) {
 // 获取API类型数据源
 export function getApiDataSources(params) {
   return request({
-    url: '/api/v1/admin/sources/api',
+    url: '/api/admin/sources/api',
     method: 'get',
     params
   })
@@ -68,7 +68,7 @@ export function getApiDataSources(params) {
 // 获取文件类型数据源
 export function getFileDataSources(params) {
   return request({
-    url: '/api/v1/admin/sources/file',
+    url: '/api/admin/sources/file',
     method: 'get',
     params
   })
@@ -78,7 +78,7 @@ export function getFileDataSources(params) {
 // 获取比赛列表
 export function getMatches(params) {
   return request({
-    url: '/api/v1/sp-management/matches',
+    url: '/api/sp-management/matches',
     method: 'get',
     params
   })
@@ -87,7 +87,7 @@ export function getMatches(params) {
 // 获取单个比赛
 export function getMatchById(id) {
   return request({
-    url: `/api/v1/sp-management/matches/${id}`,
+    url: `/api/sp-management/matches/${id}`,
     method: 'get'
   })
 }
@@ -95,7 +95,7 @@ export function getMatchById(id) {
 // 创建比赛
 export function createMatch(data) {
   return request({
-    url: '/api/v1/sp-management/matches',
+    url: '/api/sp-management/matches',
     method: 'post',
     data
   })
@@ -104,7 +104,7 @@ export function createMatch(data) {
 // 更新比赛
 export function updateMatch(id, data) {
   return request({
-    url: `/api/v1/sp-management/matches/${id}`,
+    url: `/api/sp-management/matches/${id}`,
     method: 'put',
     data
   })
@@ -113,7 +113,7 @@ export function updateMatch(id, data) {
 // 删除比赛
 export function deleteMatch(id) {
   return request({
-    url: `/api/v1/sp-management/matches/${id}`,
+    url: `/api/sp-management/matches/${id}`,
     method: 'delete'
   })
 }
@@ -121,7 +121,7 @@ export function deleteMatch(id) {
 // 获取比赛SP值历史
 export function getMatchSPHistory(matchId) {
   return request({
-    url: `/api/v1/sp-management/matches/${matchId}/sp-history`,
+    url: `/api/sp-management/matches/${matchId}/sp-history`,
     method: 'get'
   })
 }
@@ -130,7 +130,7 @@ export function getMatchSPHistory(matchId) {
 export function getSPChartData(matchId, companyId) {
   const params = companyId ? { company_id: companyId } : {}
   return request({
-    url: `/api/v1/sp-management/matches/${matchId}/sp-chart`,
+    url: `/api/sp-management/matches/${matchId}/sp-chart`,
     method: 'get',
     params
   })
@@ -140,7 +140,7 @@ export function getSPChartData(matchId, companyId) {
 // 获取赔率公司列表
 export function getOddsCompanies(params) {
   return request({
-    url: '/api/v1/sp-management/companies',
+    url: '/api/sp-management/companies',
     method: 'get',
     params
   })
@@ -149,7 +149,7 @@ export function getOddsCompanies(params) {
 // 获取所有赔率公司
 export function getAllOddsCompanies() {
   return request({
-    url: '/api/v1/sp-management/companies/all',
+    url: '/api/sp-management/companies/all',
     method: 'get'
   })
 }
@@ -157,7 +157,7 @@ export function getAllOddsCompanies() {
 // 获取单个赔率公司
 export function getOddsCompanyById(id) {
   return request({
-    url: `/api/v1/sp-management/companies/${id}`,
+    url: `/api/sp-management/companies/${id}`,
     method: 'get'
   })
 }
@@ -165,7 +165,7 @@ export function getOddsCompanyById(id) {
 // 创建赔率公司
 export function createOddsCompany(data) {
   return request({
-    url: '/api/v1/sp-management/companies',
+    url: '/api/sp-management/companies',
     method: 'post',
     data
   })
@@ -174,7 +174,7 @@ export function createOddsCompany(data) {
 // 更新赔率公司
 export function updateOddsCompany(id, data) {
   return request({
-    url: `/api/v1/sp-management/companies/${id}`,
+    url: `/api/sp-management/companies/${id}`,
     method: 'put',
     data
   })
@@ -184,7 +184,7 @@ export function updateOddsCompany(id, data) {
 // 获取SP值记录
 export function getSPRecords(params) {
   return request({
-    url: '/api/v1/sp-management/sp-records',
+    url: '/api/sp-management/sp-records',
     method: 'get',
     params
   })
@@ -193,7 +193,7 @@ export function getSPRecords(params) {
 // 录入SP值
 export function createSPRecord(data) {
   return request({
-    url: '/api/v1/sp-management/sp-records',
+    url: '/api/sp-management/sp-records',
     method: 'post',
     data
   })
@@ -203,7 +203,7 @@ export function createSPRecord(data) {
 export function updateSPRecord(id, data, reason) {
   const params = reason ? { reason } : {}
   return request({
-    url: `/api/v1/sp-management/sp-records/${id}`,
+    url: `/api/sp-management/sp-records/${id}`,
     method: 'put',
     data,
     params
@@ -213,7 +213,7 @@ export function updateSPRecord(id, data, reason) {
 // 获取SP值修改日志
 export function getSPModificationLogs(recordId) {
   return request({
-    url: `/api/v1/sp-management/sp-records/${recordId}/modifications`,
+    url: `/api/sp-management/sp-records/${recordId}/modifications`,
     method: 'get'
   })
 }
@@ -221,7 +221,7 @@ export function getSPModificationLogs(recordId) {
 // 删除SP值记录
 export function deleteSPRecord(id) {
   return request({
-    url: `/api/v1/sp-management/sp-records/${id}`,
+    url: `/api/sp-management/sp-records/${id}`,
     method: 'delete'
   })
 }
@@ -232,7 +232,7 @@ export function importMatchesCSV(file) {
   const formData = new FormData()
   formData.append('file', file)
   return request({
-    url: '/api/v1/sp-management/matches/import/csv',
+    url: '/api/sp-management/matches/import/csv',
     method: 'post',
     data: formData,
     headers: {
@@ -246,7 +246,7 @@ export function importSPDataCSV(file) {
   const formData = new FormData()
   formData.append('file', file)
   return request({
-    url: '/api/v1/sp-management/sp-records/import/csv',
+    url: '/api/sp-management/sp-records/import/csv',
     method: 'post',
     data: formData,
     headers: {
@@ -259,7 +259,7 @@ export function importSPDataCSV(file) {
 // SP值分布统计
 export function getSPDistributionAnalysis(params) {
   return request({
-    url: '/api/v1/sp-management/analysis/distribution',
+    url: '/api/sp-management/analysis/distribution',
     method: 'get',
     params
   })
@@ -268,7 +268,7 @@ export function getSPDistributionAnalysis(params) {
 // SP值变动分析
 export function getSPVolatilityAnalysis(params) {
   return request({
-    url: '/api/v1/sp-management/analysis/volatility',
+    url: '/api/sp-management/analysis/volatility',
     method: 'get',
     params
   })
@@ -277,7 +277,7 @@ export function getSPVolatilityAnalysis(params) {
 // 赔率公司对比分析
 export function getCompanyComparisonAnalysis(matchIds) {
   return request({
-    url: '/api/v1/sp-management/analysis/company-comparison',
+    url: '/api/sp-management/analysis/company-comparison',
     method: 'get',
     params: { match_ids: matchIds }
   })

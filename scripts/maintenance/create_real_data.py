@@ -11,7 +11,7 @@ import requests
 from datetime import datetime, timedelta
 import time
 
-DB_PATH = 'backend/sport_lottery.db'
+DB_PATH = 'data/sport_lottery.db'
 
 def create_500_source():
     """创建500万彩票数据源"""
@@ -23,7 +23,7 @@ def create_500_source():
     # 检查是否已存在
     cursor.execute('SELECT id FROM data_sources WHERE name = ?', ('500万彩票',))
     if cursor.fetchone():
-        print("✓ 数据源已存在")
+        print("[OK] 数据源已存在")
         cursor.execute('SELECT id FROM data_sources WHERE name = ?', ('500万彩票',))
         source_id = cursor.fetchone()[0]
     else:
@@ -40,16 +40,16 @@ def create_500_source():
         
         now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         cursor.execute('''
-            INSERT INTO data_sources (name, type, status, url, config, last_update, error_rate, created_at, updated_at, created_by)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO data_sources (name, type, status, url, config, update_frequency, last_update, error_rate, created_at, updated_at, created_by)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
             '500万彩票', 'api', True, 'https://trade.500.com/jczq/',
-            json.dumps(config, ensure_ascii=False), now, 0.0, now, now, 1
+            json.dumps(config, ensure_ascii=False), 3600, now, 0.0, now, now, 1
         ))
         
         source_id = cursor.lastrowid
         conn.commit()
-        print(f"✓ 数据源创建成功！ID: {source_id}")
+        print(f"[OK] 数据源创建成功！ID: {source_id}")
     
     conn.close()
     return source_id
@@ -73,20 +73,20 @@ def create_crawler_task(source_id):
         existing = cursor.fetchone()
         
         if existing:
-            print(f"✓ 任务已存在，ID: {existing[0]}")
+            print(f"[OK] 任务已存在，ID: {existing[0]}")
             task_id = existing[0]
         else:
             now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             cursor.execute('''
-                INSERT INTO crawler_tasks (name, source_id, task_type, status, schedule_type, priority, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO crawler_tasks (name, source_id, task_type, status, cron_expression, is_active, run_count, success_count, error_count, config, created_by, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''', (
                 '抓取500万彩票近三天赛程', source_id, 'DATA_COLLECTION', 
-                'pending', 'manual', 'high', now, now
+                'pending', None, True, 0, 0, 0, '{}', 1, now, now
             ))
             task_id = cursor.lastrowid
             conn.commit()
-            print(f"✓ 任务创建成功！ID: {task_id}")
+            print(f"[OK] 任务创建成功！ID: {task_id}")
     else:
         print("⚠ 未找到crawler_tasks表，跳过任务创建")
         task_id = None
@@ -137,20 +137,23 @@ def crawl_and_save_data():
         # 检查比赛是否已存在
         cursor.execute('SELECT id FROM football_matches WHERE match_id = ?', (match['match_id'],))
         if not cursor.fetchone():
+            # 转换时间为时间戳和datetime格式
+            dt_obj = datetime.strptime(match['match_time'], '%Y-%m-%d %H:%M:%S')
+            timestamp = int(dt_obj.timestamp())
             cursor.execute('''
-                INSERT INTO football_matches (match_id, home_team, away_team, match_time, league, status, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO football_matches (match_id, date_time, line_id, match_time, home_team, away_team, league, status, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''', (
-                match['match_id'], match['home_team'], match['away_team'],
-                match['match_time'], match['league'], match['status'],
-                datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                match['match_id'], timestamp, 1, match['match_time'],
+                match['home_team'], match['away_team'], match['league'],
+                match['status'], datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             ))
             inserted_count += 1
     
     conn.commit()
     conn.close()
     
-    print(f"✓ 成功抓取并保存 {inserted_count} 条新比赛数据")
+    print(f"[OK] 成功抓取并保存 {inserted_count} 条新比赛数据")
     return inserted_count
 
 def check_data_in_db():
@@ -162,7 +165,7 @@ def check_data_in_db():
     
     cursor.execute('SELECT COUNT(*) FROM football_matches')
     total = cursor.fetchone()[0]
-    print(f"✓ 数据库中共有 {total} 场比赛")
+    print(f"[OK] 数据库中共有 {total} 场比赛")
     
     if total > 0:
         cursor.execute('SELECT match_id, home_team, away_team, match_time, league FROM football_matches ORDER BY match_time LIMIT 10')
@@ -186,8 +189,8 @@ if __name__ == '__main__':
     inserted = crawl_and_save_data()
     check_data_in_db()
     
-    print("\n" + "=" * 80)
-    print("✅ 所有操作完成！现在你可以在页面上看到真实数据了")
-    print("=" * 80)
+print("\n" + "=" * 80)
+print("[SUCCESS] 所有操作完成！现在你可以在页面上看到真实数据了")
+print("=" * 80)
     
     # AI_DONE: coder1 @2026-01-26 10:45:00

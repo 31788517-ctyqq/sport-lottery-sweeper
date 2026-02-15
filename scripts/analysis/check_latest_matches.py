@@ -6,7 +6,7 @@ import json
 from collections import defaultdict
 
 def check_latest_100qiu_matches():
-    conn = sqlite3.connect('sport_lottery.db')
+    conn = sqlite3.connect('data/sport_lottery.db')
     cursor = conn.cursor()
     
     # 获取所有100qiu数据的source_attributes

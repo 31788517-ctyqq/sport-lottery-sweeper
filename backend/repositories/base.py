@@ -16,7 +16,14 @@ from sqlalchemy.orm import Session, Query
 from sqlalchemy.exc import SQLAlchemyError
 
 from backend.utils.null_safety import NullSafety, null_safe
-from backend.core.exceptions import NotFoundException, NullValueError, EmptyResultError
+
+# 延迟导入异常类，避免循环依赖
+def get_exceptions():
+    """延迟导入异常类，避免循环依赖"""
+    from backend.core.exceptions import NotFoundException, NullValueError, EmptyResultError
+    return NotFoundException, NullValueError, EmptyResultError
+
+NotFoundException, NullValueError, EmptyResultError = get_exceptions()
 
 T = TypeVar('T', bound=Any)
 

@@ -23,9 +23,9 @@ from fastapi import HTTPException, status, Depends, Security
 from fastapi.security import OAuth2PasswordBearer
 
 # 导入模型
-from ..models.user import User as NormalUser  # 普通用户模型
-from ..models.admin_user import AdminUser  # 管理员用户模型
-from ..schemas.token import TokenData
+from backend.models.user import User as NormalUser  # 普通用户模型
+from backend.models.admin_user import AdminUser  # 管理员用户模型
+from backend.schemas.token import TokenData
 
 # 导入异常类
 from backend.utils.exceptions import (
@@ -420,9 +420,9 @@ reusable_oauth2 = oauth2_scheme
 
 from fastapi import HTTPException, status, Depends
 from jose import JWTError
-from ..models.admin_user import AdminUser, AdminStatusEnum, AdminRoleEnum
-from ..config import settings
-from .. import crud
+from backend.models.admin_user import AdminUser, AdminStatusEnum, AdminRoleEnum
+from backend.config import settings
+from backend import crud
 
 
 async def get_current_user(token: str = Security(reusable_oauth2)):

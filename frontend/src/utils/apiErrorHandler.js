@@ -108,9 +108,15 @@ export const handleApiCall = async (apiCall, operation, options = {}) => {
     
     // 特殊处理401错误 - 跳转登录
     if (error.response?.status === 401) {
-      setTimeout(() => {
-        window.location.href = '/login';
-      }, 1500);
+      // 开发环境下只显示提示，避免页面刷新循环
+      if (import.meta.env.MODE === 'development') {
+        console.warn('🔧 开发模式：跳过401页面跳转')
+        ElMessage.warning('开发模式：模拟登录过期状态')
+      } else {
+        setTimeout(() => {
+          window.location.href = '/login';
+        }, 1500);
+      }
     }
     
     onError?.(error);
@@ -147,9 +153,12 @@ export const handleAuthenticatedApiCall = async (apiCall, operation, options = {
   
   if (!token) {
     ElMessage.error('请先登录');
-    setTimeout(() => {
-      window.location.href = '/login';
-    }, 1500);
+    // 开发环境下跳过强制跳转
+    if (import.meta.env.MODE !== 'development') {
+      setTimeout(() => {
+        window.location.href = '/login';
+      }, 1500);
+    }
     throw new Error('No valid token');
   }
   

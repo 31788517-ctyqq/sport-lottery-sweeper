@@ -1,55 +1,71 @@
-// Simple test runner that bypasses vitest watch mode issues
-const { execSync } = require('child_process');
-const fs = require('fs');
-const path = require('path');
+#!/usr/bin/env node
 
-console.log('=== Simple Test Runner ===');
+import { spawn } from 'child_process';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 
-// Change to frontend directory
-process.chdir(path.join(__dirname, 'frontend'));
-console.log('Working directory:', process.cwd());
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
-// Test 1: Check if component file exists
-const componentPath = './src/views/admin/BeidanFilterPanel.vue';
-if (fs.existsSync(componentPath)) {
-  console.log('✅ Component file exists:', componentPath);
-} else {
-  console.log('❌ Component file not found:', componentPath);
-}
+console.log('🧪 开始运行前端测试...\n');
 
-// Test 2: Check if test file exists
-const testPath = './tests/unit/views/admin/BeidanFilterPanel.unit.spec.js';
-if (fs.existsSync(testPath)) {
-  console.log('✅ Test file exists:', testPath);
-} else {
-  console.log('❌ Test file not found:', testPath);
-}
+const testFiles = [
+  'src/tests/unit/utils/date.test.js',
+  'src/tests/unit/utils/number.test.js', 
+  'src/tests/unit/utils/string.test.js',
+  'src/tests/unit/utils/formatters.test.js',
+  'src/tests/unit/utils/beidanFilterUtils.test.js',
+  'src/tests/unit/components/BeidanFilterPanel.test.js',
+  'src/tests/unit/components/BeidanFilterPanel.api.test.js',
+  'src/tests/unit/store/auth.test.js',
+  'src/tests/unit/router/beidanFilterRoute.test.js'
+];
 
-// Test 3: Try running vitest with different approach
-console.log('\n=== Running Tests ===');
-try {
-  // Use timeout to prevent hanging
-  const testCommand = `npx vitest run ${testPath} --reporter=verbose --timeout=10000`;
-  console.log('Command:', testCommand);
-  
-  const output = execSync(testCommand, { 
-    encoding: 'utf8',
-    stdio: 'pipe',
-    timeout: 15000 
+async function runTestFile(testFile) {
+  return new Promise((resolve) => {
+    console.log(`\n📋 运行测试: ${testFile}`);
+    console.log('─'.repeat(50));
+    
+    const vitest = spawn('npx', ['vitest', 'run', testFile, '--reporter=basic'], {
+      cwd: __dirname,
+      stdio: 'inherit',
+      shell: true
+    });
+    
+    vitest.on('close', (code) => {
+      if (code === 0) {
+        console.log(`✅ ${testFile} 通过`);
+      } else {
+        console.log(`❌ ${testFile} 失败 (退出码: ${code})`);
+      }
+      resolve(code);
+    });
   });
+}
+
+async function runAllTests() {
+  let passed = 0;
+  let failed = 0;
   
-  console.log('Test output:');
-  console.log(output);
+  for (const testFile of testFiles) {
+    const result = await runTestFile(testFile);
+    if (result === 0) {
+      passed++;
+    } else {
+      failed++;
+    }
+  }
   
-} catch (error) {
-  console.log('Test execution result:');
-  console.log('Exit code:', error.status);
-  console.log('Stdout:', error.stdout || 'No output');
-  console.log('Stderr:', error.stderr || 'No error output');
+  console.log('\n' + '='.repeat(60));
+  console.log('📊 测试结果汇总:');
+  console.log(`✅ 通过: ${passed}`);
+  console.log(`❌ 失败: ${failed}`);
+  console.log(`📋 总计: ${testFiles.length}`);
+  console.log('='.repeat(60));
   
-  if (error.signal === 'SIGTERM') {
-    console.log('\n⚠️  Tests timed out - vitest may be hanging in watch mode');
+  if (failed > 0) {
+    process.exit(1);
   }
 }
 
-console.log('\n=== Test Runner Complete ===');
+runAllTests().catch(console.error);

@@ -13,7 +13,7 @@ def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
 def main():
-    DB_PATH = 'sport_lottery.db'
+    DB_PATH = 'data/sport_lottery.db'
     NEW_PWD = 'admin123'
     NEW_HASH = hash_password(NEW_PWD)
     

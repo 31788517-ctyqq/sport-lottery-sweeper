@@ -54,72 +54,72 @@ export const API_CONFIG = {
 export const API_ENDPOINTS = {
   // 认证相关
   AUTH: {
-    LOGIN: '/api/v1/auth/login',
-    LOGOUT: '/api/v1/auth/logout',
-    REFRESH: '/api/v1/auth/refresh',
-    PROFILE: '/api/v1/auth/me'
+    LOGIN: '/api/auth/login',
+    LOGOUT: '/api/logout',
+    REFRESH: '/api/refresh',
+    PROFILE: '/api/me'
   },
   
   // LLM服务相关
   LLM: {
-    CHAT: '/api/v1/llm/chat',
-    PROVIDERS: '/api/v1/llm/providers',
-    COST_METRICS: '/api/v1/llm/cost-metrics',
-    EXPLAIN_PREDICTION: '/api/v1/llm/explain-prediction'
+    CHAT: '/api/llm/chat',
+    PROVIDERS: '/api/llm/providers',
+    COST_METRICS: '/api/llm/cost-metrics',
+    EXPLAIN_PREDICTION: '/api/llm/explain-prediction'
   },
   
   // 用户管理
   USERS: {
-    LIST: '/api/v1/admin/users',
-    CREATE: '/api/v1/admin/users',
-    UPDATE: (id) => `/api/v1/admin/users/${id}`,
-    DELETE: (id) => `/api/v1/admin/users/${id}`,
-    BATCH_DELETE: '/api/v1/admin/users/batch-delete',
-    ENABLE: (id) => `/api/v1/admin/users/${id}/enable`,
-    DISABLE: (id) => `/api/v1/admin/users/${id}/disable`,
-    RESET_PASSWORD: (id) => `/api/v1/admin/users/${id}/reset-password`,
-    ASSIGN_ROLES: (id) => `/api/v1/admin/users/${id}/roles`,
-    PERMISSIONS: (id) => `/api/v1/admin/users/${id}/permissions`
+    LIST: '/api/admin/users',
+    CREATE: '/api/admin/users',
+    UPDATE: (id) => `/api/admin/users/${id}`,
+    DELETE: (id) => `/api/admin/users/${id}`,
+    BATCH_DELETE: '/api/admin/users/batch-delete',
+    ENABLE: (id) => `/api/admin/users/${id}/enable`,
+    DISABLE: (id) => `/api/admin/users/${id}/disable`,
+    RESET_PASSWORD: (id) => `/api/admin/users/${id}/reset-password`,
+    ASSIGN_ROLES: (id) => `/api/admin/users/${id}/roles`,
+    PERMISSIONS: (id) => `/api/admin/users/${id}/permissions`
   },
   
   // 角色管理
   ROLES: {
-    LIST: '/api/v1/admin/roles',
-    CREATE: '/api/v1/admin/roles',
-    UPDATE: (id) => `/api/v1/admin/roles/${id}`,
-    DELETE: (id) => `/api/v1/admin/roles/${id}`,
-    PERMISSIONS: (id) => `/api/v1/admin/roles/${id}/permissions`
+    LIST: '/api/admin/roles',
+    CREATE: '/api/admin/roles',
+    UPDATE: (id) => `/api/admin/roles/${id}`,
+    DELETE: (id) => `/api/admin/roles/${id}`,
+    PERMISSIONS: (id) => `/api/admin/roles/${id}/permissions`
   },
   
   // 权限管理
   PERMISSIONS: {
-    LIST: '/api/v1/admin/permissions',
-    TREE: '/api/v1/admin/permissions/tree'
+    LIST: '/api/admin/permissions',
+    TREE: '/api/admin/permissions/tree'
   },
   
   // 部门管理
   DEPARTMENTS: {
-    LIST: '/api/v1/admin/departments',
-    CREATE: '/api/v1/admin/departments',
-    UPDATE: (id) => `/api/v1/admin/departments/${id}`,
-    DELETE: (id) => `/api/v1/admin/departments/${id}`,
-    MEMBERS: (id) => `/api/v1/admin/departments/${id}/members`,
-    ADD_MEMBERS: (id) => `/api/v1/admin/departments/${id}/members/add`,
-    REMOVE_MEMBERS: (id) => `/api/v1/admin/departments/${id}/members/remove`
+    LIST: '/api/admin/departments',
+    CREATE: '/api/admin/departments',
+    UPDATE: (id) => `/api/admin/departments/${id}`,
+    DELETE: (id) => `/api/admin/departments/${id}`,
+    MEMBERS: (id) => `/api/admin/departments/${id}/members`,
+    ADD_MEMBERS: (id) => `/api/admin/departments/${id}/members/add`,
+    REMOVE_MEMBERS: (id) => `/api/admin/departments/${id}/members/remove`
   },
   
   // 操作日志
   OPERATION_LOGS: {
-    LIST: '/api/v1/admin/system/logs/db/user',
-    STATISTICS: '/api/v1/admin/system/logs/db/statistics',
-    EXPORT: '/api/v1/admin/system/logs/export'
+    LIST: '/api/admin/system/logs/db/user',
+    STATISTICS: '/api/admin/system/logs/db/statistics',
+    EXPORT: '/api/admin/system/logs/export'
   },
   
   // 系统监控
   SYSTEM: {
-    HEALTH: '/api/v1/system/health',
-    METRICS: '/api/v1/system/metrics',
-    CONFIG: '/api/v1/system/config'
+    HEALTH: '/api/system/health',
+    METRICS: '/api/system/metrics',
+    CONFIG: '/api/system/config'
   }
 }
 

@@ -12,11 +12,23 @@ DATA_DIR.mkdir(exist_ok=True)  # 确保data目录存在
 DATABASE_PATH = DATA_DIR / "sport_lottery.db"
 
 # 计算数据库URL（在类定义外部）- 使用绝对路径
-ABS_DB_PATH = str(DATABASE_PATH.absolute()).replace(chr(92), '/')
+ABS_DB_PATH = str(DATABASE_PATH.absolute())
+# 规范化路径分隔符，确保Windows兼容性
+if ':' in ABS_DB_PATH:
+    # Windows路径格式：C:\path\to\file.db -> ///C:/path/to/file.db
+    ABS_DB_PATH = ABS_DB_PATH.replace('\\\\', '/')
+    DEFAULT_DATABASE_URL = f"sqlite:///{ABS_DB_PATH}"
+    DEFAULT_ASYNC_DATABASE_URL = f"sqlite+aiosqlite:///{ABS_DB_PATH}"
+else:
+    # Unix路径格式
+    DEFAULT_DATABASE_URL = f"sqlite:///{ABS_DB_PATH}"
+    DEFAULT_ASYNC_DATABASE_URL = f"sqlite+aiosqlite:///{ABS_DB_PATH}"
 
-# 默认数据库URL常量（在类定义之前定义）
-DEFAULT_DATABASE_URL = f"sqlite:///{ABS_DB_PATH}"
-DEFAULT_ASYNC_DATABASE_URL = f"sqlite+aiosqlite:///{ABS_DB_PATH}"
+# 调试输出（可选，避免编码问题）
+try:
+    print(f"数据库路径配置: {DEFAULT_DATABASE_URL}")
+except UnicodeEncodeError:
+    print(f"Database URL configured: {DEFAULT_DATABASE_URL}")
 
 
 class Settings(BaseSettings):
@@ -56,15 +68,40 @@ class Settings(BaseSettings):
     }
 
     # --- Security Settings ---
-    SECRET_KEY: str = Field(default="C_Ks04hg6nT8NC3ZEKG6pQsm7jC_2shXMMm9nhhTY1M=", description="Secret key for encryption")
+    # Generate secure secret key from environment variable or create random one
+    SECRET_KEY: str = Field(
+        default_factory=lambda: os.getenv(
+            "SECRET_KEY", 
+            secrets.token_urlsafe(32)  # Fallback to random 32-byte key
+        ),
+        description="Secret key for encryption - should be set via SECRET_KEY env var in production"
+    )
 
     # --- Backend CORS Origins ---
-    BACKEND_CORS_ORIGINS: List[str] = ["*"]
+    # Security: Explicit origins instead of wildcard to prevent unauthorized domains
+    BACKEND_CORS_ORIGINS: List[str] = [
+        "http://localhost:3000",      # Frontend development server
+        "http://127.0.0.1:3000",      # Frontend alternative
+        "http://localhost:8080",      # Alternative frontend port
+        "https://your-production-domain.com",  # Production domain - UPDATE THIS
+        "https://www.your-production-domain.com"  # Production www domain - UPDATE THIS
+    ]
 
     # --- JWT Settings ---
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
-    REFRESH_TOKEN_EXPIRE_DAYS: int = 7
-    ALGORITHM: str = "HS256"  # 添加JWT算法设置
+    # Shortened expiry times for enhanced security
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 15  # Reduced from 30 to 15 minutes
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 1    # Reduced from 7 to 1 day for security
+    ALGORITHM: str = "HS256"  # JWT algorithm
+    
+    # Token blacklist settings
+    ENABLE_TOKEN_BLACKLIST: bool = Field(
+        default=True, 
+        description="Enable token blacklist for logout/invalidation functionality"
+    )
+    BLACKLIST_CLEANUP_HOURS: int = Field(
+        default=24, 
+        description="Hours to keep blacklisted tokens before cleanup"
+    )
 
     # --- Database Pool Settings ---
     # Connection pool sizes

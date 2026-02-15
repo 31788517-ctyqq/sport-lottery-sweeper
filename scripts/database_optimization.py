@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 def get_database_path():
     """获取数据库路径"""
     # 检查环境变量或使用默认路径
-    db_path = os.getenv("DATABASE_PATH", "sport_lottery.db")
+    db_path = os.getenv("DATABASE_PATH", "data/sport_lottery.db")
     
     # 如果是相对路径，拼接项目根目录
     if not Path(db_path).is_absolute():

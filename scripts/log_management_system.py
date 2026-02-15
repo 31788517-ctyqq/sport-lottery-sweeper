@@ -30,7 +30,7 @@ class LogManagementSystem:
     """日志管理系统"""
     
     def __init__(self, db_path: str = None):
-        self.db_path = db_path or "sport_lottery.db"
+        self.db_path = db_path or "data/sport_lottery.db"
         self.log_dir = project_root / "logs"
         self.log_dir.mkdir(exist_ok=True)
         

@@ -2,7 +2,7 @@ import sqlite3
 import os
 
 # 数据库文件路径
-db_path = os.path.join('backend', 'sport_lottery.db')
+db_path = os.path.join('data', 'data/sport_lottery.db')
 
 def check_tables():
     """检查数据库中的所有表"""

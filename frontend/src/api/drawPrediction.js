@@ -6,7 +6,7 @@ import request from '@/utils/request'
 // 获取平局预测特征列表
 export function getDrawFeatures(params) {
   return request({
-    url: '/api/v1/draw-prediction/features',
+    url: '/api/draw-prediction/features',
     method: 'get',
     params
   })
@@ -15,7 +15,7 @@ export function getDrawFeatures(params) {
 // 创建平局预测特征
 export function createDrawFeature(data) {
   return request({
-    url: '/api/v1/draw-prediction/features',
+    url: '/api/draw-prediction/features',
     method: 'post',
     data
   })
@@ -24,7 +24,7 @@ export function createDrawFeature(data) {
 // 更新平局预测特征
 export function updateDrawFeature(id, data) {
   return request({
-    url: `/api/v1/draw-prediction/features/${id}`,
+    url: `/api/draw-prediction/features/${id}`,
     method: 'put',
     data
   })
@@ -33,7 +33,7 @@ export function updateDrawFeature(id, data) {
 // 删除平局预测特征
 export function deleteDrawFeature(id) {
   return request({
-    url: `/api/v1/draw-prediction/features/${id}`,
+    url: `/api/draw-prediction/features/${id}`,
     method: 'delete'
   })
 }
@@ -41,7 +41,7 @@ export function deleteDrawFeature(id) {
 // 获取训练任务列表
 export function getTrainingJobs(params) {
   return request({
-    url: '/api/v1/draw-prediction/training-jobs',
+    url: '/api/draw-prediction/training-jobs',
     method: 'get',
     params
   })
@@ -50,7 +50,7 @@ export function getTrainingJobs(params) {
 // 创建训练任务
 export function createTrainingJob(data) {
   return request({
-    url: '/api/v1/draw-prediction/training-jobs',
+    url: '/api/draw-prediction/training-jobs',
     method: 'post',
     data
   })
@@ -59,7 +59,7 @@ export function createTrainingJob(data) {
 // 获取训练任务日志
 export function getTrainingJobLogs(jobId) {
   return request({
-    url: `/api/v1/draw-prediction/training-jobs/${jobId}/logs`,
+    url: `/api/draw-prediction/training-jobs/${jobId}/logs`,
     method: 'get'
   })
 }
@@ -67,7 +67,7 @@ export function getTrainingJobLogs(jobId) {
 // 更新训练任务状态
 export function updateTrainingJobStatus(jobId, data) {
   return request({
-    url: `/api/v1/draw-prediction/training-jobs/${jobId}/status`,
+    url: `/api/draw-prediction/training-jobs/${jobId}/status`,
     method: 'put',
     data
   })
@@ -76,7 +76,7 @@ export function updateTrainingJobStatus(jobId, data) {
 // 获取模型版本列表
 export function getModelVersions(params) {
   return request({
-    url: '/api/v1/draw-prediction/models',
+    url: '/api/draw-prediction/models',
     method: 'get',
     params
   })
@@ -85,7 +85,7 @@ export function getModelVersions(params) {
 // 部署模型版本
 export function deployModelVersion(modelId) {
   return request({
-    url: `/api/v1/draw-prediction/models/${modelId}/deploy`,
+    url: `/api/draw-prediction/models/${modelId}/deploy`,
     method: 'post'
   })
 }
@@ -93,7 +93,7 @@ export function deployModelVersion(modelId) {
 // 回滚模型版本
 export function rollbackModelVersion(modelId) {
   return request({
-    url: `/api/v1/draw-prediction/models/${modelId}/rollback`,
+    url: `/api/draw-prediction/models/${modelId}/rollback`,
     method: 'post'
   })
 }
@@ -101,7 +101,7 @@ export function rollbackModelVersion(modelId) {
 // 获取预测结果列表
 export function getPredictions(params) {
   return request({
-    url: '/api/v1/draw-prediction/predictions',
+    url: '/api/draw-prediction/predictions',
     method: 'get',
     params
   })

@@ -42,52 +42,52 @@ export const exportLogs = (params) => {
 
 // 获取操作模块列表 - 这个端点可能不存在，暂时注释掉
 // export const getOperationModules = () => {
-//   return http.get('/api/v1/admin/operation-logs/modules')
+//   return http.get('/api/admin/operation-logs/modules')
 // }
 
 // 获取操作类型列表 - 这个端点可能不存在，暂时注释掉  
 // export const getOperationActions = () => {
-//   return http.get('/api/v1/admin/operation-logs/actions')
+//   return http.get('/api/admin/operation-logs/actions')
 // }
 
 // 获取用户操作统计 - 这个端点可能不存在，暂时注释掉
 // export const getUserOperationStats = (userId, params) => {
-//   return http.get(`/api/v1/admin/users/${userId}/operation-stats`, { params })
+//   return http.get(`/api/admin/users/${userId}/operation-stats`, { params })
 // }
 
 // 获取热门操作排行 - 这个端点可能不存在，暂时注释掉
 // export const getPopularOperations = (params) => {
-//   return http.get('/api/v1/admin/operation-logs/popular', { params })
+//   return http.get('/api/admin/operation-logs/popular', { params })
 // }
 
 // 获取异常操作记录 - 这个端点可能不存在，暂时注释掉
 // export const getErrorOperations = (params) => {
-//   return http.get('/api/v1/admin/operation-logs/errors', { params })
+//   return http.get('/api/admin/operation-logs/errors', { params })
 // }
 
 // 获取登录统计 - 这个端点可能不存在，暂时注释掉
 // export const getLoginStats = (params) => {
-//   return http.get('/api/v1/admin/operation-logs/login-stats', { params })
+//   return http.get('/api/admin/operation-logs/login-stats', { params })
 // }
 
 // 实时监控日志 - 这个端点可能不存在，暂时注释掉
 // export const getRealtimeLogs = (params) => {
-//   return http.get('/api/v1/admin/operation-logs/realtime', { params })
+//   return http.get('/api/admin/operation-logs/realtime', { params })
 // }
 
 // 获取日志趋势数据 - 这个端点可能不存在，暂时注释掉
 // export const getLogTrends = (params) => {
-//   return http.get('/api/v1/admin/operation-logs/trends', { params })
+//   return http.get('/api/admin/operation-logs/trends', { params })
 // }
 
 // 归档日志 - 这个端点可能不存在，暂时注释掉
 // export const archiveLogs = (beforeDate) => {
-//   return http.post('/api/v1/admin/operation-logs/archive', null, { params: { beforeDate } })
+//   return http.post('/api/admin/operation-logs/archive', null, { params: { beforeDate } })
 // }
 
 // 下载日志文件 - 这个端点可能不存在，暂时注释掉
 // export const downloadLogFile = (logFile) => {
-//   return http.get(`/api/v1/admin/operation-logs/download/${logFile}`, { responseType: 'blob' })
+//   return http.get(`/api/admin/operation-logs/download/${logFile}`, { responseType: 'blob' })
 // }
 
 // 别名导出，以匹配组件中的导入

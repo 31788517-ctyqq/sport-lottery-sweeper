@@ -50,6 +50,16 @@ class BeidanStrategy(Base):
     
     def to_dict(self) -> dict:
         """转换为字典格式"""
+        # 处理字符串类型的日期时间字段
+        def format_datetime(dt):
+            if dt is None:
+                return None
+            if isinstance(dt, str):
+                return dt
+            if hasattr(dt, 'isoformat'):
+                return dt.isoformat()
+            return str(dt)
+            
         return {
             "id": self.id,
             "name": self.name,
@@ -57,8 +67,8 @@ class BeidanStrategy(Base):
             "threeDimensional": self.three_dimensional,
             "otherConditions": self.other_conditions,
             "sort": self.sort_config,
-            "createdAt": self.created_at.isoformat() if self.created_at else None,
-            "updatedAt": self.updated_at.isoformat() if self.updated_at else None
+            "createdAt": format_datetime(self.created_at),
+            "updatedAt": format_datetime(self.updated_at)
         }
 
 

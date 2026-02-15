@@ -2,7 +2,7 @@ import sqlite3
 import os
 
 # 检查当前目录下的sport_lottery.db文件
-db_path = os.path.join(os.getcwd(), 'sport_lottery.db')
+db_path = os.path.join(os.getcwd(), 'data', 'data/sport_lottery.db')
 print('数据库路径:', db_path)
 print('文件是否存在:', os.path.exists(db_path))
 

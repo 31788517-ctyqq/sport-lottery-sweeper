@@ -7,7 +7,7 @@ import sqlite3
 import os
 
 def main():
-    db_path = 'sport_lottery.db'
+    db_path = 'data/sport_lottery.db'
     print(f"检查数据库: {db_path}")
     print(f"文件大小: {os.path.getsize(db_path) if os.path.exists(db_path) else '不存在'} 字节")
     

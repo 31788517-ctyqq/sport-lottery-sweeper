@@ -1,6 +1,6 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """
-测试模型注册和映射器配置
+娴嬭瘯妯″瀷娉ㄥ唽鍜屾槧灏勫櫒閰嶇疆
 """
 import sys
 sys.path.insert(0, '.')
@@ -11,55 +11,52 @@ from models.base import Base
 from models.user import User
 from models.predictions import UserPrediction, Prediction
 
-print("=== 测试模型注册 ===")
+print("=== 娴嬭瘯妯″瀷娉ㄥ唽 ===")
 
-# 创建内存数据库引擎
-engine = create_engine('sqlite:///:memory:')
+# 鍒涘缓鍐呭瓨鏁版嵁搴撳紩鎿?engine = create_engine('sqlite:///:memory:')
 
-# 创建所有表
+# 鍒涘缓鎵€鏈夎〃
 try:
     Base.metadata.create_all(engine)
-    print("[OK] 数据库表创建成功")
+    print("SUCCESS 鏁版嵁搴撹〃鍒涘缓鎴愬姛")
 except Exception as e:
-    print(f"[FAIL] 数据库表创建失败: {e}")
+    print(f"FAILED 鏁版嵁搴撹〃鍒涘缓澶辫触: {e}")
     sys.exit(1)
 
-# 测试映射器配置
-models_to_test = [User, UserPrediction, Prediction]
+# 娴嬭瘯鏄犲皠鍣ㄩ厤缃?models_to_test = [User, UserPrediction, Prediction]
 for model in models_to_test:
     try:
         mapper = class_mapper(model)
-        print(f"[OK] {model.__name__} 映射器配置成功")
+        print(f"SUCCESS {model.__name__} 鏄犲皠鍣ㄩ厤缃垚鍔?)
     except Exception as e:
-        print(f"[FAIL] {model.__name__} 映射器配置失败: {e}")
+        print(f"FAILED {model.__name__} 鏄犲皠鍣ㄩ厤缃け璐? {e}")
 
-# 测试关系
-print("\n=== 测试关系 ===")
+# 娴嬭瘯鍏崇郴
+print("\n=== 娴嬭瘯鍏崇郴 ===")
 if hasattr(User, 'user_predictions'):
     rel = User.user_predictions
-    print(f"[OK] User.user_predictions 关系存在: {rel}")
+    print(f"SUCCESS User.user_predictions 鍏崇郴瀛樺湪: {rel}")
 else:
-    print("[FAIL] User.user_predictions 关系缺失")
+    print("FAILED User.user_predictions 鍏崇郴缂哄け")
 
 if hasattr(UserPrediction, 'user'):
     rel = UserPrediction.user
-    print(f"[OK] UserPrediction.user 关系存在: {rel}")
+    print(f"SUCCESS UserPrediction.user 鍏崇郴瀛樺湪: {rel}")
 else:
-    print("[FAIL] UserPrediction.user 关系缺失")
+    print("FAILED UserPrediction.user 鍏崇郴缂哄け")
 
 if hasattr(Prediction, 'user_predictions'):
     rel = Prediction.user_predictions
-    print(f"[OK] Prediction.user_predictions 关系存在: {rel}")
+    print(f"SUCCESS Prediction.user_predictions 鍏崇郴瀛樺湪: {rel}")
 else:
-    print("[FAIL] Prediction.user_predictions 关系缺失")
+    print("FAILED Prediction.user_predictions 鍏崇郴缂哄け")
 
-# 创建一个会话并测试基本操作
+# 鍒涘缓涓€涓細璇濆苟娴嬭瘯鍩烘湰鎿嶄綔
 Session = sessionmaker(bind=engine)
 session = Session()
 
 try:
-    # 创建一个测试用户
-    test_user = User(
+    # 鍒涘缓涓€涓祴璇曠敤鎴?    test_user = User(
         username='testuser',
         email='test@example.com',
         hashed_password='fakehash',
@@ -67,15 +64,15 @@ try:
     )
     session.add(test_user)
     session.commit()
-    print(f"[OK] 用户创建成功: id={test_user.id}")
+    print(f"SUCCESS 鐢ㄦ埛鍒涘缓鎴愬姛: id={test_user.id}")
     
-    # 清理
+    # 娓呯悊
     session.query(User).delete()
     session.commit()
-    print("[OK] 清理成功")
+    print("SUCCESS 娓呯悊鎴愬姛")
     
 except Exception as e:
-    print(f"[FAIL] 数据库操作失败: {e}")
+    print(f"FAILED 鏁版嵁搴撴搷浣滃け璐? {e}")
     session.rollback()
 
-print("\n=== 测试完成 ===")
+print("\n=== 娴嬭瘯瀹屾垚 ===")

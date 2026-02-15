@@ -43,7 +43,7 @@ import LogTable from '@/components/LogTable.vue'
 import http from '@/utils/http'
 import { processLogResponse, getLogLevelType } from '@/utils/logUtils.js'
 
-const API_BASE = '/api/v1/admin/system';
+const API_BASE = '/api/admin/system';
 
 export default {
   name: 'APILogs',

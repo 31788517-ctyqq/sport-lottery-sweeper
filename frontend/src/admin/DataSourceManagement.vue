@@ -140,7 +140,7 @@ export default {
     async handleFetch(id) {
       this.fetchingId = id;
       try {
-        const response = await fetch(`/api/v1/data-source-100qiu/${id}/fetch`, {
+        const response = await fetch(`/api/data-source-100qiu/${id}/fetch`, {
           method: 'POST',
           credentials: 'include'
         });
@@ -175,7 +175,7 @@ export default {
         if (this.searchQuery) queryParams.push(`search=${encodeURIComponent(this.searchQuery)}`);
         
         const queryString = queryParams.length > 0 ? '?' + queryParams.join('&') : '';
-        const url = `/api/v1/admin/sources${queryString}`;
+        const url = `/api/admin/sources${queryString}`;
         
         const response = await fetch(url, {
           method: 'GET',

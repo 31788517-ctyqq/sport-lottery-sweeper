@@ -4,6 +4,11 @@
 包含测试夹具、模拟对象和测试配置
 """
 
+import sys
+import os
+# 添加项目根目录到Python路径，确保backend包可导入
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+
 import pytest
 import asyncio
 from unittest.mock import Mock, MagicMock, patch, AsyncMock

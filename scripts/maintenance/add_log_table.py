@@ -26,7 +26,7 @@ def add_log_table():
             print("log_entries 表已存在")
             # 检查表中的记录数
             import sqlite3
-            conn = sqlite3.connect('backend/sport_lottery.db')
+            conn = sqlite3.connect('data/sport_lottery.db')
             cursor = conn.cursor()
             cursor.execute('SELECT COUNT(*) FROM log_entries;')
             count = cursor.fetchone()[0]
@@ -58,7 +58,7 @@ def add_log_table():
             
             # 检查表中的记录数
             import sqlite3
-            conn = sqlite3.connect('backend/sport_lottery.db')
+            conn = sqlite3.connect('data/sport_lottery.db')
             cursor = conn.cursor()
             cursor.execute('SELECT COUNT(*) FROM log_entries;')
             count = cursor.fetchone()[0]

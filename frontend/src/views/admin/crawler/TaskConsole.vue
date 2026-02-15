@@ -26,7 +26,7 @@
           <el-card class="stat-card">
             <el-statistic
               title="运行中"
-              :value="statistics.runningTasks"
+              :value="Number(statistics.runningTasks) || 0"
               :precision="0"
               style="color: #67c23a"
             >
@@ -40,7 +40,7 @@
           <el-card class="stat-card">
             <el-statistic
               title="成功完成"
-              :value="statistics.successTasks"
+              :value="Number(statistics.successTasks) || 0"
               :precision="0"
               style="color: #409eff"
             >
@@ -54,7 +54,7 @@
           <el-card class="stat-card">
             <el-statistic
               title="失败任务"
-              :value="statistics.failedTasks"
+              :value="Number(statistics.failedTasks) || 0"
               :precision="0"
               style="color: #f56c6c"
             >
@@ -65,6 +65,12 @@
           </el-card>
         </el-col>
       </el-row>
+      <!-- 空数据提示 -->
+      <div v-if="displayTotalValue === 0 && !hasActiveFilters" class="empty-stats-tip">
+        <el-alert type="info" show-icon :closable="false">
+          暂无统计数据，请先创建或运行任务以生成统计信息。
+        </el-alert>
+      </div>
     </div>
 
     <!-- 操作栏 (已删除500彩票网相关按钮) -->
@@ -133,7 +139,7 @@
             />
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" @click="searchTasks">查询</el-button>
+            <el-button type="primary" @click="searchTasks" :loading="searchLoading">查询</el-button>
             <el-button @click="resetFilters">重置</el-button>
           </el-form-item>
         </el-form>
@@ -142,7 +148,13 @@
 
     <!-- 任务列表 -->
     <div class="table-section">
+      <div v-if="tasks.length === 0" class="empty-state">
+        <el-empty description="暂无任务，请先创建数据源并配置任务">
+          <el-button type="primary" @click="handleAdd">添加任务</el-button>
+        </el-empty>
+      </div>
       <el-table
+        v-else
         :data="tasks"
         v-loading="loading"
         @selection-change="handleSelectionChange"
@@ -154,34 +166,34 @@
         <el-table-column prop="name" label="任务名称" min-width="150" />
         <el-table-column prop="task_type" label="任务类型" width="100">
           <template #default="scope">
-            <el-tag :type="getTaskTypeColor(scope.row.task_type)">
-              {{ getTaskTypeName(scope.row.task_type) }}
-            </el-tag>
+<el-tag :type="getTaskTypeColor(scope.row.task_type || '')">
+  {{ getTaskTypeName(scope.row.task_type || '') }}
+</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="status" label="状态" width="100">
           <template #default="scope">
-            <el-tag :type="getStatusColor(scope.row.status)">
-              {{ getStatusName(scope.row.status) }}
-            </el-tag>
+<el-tag :type="getStatusColor(scope.row.status || '')">
+  {{ getStatusName(scope.row.status || '') }}
+</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="source_id" label="源ID" width="100" />
         <el-table-column prop="progress" label="进度" width="120">
           <template #default="scope">
-            <el-progress :percentage="scope.row.progress || 0" :stroke-width="6" />
+            <el-progress :percentage="scope.row.progress != null ? Number(scope.row.progress) : 0" :stroke-width="6" />
           </template>
         </el-table-column>
         <el-table-column prop="created_at" label="创建时间" width="160">
           <template #default="scope">
-            {{ formatDate(scope.row.created_at) }}
-          </template>
-        </el-table-column>
-        <el-table-column prop="started_at" label="开始时间" width="160">
-          <template #default="scope">
-            {{ formatDate(scope.row.started_at) }}
-          </template>
-        </el-table-column>
+            {{ formatDate(scope.row.created_at || null) }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="started_at" label="开始时间" width="160">
+            <template #default="scope">
+              {{ formatDate(scope.row.started_at || null) }}
+            </template>
+          </el-table-column>
         <el-table-column label="操作" width="380" fixed="right">
           <template #default="scope">
             <el-button 
@@ -222,8 +234,13 @@
         </el-table-column>
       </el-table>
 
+      <!-- 空数据提示 -->
+      <div v-if="tasks.length === 0 && !loading" class="empty-table-tip">
+        <el-empty description="暂无任务数据" />
+      </div>
+
       <!-- 分页 -->
-      <div class="pagination-wrapper">
+      <div v-if="tasks.length > 0" class="pagination-wrapper">
         <el-pagination
           v-model:current-page="pagination.page"
           v-model:page-size="pagination.size"
@@ -356,10 +373,15 @@
           <el-button @click="fetchLatestLogs">刷新日志</el-button>
         </div>
         <div class="log-content">
-          <div v-for="log in taskLogs" :key="log.id" class="log-line">
-            <span class="log-timestamp">{{ formatTimestamp(log.timestamp) }}</span>
-            <span :class="`log-level log-level-${log.level.toLowerCase()}`">[{{ log.level }}]</span>
-            <span class="log-message">{{ log.message }}</span>
+          <div v-if="taskLogs.length === 0" class="empty-logs-tip">
+            <el-empty description="暂无日志" />
+          </div>
+          <div v-else>
+            <div v-for="log in taskLogs" :key="log.id" class="log-line">
+              <span class="log-timestamp">{{ formatTimestamp(log.timestamp) }}</span>
+              <span :class="`log-level log-level-${(log.level || 'info').toLowerCase()}`">[{{ log.level || 'INFO' }}]</span>
+              <span class="log-message">{{ log.message || '' }}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -385,12 +407,12 @@
             <el-progress :percentage="currentProgress" :status="currentTask?.status === 'RUNNING' ? null : 'success'" />
           </el-descriptions-item>
           <el-descriptions-item label="数据源ID">{{ currentTask?.source_id }}</el-descriptions-item>
-          <el-descriptions-item label="上次运行时间">{{ formatDate(currentTask?.last_run_time) }}</el-descriptions-item>
-          <el-descriptions-item label="下次运行时间">{{ formatDate(currentTask?.next_run_time) }}</el-descriptions-item>
+          <el-descriptions-item label="上次运行时间">{{ formatDate(currentTask?.last_run_time || null) }}</el-descriptions-item>
+          <el-descriptions-item label="下次运行时间">{{ formatDate(currentTask?.next_run_time || null) }}</el-descriptions-item>
           <el-descriptions-item label="运行次数">{{ currentTask?.run_count || 0 }}</el-descriptions-item>
           <el-descriptions-item label="成功次数">{{ currentTask?.success_count || 0 }}</el-descriptions-item>
           <el-descriptions-item label="错误次数">{{ currentTask?.error_count || 0 }}</el-descriptions-item>
-          <el-descriptions-item label="创建时间">{{ formatDate(currentTask?.created_at) }}</el-descriptions-item>
+          <el-descriptions-item label="创建时间">{{ formatDate(currentTask?.created_at || null) }}</el-descriptions-item>
         </el-descriptions>
       </div>
     </el-drawer>
@@ -419,6 +441,7 @@ import {
 // 响应式数据
 const loading = ref(false)
 const submitting = ref(false)
+const searchLoading = ref(false)
 const showCreateDialog = ref(false)
 const showLogDrawer = ref(false)
 const isEdit = ref(false)
@@ -465,12 +488,65 @@ const taskForm = reactive({
   scheduled_at: null
 })
 
+// 自定义校验：正整数
+const validatePositiveInteger = (rule, value, callback) => {
+  if (!value) {
+    return callback(new Error('请输入源ID'))
+  }
+  const num = Number(value)
+  if (!Number.isInteger(num) || num <= 0) {
+    return callback(new Error('源ID必须为正整数'))
+  }
+  callback()
+}
+
+// 自定义校验：cron 表达式（5段非空）
+const validateCronExpression = (rule, value, callback) => {
+  if (!value) {
+    return callback(new Error('请输入Cron表达式'))
+  }
+  const parts = value.trim().split(/\s+/)
+  if (parts.length < 5) {
+    return callback(new Error('Cron表达式至少需要5个字段'))
+  }
+  // 简单检查每段非空
+  if (parts.some(p => p === '')) {
+    return callback(new Error('Cron表达式字段不能为空'))
+  }
+  callback()
+}
+
+// 自定义校验：JSON 格式
+const validateJsonConfig = (rule, value, callback) => {
+  if (!value) {
+    return callback() // 允许为空
+  }
+  try {
+    JSON.parse(value.trim() || '{}')
+    callback()
+  } catch (e) {
+    return callback(new Error('配置参数必须是有效的JSON格式'))
+  }
+}
+
 // 表单验证规则
 const formRules = {
-  name: [{ required: true, message: '请输入任务名称', trigger: 'blur' }],
+  name: [
+    { required: true, message: '请输入任务名称', trigger: 'blur' },
+    { min: 1, max: 50, message: '任务名称长度应在1到50个字符之间', trigger: 'blur' }
+  ],
   task_type: [{ required: true, message: '请选择任务类型', trigger: 'change' }],
-  source_id: [{ required: true, message: '请输入源ID', trigger: 'blur' }],
-  cron_expression: [{ required: true, message: '请输入Cron表达式', trigger: 'blur' }] // 添加cron_expression验证
+  source_id: [
+    { required: true, message: '请输入源ID', trigger: 'blur' },
+    { validator: validatePositiveInteger, trigger: 'blur' }
+  ],
+  cron_expression: [
+    { required: true, message: '请输入Cron表达式', trigger: 'blur' },
+    { validator: validateCronExpression, trigger: 'blur' }
+  ],
+  config: [
+    { validator: validateJsonConfig, trigger: 'blur' }
+  ]
 }
 
 // 计算属性：判断是否有激活的筛选条件
@@ -485,7 +561,7 @@ const displayTotalTitle = computed(() => {
 
 // 计算属性：显示的总数值
 const displayTotalValue = computed(() => {
-  return hasActiveFilters.value ? pagination.total : statistics.totalTasks;
+  return hasActiveFilters.value ? pagination.total : (Number(statistics.totalTasks) || 0);
 });
 
 // 任务日志
@@ -560,9 +636,14 @@ const refreshTasks = () => {
   loadStatistics()
 }
 
-const searchTasks = () => {
-  pagination.page = 1
-  loadTasks()
+const searchTasks = async () => {
+  searchLoading.value = true
+  try {
+    pagination.page = 1
+    await loadTasks()
+  } finally {
+    searchLoading.value = false
+  }
 }
 
 const resetFilters = () => {
@@ -593,6 +674,17 @@ const submitTaskForm = async () => {
   
   try {
     await taskFormRef.value.validate()
+
+    // 检查数据源是否可用
+    if (!sourceOptions || sourceOptions.length === 0) {
+      ElMessage.warning('请先添加数据源后再创建任务')
+      return
+    }
+    if (!taskForm.source_id) {
+      ElMessage.warning('请选择数据源')
+      return
+    }
+
     submitting.value = true
     
     const payload = { ...taskForm }
@@ -1037,5 +1129,16 @@ const viewTaskDetails = (task) => {
     display: block;
     margin-right: 0;
   }
+}
+.empty-stats-tip {
+  margin-top: 16px;
+}
+.empty-table-tip {
+  margin: 40px 0;
+  text-align: center;
+}
+.empty-logs-tip {
+  margin: 40px 0;
+  text-align: center;
 }
 </style>

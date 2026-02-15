@@ -1,6 +1,6 @@
-"""
-API端点集成测试
-测试API端点的实际行为和与其他模块的集成
+﻿"""
+API绔偣闆嗘垚娴嬭瘯
+娴嬭瘯API绔偣鐨勫疄闄呰涓哄拰涓庡叾浠栨ā鍧楃殑闆嗘垚
 """
 import pytest
 import asyncio
@@ -16,13 +16,13 @@ from backend.core.security import get_password_hash
 from unittest.mock import AsyncMock, patch
 
 
-# 创建测试客户端
+# 鍒涘缓娴嬭瘯瀹㈡埛绔?
 client = TestClient(app)
 
 
 @pytest.fixture
 def mock_db_session():
-    """模拟数据库会话"""
+    """妯℃嫙鏁版嵁搴撲細璇?""
     session = AsyncMock()
     session.execute = AsyncMock(return_value=AsyncMock())
     session.add = AsyncMock()
@@ -33,84 +33,84 @@ def mock_db_session():
 
 @pytest.mark.asyncio
 async def test_health_check_endpoint():
-    """测试健康检查端点"""
+    """娴嬭瘯鍋ュ悍妫€鏌ョ鐐?""
     response = client.get("/health")
     assert response.status_code == 200
     
     data = response.json()
     assert "status" in data
     assert data["status"] == "healthy"
-    print("[OK] 健康检查端点测试通过")
+    print("SUCCESS 鍋ュ悍妫€鏌ョ鐐规祴璇曢€氳繃")
 
 
 def test_docs_endpoint():
-    """测试API文档端点"""
+    """娴嬭瘯API鏂囨。绔偣"""
     response = client.get("/docs")
-    assert response.status_code in [200, 307]  # 307是重定向到/docs/
-    print("[OK] API文档端点测试通过")
+    assert response.status_code in [200, 307]  # 307鏄噸瀹氬悜鍒?docs/
+    print("SUCCESS API鏂囨。绔偣娴嬭瘯閫氳繃")
 
 
 @pytest.mark.asyncio
 async def test_admin_user_endpoints_integration():
-    """测试管理员用户API端点集成"""
-    # 由于这些端点需要认证，我们测试返回的认证错误
+    """娴嬭瘯绠＄悊鍛樼敤鎴稟PI绔偣闆嗘垚"""
+    # 鐢变簬杩欎簺绔偣闇€瑕佽璇侊紝鎴戜滑娴嬭瘯杩斿洖鐨勮璇侀敊璇?
     response = client.get("/api/v1/admin/users/")
-    # 应该返回401未认证或422请求体错误（如果没有提供必要参数）
+    # 搴旇杩斿洖401鏈璇佹垨422璇锋眰浣撻敊璇紙濡傛灉娌℃湁鎻愪緵蹇呰鍙傛暟锛?
     assert response.status_code in [401, 422]
     
     response = client.post("/api/v1/admin/users/")
     assert response.status_code in [401, 422]
     
-    print("[OK] 管理员用户API端点集成测试通过")
+    print("SUCCESS 绠＄悊鍛樼敤鎴稟PI绔偣闆嗘垚娴嬭瘯閫氳繃")
 
 
 @pytest.mark.asyncio
 async def test_auth_endpoints_integration():
-    """测试认证API端点集成"""
-    # 测试登录端点（没有提供数据，期望返回422）
+    """娴嬭瘯璁よ瘉API绔偣闆嗘垚"""
+    # 娴嬭瘯鐧诲綍绔偣锛堟病鏈夋彁渚涙暟鎹紝鏈熸湜杩斿洖422锛?
     response = client.post("/api/v1/auth/login")
-    assert response.status_code == 422  # 请求体缺失
+    assert response.status_code == 422  # 璇锋眰浣撶己澶?
     
-    # 测试注册端点（没有提供数据，期望返回422）
+    # 娴嬭瘯娉ㄥ唽绔偣锛堟病鏈夋彁渚涙暟鎹紝鏈熸湜杩斿洖422锛?
     response = client.post("/api/v1/auth/register")
-    assert response.status_code == 422  # 请求体缺失
+    assert response.status_code == 422  # 璇锋眰浣撶己澶?
     
-    print("[OK] 认证API端点集成测试通过")
+    print("SUCCESS 璁よ瘉API绔偣闆嗘垚娴嬭瘯閫氳繃")
 
 
 @pytest.mark.asyncio
 async def test_crawler_endpoints_integration():
-    """测试爬虫API端点集成"""
-    # 测试获取爬虫配置端点（需要认证）
+    """娴嬭瘯鐖櫕API绔偣闆嗘垚"""
+    # 娴嬭瘯鑾峰彇鐖櫕閰嶇疆绔偣锛堥渶瑕佽璇侊級
     response = client.get("/api/v1/crawlers/configs/")
     assert response.status_code in [401, 422]
     
-    # 测试获取爬虫任务端点（需要认证）
+    # 娴嬭瘯鑾峰彇鐖櫕浠诲姟绔偣锛堥渶瑕佽璇侊級
     response = client.get("/api/v1/crawlers/tasks/")
     assert response.status_code in [401, 422]
     
-    print("[OK] 爬虫API端点集成测试通过")
+    print("SUCCESS 鐖櫕API绔偣闆嗘垚娴嬭瘯閫氳繃")
 
 
 @pytest.mark.asyncio
 async def test_public_endpoints():
-    """测试公共API端点"""
-    # 测试获取比赛数据的公共端点（如果没有数据可能返回空数组）
+    """娴嬭瘯鍏叡API绔偣"""
+    # 娴嬭瘯鑾峰彇姣旇禌鏁版嵁鐨勫叕鍏辩鐐癸紙濡傛灉娌℃湁鏁版嵁鍙兘杩斿洖绌烘暟缁勶級
     response = client.get("/api/v1/public/matches/")
-    # 公共端点不需要认证，但可能因为数据库中没有数据而返回特定响应
+    # 鍏叡绔偣涓嶉渶瑕佽璇侊紝浣嗗彲鑳藉洜涓烘暟鎹簱涓病鏈夋暟鎹€岃繑鍥炵壒瀹氬搷搴?
     assert response.status_code in [200, 404, 500]
     
-    print("[OK] 公共API端点测试通过")
+    print("SUCCESS 鍏叡API绔偣娴嬭瘯閫氳繃")
 
 
 @pytest.mark.asyncio
 async def test_api_response_format():
-    """测试API响应格式一致性"""
-    # 检查一个假想的端点响应格式
-    # 因为许多端点需要认证，我们模拟一个端点检查格式
+    """娴嬭瘯API鍝嶅簲鏍煎紡涓€鑷存€?""
+    # 妫€鏌ヤ竴涓亣鎯崇殑绔偣鍝嶅簲鏍煎紡
+    # 鍥犱负璁稿绔偣闇€瑕佽璇侊紝鎴戜滑妯℃嫙涓€涓鐐规鏌ユ牸寮?
     from backend.utils.response import UnifiedResponse
     
-    # 测试统一响应格式
+    # 娴嬭瘯缁熶竴鍝嶅簲鏍煎紡
     response = UnifiedResponse.success(data={"test": "data"})
     assert hasattr(response, 'code')
     assert hasattr(response, 'message')
@@ -122,11 +122,11 @@ async def test_api_response_format():
     assert error_response.code == 400
     assert error_response.message == "Test error"
     
-    print("[OK] API响应格式一致性测试通过")
+    print("SUCCESS API鍝嶅簲鏍煎紡涓€鑷存€ф祴璇曢€氳繃")
 
 
 if __name__ == "__main__":
-    # 运行测试
+    # 杩愯娴嬭瘯
     test_health_check_endpoint()
     test_docs_endpoint()
     test_admin_user_endpoints_integration()

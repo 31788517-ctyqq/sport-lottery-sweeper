@@ -46,8 +46,8 @@ def check_admin_user():
     # 获取项目根目录
     project_root = Path(__file__).parent
     db_paths = [
-        project_root / 'sport_lottery.db',
-        project_root / 'data' / 'sport_lottery.db'
+        project_root / 'data/sport_lottery.db',
+        project_root / 'data' / 'data/sport_lottery.db'
     ]
 
     db_path = None

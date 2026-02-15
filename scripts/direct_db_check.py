@@ -6,7 +6,7 @@ import sqlite3
 import os
 
 # 数据库文件路径
-db_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'backend', 'sport_lottery.db')
+db_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'backend', 'data/sport_lottery.db')
 
 def check_users():
     """直接查询用户表"""

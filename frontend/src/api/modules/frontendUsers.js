@@ -75,7 +75,7 @@ export function getFrontendUsers(params) {
   
   // 生产环境使用真实API
   return request({
-    url: '/api/v1/admin/users/',
+    url: '/api/admin/users/',
     method: 'get',
     params
   })
@@ -99,7 +99,7 @@ export function getFrontendUserDetail(userId) {
   
   // 生产环境使用真实API
   return request({
-    url: `/api/v1/admin/users/${userId}`,
+    url: `/api/admin/users/${userId}`,
     method: 'get'
   })
 }
@@ -123,7 +123,7 @@ export function updateFrontendUser(userId, data) {
   
   // 生产环境使用真实API
   return request({
-    url: `/api/v1/admin/users/${userId}`,
+    url: `/api/admin/users/${userId}`,
     method: 'put',
     data
   })
@@ -148,7 +148,7 @@ export function updateFrontendUserStatus(userId, status) {
   
   // 生产环境使用真实API
   return request({
-    url: `/api/v1/admin/users/${userId}/status`,
+    url: `/api/admin/users/${userId}/status`,
     method: 'put',
     data: { status }
   })
@@ -172,7 +172,7 @@ export function deleteFrontendUser(userId) {
   
   // 生产环境使用真实API
   return request({
-    url: `/api/v1/admin/users/${userId}`,
+    url: `/api/admin/users/${userId}`,
     method: 'delete'
   })
 }
@@ -194,7 +194,7 @@ export function getFrontendUserStats() {
   
   // 生产环境使用真实API
   return request({
-    url: '/api/v1/admin/users/stats',
+    url: '/api/admin/users/stats',
     method: 'get'
   })
 }
@@ -219,7 +219,7 @@ export function batchDeleteUsers(userIds) {
   
   // 生产环境使用真实API
   return request({
-    url: '/api/v1/admin/users/batch-delete',
+    url: '/api/admin/users/batch-delete',
     method: 'post',
     data: { user_ids: userIds }
   })
@@ -246,7 +246,7 @@ export function batchUpdateUserStatus(userIds, status) {
   
   // 生产环境使用真实API
   return request({
-    url: '/api/v1/admin/users/batch-update-status',
+    url: '/api/admin/users/batch-update-status',
     method: 'post',
     data: { user_ids: userIds, status }
   })

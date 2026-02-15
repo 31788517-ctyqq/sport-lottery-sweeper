@@ -2,7 +2,7 @@ import sqlite3
 from datetime import datetime
 
 def complete_migration():
-    conn = sqlite3.connect('sport_lottery.db')
+    conn = sqlite3.connect('data/sport_lottery.db')
     cursor = conn.cursor()
     
     now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')

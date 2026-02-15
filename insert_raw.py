@@ -7,7 +7,7 @@ import json
 from datetime import datetime, timedelta
 
 def insert_data_source():
-    conn = sqlite3.connect('sport_lottery.db')
+    conn = sqlite3.connect('data/sport_lottery.db')
     c = conn.cursor()
     
     # 检查表是否存在

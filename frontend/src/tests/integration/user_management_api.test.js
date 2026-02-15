@@ -11,19 +11,19 @@ vi.mock('@/api/userManagement', async () => {
   };
 
   return {
-    getUserList: vi.fn((params) => axios.get('/api/v1/admin/backend-users', { params })),
-    createUser: vi.fn((data) => axios.post('/api/v1/admin/backend-users', data)),
-    updateUser: vi.fn((id, data) => axios.put(`/api/v1/admin/backend-users/${id}`, data)),
-    deleteUser: vi.fn((id) => axios.delete(`/api/v1/admin/backend-users/${id}`)),
-    updateUserStatus: vi.fn((id, status) => axios.patch(`/api/v1/admin/backend-users/${id}/status`, { status })),
-    resetUserPassword: vi.fn((id, password) => axios.post(`/api/v1/admin/backend-users/${id}/reset-password`, { password })),
-    getRoleList: vi.fn(() => axios.get('/api/v1/admin/roles')),
-    updateRolePermissions: vi.fn((id, permissions) => axios.put(`/api/v1/admin/roles/${id}/permissions`, { permissions })),
-    getOperationLogs: vi.fn((params) => axios.get('/api/v1/admin/operation-logs', { params })),
-    getDepartmentList: vi.fn(() => axios.get('/api/v1/admin/departments')),
-    createDepartment: vi.fn((data) => axios.post('/api/v1/admin/departments', data)),
-    updateDepartment: vi.fn((id, data) => axios.put(`/api/v1/admin/departments/${id}`, data)),
-    deleteDepartment: vi.fn((id) => axios.delete(`/api/v1/admin/departments/${id}`))
+    getUserList: vi.fn((params) => axios.get('/api/admin/backend-users', { params })),
+    createUser: vi.fn((data) => axios.post('/api/admin/backend-users', data)),
+    updateUser: vi.fn((id, data) => axios.put(`/api/admin/backend-users/${id}`, data)),
+    deleteUser: vi.fn((id) => axios.delete(`/api/admin/backend-users/${id}`)),
+    updateUserStatus: vi.fn((id, status) => axios.patch(`/api/admin/backend-users/${id}/status`, { status })),
+    resetUserPassword: vi.fn((id, password) => axios.post(`/api/admin/backend-users/${id}/reset-password`, { password })),
+    getRoleList: vi.fn(() => axios.get('/api/admin/roles')),
+    updateRolePermissions: vi.fn((id, permissions) => axios.put(`/api/admin/roles/${id}/permissions`, { permissions })),
+    getOperationLogs: vi.fn((params) => axios.get('/api/admin/operation-logs', { params })),
+    getDepartmentList: vi.fn(() => axios.get('/api/admin/departments')),
+    createDepartment: vi.fn((data) => axios.post('/api/admin/departments', data)),
+    updateDepartment: vi.fn((id, data) => axios.put(`/api/admin/departments/${id}`, data)),
+    deleteDepartment: vi.fn((id) => axios.delete(`/api/admin/departments/${id}`))
   };
 });
 

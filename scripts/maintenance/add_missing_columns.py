@@ -6,7 +6,7 @@ def add_missing_columns():
     添加缺失的数据库列
     """
     # 使用相对路径构建数据库路径
-    db_path = os.path.join(os.path.dirname(__file__), 'sport_lottery.db')
+    db_path = os.path.join(os.path.dirname(__file__), 'data/sport_lottery.db')
     
     if not os.path.exists(db_path):
         print(f"数据库文件不存在: {db_path}")

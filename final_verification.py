@@ -1,124 +1,193 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-"""
-最终验证：100球数据获取路径及策略执行流程
-"""
+import requests
 import json
-from datetime import datetime
-from backend.database import get_db
-from backend.models.matches import FootballMatch
-from backend.services.multi_strategy_scheduler import MultiStrategyScheduler
-from backend.api.v1.data_source_100qiu import parse_match_from_100qiu
+import time
+import sys
 
+BASE_URL = "http://localhost:8000"
+BEIDAN_BASE = f"{BASE_URL}/api/v1/beidan-filter"
 
-def final_verification():
-    print("=" * 70)
-    print("最终验证：100球数据获取路径及策略执行流程")
-    print("=" * 70)
-    
-    # 1. 数据库连接验证
-    print("\n1. 数据库连接验证...")
+def print_status(ok, message):
+    if ok:
+        print(f"[OK] {message}")
+    else:
+        print(f"[FAIL] {message}")
+
+def test_health():
+    """测试服务健康状态"""
     try:
-        db = next(get_db())
-        print("   ✅ 数据库连接成功")
+        response = requests.get(f"{BASE_URL}/health/live", timeout=5)
+        return response.status_code == 200, f"Health check: {response.status_code}"
     except Exception as e:
-        print(f"   ❌ 数据库连接失败: {e}")
-        return
+        return False, f"Health check failed: {e}"
+
+def test_option_apis():
+    """测试选项API"""
+    apis = [
+        ("strength-options", "实力等级差选项"),
+        ("win-pan-diff-options", "赢盘等级差选项"), 
+        ("stability-options", "一赔稳定性选项")
+    ]
     
-    # 2. 检查100球数据是否存在
-    print("\n2. 100球数据存在性验证...")
+    all_ok = True
+    for endpoint, name in apis:
+        try:
+            response = requests.get(f"{BEIDAN_BASE}/{endpoint}", timeout=5)
+            if response.status_code == 200:
+                data = response.json()
+                # 检查数据结构
+                if isinstance(data, dict) and f"{endpoint.split('-')[0]}Options" in data:
+                    options = data[f"{endpoint.split('-')[0]}Options"]
+                    if isinstance(options, list) and len(options) > 0:
+                        print_status(True, f"{name}: 返回 {len(options)} 项正确数据")
+                        continue
+            
+            print_status(False, f"{name}: 返回异常数据")
+            all_ok = False
+        except Exception as e:
+            print_status(False, f"{name}: {e}")
+            all_ok = False
+    
+    return all_ok
+
+def test_real_time_matches():
+    """测试实时场次接口"""
     try:
-        matches = db.query(FootballMatch).filter(FootballMatch.data_source == "100qiu").all()
-        print(f"   ✅ 数据库中存在 {len(matches)} 条来自100球的数据")
-        
-        if matches:
-            latest_match = matches[0]
-            print(f"   📅 最新比赛: {latest_match.home_team} vs {latest_match.away_team}")
-            print(f"   ⏰ 比赛时间: {latest_match.match_time}")
+        response = requests.get(f"{BEIDAN_BASE}/real-time-count", timeout=10)
+        if response.status_code == 200:
+            data = response.json()
+            match_count = data.get('matchCount', 0)
+            print_status(True, f"实时场次: {match_count} 场比赛")
+            return True, match_count
+        else:
+            print_status(False, f"实时场次返回 {response.status_code}")
+            return False, 0
     except Exception as e:
-        print(f"   ❌ 检查100球数据失败: {e}")
-        return
-    
-    # 3. 验证数据解析函数
-    print("\n3. 数据解析函数验证...")
+        print_status(False, f"实时场次失败: {e}")
+        return False, 0
+
+def test_advanced_filter():
+    """测试高级筛选接口"""
     try:
-        sample_data = {
-            'lineId': 'test123',
-            'homeTeam': '测试主队',
-            'guestTeam': '测试客队',
-            'gameShortName': '测试联赛',
-            'matchTimeStr': '2026-02-11'
+        # 构建一个简单的筛选请求
+        filter_request = {
+            "threeDimensional": {
+                "strengthDiff": "0",
+                "winPanDiff": 0,
+                "stabilityTier": "B"
+            },
+            "otherConditions": {
+                "league": "all",
+                "dateTimeRange": "today"
+            }
         }
         
-        parsed = parse_match_from_100qiu(sample_data, "26011")
-        if parsed and parsed['home_team'] == '测试主队':
-            print("   ✅ 数据解析函数工作正常")
-        else:
-            print("   ❌ 数据解析函数存在问题")
-    except Exception as e:
-        print(f"   ❌ 数据解析函数验证失败: {e}")
-    
-    # 4. 验证多策略调度器
-    print("\n4. 多策略调度器验证...")
-    try:
-        scheduler = MultiStrategyScheduler()
-        strategies = scheduler.strategy_manager.get_all_strategies()
-        print(f"   ✅ 多策略调度器工作正常")
-        print(f"      策略列表: {strategies}")
-    except Exception as e:
-        print(f"   ❌ 多策略调度器验证失败: {e}")
-    
-    # 5. 验证调度器获取最新数据功能
-    print("\n5. 调度器数据获取验证...")
-    try:
-        latest_data = scheduler._get_latest_matches_from_db()
-        print(f"   ✅ 调度器成功获取 {len(latest_data)} 条最新比赛数据")
+        response = requests.post(
+            f"{BEIDAN_BASE}/advanced-filter",
+            json=filter_request,
+            timeout=15
+        )
         
-        if latest_data:
-            sample_match = latest_data[0]
-            print(f"      示例比赛: {sample_match.get('home_team', 'N/A')} vs {sample_match.get('away_team', 'N/A')}")
+        if response.status_code == 200:
+            data = response.json()
+            matches = data.get('matches', [])
+            print_status(True, f"高级筛选: 返回 {len(matches)} 场比赛")
+            return True
+        else:
+            print_status(False, f"高级筛选返回 {response.status_code}: {response.text[:200]}")
+            return False
     except Exception as e:
-        print(f"   ❌ 调度器数据获取验证失败: {e}")
-    
-    # 6. 验证策略执行流程
-    print("\n6. 策略执行流程验证...")
-    try:
-        if 'latest_data' in locals() and latest_data:
-            from backend.services.strategy_manager import StrategyManager
-            manager = StrategyManager()
-            
-            # 测试高胜率策略
-            results = manager.execute_strategy('high_probability_winning', latest_data[:5])
-            print(f"   ✅ 策略执行流程正常")
-            print(f"      高胜率策略筛选出 {len(results)} 条结果")
-    except Exception as e:
-        print(f"   ❌ 策略执行流程验证失败: {e}")
-    
-    # 7. 验证钉钉集成
-    print("\n7. 钉钉消息集成验证...")
-    try:
-        from backend.services.dingtalk_integration import send_dingtalk_message
-        print("   ✅ 钉钉集成模块可导入")
-    except Exception as e:
-        print(f"   ⚠️  钉钉集成模块存在问题: {e}")
-    
-    print("\n" + "=" * 70)
-    print("验证完成！")
-    print("=" * 70)
-    
-    print(f"\n📋 验证摘要:")
-    print(f"   • 100球数据源配置: 正常")
-    print(f"   • 100球数据存储: {len(matches) if 'matches' in locals() else 0} 条记录")
-    print(f"   • 数据解析功能: 正常")
-    print(f"   • 多策略调度器: 正常")
-    print(f"   • 策略执行流程: 正常")
-    print(f"   • 钉钉消息集成: 正常")
-    
-    print(f"\n🎯 结论:")
-    print(f"   100球数据获取路径已完全打通:")
-    print(f"   100球API → 数据解析 → 数据库存储 → 策略执行 → 钉钉通知")
-    print(f"   系统可以确保在执行预设策略前获取最新比赛数据")
+        print_status(False, f"高级筛选失败: {e}")
+        return False
 
+def test_frontend_backend_alignment():
+    """测试前端-后端字段映射"""
+    try:
+        # 获取后端选项
+        strength_resp = requests.get(f"{BEIDAN_BASE}/strength-options", timeout=5)
+        win_pan_resp = requests.get(f"{BEIDAN_BASE}/win-pan-diff-options", timeout=5)
+        stability_resp = requests.get(f"{BEIDAN_BASE}/stability-options", timeout=5)
+        
+        # 检查所有API都成功
+        if all(r.status_code == 200 for r in [strength_resp, win_pan_resp, stability_resp]):
+            strength_data = strength_resp.json()['strengthOptions']
+            win_pan_data = win_pan_resp.json()['winPanDiffOptions']
+            stability_data = stability_resp.json()['stabilityOptions']
+            
+            # 检查数据项数量与文档一致
+            doc_counts = {
+                'strength': 7,  # -3 到 +3
+                'win_pan': 9,   # -4 到 +4
+                'stability': 7  # S 到 E
+            }
+            
+            actual_counts = {
+                'strength': len(strength_data),
+                'win_pan': len(win_pan_data),
+                'stability': len(stability_data)
+            }
+            
+            all_match = True
+            for key, expected in doc_counts.items():
+                actual = actual_counts[key]
+                if actual == expected:
+                    print_status(True, f"{key} 选项: {actual} 项 (符合文档)")
+                else:
+                    print_status(False, f"{key} 选项: {actual} 项 (应为 {expected})")
+                    all_match = False
+            
+            return all_match
+        else:
+            print_status(False, "有选项API请求失败")
+            return False
+            
+    except Exception as e:
+        print_status(False, f"字段映射验证失败: {e}")
+        return False
+
+def main():
+    print("=" * 60)
+    print("北单过滤功能最终验证")
+    print("=" * 60)
+    
+    tests = [
+        ("服务健康检查", test_health),
+        ("选项API验证", test_option_apis),
+        ("实时场次接口", test_real_time_matches),
+        ("高级筛选接口", test_advanced_filter),
+        ("前后端字段映射", test_frontend_backend_alignment)
+    ]
+    
+    results = []
+    for name, test_func in tests:
+        print(f"\n--- {name} ---")
+        if name == "实时场次接口":
+            success, match_count = test_func()
+            results.append(success)
+        else:
+            success = test_func()
+            results.append(success)
+    
+    print("\n" + "=" * 60)
+    print("最终验证结果汇总")
+    print("=" * 60)
+    
+    passed = sum(results)
+    total = len(results)
+    
+    for i, (name, _) in enumerate(tests):
+        status = "PASS" if results[i] else "FAIL"
+        print(f"{i+1}. {name}: {status}")
+    
+    print(f"\n总测试数: {total}")
+    print(f"通过数: {passed}")
+    print(f"失败数: {total - passed}")
+    
+    if passed == total:
+        print("\n✅ 所有测试通过！北单过滤功能后端实现与文档完全一致。")
+        print("前端筛选界面使用的三维参数在后端得到正确计算和处理。")
+    else:
+        print(f"\n❌ 有 {total - passed} 项测试失败，需要进一步检查。")
+        sys.exit(1)
 
 if __name__ == "__main__":
-    final_verification()
+    main()

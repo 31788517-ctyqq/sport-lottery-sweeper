@@ -3,7 +3,7 @@ import sqlite3
 import os
 
 print("检查数据库...")
-db_path = "sport_lottery.db"
+db_path = "data/sport_lottery.db"
 if not os.path.exists(db_path):
     print(f"数据库文件不存在: {db_path}")
     exit(1)

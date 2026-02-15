@@ -11,7 +11,7 @@ import os
 
 def create_admin_user():
     """创建admin用户（如果不存在）"""
-    conn = sqlite3.connect('sport_lottery.db')
+    conn = sqlite3.connect('data/sport_lottery.db')
     c = conn.cursor()
     
     # 检查admin用户是否已存在

@@ -147,9 +147,28 @@ pnpm run dev
   - IP池管理: `/api/v1/admin/ip-pools`
   - 日志管理: `/api/v1/admin/system/logs`
 
-## 项目结构
+## 数据库管理
 
-**数据库文件位置规范**：主数据库文件 `sport_lottery.db` 统一位于 `data/` 目录下（`data/sport_lottery.db`）。所有代码应通过配置系统访问数据库，禁止硬编码路径。项目根目录的旧数据库文件已删除，避免数据不一致。
+### 数据库整理完成状态
+
+**✅ 已完成的工作：**
+- 统一数据库位置：仅保留 `data/sport_lottery.db` 作为主数据库
+- 封存历史备份：2个旧数据库文件已移至 `backup/archived_databases/`
+- 清理测试数据：删除无用的测试数据库文件
+- 补充演示数据：为管理表添加合理的测试数据
+- 验证数据完整性：所有67个业务表结构正常，外键约束有效
+
+**📊 当前数据库状态：**
+- 主数据库：`data/sport_lottery.db` (2.85 MB, 67个业务表)
+- LLM供应商：已配置5个主流供应商（OpenAI、Claude、Gemini、Azure、Qwen）
+- 管理员用户：1个超级管理员账户
+- 登录日志：15条记录
+- 操作日志：10条记录
+- 系统配置：3条基础配置
+
+### 数据库文件位置规范
+
+主数据库文件 `sport_lottery.db` 统一位于 `data/` 目录下（`data/sport_lottery.db`）。所有代码应通过配置系统访问数据库，禁止硬编码路径。
 
 ```
 sport-lottery-sweeper/

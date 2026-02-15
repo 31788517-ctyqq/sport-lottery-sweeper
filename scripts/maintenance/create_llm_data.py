@@ -2,7 +2,7 @@ import sqlite3
 import json
 from datetime import datetime
 
-conn = sqlite3.connect('sport_lottery.db')
+conn = sqlite3.connect('data/sport_lottery.db')
 cursor = conn.cursor()
 
 now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')

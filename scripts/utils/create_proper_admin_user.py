@@ -12,7 +12,7 @@ from datetime import datetime
 from backend.core.security import get_password_hash
 
 def create_proper_admin_user():
-    db_path = "sport_lottery.db"
+    db_path = "data/sport_lottery.db"
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     

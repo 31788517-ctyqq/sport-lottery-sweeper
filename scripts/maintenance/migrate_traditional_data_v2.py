@@ -15,7 +15,7 @@ def migrate_traditional_data_v2():
         content = f.read()
     
     # 连接目标数据库
-    target_conn = sqlite3.connect('sport_lottery.db')
+    target_conn = sqlite3.connect('data/sport_lottery.db')
     target_cursor = target_conn.cursor()
     
     # 提取所有INSERT语句

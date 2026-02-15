@@ -3,7 +3,7 @@ import sqlite3
 def check_database_tables():
     """检查数据库表结构"""
     try:
-        conn = sqlite3.connect('backend/sport_lottery.db')
+        conn = sqlite3.connect('data/sport_lottery.db')
         cursor = conn.cursor()
         
         # 查询所有表

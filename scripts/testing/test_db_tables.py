@@ -8,7 +8,7 @@ import os
 import sys
 
 def main():
-    db_path = os.path.join(os.getcwd(), 'data', 'sport_lottery.db')
+    db_path = os.path.join(os.getcwd(), 'data', 'data/sport_lottery.db')
     print(f"数据库路径: {db_path}")
     print(f"文件存在: {os.path.exists(db_path)}")
     

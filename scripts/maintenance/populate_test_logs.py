@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 import random
 
 def populate_test_logs():
-    db_path = 'backend/sport_lottery.db'
+    db_path = 'data/sport_lottery.db'
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     

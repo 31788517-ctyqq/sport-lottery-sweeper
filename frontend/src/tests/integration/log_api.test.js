@@ -87,7 +87,7 @@ describe('日志管理API交互测试', () => {
         id: 1,
         timestamp: '2024-01-28T07:00:00Z',
         level: 'INFO',
-        request_path: '/api/v1/users',
+        request_path: '/api/users',
         response_status: 200,
         duration_ms: 125,
         ip_address: '192.168.1.100',
@@ -99,7 +99,7 @@ describe('日志管理API交互测试', () => {
         id: 2,
         timestamp: '2024-01-28T07:05:00Z',
         level: 'WARN',
-        request_path: '/api/v1/orders',
+        request_path: '/api/orders',
         response_status: 400,
         duration_ms: 50,
         ip_address: '192.168.1.101',
@@ -143,10 +143,10 @@ describe('日志管理API交互测试', () => {
       axios.get.mockResolvedValue({ data: mockSystemLogs });
 
       // 调用API
-      const response = await axios.get('/api/v1/admin/system/logs/db/system?skip=0&limit=50');
+      const response = await axios.get('/api/admin/system/logs/db/system?skip=0&limit=50');
 
       // 验证API调用
-      expect(axios.get).toHaveBeenCalledWith('/api/v1/admin/system/logs/db/system?skip=0&limit=50');
+      expect(axios.get).toHaveBeenCalledWith('/api/admin/system/logs/db/system?skip=0&limit=50');
       expect(response.data).toEqual(mockSystemLogs);
       expect(response.data.items.length).toBe(2);
       expect(response.data.total).toBe(2);
@@ -165,10 +165,10 @@ describe('日志管理API交互测试', () => {
       };
 
       const queryString = new URLSearchParams(params).toString();
-      const response = await axios.get(`/api/v1/admin/system/logs/db/system?${queryString}`);
+      const response = await axios.get(`/api/admin/system/logs/db/system?${queryString}`);
 
       // 验证API调用
-      expect(axios.get).toHaveBeenCalledWith(`/api/v1/admin/system/logs/db/system?${queryString}`);
+      expect(axios.get).toHaveBeenCalledWith(`/api/admin/system/logs/db/system?${queryString}`);
       expect(response.data).toEqual(mockSystemLogs);
     });
   });
@@ -179,10 +179,10 @@ describe('日志管理API交互测试', () => {
       axios.get.mockResolvedValue({ data: mockUserLogs });
 
       // 调用API
-      const response = await axios.get('/api/v1/admin/system/logs/db/user?skip=0&limit=50');
+      const response = await axios.get('/api/admin/system/logs/db/user?skip=0&limit=50');
 
       // 验证API调用
-      expect(axios.get).toHaveBeenCalledWith('/api/v1/admin/system/logs/db/user?skip=0&limit=50');
+      expect(axios.get).toHaveBeenCalledWith('/api/admin/system/logs/db/user?skip=0&limit=50');
       expect(response.data).toEqual(mockUserLogs);
       expect(response.data.items.length).toBe(2);
       expect(response.data.total).toBe(2);
@@ -200,10 +200,10 @@ describe('日志管理API交互测试', () => {
       };
 
       const queryString = new URLSearchParams(params).toString();
-      const response = await axios.get(`/api/v1/admin/system/logs/db/user?${queryString}`);
+      const response = await axios.get(`/api/admin/system/logs/db/user?${queryString}`);
 
       // 验证API调用
-      expect(axios.get).toHaveBeenCalledWith(`/api/v1/admin/system/logs/db/user?${queryString}`);
+      expect(axios.get).toHaveBeenCalledWith(`/api/admin/system/logs/db/user?${queryString}`);
       expect(response.data).toEqual(mockUserLogs);
     });
   });
@@ -214,10 +214,10 @@ describe('日志管理API交互测试', () => {
       axios.get.mockResolvedValue({ data: mockSecurityLogs });
 
       // 调用API
-      const response = await axios.get('/api/v1/admin/system/logs/db/security?skip=0&limit=50');
+      const response = await axios.get('/api/admin/system/logs/db/security?skip=0&limit=50');
 
       // 验证API调用
-      expect(axios.get).toHaveBeenCalledWith('/api/v1/admin/system/logs/db/security?skip=0&limit=50');
+      expect(axios.get).toHaveBeenCalledWith('/api/admin/system/logs/db/security?skip=0&limit=50');
       expect(response.data).toEqual(mockSecurityLogs);
       expect(response.data.items.length).toBe(2);
       expect(response.data.total).toBe(2);
@@ -230,10 +230,10 @@ describe('日志管理API交互测试', () => {
       axios.get.mockResolvedValue({ data: mockAPILogs });
 
       // 调用API
-      const response = await axios.get('/api/v1/admin/system/logs/db/api?skip=0&limit=50');
+      const response = await axios.get('/api/admin/system/logs/db/api?skip=0&limit=50');
 
       // 验证API调用
-      expect(axios.get).toHaveBeenCalledWith('/api/v1/admin/system/logs/db/api?skip=0&limit=50');
+      expect(axios.get).toHaveBeenCalledWith('/api/admin/system/logs/db/api?skip=0&limit=50');
       expect(response.data).toEqual(mockAPILogs);
       expect(response.data.items.length).toBe(2);
       expect(response.data.total).toBe(2);
@@ -253,10 +253,10 @@ describe('日志管理API交互测试', () => {
       };
 
       const queryString = new URLSearchParams(params).toString();
-      const response = await axios.get(`/api/v1/admin/system/logs/db/api?${queryString}`);
+      const response = await axios.get(`/api/admin/system/logs/db/api?${queryString}`);
 
       // 验证API调用
-      expect(axios.get).toHaveBeenCalledWith(`/api/v1/admin/system/logs/db/api?${queryString}`);
+      expect(axios.get).toHaveBeenCalledWith(`/api/admin/system/logs/db/api?${queryString}`);
       expect(response.data).toEqual(mockAPILogs);
     });
   });
@@ -267,10 +267,10 @@ describe('日志管理API交互测试', () => {
       axios.get.mockResolvedValue({ data: mockStatistics });
 
       // 调用API
-      const response = await axios.get('/api/v1/admin/system/logs/db/statistics');
+      const response = await axios.get('/api/admin/system/logs/db/statistics');
 
       // 验证API调用
-      expect(axios.get).toHaveBeenCalledWith('/api/v1/admin/system/logs/db/statistics');
+      expect(axios.get).toHaveBeenCalledWith('/api/admin/system/logs/db/statistics');
       expect(response.data).toEqual(mockStatistics);
       expect(response.data.total_logs).toBe(1500);
       expect(response.data.error_logs).toBe(45);
@@ -284,7 +284,7 @@ describe('日志管理API交互测试', () => {
       axios.get.mockRejectedValue(new Error(errorMessage));
 
       // 验证错误处理
-      await expect(axios.get('/api/v1/admin/system/logs/db/system?skip=0&limit=50'))
+      await expect(axios.get('/api/admin/system/logs/db/system?skip=0&limit=50'))
         .rejects
         .toThrow(errorMessage);
     });
@@ -300,7 +300,7 @@ describe('日志管理API交互测试', () => {
       axios.get.mockRejectedValue(errorResponse);
 
       // 验证错误处理
-      await expect(axios.get('/api/v1/admin/system/logs/db/system?skip=0&limit=50'))
+      await expect(axios.get('/api/admin/system/logs/db/system?skip=0&limit=50'))
         .rejects
         .toEqual(errorResponse);
     });
@@ -311,17 +311,17 @@ describe('日志管理API交互测试', () => {
       // 模拟用户执行一系列操作
       const operations = [
         // 获取统计信息
-        () => axios.get('/api/v1/admin/system/logs/db/statistics'),
+        () => axios.get('/api/admin/system/logs/db/statistics'),
         // 获取最近的系统日志
-        () => axios.get('/api/v1/admin/system/logs/db/system?skip=0&limit=5'),
+        () => axios.get('/api/admin/system/logs/db/system?skip=0&limit=5'),
         // 获取所有系统日志
-        () => axios.get('/api/v1/admin/system/logs/db/system?skip=0&limit=50'),
+        () => axios.get('/api/admin/system/logs/db/system?skip=0&limit=50'),
         // 获取用户日志
-        () => axios.get('/api/v1/admin/system/logs/db/user?skip=0&limit=50'),
+        () => axios.get('/api/admin/system/logs/db/user?skip=0&limit=50'),
         // 获取安全日志
-        () => axios.get('/api/v1/admin/system/logs/db/security?skip=0&limit=50'),
+        () => axios.get('/api/admin/system/logs/db/security?skip=0&limit=50'),
         // 获取API日志
-        () => axios.get('/api/v1/admin/system/logs/db/api?skip=0&limit=50')
+        () => axios.get('/api/admin/system/logs/db/api?skip=0&limit=50')
       ];
 
       // Mock每个API调用

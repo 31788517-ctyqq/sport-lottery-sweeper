@@ -151,7 +151,7 @@ def calculate_win_level_diff(home_wp: float, away_wp: float) -> int:
             return 4  # S
         elif 1.20 <= wp <= 1.40:
             return 3  # A
-        elif 0.80 <= wp <= 1.19:
+        elif 0.80 <= wp < 1.20:
             return 2  # B
         elif 0.60 <= wp <= 0.79:
             return 1  # C
@@ -164,12 +164,23 @@ def calculate_win_level_diff(home_wp: float, away_wp: float) -> int:
     return home_score - away_score
 
 
-def calculate_stability_tier(home_odds: List[float], away_odds: List[float]) -> str:
+def calculate_stability_tier(
+    home_odds: List[float], 
+    away_odds: List[float],
+    home_highest_freq_percent: Optional[float] = None,
+    away_highest_freq_percent: Optional[float] = None
+) -> str:
     """
     计算一赔稳定性 (P-Tier)
     基于一赔指数出现频率计算的稳定性等级，反映正路可信度。
+    算法逻辑:
+    1. 判断场次类型: 双一赔, 单一赔, 无一赔
+    2. 计算P值:
+       双一赔: P = 主一赔% + 客一赔%
+       单一赔: P = 唯一一赔% - 对手最高频%
+       无一赔: 进入P7，按Ssum = 主最频% + 客最频% 排序
+    3. 根据P值范围确定等级
     """
-    # 简化实现，实际情况需要更复杂的计算逻辑
     has_home_odds = len(home_odds) > 0
     has_away_odds = len(away_odds) > 0
     
@@ -184,11 +195,22 @@ def calculate_stability_tier(home_odds: List[float], away_odds: List[float]) -> 
             return "B-"  # S(P4)
     elif has_home_odds or has_away_odds:
         # 单一赔
-        odds_sum = sum(home_odds) if has_home_odds else sum(away_odds)
-        if odds_sum >= 40:
+        if has_home_odds:
+            unique_odds_percent = sum(home_odds)
+            opponent_highest_freq = away_highest_freq_percent if away_highest_freq_percent is not None else 0
+        else:
+            unique_odds_percent = sum(away_odds)
+            opponent_highest_freq = home_highest_freq_percent if home_highest_freq_percent is not None else 0
+        
+        p_value = unique_odds_percent - opponent_highest_freq
+        
+        if p_value >= 40:
             return "B"  # S(P3)
-        elif 15 <= odds_sum < 40:
+        elif 15 <= p_value < 40:
             return "C"  # S(P5)
+        elif p_value < 0:
+            # P < 0 的情况归为 E 级
+            return "E"
         else:
             return "D"  # S(P6)
     else:
@@ -270,6 +292,19 @@ def transform_real_beidan_match(raw_data: Dict) -> Dict:
     home_odds = extract_odds_from_feature(home_feature)
     guest_odds = extract_odds_from_feature(guest_feature)
     
+    # 提取最高频百分比（用于单一赔计算）
+    def parse_percent_str(percent_str: str) -> float:
+        if not percent_str:
+            return 0.0
+        try:
+            # 移除百分号并转换为浮点数
+            return float(percent_str.rstrip('%'))
+        except (ValueError, TypeError):
+            return 0.0
+    
+    home_highest_freq = parse_percent_str(raw_data.get('homeDxqPercentStr', '0'))
+    away_highest_freq = parse_percent_str(raw_data.get('guestDxqPercentStr', '0'))
+    
     # 计算ssum值 - 使用一些指标的组合
     ssum = calculate_ssum_value(raw_data)
     
@@ -278,7 +313,7 @@ def transform_real_beidan_match(raw_data: Dict) -> Dict:
         'teams': f"{home_team} vs {guest_team}",
         'strength': calculate_strength_diff(home_power, guest_power),
         'winLevel': calculate_win_level_diff(home_wp, guest_wp),
-        'stability': calculate_stability_tier(home_odds, guest_odds),
+        'stability': calculate_stability_tier(home_odds, guest_odds, home_highest_freq, away_highest_freq),
         'warning': None,
         'sortScore': 0,
         'ssum': ssum
@@ -288,19 +323,22 @@ def transform_real_beidan_match(raw_data: Dict) -> Dict:
 def calculate_ssum_value(match_data: Dict) -> int:
     """
     根据比赛数据计算ssum值（用于P7排序规则）
+    根据文档：Ssum = 主最频% + 客最频%
     """
-    # 计算一个综合分数，基于多个因素
-    factors = [
-        match_data.get('homePower', 0),
-        match_data.get('guestPower', 0),
-        abs(match_data.get('homeWinPan', 0) - match_data.get('guestWinPan', 0)) * 10,
-        int(match_data.get('homeDxqPercentStr', '0').rstrip('%')),
-        int(match_data.get('guestDxqPercentStr', '0').rstrip('%')),
-    ]
+    def parse_percent_str(percent_str: str) -> float:
+        if not percent_str:
+            return 0.0
+        try:
+            # 移除百分号并转换为浮点数
+            return float(percent_str.rstrip('%'))
+        except (ValueError, TypeError):
+            return 0.0
     
-    # 取平均值并转换为整数
-    avg_factor = sum(f for f in factors if isinstance(f, (int, float))) / len([f for f in factors if isinstance(f, (int, float))])
-    return int(avg_factor)
+    home_percent = parse_percent_str(match_data.get('homeDxqPercentStr', '0'))
+    guest_percent = parse_percent_str(match_data.get('guestDxqPercentStr', '0'))
+    
+    # 返回百分比之和，四舍五入为整数
+    return int(round(home_percent + guest_percent))
 
 
 def transform_multiple_beidan_matches(matches_data: List[Dict]) -> List[Dict]:

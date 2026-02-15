@@ -3,7 +3,7 @@ import os
 
 def check_table_structure():
     # 检查数据库文件是否存在
-    db_path = './backend/sport_lottery.db'  # 使用正确的数据库路径
+    db_path = './data/sport_lottery.db'  # 使用正确的数据库路径
     if not os.path.exists(db_path):
         print(f"数据库文件不存在: {db_path}")
         return

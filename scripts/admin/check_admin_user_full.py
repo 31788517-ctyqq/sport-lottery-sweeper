@@ -3,7 +3,7 @@ import os
 
 def check_admin_user_full():
     """检查admin用户的完整信息"""
-    db_path = 'sport_lottery.db'
+    db_path = 'data/sport_lottery.db'
     
     if not os.path.exists(db_path):
         print(f"数据库文件 {db_path} 不存在")

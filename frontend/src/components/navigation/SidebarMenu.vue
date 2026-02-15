@@ -21,7 +21,7 @@
     
     <nav class="sidebar-nav">
       <div 
-        v-for="item in menuItems" 
+        v-for="item in visibleMenuItems" 
         :key="item.path || item.name"
         class="nav-item"
         :class="{ active: isActive(item.path || item.children?.[0]?.path) }"
@@ -143,6 +143,52 @@ const onTouchEnd = (e) => {
 }
 
 defineExpose({ openMenu, closeMenu })
+
+// 缺失组件的路径黑名单（根据自动化扫描结果）
+const missingPaths = [
+  '/admin/data-source',
+  '/admin/draw-prediction',
+  '/admin/draw-prediction/data-feature',
+  '/admin/draw-prediction/model-train-eval',
+  '/admin/draw-prediction/model-manage-deploy',
+  '/admin/draw-prediction/prediction-monitor',
+  '/admin/ip-pool',
+  '/admin/headers-management',
+  '/admin/task-execution-monitor',
+  '/admin/ai-service/cost-monitor',
+  '/admin/ai-service/agent-management',
+  '/admin/ai-service/model-management',
+  '/admin/ai-service/conversation-assistant',
+  '/admin/ai-service/config-management',
+  '/admin/intelligent-decision/hedging-management',
+  '/admin/intelligent-decision/recommendation-management',
+  '/admin/intelligent-decision/risk-control',
+  '/admin/intelligence/screening-management',
+  '/admin/intelligence/collection-management',
+  '/admin/intelligence/model-management',
+  '/admin/intelligence/weight-management',
+  '/admin/intelligence/sentiment-analysis',
+  '/admin/intelligence/multimodal-analysis'
+]
+
+// 计算可见菜单项：过滤掉路径在缺失列表中的项，若父菜单无可见子项则整组隐藏
+const visibleMenuItems = computed(() => {
+  return menuItems.filter(item => {
+    // 有子菜单的情况
+    if (item.children && item.children.length > 0) {
+      const visibleChildren = item.children.filter(child => !missingPaths.includes(child.path))
+      // 如果该父菜单本身路径也在缺失列表，或所有子菜单都缺失，则隐藏
+      if (missingPaths.includes(item.path) || visibleChildren.length === 0) {
+        return false
+      }
+      // 替换children为可见的子菜单
+      item.children = visibleChildren
+      return true
+    }
+    // 无子菜单的情况
+    return !missingPaths.includes(item.path)
+  })
+})
 </script>
 
 <style scoped>

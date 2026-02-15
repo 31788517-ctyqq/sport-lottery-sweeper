@@ -8,9 +8,9 @@ Get-Process python -ErrorAction SilentlyContinue | Stop-Process -Force
 Start-Sleep -Seconds 2
 Write-Host ""
 Write-Host "[2/4] ?????..."
-if (-Not (Test-Path "sport_lottery.db")) {
+if (-Not (Test-Path "../../data/sport_lottery.db")) {
     Write-Host "???????..."
-    New-Item -ItemType File -Path "sport_lottery.db" -Force | Out-Null
+    New-Item -ItemType File -Path "../../data/sport_lottery.db" -Force | Out-Null
 }
 Write-Host "???????"
 Write-Host ""

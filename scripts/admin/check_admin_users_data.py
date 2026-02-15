@@ -3,7 +3,7 @@ import sqlite3
 import sys
 
 def check_admin_users():
-    db_path = "sport_lottery.db"
+    db_path = "data/sport_lottery.db"
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()

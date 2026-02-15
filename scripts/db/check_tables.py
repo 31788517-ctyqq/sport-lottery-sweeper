@@ -1,7 +1,7 @@
 import sqlite3
 
 def check_tables():
-    conn = sqlite3.connect('sport_lottery.db')
+    conn = sqlite3.connect('data/sport_lottery.db')
     cursor = conn.cursor()
     cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
     tables = cursor.fetchall()
@@ -33,7 +33,7 @@ if os.path.exists(test_db_path):
 else:
     print("Database file does not exist!")
 
-DB_PATH = 'sport_lottery.db'
+DB_PATH = 'data/sport_lottery.db'
 
 if not os.path.exists(DB_PATH):
     print(f"数据库文件不存在: {DB_PATH}")

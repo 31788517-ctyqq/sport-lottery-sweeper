@@ -18,7 +18,7 @@ export function getSources(params) {
   }
   
   return request({
-    url: '/api/v1/admin/sources',
+    url: '/api/admin/sources',
     method: 'get',
     params: filteredParams
   })
@@ -27,7 +27,7 @@ export function getSources(params) {
 // 获取单个数据源详情
 export function getSource(id) {
   return request({
-    url: `/api/v1/admin/sources/${id}`,
+    url: `/api/admin/sources/${id}`,
     method: 'get'
   })
 }
@@ -35,7 +35,7 @@ export function getSource(id) {
 // 创建数据源
 export function createSource(data) {
   return request({
-    url: '/api/v1/admin/sources',
+    url: '/api/admin/sources',
     method: 'post',
     data
   })
@@ -44,7 +44,7 @@ export function createSource(data) {
 // 更新数据源
 export function updateSource(id, data) {
   return request({
-    url: `/api/v1/admin/sources/${id}`,
+    url: `/api/admin/sources/${id}`,
     method: 'put',
     data
   })
@@ -53,7 +53,7 @@ export function updateSource(id, data) {
 // 删除数据源
 export function deleteSource(id) {
   return request({
-    url: `/api/v1/admin/sources/${id}`,
+    url: `/api/admin/sources/${id}`,
     method: 'delete'
   })
 }
@@ -61,7 +61,7 @@ export function deleteSource(id) {
 // 批量删除数据源
 export function batchDeleteSources(ids) {
   return request({
-    url: '/api/v1/admin/sources/batch',
+    url: '/api/admin/sources/batch',
     method: 'delete',
     data: { ids }
   })
@@ -70,7 +70,7 @@ export function batchDeleteSources(ids) {
 // 健康检查
 export function healthCheck(id) {
   return request({
-    url: `/api/v1/admin/sources/${id}/health`,
+    url: `/api/admin/sources/${id}/health`,
     method: 'get'
   })
 }
@@ -78,7 +78,7 @@ export function healthCheck(id) {
 // 批量健康检查
 export function batchHealthCheck(ids) {
   return request({
-    url: '/api/v1/admin/sources/batch/health',
+    url: '/api/admin/sources/batch/health',
     method: 'post',
     data: { ids }
   })
@@ -87,7 +87,7 @@ export function batchHealthCheck(ids) {
 // 更新数据源状态
 export function updateStatus(id, data) {
   return request({
-    url: `/api/v1/admin/sources/${id}/status`,
+    url: `/api/admin/sources/${id}/status`,
     method: 'put',
     data
   })
@@ -96,7 +96,7 @@ export function updateStatus(id, data) {
 // 批量启用数据源
 export function batchEnableSource(ids) {
   return request({
-    url: '/api/v1/admin/sources/batch/enable',
+    url: '/api/admin/sources/batch/enable',
     method: 'put',
     data: { ids }
   })
@@ -105,7 +105,7 @@ export function batchEnableSource(ids) {
 // 批量停用数据源
 export function batchDisableSource(ids) {
   return request({
-    url: '/api/v1/admin/sources/batch/disable',
+    url: '/api/admin/sources/batch/disable',
     method: 'put',
     data: { ids }
   })
@@ -114,7 +114,7 @@ export function batchDisableSource(ids) {
 // 批量测试数据源
 export function batchTestSources(ids) {
   return request({
-    url: '/api/v1/admin/sources/batch/test',
+    url: '/api/admin/sources/batch/test',
     method: 'post',
     data: { ids }
   })
@@ -123,7 +123,7 @@ export function batchTestSources(ids) {
 // 导出数据源报告
 export function exportSourceReport(params) {
   return request({
-    url: '/api/v1/admin/sources/export',
+    url: '/api/admin/sources/export',
     method: 'get',
     params,
     responseType: 'blob'
@@ -133,7 +133,7 @@ export function exportSourceReport(params) {
 // 获取数据源分类选项
 export function getSourceCategories() {
   return request({
-    url: '/api/v1/admin/sources/categories',
+    url: '/api/admin/sources/categories',
     method: 'get'
   })
 }

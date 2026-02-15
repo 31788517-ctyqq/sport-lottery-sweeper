@@ -25,7 +25,7 @@ def print_step(step):
 def execute_optimization_plan():
     """执行完整的数据库优化计划"""
     
-    db_path = BASE_DIR / "sport_lottery.db"
+    db_path = BASE_DIR / "data/sport_lottery.db"
     
     print("🚀 体育彩票扫盘系统 - 数据库优化执行")
     print("目标: 提升查询性能、优化存储结构、增强数据分析能力")

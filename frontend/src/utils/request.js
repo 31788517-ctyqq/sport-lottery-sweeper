@@ -118,15 +118,52 @@ request.interceptors.response.use(
       message = ''
     }
     
-    // 对于成功响应，即使message包含额外文本也不应报错
-    // 只有当success为false时才处理错误
-    
     // 对直接返回的数据进行null值规范化
     return normalizeNullValues(processedData)
   },
   (error) => {
+    // ===== 新增：安全读取响应体，防止 HTML 等非 JSON 内容导致解析错误 =====
+    if (error.response) {
+      const { status, statusText, data } = error.response
+      if (status < 200 || status >= 300) {
+        let parsed = null
+        if (typeof data === 'string') {
+          try {
+            parsed = JSON.parse(data)
+          } catch {
+            console.error(`API 返回非 JSON 响应 (status ${status}):`, data.slice(0, 200))
+            return Promise.reject(new Error(`HTTP ${status} ${statusText} - 服务异常`))
+          }
+        }
+        error.response.parsedData = parsed || data
+      }
+    }
+    // ========================================================================
     console.error('API响应错误:', error)
     
+    // 检查是否为401未授权错误
+    if (error.response && error.response.status === 401) {
+      console.error('认证失败: 令牌无效或已过期')
+      
+      // 开发环境下只显示提示，避免页面刷新循环
+      if (import.meta.env.MODE === 'development') {
+        console.warn('🔧 开发模式：跳过401页面跳转')
+        ElMessage.warning('开发模式：模拟登录过期状态')
+      } else {
+        ElMessage.error('认证失败，请重新登录')
+        // 清除本地存储的认证信息
+        localStorage.removeItem('access_token')
+        localStorage.removeItem('token')
+        
+        // 生产环境才执行跳转
+        setTimeout(() => {
+          window.location.href = '/#/login'
+        }, 1500)
+      }
+      
+      return Promise.reject(error)
+    }
+
     // 检查是否为null值相关错误
     if (isNullRelatedError(error)) {
       console.warn('检测到null值相关网络错误:', error.message)

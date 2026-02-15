@@ -9,7 +9,7 @@ import request from '@/utils/request'
  */
 export function getMultiStrategyInfo() {
   return request({
-    url: '/api/v1/multi-strategy/',
+    url: '/api/multi-strategy/',
     method: 'get'
   })
 }
@@ -19,7 +19,7 @@ export function getMultiStrategyInfo() {
  */
 export function getAvailableStrategies() {
   return request({
-    url: '/api/v1/multi-strategy/strategies',
+    url: '/api/multi-strategy/strategies',
     method: 'get'
   })
 }
@@ -29,7 +29,7 @@ export function getAvailableStrategies() {
  */
 export function executeMultiStrategy(data) {
   return request({
-    url: '/api/v1/multi-strategy/execute',
+    url: '/api/multi-strategy/execute',
     method: 'post',
     data
   })
@@ -40,7 +40,7 @@ export function executeMultiStrategy(data) {
  */
 export function toggleTask(data) {
   return request({
-    url: '/api/v1/multi-strategy/toggle-task',
+    url: '/api/multi-strategy/toggle-task',
     method: 'post',
     data
   })

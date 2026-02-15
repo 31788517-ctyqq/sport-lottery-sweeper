@@ -23,7 +23,7 @@ print("\n数据库表检查完成")
 
 
 def check_all_tables():
-    conn = sqlite3.connect('sport_lottery.db')
+    conn = sqlite3.connect('data/sport_lottery.db')
     cursor = conn.cursor()
 
     # 查询数据库中所有表

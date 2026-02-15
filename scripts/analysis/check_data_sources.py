@@ -1,6 +1,6 @@
 ﻿import sqlite3
 
-conn = sqlite3.connect('sport_lottery.db')
+conn = sqlite3.connect('data/sport_lottery.db')
 cur = conn.cursor()
 
 # 检查数据源总数

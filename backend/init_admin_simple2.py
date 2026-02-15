@@ -23,7 +23,7 @@ def init_admin_user():
             db_path = str(DATABASE_PATH)
         except ImportError:
             # 回退方案
-            db_path = os.path.join(project_root, "data", "sport_lottery.db")
+            db_path = os.path.join(project_root, "data", "data/sport_lottery.db")
         print(f"数据库路径: {db_path}")
         
         conn = sqlite3.connect(db_path)

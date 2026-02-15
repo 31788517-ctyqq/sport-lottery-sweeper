@@ -25,8 +25,8 @@ print("✅ alembic 已安装")
 alembic_ini = os.path.join(BASE_DIR, "alembic.ini")
 with open(alembic_ini, "r", encoding="utf-8") as f:
     content = f.read()
-new_url = "sqlite:///D:/sport-lottery-sweeper/sport_lottery.db"
-if "sqlite:///D:/sport-lottery-sweeper/sport_lottery.db" not in content:
+new_url = "sqlite:///data/sport_lottery.db"
+if "sqlite:///data/sport_lottery.db" not in content:
     content = content.replace(
         "sqlalchemy.url = driver://user:pass@localhost/dbname",
         new_url
@@ -64,7 +64,7 @@ else:
     print("✅ alembic/env.py 已正确配置 Base.metadata")
 
 # 4. 检查数据库是否已有表
-DB_PATH = os.path.join(BASE_DIR, "sport_lottery.db")
+DB_PATH = os.path.join(BASE_DIR, "data", "sport_lottery.db")
 conn = sqlite3.connect(DB_PATH)
 cur = conn.cursor()
 cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name IN ('leagues','teams','matches');")
@@ -113,7 +113,7 @@ if has_tables:
     print("✅ 已清空迁移脚本内容，确保为空迁移")
 
     # 将版本号写入 alembic_version 表
-    conn = sqlite3.connect("D:/sport-lottery-sweeper/sport_lottery.db")
+    conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
     cur.execute("DELETE FROM alembic_version;")
     cur.execute("INSERT INTO alembic_version (version_num) VALUES (?);", (version_id,))

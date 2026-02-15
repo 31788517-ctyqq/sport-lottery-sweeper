@@ -1,7 +1,7 @@
 import sqlite3
 
 # 连接当前数据库
-conn = sqlite3.connect('sport_lottery.db')
+conn = sqlite3.connect('data/sport_lottery.db')
 cursor = conn.cursor()
 cursor.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")
 current_tables = set([row[0] for row in cursor.fetchall()])

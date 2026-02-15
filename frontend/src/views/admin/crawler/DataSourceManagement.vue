@@ -351,7 +351,7 @@ const loadData = async () => {
     if (filters.value.search) queryParams.push(`search=${encodeURIComponent(filters.value.search)}`)
     
     const queryString = queryParams.length > 0 ? '?' + queryParams.join('&') : ''
-    const url = `/api/v1/admin/sources${queryString}`
+    const url = `/api/admin/sources${queryString}`
     
     const response = await fetch(url, {
       method: 'GET',
@@ -519,7 +519,7 @@ const saveDataSource = async () => {
       category: formData.value.category
     }
     
-    const response = await fetch('/api/v1/admin/sources', {
+    const response = await fetch('/api/admin/sources', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -563,7 +563,7 @@ const save100qiuDataSource = async () => {
       return
     }
     
-    const response = await fetch('/api/v1/admin/sources', {
+    const response = await fetch('/api/admin/sources', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -746,7 +746,7 @@ const handleDelete = (row) => {
 
 const deleteDataSource = async (id) => {
   try {
-    const response = await fetch(`/api/v1/admin/sources/${id}`, {
+    const response = await fetch(`/api/admin/sources/${id}`, {
       method: 'DELETE',
       credentials: 'include'
     })
@@ -765,7 +765,7 @@ const deleteDataSource = async (id) => {
 
 const checkHealth = async (row) => {
   try {
-    const response = await fetch(`/api/v1/admin/sources/${row.id}/health`, {
+    const response = await fetch(`/api/admin/sources/${row.id}/health`, {
       method: 'POST',
       credentials: 'include'
     })
@@ -795,7 +795,7 @@ const checkHealth = async (row) => {
 const handleFetch = async (row) => {
   fetchingIds.value.push(row.id)
   try {
-    const response = await fetch(`/api/v1/data-source-100qiu/${row.id}/fetch`, {
+    const response = await fetch(`/api/data-source-100qiu/${row.id}/fetch`, {
       method: 'POST',
       credentials: 'include'
     })
@@ -847,7 +847,7 @@ const batchDelete = () => {
     type: 'warning'
   }).then(async () => {
     try {
-      const response = await fetch('/api/v1/admin/sources/batch', {
+      const response = await fetch('/api/admin/sources/batch', {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json'
@@ -917,7 +917,7 @@ const saveEditDataSource = async () => {
       }
     }
     
-    const response = await fetch(`/api/v1/admin/sources/${editFormData.value.id}`, {
+    const response = await fetch(`/api/admin/sources/${editFormData.value.id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json'

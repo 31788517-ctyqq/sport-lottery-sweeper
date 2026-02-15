@@ -23,8 +23,8 @@ import hashlib
 # 配置
 BASE_DIR = Path(__file__).parent
 BACKEND_DIR = BASE_DIR / "backend"
-DB_PATH = BASE_DIR / "sport_lottery.db"
-DATA_DB_PATH = BASE_DIR / "data" / "sport_lottery.db"
+DB_PATH = BASE_DIR / "data/sport_lottery.db"
+DATA_DB_PATH = BASE_DIR / "data" / "data/sport_lottery.db"
 BASE_URL = "http://localhost:8000"
 API_PREFIX = "/api/v1"
 

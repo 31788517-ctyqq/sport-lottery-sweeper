@@ -3,7 +3,7 @@ import request from '@/utils/request'
 // 获取智能分析记录列表
 export function getIntelligenceList(params) {
   return request({
-    url: '/api/v1/intelligence',
+    url: '/api/intelligence',
     method: 'get',
     params
   })
@@ -12,7 +12,7 @@ export function getIntelligenceList(params) {
 // 新增分析记录
 export function createIntelligence(data) {
   return request({
-    url: '/api/v1/intelligence',
+    url: '/api/intelligence',
     method: 'post',
     data
   })
@@ -21,7 +21,7 @@ export function createIntelligence(data) {
 // 删除分析记录
 export function deleteIntelligence(id) {
   return request({
-    url: `/api/v1/intelligence/${id}`,
+    url: `/api/intelligence/${id}`,
     method: 'delete'
   })
 }
@@ -29,7 +29,7 @@ export function deleteIntelligence(id) {
 // 获取情报统计信息
 export function getIntelligenceStats(params) {
   return request({
-    url: '/api/v1/intelligence/stats',
+    url: '/api/intelligence/stats',
     method: 'get',
     params
   })
@@ -38,7 +38,7 @@ export function getIntelligenceStats(params) {
 // 更新情报记录
 export function updateIntelligence(id, data) {
   return request({
-    url: `/api/v1/intelligence/${id}`,
+    url: `/api/intelligence/${id}`,
     method: 'put',
     data
   })
@@ -47,7 +47,7 @@ export function updateIntelligence(id, data) {
 // 获取情报类型列表
 export function getIntelligenceTypes() {
   return request({
-    url: '/api/v1/intelligence/types',
+    url: '/api/intelligence/types',
     method: 'get'
   })
 }
@@ -55,7 +55,7 @@ export function getIntelligenceTypes() {
 // 获取情报来源列表
 export function getIntelligenceSources() {
   return request({
-    url: '/api/v1/intelligence/sources',
+    url: '/api/intelligence/sources',
     method: 'get'
   })
 }

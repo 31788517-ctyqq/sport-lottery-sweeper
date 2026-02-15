@@ -557,23 +557,33 @@ async def batch_update_status(
 
 
 
-@router.get("/sources/{source_id}/health")
+@router.api_route("/sources/{source_id}/health", methods=["GET", "POST"])
 async def get_data_source_health(
     source_id: int,
     # current_user: User = Depends(get_current_admin_user),
     db: Session = Depends(get_db)
 ):
     """
-    获取数据源健康状态
+    获取数据源健康状态（支持GET和POST方法）
+    返回前端期望的格式，包含status、response_time_ms、status_code、message字段
     """
     try:
         service = SPManagementService(db)
         # 使用测试连接方法作为健康检查
         health_status = service.test_data_source(source_id)
         
+        # 确保返回的数据包含前端期望的字段
+        response_data = health_status.copy()
+        
+        # 映射字段到前端期望的格式
+        response_data['response_time_ms'] = health_status.get('response_time')
+        response_data['status_code'] = health_status.get('status_code')
+        response_data['status'] = health_status.get('status', 'unknown')
+        response_data['message'] = health_status.get('message', '')
+        
         return {
             "success": True,
-            "data": health_status,
+            "data": response_data,
             "message": "健康状态获取成功"
         }
     except Exception as e:

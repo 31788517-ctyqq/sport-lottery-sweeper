@@ -78,7 +78,7 @@ class BackupCleanup:
             # 检查是否超过保留期限
             if mtime < self.cutoff_date:
                 # 保护重要的数据库文件不被误删
-                if file_path.name == 'sport_lottery.db':
+                if file_path.name == 'data/sport_lottery.db':
                     logger.warning(f"[WARN] 跳过重要数据库文件: {file_path}")
                     return False
                 

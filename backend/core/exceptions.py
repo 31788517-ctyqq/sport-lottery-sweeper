@@ -27,20 +27,71 @@ class EmptyResultError(BusinessException):
 # AI_DONE: coder1 @2026-02-04
 
 # 为了兼容，也导出其他常见异常
-from ..utils.exceptions import (
-    AuthenticationError,
-    AuthorizationError,
-    ValidationError,
-    UserNotFoundError,
-    UserAlreadyExistsError,
-    AccountDisabledError,
-    InvalidTokenError,
-    PasswordStrengthError,
-    TokenValidationError,
-    BusinessLogicError,
-    DatabaseError,
-    ConfigurationError
-)
+try:
+    from ..utils.exceptions import (
+        AuthenticationError,
+        AuthorizationError,
+        ValidationError,
+        UserNotFoundError,
+        UserAlreadyExistsError,
+        AccountDisabledError,
+        InvalidTokenError,
+        PasswordStrengthError,
+        TokenValidationError,
+        BusinessLogicError,
+        DatabaseError,
+        ConfigurationError
+    )
+except ImportError:
+    # 如果utils.exceptions不存在，则定义一些基本异常类
+    class AuthenticationError(Exception):
+        """认证错误"""
+        pass
+
+    class AuthorizationError(Exception):
+        """授权错误"""
+        pass
+
+    class ValidationError(Exception):
+        """验证错误"""
+        pass
+
+    class UserNotFoundError(Exception):
+        """用户未找到错误"""
+        pass
+
+    class UserAlreadyExistsError(Exception):
+        """用户已存在错误"""
+        pass
+
+    class AccountDisabledError(Exception):
+        """账户禁用错误"""
+        pass
+
+    class InvalidTokenError(Exception):
+        """无效令牌错误"""
+        pass
+
+    class PasswordStrengthError(Exception):
+        """密码强度错误"""
+        pass
+
+    class TokenValidationError(Exception):
+        """令牌验证错误"""
+        pass
+
+    class BusinessLogicError(Exception):
+        """业务逻辑错误"""
+        pass
+
+    class DatabaseError(Exception):
+        """数据库错误"""
+        pass
+
+    class ConfigurationError(Exception):
+        """配置错误"""
+        pass
+
 
 __all__ = [
     "ValidationException",

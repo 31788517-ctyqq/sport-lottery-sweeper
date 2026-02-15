@@ -76,8 +76,13 @@ export const useUserStore = defineStore('user', () => {
       localStorage.removeItem('permissions')
       localStorage.removeItem('roles')
       
-      // 统一使用相对路径进行跳转，避免硬编码端口
-      window.location.href = '/login'
+      // 开发环境下跳过强制跳转，避免循环
+      if (import.meta.env.MODE !== 'development') {
+        // 统一使用相对路径进行跳转，避免硬编码端口
+        window.location.href = '/login'
+      } else {
+        console.warn('🔧 开发模式：跳过logout跳转')
+      }
     }
   }
 

@@ -3,7 +3,7 @@ import datetime
 import json
 
 def fix_admin_user():
-    conn = sqlite3.connect('sport_lottery.db')
+    conn = sqlite3.connect('data/sport_lottery.db')
     c = conn.cursor()
     
     print("检查admin用户...")

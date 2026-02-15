@@ -56,7 +56,7 @@ class TestCreateAccessToken:
         # Mock JWT encode
         mock_jwt_encode.return_value = "test-jwt-token"
         
-        result = create_access_token("testuser")
+        result = create_access_token({"sub": "testuser"})
         
         # 验证JWT encode被正确调用
         mock_jwt_encode.assert_called_once()
@@ -88,7 +88,7 @@ class TestCreateAccessToken:
         mock_jwt_encode.return_value = "test-jwt-token-custom"
         
         custom_expiry = timedelta(hours=2)
-        result = create_access_token("testuser", expires_delta=custom_expiry)
+        result = create_access_token({"sub": "testuser"}, expires_delta=custom_expiry)
         
         # 验证JWT encode被正确调用
         call_args = mock_jwt_encode.call_args
@@ -113,56 +113,76 @@ class TestAuthService:
         """创建认证服务实例"""
         return AuthenticationService(mock_db)
     
-    @patch('backend.services.auth_service.AuthenticationService._get_user_by_username')
-    def test_authenticate_user_success(self, mock_get_user, auth_service):
+    def test_authenticate_user_success(self, auth_service):
         """测试用户认证成功"""
         # Mock用户对象
         mock_user = Mock()
         mock_user.username = "testuser"
         mock_user.hashed_password = get_password_hash("testpass")
         mock_user.is_active = True
+        mock_user.status = "active"
         
-        mock_get_user.return_value = mock_user
+        # Mock数据库查询
+        mock_query = Mock()
+        mock_filter = Mock()
+        mock_filter.first.return_value = mock_user
+        mock_query.filter.return_value = mock_filter
+        auth_service.db.query.return_value = mock_query
         
         result = auth_service.authenticate_user("testuser", "testpass")
         
         assert result == mock_user
-        mock_get_user.assert_called_once_with("testuser")
+        # 验证查询被调用
+        auth_service.db.query.assert_called_once()
     
-    @patch('backend.services.auth_service.AuthenticationService._get_user_by_username')
-    def test_authenticate_user_wrong_password(self, mock_get_user, auth_service):
+    def test_authenticate_user_wrong_password(self, auth_service):
         """测试用户认证失败 - 密码错误"""
         # Mock用户对象
         mock_user = Mock()
         mock_user.username = "testuser"
         mock_user.hashed_password = get_password_hash("correctpass")
         mock_user.is_active = True
+        mock_user.status = "active"
         
-        mock_get_user.return_value = mock_user
+        # Mock数据库查询
+        mock_query = Mock()
+        mock_filter = Mock()
+        mock_filter.first.return_value = mock_user
+        mock_query.filter.return_value = mock_filter
+        auth_service.db.query.return_value = mock_query
         
         result = auth_service.authenticate_user("testuser", "wrongpass")
         
         assert result is None
     
-    @patch('backend.services.auth_service.AuthenticationService._get_user_by_username')
-    def test_authenticate_user_inactive(self, mock_get_user, auth_service):
+    def test_authenticate_user_inactive(self, auth_service):
         """测试用户认证失败 - 用户未激活"""
         # Mock用户对象
         mock_user = Mock()
         mock_user.username = "testuser"
         mock_user.hashed_password = get_password_hash("testpass")
         mock_user.is_active = False
+        mock_user.status = "inactive"
         
-        mock_get_user.return_value = mock_user
+        # Mock数据库查询
+        mock_query = Mock()
+        mock_filter = Mock()
+        mock_filter.first.return_value = mock_user
+        mock_query.filter.return_value = mock_filter
+        auth_service.db.query.return_value = mock_query
         
         result = auth_service.authenticate_user("testuser", "testpass")
         
         assert result is None
     
-    @patch('backend.services.auth_service.AuthenticationService._get_user_by_username')
-    def test_authenticate_user_not_found(self, mock_get_user, auth_service):
+    def test_authenticate_user_not_found(self, auth_service):
         """测试用户认证失败 - 用户不存在"""
-        mock_get_user.return_value = None
+        # Mock数据库查询返回None
+        mock_query = Mock()
+        mock_filter = Mock()
+        mock_filter.first.return_value = None
+        mock_query.filter.return_value = mock_filter
+        auth_service.db.query.return_value = mock_query
         
         result = auth_service.authenticate_user("nonexistent", "testpass")
         
@@ -225,15 +245,18 @@ class TestLoginUser:
         mock_auth_service_class.return_value = mock_auth_instance
         
         # Mock JWT token创建
-        with patch('backend.api.v1.auth.create_access_token', return_value="test-token"):
+        with patch.multiple('backend.api.v1.auth',
+                            create_access_token=Mock(return_value="test-token"),
+                            create_refresh_token=Mock(return_value="test-refresh-token")):
             response = test_client.post("/api/v1/login", json=login_data)
         
         assert response.status_code == 200
         data = response.json()
-        assert data["code"] == 200
-        assert data["message"] == "登录成功"
-        assert data["data"]["access_token"] == "test-token"
-        assert data["data"]["user_info"]["username"] == "testuser"
+        assert data["access_token"] == "test-token"
+        assert data["refresh_token"] == "test-refresh-token"
+        assert data["token_type"] == "bearer"
+        assert data["expires_in"] == 1800  # ACCESS_TOKEN_EXPIRE_MINUTES * 60
+        assert data["user_info"]["username"] == "testuser"
     
     @pytest.mark.asyncio
     @patch('backend.api.v1.auth.AuthenticationService')

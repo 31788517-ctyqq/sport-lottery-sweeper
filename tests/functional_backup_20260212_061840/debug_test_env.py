@@ -13,7 +13,7 @@ print(f"Current working directory: {os.getcwd()}")
 print(f"Script directory: {current_dir}")
 
 # 检查数据库文件是否存在
-db_path = os.path.join(current_dir, "sport_lottery.db")
+db_path = os.path.join(current_dir, "data", "data/sport_lottery.db")
 print(f"Database file exists: {os.path.exists(db_path)}")
 
 # 导入配置查看数据库URL

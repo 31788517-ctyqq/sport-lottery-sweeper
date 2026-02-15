@@ -7,7 +7,7 @@ import request from '@/utils/request'
 // 获取用户列表
 export function getUserList(params) {
   return request({
-    url: '/api/v1/admin/backend-users',
+    url: '/api/admin/backend-users',
     method: 'get',
     params
   })
@@ -16,7 +16,7 @@ export function getUserList(params) {
 // 获取用户详情
 export function getUserById(id) {
   return request({
-    url: `/api/v1/admin/backend-users/${id}`,
+    url: `/api/admin/backend-users/${id}`,
     method: 'get'
   })
 }
@@ -24,7 +24,7 @@ export function getUserById(id) {
 // 创建用户
 export function createUser(data) {
   return request({
-    url: '/api/v1/admin/backend-users',
+    url: '/api/admin/backend-users',
     method: 'post',
     data
   })
@@ -33,7 +33,7 @@ export function createUser(data) {
 // 更新用户
 export function updateUser(id, data) {
   return request({
-    url: `/api/v1/admin/backend-users/${id}`,
+    url: `/api/admin/backend-users/${id}`,
     method: 'put',
     data
   })
@@ -42,7 +42,7 @@ export function updateUser(id, data) {
 // 删除用户
 export function deleteUser(id) {
   return request({
-    url: `/api/v1/admin/backend-users/${id}`,
+    url: `/api/admin/backend-users/${id}`,
     method: 'delete'
   })
 }
@@ -50,7 +50,7 @@ export function deleteUser(id) {
 // 更新用户状态
 export function updateUserStatus(id, status) {
   return request({
-    url: `/api/v1/admin/backend-users/${id}/status`,
+    url: `/api/admin/backend-users/${id}/status`,
     method: 'patch',
     data: { status }
   })
@@ -59,7 +59,7 @@ export function updateUserStatus(id, status) {
 // 重置用户密码
 export function resetUserPassword(id, password) {
   return request({
-    url: `/api/v1/admin/backend-users/${id}/reset-password`,
+    url: `/api/admin/backend-users/${id}/reset-password`,
     method: 'post',
     data: { password }
   })
@@ -68,7 +68,7 @@ export function resetUserPassword(id, password) {
 // 批量删除用户
 export function batchDeleteUsers(ids) {
   return request({
-    url: '/api/v1/admin/backend-users/batch-delete',
+    url: '/api/admin/backend-users/batch-delete',
     method: 'delete',
     data: { ids }
   })
@@ -77,7 +77,7 @@ export function batchDeleteUsers(ids) {
 // 获取角色列表
 export function getRoleList() {
   return request({
-    url: '/api/v1/admin/roles',
+    url: '/api/admin/roles',
     method: 'get'
   })
 }
@@ -85,7 +85,7 @@ export function getRoleList() {
 // 更新角色权限
 export function updateRolePermissions(roleId, permissions) {
   return request({
-    url: `/api/v1/admin/roles/${roleId}/permissions`,
+    url: `/api/admin/roles/${roleId}/permissions`,
     method: 'put',
     data: { permissions }
   })
@@ -94,7 +94,7 @@ export function updateRolePermissions(roleId, permissions) {
 // 获取操作日志
 export function getOperationLogs(params) {
   return request({
-    url: '/api/v1/admin/operation-logs',
+    url: '/api/admin/operation-logs',
     method: 'get',
     params
   })
@@ -103,7 +103,7 @@ export function getOperationLogs(params) {
 // 获取部门列表
 export function getDepartmentList() {
   return request({
-    url: '/api/v1/admin/departments',
+    url: '/api/admin/departments',
     method: 'get'
   })
 }
@@ -111,7 +111,7 @@ export function getDepartmentList() {
 // 创建部门
 export function createDepartment(data) {
   return request({
-    url: '/api/v1/admin/departments',
+    url: '/api/admin/departments',
     method: 'post',
     data
   })
@@ -120,7 +120,7 @@ export function createDepartment(data) {
 // 更新部门
 export function updateDepartment(id, data) {
   return request({
-    url: `/api/v1/admin/departments/${id}`,
+    url: `/api/admin/departments/${id}`,
     method: 'put',
     data
   })
@@ -129,7 +129,7 @@ export function updateDepartment(id, data) {
 // 删除部门
 export function deleteDepartment(id) {
   return request({
-    url: `/api/v1/admin/departments/${id}`,
+    url: `/api/admin/departments/${id}`,
     method: 'delete'
   })
 }

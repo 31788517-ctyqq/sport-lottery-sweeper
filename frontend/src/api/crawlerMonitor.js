@@ -4,7 +4,7 @@ import request from '@/utils/request'
 export function getHealthStatus() {
   return request({
     // 修正：使用实际API路径
-    url: '/api/v1/admin/crawler/monitor/health',
+    url: '/api/admin/crawler/monitor/health',
     method: 'get'
   })
 }
@@ -14,7 +14,7 @@ export function getHealthStatus() {
 export function getAlerts(params) {
   return request({
     // 修正：使用实际API路径
-    url: '/api/v1/admin/crawler/monitor/alerts',
+    url: '/api/admin/crawler/monitor/alerts',
     method: 'get',
     params
   })
@@ -25,7 +25,7 @@ export function getAlerts(params) {
 export function getAlertHistory() {
   return request({
     // 修正：使用实际API路径
-    url: '/api/v1/admin/crawler/monitor/alerts/history',
+    url: '/api/admin/crawler/monitor/alerts/history',
     method: 'get'
   })
 }
@@ -34,7 +34,7 @@ export function getAlertHistory() {
 export function acknowledgeAlert(alertId) {
   return request({
     // 修正：使用实际API路径
-    url: `/api/v1/admin/crawler/monitor/alerts/${alertId}/acknowledge`,
+    url: `/api/admin/crawler/monitor/alerts/${alertId}/acknowledge`,
     method: 'post'
   })
 }
@@ -43,7 +43,7 @@ export function acknowledgeAlert(alertId) {
 export function getResourcesUsage() {
   return request({
     // 修正：使用实际API路径
-    url: '/api/v1/admin/crawler/monitor/resources',
+    url: '/api/admin/crawler/monitor/resources',
     method: 'get'
   })
 }
@@ -52,7 +52,7 @@ export function getResourcesUsage() {
 export function getMetrics() {
   return request({
     // 修正：使用实际API路径
-    url: '/api/v1/admin/crawler/monitor/metrics',
+    url: '/api/admin/crawler/monitor/metrics',
     method: 'get'
   })
 }
@@ -61,7 +61,7 @@ export function getMetrics() {
 export function getSuccessRateTrends() {
   return request({
     // 修正：使用实际API路径
-    url: '/api/v1/admin/crawler/monitor/trends/success-rate',
+    url: '/api/admin/crawler/monitor/trends/success-rate',
     method: 'get'
   })
 }
@@ -70,7 +70,7 @@ export function getSuccessRateTrends() {
 export function getDataVolumeStats() {
   return request({
     // 修正：使用实际API路径
-    url: '/api/v1/admin/crawler/monitor/stats/data-volume',
+    url: '/api/admin/crawler/monitor/stats/data-volume',
     method: 'get'
   })
 }
@@ -79,7 +79,7 @@ export function getDataVolumeStats() {
 export function getAlertRules() {
   return request({
     // 修正：使用实际API路径
-    url: '/api/v1/admin/crawler/monitor/alert-rules',
+    url: '/api/admin/crawler/monitor/alert-rules',
     method: 'get'
   })
 }
@@ -88,7 +88,7 @@ export function getAlertRules() {
 export function createAlertRule(data) {
   return request({
     // 修正：使用实际API路径
-    url: '/api/v1/admin/crawler/monitor/alert-rules',
+    url: '/api/admin/crawler/monitor/alert-rules',
     method: 'post',
     data
   })
@@ -98,7 +98,7 @@ export function createAlertRule(data) {
 export function updateAlertRule(ruleId, data) {
   return request({
     // 修正：使用实际API路径
-    url: `/api/v1/admin/crawler/monitor/alert-rules/${ruleId}`,
+    url: `/api/admin/crawler/monitor/alert-rules/${ruleId}`,
     method: 'put',
     data
   })
@@ -108,7 +108,7 @@ export function updateAlertRule(ruleId, data) {
 export function deleteAlertRule(ruleId) {
   return request({
     // 修正：使用实际API路径
-    url: `/api/v1/admin/crawler/monitor/alert-rules/${ruleId}`,
+    url: `/api/admin/crawler/monitor/alert-rules/${ruleId}`,
     method: 'delete'
   })
 }
@@ -117,7 +117,7 @@ export function deleteAlertRule(ruleId) {
 export function testAlertRule() {
   return request({
     // 修正：使用实际API路径
-    url: '/api/v1/admin/crawler/monitor/alert-rules/test',
+    url: '/api/admin/crawler/monitor/alert-rules/test',
     method: 'post'
   })
 }
@@ -126,7 +126,7 @@ export function testAlertRule() {
 export function getRealtimeEndpoint() {
   return request({
     // 修正：使用实际API路径
-    url: '/api/v1/admin/crawler/monitor/realtime/endpoint',
+    url: '/api/admin/crawler/monitor/realtime/endpoint',
     method: 'get'
   })
 }
@@ -135,7 +135,7 @@ export function getRealtimeEndpoint() {
 export function exportMonitorData() {
   return request({
     // 修正：使用实际API路径
-    url: '/api/v1/admin/crawler/monitor/export',
+    url: '/api/admin/crawler/monitor/export',
     method: 'get'
   })
 }
@@ -144,7 +144,7 @@ export function exportMonitorData() {
 export function getInstances() {
   return request({
     // 修正：使用实际API路径
-    url: '/api/v1/admin/crawler/monitor/instances',
+    url: '/api/admin/crawler/monitor/instances',
     method: 'get'
   })
 }
@@ -153,7 +153,7 @@ export function getInstances() {
 export function restartInstance(instanceId) {
   return request({
     // 修正：使用实际API路径
-    url: `/api/v1/admin/crawler/monitor/instances/${instanceId}/restart`,
+    url: `/api/admin/crawler/monitor/instances/${instanceId}/restart`,
     method: 'post'
   })
 }
@@ -162,7 +162,7 @@ export function restartInstance(instanceId) {
 export function getDatabaseMetrics() {
   return request({
     // 修正：使用实际API路径
-    url: '/api/v1/admin/crawler/monitor/database/metrics',
+    url: '/api/admin/crawler/monitor/database/metrics',
     method: 'get'
   })
 }
@@ -171,7 +171,7 @@ export function getDatabaseMetrics() {
 export function getNetworkStatus() {
   return request({
     // 修正：使用实际API路径
-    url: '/api/v1/admin/crawler/monitor/network/status',
+    url: '/api/admin/crawler/monitor/network/status',
     method: 'get'
   })
 }
@@ -180,7 +180,7 @@ export function getNetworkStatus() {
 export function cleanupMonitorData() {
   return request({
     // 修正：使用实际API路径
-    url: '/api/v1/admin/crawler/monitor/cleanup',
+    url: '/api/admin/crawler/monitor/cleanup',
     method: 'post'
   })
 }

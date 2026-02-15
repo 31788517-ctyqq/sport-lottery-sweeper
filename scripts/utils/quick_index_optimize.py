@@ -15,7 +15,7 @@ def log_message(message):
 def optimize_database_indexes():
     """执行核心索引优化"""
     
-    db_path = BASE_DIR / "sport_lottery.db"
+    db_path = BASE_DIR / "data" / "data/sport_lottery.db"
     
     # 检查数据库文件是否存在
     if not db_path.exists():

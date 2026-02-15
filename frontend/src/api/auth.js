@@ -30,12 +30,12 @@ const authAPI = USE_MOCK ? {
   }
 } : {
   // 使用真实API
-  login: async (credentials) => {
-    try {
-      console.log('Sending login request to /api/v1/login with credentials:', credentials);
-      // 使用带拦截器的request实例
-      const response = await request.post('/api/v1/login', credentials);
-      console.log('Login response received:', response);
+      login: async (credentials) => {
+        try {
+          console.log('Sending login request to /api/auth/login with credentials:', credentials);
+          // 使用带拦截器的request实例
+          const response = await request.post('/api/auth/login', credentials);
+          console.log('Login response received:', response);
       
       // 将扁平结构转换为前端期望的嵌套结构
       const nestedResponse = {
@@ -58,42 +58,42 @@ const authAPI = USE_MOCK ? {
     }
   },
   
-  logout: () => {
-    return request.post('/api/v1/logout')
+logout: () => {
+    return request.post('/api/logout')
   },
-  
+
   getUserInfo: (userId) => {
-    return request.get(`/api/v1/users/${userId}`)
+    return request.get(`/api/users/${userId}`)
   },
-  
+
   refreshToken: (refreshToken) => {
-    return request.post('/api/v1/refresh', { refresh_token: refreshToken })
+    return request.post('/api/refresh', { refresh_token: refreshToken })
   }
 }
 
 // 用户管理API (保持原有代码)
 const userAPI = {
   getUserInfo: (userId) => {
-    return request.get(`/api/v1/users/${userId}`)
+    return request.get(`/api/users/${userId}`)
   },
   updateUserInfo: (userId, userData) => {
-    return request.put(`/api/v1/users/${userId}`, userData)
+    return request.put(`/api/users/${userId}`, userData)
   },
   getUsers: (params) => {
-    return request.get('/api/v1/users/', { params })
+    return request.get('/api/users/', { params })
   }
 }
 
 // 管理员用户API (保持原有代码)
 const adminAPI = {
   createAdmin: (adminData) => {
-    return request.post('/api/v1/users/admin', adminData)
+    return request.post('/api/users/admin', adminData)
   },
   getAdmins: (params) => {
-    return request.get('/api/v1/users/admin', { params })
+    return request.get('/api/users/admin', { params })
   },
   getAdminInfo: (adminId) => {
-    return request.get(`/api/v1/users/admin/${adminId}`)
+    return request.get(`/api/users/admin/${adminId}`)
   }
 }
 

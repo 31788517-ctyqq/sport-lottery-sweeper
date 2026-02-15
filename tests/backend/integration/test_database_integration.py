@@ -1,6 +1,6 @@
-"""
-数据库集成测试
-测试数据库连接、CRUD操作以及不同模块之间的数据交互
+﻿"""
+鏁版嵁搴撻泦鎴愭祴璇?
+娴嬭瘯鏁版嵁搴撹繛鎺ャ€丆RUD鎿嶄綔浠ュ強涓嶅悓妯″潡涔嬮棿鐨勬暟鎹氦浜?
 """
 import pytest
 import asyncio
@@ -19,7 +19,7 @@ from backend.config import settings
 
 @pytest.mark.asyncio
 async def test_database_connection():
-    """测试数据库连接"""
+    """娴嬭瘯鏁版嵁搴撹繛鎺?""
     engine = create_async_engine(settings.DATABASE_URL)
     
     async with engine.begin() as conn:
@@ -29,17 +29,17 @@ async def test_database_connection():
         assert row[0] == 1
     
     await engine.dispose()
-    print("[OK] 数据库连接测试通过")
+    print("SUCCESS 鏁版嵁搴撹繛鎺ユ祴璇曢€氳繃")
 
 
 @pytest.mark.asyncio
 async def test_admin_user_crud_integration():
-    """测试管理员用户的CRUD操作集成"""
+    """娴嬭瘯绠＄悊鍛樼敤鎴风殑CRUD鎿嶄綔闆嗘垚"""
     engine = create_async_engine(settings.DATABASE_URL)
     async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
     
     async with async_session() as session:
-        # 创建测试用户
+        # 鍒涘缓娴嬭瘯鐢ㄦ埛
         new_user_data = {
             "username": "integration_test_user",
             "email": "test@example.com",
@@ -51,23 +51,23 @@ async def test_admin_user_crud_integration():
             "role": "admin"
         }
         
-        # 使用CRUD创建用户
+        # 浣跨敤CRUD鍒涘缓鐢ㄦ埛
         created_user = await crud_admin_user.create(
             session, 
             obj_in=new_user_data,
             created_by=None
         )
         
-        # 验证用户已创建
+        # 楠岃瘉鐢ㄦ埛宸插垱寤?
         assert created_user.id is not None
         assert created_user.username == new_user_data["username"]
         
-        # 通过ID获取用户
+        # 閫氳繃ID鑾峰彇鐢ㄦ埛
         retrieved_user = await crud_admin_user.get(session, id=created_user.id)
         assert retrieved_user is not None
         assert retrieved_user.username == new_user_data["username"]
         
-        # 更新用户信息
+        # 鏇存柊鐢ㄦ埛淇℃伅
         update_data = {"real_name": "Updated Integration Test User"}
         updated_user = await crud_admin_user.update(
             session, 
@@ -76,26 +76,26 @@ async def test_admin_user_crud_integration():
         )
         assert updated_user.real_name == update_data["real_name"]
         
-        # 删除用户
+        # 鍒犻櫎鐢ㄦ埛
         deletion_result = await crud_admin_user.remove(session, id=created_user.id)
         assert deletion_result is True
         
-        # 验证用户已被删除
+        # 楠岃瘉鐢ㄦ埛宸茶鍒犻櫎
         deleted_user = await crud_admin_user.get(session, id=created_user.id)
         assert deleted_user is None
     
     await engine.dispose()
-    print("[OK] 管理员用户CRUD集成测试通过")
+    print("SUCCESS 绠＄悊鍛樼敤鎴稢RUD闆嗘垚娴嬭瘯閫氳繃")
 
 
 @pytest.mark.asyncio
 async def test_crawler_config_crud_integration():
-    """测试爬虫配置的CRUD操作集成"""
+    """娴嬭瘯鐖櫕閰嶇疆鐨凜RUD鎿嶄綔闆嗘垚"""
     engine = create_async_engine(settings.DATABASE_URL)
     async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
     
     async with async_session() as session:
-        # 创建测试配置
+        # 鍒涘缓娴嬭瘯閰嶇疆
         new_config_data = {
             "name": "Integration Test Config",
             "description": "Configuration for integration test",
@@ -105,19 +105,19 @@ async def test_crawler_config_crud_integration():
             "config_data": '{"timeout": 30}'
         }
         
-        # 使用CRUD创建配置
+        # 浣跨敤CRUD鍒涘缓閰嶇疆
         created_config = await crud_crawler_config.create(session, obj_in=new_config_data)
         
-        # 验证配置已创建
+        # 楠岃瘉閰嶇疆宸插垱寤?
         assert created_config.id is not None
         assert created_config.name == new_config_data["name"]
         
-        # 通过ID获取配置
+        # 閫氳繃ID鑾峰彇閰嶇疆
         retrieved_config = await crud_crawler_config.get(session, id=created_config.id)
         assert retrieved_config is not None
         assert retrieved_config.name == new_config_data["name"]
         
-        # 更新配置
+        # 鏇存柊閰嶇疆
         update_data = {"frequency": 7200}
         updated_config = await crud_crawler_config.update(
             session, 
@@ -126,26 +126,26 @@ async def test_crawler_config_crud_integration():
         )
         assert updated_config.frequency == update_data["frequency"]
         
-        # 删除配置
+        # 鍒犻櫎閰嶇疆
         deletion_result = await crud_crawler_config.remove(session, id=created_config.id)
         assert deletion_result is True
         
-        # 验证配置已被删除
+        # 楠岃瘉閰嶇疆宸茶鍒犻櫎
         deleted_config = await crud_crawler_config.get(session, id=created_config.id)
         assert deleted_config is None
     
     await engine.dispose()
-    print("[OK] 爬虫配置CRUD集成测试通过")
+    print("SUCCESS 鐖櫕閰嶇疆CRUD闆嗘垚娴嬭瘯閫氳繃")
 
 
 @pytest.mark.asyncio
 async def test_cross_module_integration():
-    """测试跨模块数据交互集成"""
+    """娴嬭瘯璺ㄦā鍧楁暟鎹氦浜掗泦鎴?""
     engine = create_async_engine(settings.DATABASE_URL)
     async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
     
     async with async_session() as session:
-        # 创建一个管理员用户
+        # 鍒涘缓涓€涓鐞嗗憳鐢ㄦ埛
         admin_user_data = {
             "username": "cross_module_admin",
             "email": "cross_module@example.com",
@@ -163,7 +163,7 @@ async def test_cross_module_integration():
             created_by=None
         )
         
-        # 创建一个关联该管理员的爬虫配置
+        # 鍒涘缓涓€涓叧鑱旇绠＄悊鍛樼殑鐖櫕閰嶇疆
         crawler_config_data = {
             "name": "Admin Associated Config",
             "description": "Config associated with admin user",
@@ -176,24 +176,24 @@ async def test_cross_module_integration():
         
         created_config = await crud_crawler_config.create(session, obj_in=crawler_config_data)
         
-        # 验证两个实体都已创建
+        # 楠岃瘉涓や釜瀹炰綋閮藉凡鍒涘缓
         assert created_admin.id is not None
         assert created_config.id is not None
         assert created_config.created_by == created_admin.id
         
-        # 验证可以通过关联字段查询
+        # 楠岃瘉鍙互閫氳繃鍏宠仈瀛楁鏌ヨ
         configs_by_creator = await crud_crawler_config.get_multi(
             session,
             created_by=created_admin.id
         )
         assert len(configs_by_creator[0]) >= 1
         
-        # 清理数据
+        # 娓呯悊鏁版嵁
         await crud_crawler_config.remove(session, id=created_config.id)
         await crud_admin_user.remove(session, id=created_admin.id)
     
     await engine.dispose()
-    print("[OK] 跨模块数据交互集成测试通过")
+    print("SUCCESS 璺ㄦā鍧楁暟鎹氦浜掗泦鎴愭祴璇曢€氳繃")
 
 
 if __name__ == "__main__":

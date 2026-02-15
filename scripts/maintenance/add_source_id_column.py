@@ -14,7 +14,7 @@ def add_source_id_column():
     try:
         # 使用项目根目录下的数据库文件
         project_root = Path(__file__).parent
-        db_path = project_root / "sport_lottery.db"
+        db_path = project_root / "data/sport_lottery.db"
         
         if not db_path.exists():
             print(f"数据库文件不存在: {db_path}")

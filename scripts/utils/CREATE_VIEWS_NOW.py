@@ -7,7 +7,7 @@ import os
 print("📊 创建关键业务视图")
 print("="*50)
 
-db_path = "sport_lottery.db"
+db_path = "data/sport_lottery.db"
 conn = sqlite3.connect(db_path)
 cursor = conn.cursor()
 

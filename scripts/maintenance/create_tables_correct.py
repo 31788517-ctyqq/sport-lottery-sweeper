@@ -27,8 +27,8 @@ def create_tables():
     try:
         # 删除现有数据库文件（可选，用于干净启动）
         # import os
-        # if os.path.exists("sport_lottery.db"):
-        #     os.remove("sport_lottery.db")
+        # if os.path.exists("data/sport_lottery.db"):
+        #     os.remove("data/sport_lottery.db")
         
         Base.metadata.create_all(bind=engine)
         print("✅ 数据库表创建成功")
@@ -42,7 +42,7 @@ def create_tables():
 def verify_tables():
     """验证表是否已创建"""
     import sqlite3
-    conn = sqlite3.connect('sport_lottery.db')
+    conn = sqlite3.connect('data/sport_lottery.db')
     cursor = conn.cursor()
     cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='admin_users'")
     result = cursor.fetchone()

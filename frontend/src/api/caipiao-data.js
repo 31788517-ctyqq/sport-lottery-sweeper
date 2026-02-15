@@ -7,7 +7,7 @@ import request from '@/utils/request';
 // 获取竞彩数据列表
 export function getCaiPiaoDataList(params) {
   return request({
-    url: '/api/v1/caipiao-data/',
+    url: '/api/caipiao-data/',
     method: 'get',
     params
   });
@@ -16,7 +16,7 @@ export function getCaiPiaoDataList(params) {
 // 根据ID获取竞彩数据
 export function getCaiPiaoDataById(id) {
   return request({
-    url: `/api/v1/caipiao-data/${id}`,
+    url: `/api/caipiao-data/${id}`,
     method: 'get'
   });
 }
@@ -24,7 +24,7 @@ export function getCaiPiaoDataById(id) {
 // 创建竞彩数据
 export function createCaiPiaoData(data) {
   return request({
-    url: '/api/v1/caipiao-data/',
+    url: '/api/caipiao-data/',
     method: 'post',
     data
   });
@@ -33,7 +33,7 @@ export function createCaiPiaoData(data) {
 // 更新竞彩数据
 export function updateCaiPiaoData(id, data) {
   return request({
-    url: `/api/v1/caipiao-data/${id}`,
+    url: `/api/caipiao-data/${id}`,
     method: 'put',
     data
   });
@@ -42,7 +42,7 @@ export function updateCaiPiaoData(id, data) {
 // 删除竞彩数据
 export function deleteCaiPiaoData(id) {
   return request({
-    url: `/api/v1/caipiao-data/${id}`,
+    url: `/api/caipiao-data/${id}`,
     method: 'delete'
   });
 }
@@ -50,7 +50,7 @@ export function deleteCaiPiaoData(id) {
 // 从API同步竞彩数据
 export function syncCaiPiaoDataFromApi(params) {
   return request({
-    url: '/api/v1/caipiao-data/sync-from-api/',
+    url: '/api/caipiao-data/sync-from-api/',
     method: 'post',
     params
   });
@@ -59,7 +59,7 @@ export function syncCaiPiaoDataFromApi(params) {
 // 批量创建竞彩数据
 export function batchCreateCaiPiaoData(data) {
   return request({
-    url: '/api/v1/caipiao-data/batch/',
+    url: '/api/caipiao-data/batch/',
     method: 'post',
     data
   });

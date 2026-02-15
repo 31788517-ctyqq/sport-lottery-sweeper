@@ -105,7 +105,7 @@ export function executeFiveHundredCrawl(days = 3) {
 // 创建500彩票网数据源
 export function createFiveHundredDataSource() {
   return request({
-    url: '/api/v1/admin/sources/five-hundred-create',
+    url: '/api/admin/sources/five-hundred-create',
     method: 'post'
   })
 }

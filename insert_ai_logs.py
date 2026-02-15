@@ -12,7 +12,7 @@ from datetime import datetime, timezone
 import json
 
 # 数据库连接
-db_path = os.path.join(os.path.dirname(__file__), 'sport_lottery.db')
+db_path = os.path.join(os.path.dirname(__file__), 'data/sport_lottery.db')
 engine = create_engine(f'sqlite:///{db_path}')
 Session = sessionmaker(bind=engine)
 db = Session()

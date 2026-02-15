@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>认证诊断工具</title>
+    <meta charset="utf-8">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background: #d4edda; border-color: #c3e6cb; }
+        .error { background: #f8d7da; border-color: #f5c6cb; }
+        .warning { background: #fff3cd; border-color: #ffeaa7; }
+        .info { background: #d1ecf1; border-color: #bee5eb; }
+        button { padding: 10px 20px; margin: 5px; border: none; border-radius: 4px; cursor: pointer; }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-warning { background: #ffc107; color: black; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto; }
+        .step { margin: 10px 0; padding: 10px; background: #f8f9fa; border-left: 4px solid #007bff; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 认证诊断工具</h1>
+        
+        <div class="section info">
+            <h3>使用说明</h3>
+            <p>这个工具帮助诊断前端认证问题。请按顺序执行以下步骤：</p>
+        </div>
+
+        <div class="section">
+            <h3>步骤 1: 检查当前Token状态</h3>
+            <button class="btn-primary" onclick="checkTokens()">检查LocalStorage中的Token</button>
+            <div id="tokenStatus"></div>
+        </div>
+
+        <div class="section">
+            <h3>步骤 2: 快速登录测试</h3>
+            <p>如果没有token或token无效，可以使用测试账号快速登录：</p>
+            <button class="btn-success" onclick="quickLogin()">使用admin/admin123快速登录</button>
+            <div id="loginStatus"></div>
+        </div>
+
+        <div class="section">
+            <h3>步骤 3: 测试API连接</h3>
+            <button class="btn-warning" onclick="testApiConnection()">测试API连接</button>
+            <div id="apiTestStatus"></div>
+        </div>
+
+        <div class="section">
+            <h3>步骤 4: 手动执行诊断命令</h3>
+            <div class="step">
+                <strong>在浏览器控制台(F12)中依次运行以下命令：</strong>
+                <pre>// 1. 检查所有token相关项
+Object.keys(localStorage).filter(k => k.includes('token') || k.includes('Token')).forEach(k => console.log(k, ':', localStorage.getItem(k)))
+
+// 2. 检查特定token
+console.log('access_token:', localStorage.getItem('access_token'))
+console.log('token:', localStorage.getItem('token'))
+console.log('admin_token:', localStorage.getItem('admin_token'))
+console.log('user_token:', localStorage.getItem('user_token'))
+
+// 3. 测试API调用
+fetch('/api/v1/beidan-filter/strategies', {
+  method: 'GET',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer ' + (localStorage.getItem('access_token') || localStorage.getItem('token') || '')
+  }
+}).then(r => r.json()).then(console.log).catch(console.error)</pre>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>步骤 5: 修复建议</h3>
+            <div id="fixSuggestions"></div>
+        </div>
+    </div>
+
+    <script>
+        function checkTokens() {
+            const result = document.getElementById('tokenStatus');
+            result.innerHTML = '<p>检查中...</p>';
+            
+            const tokenKeys = Object.keys(localStorage).filter(k => k.includes('token') || k.includes('Token'));
+            
+            if (tokenKeys.length === 0) {
+                result.innerHTML = `
+                    <div class="error">
+                        <h4>❌ 未找到任何Token</h4>
+                        <p>您需要先登录系统才能使用策略功能。</p>
+                    </div>
+                `;
+                updateFixSuggestions('no_tokens');
+                return;
+            }
+            
+            let html = '<h4>✅ 找到以下Token:</h4><ul>';
+            tokenKeys.forEach(key => {
+                const value = localStorage.getItem(key);
+                const preview = value ? value.substring(0, 50) + (value.length > 50 ? '...' : '') : 'null';
+                const isValid = value && value.startsWith('ey') && value.split('.').length === 3;
+                html += `<li><strong>${key}:</strong> ${preview} ${isValid ? '✅' : '❌'}</li>`;
+            });
+            html += '</ul>';
+            
+            // 检查是否有可用的token
+            const hasValidToken = tokenKeys.some(key => {
+                const value = localStorage.getItem(key);
+                return value && value.startsWith('ey') && value.split('.').length === 3;
+            });
+            
+            if (!hasValidToken) {
+                html += '<div class="warning"><p>⚠️ 找到的Token格式可能无效，建议重新登录</p></div>';
+                updateFixSuggestions('invalid_tokens');
+            } else {
+                html += '<div class="success"><p>✅ 找到有效的Token，可以尝试API调用</p></div>';
+                updateFixSuggestions('has_valid_tokens');
+            }
+            
+            result.innerHTML = html;
+        }
+
+        async function quickLogin() {
+            const result = document.getElementById('loginStatus');
+            result.innerHTML = '<p>登录中...</p>';
+            
+            try {
+                const response = await fetch('/api/v1/token', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: 'admin', password: 'admin123' })
+                });
+                
+                const data = await response.json();
+                
+                if (data.access_token) {
+                    localStorage.setItem('access_token', data.access_token);
+                    localStorage.setItem('token', data.access_token);
+                    localStorage.setItem('user_info', JSON.stringify(data.user));
+                    
+                    result.innerHTML = `
+                        <div class="success">
+                            <h4>✅ 登录成功!</h4>
+                            <p>用户: ${data.user.username} (${data.user.role})</p>
+                            <p>Token已保存到localStorage，现在可以测试API功能了。</p>
+                        </div>
+                    `;
+                    updateFixSuggestions('logged_in');
+                } else {
+                    result.innerHTML = `
+                        <div class="error">
+                            <h4>❌ 登录失败</h4>
+                            <p>响应: ${JSON.stringify(data)}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                result.innerHTML = `
+                    <div class="error">
+                        <h4>❌ 登录请求失败</h4>
+                        <p>错误: ${error.message}</p>
+                        <p>请检查后端服务是否正常运行在8000端口。</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function testApiConnection() {
+            const result = document.getElementById('apiTestStatus');
+            result.innerHTML = '<p>测试中...</p>';
+            
+            const token = localStorage.getItem('access_token') || localStorage.getItem('token');
+            
+            try {
+                const response = await fetch('/api/v1/beidan-filter/strategies', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': token ? `Bearer ${token}` : ''
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.status === 401) {
+                    result.innerHTML = `
+                        <div class="warning">
+                            <h4>⚠️ API返回401未授权</h4>
+                            <p>这是正常的，说明API路径正确，但需要有效的token。</p>
+                            <p>响应: ${JSON.stringify(data)}</p>
+                            <p><strong>解决方案:</strong> 点击上面的"快速登录"按钮获取token</p>
+                        </div>
+                    `;
+                } else if (response.ok) {
+                    result.innerHTML = `
+                        <div class="success">
+                            <h4>✅ API调用成功!</h4>
+                            <p>状态码: ${response.status}</p>
+                            <p>数据: ${JSON.stringify(data)}</p>
+                        </div>
+                    `;
+                } else {
+                    result.innerHTML = `
+                        <div class="error">
+                            <h4>❌ API调用失败</h4>
+                            <p>状态码: ${response.status}</p>
+                            <p>响应: ${JSON.stringify(data)}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                result.innerHTML = `
+                    <div class="error">
+                        <h4>❌ API请求失败</h4>
+                        <p>错误: ${error.message}</p>
+                        <p>请检查前端开发服务器是否运行在3000端口，后端是否在8000端口。</p>
+                    </div>
+                `;
+            }
+        }
+
+        function updateFixSuggestions(type) {
+            const suggestions = document.getElementById('fixSuggestions');
+            let html = '';
+            
+            switch(type) {
+                case 'no_tokens':
+                    html = `
+                        <div class="error">
+                            <h4>🚨 需要登录</h4>
+                            <ol>
+                                <li>点击上面的"快速登录"按钮</li>
+                                <li>或者在前端应用中正常登录</li>
+                                <li>确保登录后token被保存到localStorage</li>
+                            </ol>
+                        </div>
+                    `;
+                    break;
+                case 'invalid_tokens':
+                    html = `
+                        <div class="warning">
+                            <h4>🔄 Token无效，需要重新登录</h4>
+                            <ol>
+                                <li>点击上面的"快速登录"按钮</li>
+                                <li>或者清除localStorage后重新登录</li>
+                                <li>检查浏览器控制台是否有认证错误</li>
+                            </ol>
+                        </div>
+                    `;
+                    break;
+                case 'has_valid_tokens':
+                    html = `
+                        <div class="success">
+                            <h4>✅ Token有效，尝试API调用</h4>
+                            <ol>
+                                <li>点击"测试API连接"按钮验证</li>
+                                <li>如果返回401，说明后端需要认证但前端token可能有问题</li>
+                                <li>检查前端请求是否正确携带Authorization头</li>
+                            </ol>
+                        </div>
+                    `;
+                    break;
+                case 'logged_in':
+                    html = `
+                        <div class="success">
+                            <h4>🎉 登录成功，现在测试功能</h4>
+                            <ol>
+                                <li>点击"测试API连接"验证API是否正常工作</li>
+                                <li>返回前端应用，测试策略保存功能</li>
+                                <li>如果仍有问题，检查浏览器控制台的Network标签</li>
+                            </ol>
+                        </div>
+                    `;
+                    break;
+                default:
+                    html = '<p>请先执行前面的诊断步骤</p>';
+            }
+            
+            suggestions.innerHTML = html;
+        }
+
+        // 页面加载时自动检查
+        window.onload = function() {
+            checkTokens();
+        };
+    </script>
+</body>
+</html>

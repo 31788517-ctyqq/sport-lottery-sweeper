@@ -169,7 +169,7 @@ def test_real_logs_data():
     
     # 检查数据库中是否已有日志数据
     import sqlite3
-    db_path = os.path.join(os.path.dirname(__file__), '..', '..', 'backend', 'sport_lottery.db')
+    db_path = os.path.join(os.path.dirname(__file__), '..', '..', 'data', 'data/sport_lottery.db')
     
     if os.path.exists(db_path):
         conn = sqlite3.connect(db_path)

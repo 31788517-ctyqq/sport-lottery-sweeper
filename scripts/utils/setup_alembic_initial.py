@@ -15,7 +15,7 @@ with open(alembic_ini, "r", encoding="utf-8") as f:
 # 替换默认占位 URL 为 SQLite 绝对路径
 content = content.replace(
     "sqlalchemy.url = driver://user:pass@localhost/dbname",
-    f"sqlite:///{BASE_DIR / 'sport_lottery.db'}"
+    f"sqlite:///{BASE_DIR / 'data' / 'data/sport_lottery.db'}"
 )
 with open(alembic_ini, "w", encoding="utf-8") as f:
     f.write(content)

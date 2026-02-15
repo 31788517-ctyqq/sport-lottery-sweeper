@@ -24,7 +24,7 @@ router = APIRouter()
 router.include_router(logs.router, prefix="/logs", tags=["admin-logs"])
 router.include_router(metrics.router, prefix="/metrics", tags=["admin-metrics"])
 router.include_router(cache_management.router, prefix="/cache", tags=["admin-cache"])
-router.include_router(data_source.router, prefix="/sources", tags=["admin-data-sources"])
+router.include_router(data_source.router, prefix="", tags=["admin-data-sources"])
 
 # 包含可选模块路由
 try:

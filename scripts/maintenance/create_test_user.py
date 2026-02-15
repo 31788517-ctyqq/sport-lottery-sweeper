@@ -9,7 +9,7 @@ from datetime import datetime
 
 # 获取数据库路径
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.join(PROJECT_ROOT, "sport_lottery.db")
+DB_PATH = os.path.join(PROJECT_ROOT, "data/sport_lottery.db")
 
 def create_test_user():
     # 创建密码哈希

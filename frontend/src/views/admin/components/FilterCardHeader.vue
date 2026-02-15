@@ -9,6 +9,7 @@
         <div class="header-actions">
           <div class="match-count">实时匹配 <span>{{ totalResults }}</span> 场</div>
           <el-button type="primary" @click="onFetchRealData" :loading="loading">获取实时数据</el-button>
+          <el-button @click="onShowPLevelRules">P级规则</el-button>
           <slot name="extra-actions"></slot>
         </div>
       </div>
@@ -36,14 +37,19 @@ export default defineComponent({
       required: true
     }
   },
-  emits: ['fetchRealData'],
+  emits: ['fetchRealData', 'showPLevelRules'],
   setup(props, { emit }) {
     const onFetchRealData = () => {
       emit('fetchRealData');
     };
 
+    const onShowPLevelRules = () => {
+      emit('showPLevelRules');
+    };
+
     return {
-      onFetchRealData
+      onFetchRealData,
+      onShowPLevelRules
     };
   }
 });

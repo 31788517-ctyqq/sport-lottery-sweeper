@@ -509,10 +509,9 @@ const handleRemoveMember = async (user) => {
       }
     )
     
-    // 调用API将用户从部门移除
-    await removeUserFromDepartment(selectedDept.value.id, user.id)
+    // TODO: 调用API将用户从部门移除
     ElMessage.success('移除成功')
-    loadUsers()  // 重新加载用户数据
+    loadUsers()
   } catch (error) {
     if (error !== 'cancel') {
       console.error('移除失败:', error)

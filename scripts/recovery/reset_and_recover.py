@@ -10,7 +10,7 @@ import shutil
 import subprocess
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-DB_PATH = os.path.join(PROJECT_ROOT, 'sport_lottery.db')
+DB_PATH = os.path.join(PROJECT_ROOT, 'data', 'data/sport_lottery.db')
 ALEMBIC_INI = os.path.join(PROJECT_ROOT, 'alembic.ini')
 
 def print_step(msg):

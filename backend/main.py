@@ -5,11 +5,22 @@
 真实数据库版本
 """
 
+import warnings
+# 忽略 Pydantic v2 的 protected_namespaces 警告
+warnings.filterwarnings("ignore", category=UserWarning, message=".*Field name.*shadows an attribute in parent.*")
+warnings.filterwarnings("ignore", category=UserWarning, message=".*protected_namespaces.*")
+
 from typing import Optional  # AI_WORKING: coder1 @2026-02-10
 
 import os
 import sys
 import logging  # AI_WORKING: coder1 @2026-02-10
+
+# Import rate limiting libraries
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 
 # AI_WORKING: coder1 @2026-02-10 - unset DATABASE_URL environment variable
 if "DATABASE_URL" in os.environ:
@@ -30,10 +41,14 @@ from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
-from fastapi import Query
+from fastapi import Query, Body
 from starlette.requests import Request
 from starlette.responses import Response
 import asyncio
+
+# Import authentication dependencies
+from backend.api.dependencies import get_current_active_user, get_current_active_admin_user
+from backend.models.user import User
 
 # 导入数据库相关模块
 from backend.database import engine, DATABASE_URL
@@ -104,33 +119,11 @@ def init_llm_service():
             llm_service.register_provider('qwen', api_keys['qwen'])
             logger.info("Qwen provider registered")
         
-        # 从数据库加载已配置的提供商
+        # 从数据库加载已配置的提供商（简化版本，避免阻塞）
         try:
-            from sqlalchemy.orm import sessionmaker
-            from backend.database import engine
-            from backend.crud.llm_provider import llm_provider as crud_llm_provider
-            
-            SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-            db = SessionLocal()
-            
-            # 获取所有启用的提供商
-            enabled_providers = crud_llm_provider.get_multi(db, enabled=True)
-            
-            for provider in enabled_providers:
-                provider_name = provider.provider_type.value.lower()
-                # 获取解密的API密钥
-                decrypted_key = crud_llm_provider.get_decrypted_api_key(db, provider.id)
-                if decrypted_key:
-                    # 如果提供商尚未注册，则注册它
-                    if provider_name not in llm_service.providers:
-                        llm_service.register_provider(provider_name, decrypted_key)
-                        logger.info(f"从数据库注册LLM提供商: {provider.name} ({provider_name})")
-                    else:
-                        logger.info(f"LLM提供商已从环境变量注册: {provider_name}")
-                else:
-                    logger.warning(f"无法解密LLM提供商的API密钥: {provider.name}")
-            
-            db.close()
+            # 使用简单的懒加载方式，避免启动时阻塞
+            # 将数据库加载推迟到第一次实际需要时进行
+            logger.info("LLM提供商数据库加载已推迟到运行时（避免启动阻塞）")
         except Exception as db_error:
             logger.warning(f"从数据库加载LLM提供商失败: {db_error}")
             # 继续运行，至少环境变量中的提供商已注册
@@ -240,6 +233,16 @@ app = FastAPI(
     version="1.0.0"
 )
 
+# Initialize rate limiter
+limiter = Limiter(
+    key_func=get_remote_address,
+    default_limits=["100/hour"],  # Default global rate limit
+    storage_uri="memory://"  # Use memory storage for simplicity
+)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_middleware(SlowAPIMiddleware)
+
 # 添加API迁移中间件（放在其他中间件之前）
 app.add_middleware(APIMigrationMiddleware)
 
@@ -290,15 +293,15 @@ except Exception as e:
     logger.error(f"API v1 路由注册失败: {e}")
     # 即使API路由注册失败，也继续运行基本服务
 
-# 注册数据源管理路由
-try:
-    from backend.api.v1.admin.data_source import router as data_source_router
-    app.include_router(data_source_router, prefix="/api/v1/admin", tags=["data-sources"])
-    logger.info("Data source management routes registered (/api/v1/admin/data-sources)")
-except Exception as e:
-    logger.error(f"数据源管理路由注册失败: {e}")
-    import traceback
-    logger.error(f"详细堆栈: {traceback.format_exc()}")
+# 注册数据源管理路由（已通过admin路由注册，此处注释避免重复）
+# try:
+#     from backend.api.v1.admin.data_source import router as data_source_router
+#     app.include_router(data_source_router, prefix="/api/v1/admin", tags=["data-sources"])
+#     logger.info("Data source management routes registered (/api/v1/admin/data-sources)")
+# except Exception as e:
+#     logger.error(f"数据源管理路由注册失败: {e}")
+#     import traceback
+#     logger.error(f"详细堆栈: {traceback.format_exc()}")
     
 # 注册爬虫监控API路由
 try:
@@ -610,7 +613,8 @@ async def register(
     }
 
 @app.post("/api/v1/auth/login")
-async def login_v1(username: str = Body(...), password: str = Body(...)):
+@limiter.limit("5/minute")  # Strict limit for login attempts - prevents brute force
+async def login_v1(request: Request, username: str = Body(...), password: str = Body(...)):
     """用户登录接口 (/api/v1) - 真实数据库验证"""
     logger.info(f"Login attempt for username: {username}")
     user = authenticate_user(username, password)
@@ -791,10 +795,14 @@ async def get_profile_compat():
     }
 
 @app.get("/api/dashboard/summary")
-async def dashboard_summary():
-    """仪表板统计数据 - 真实数据库查询"""
+@limiter.limit("30/minute")  # Reasonable limit for dashboard data
+async def dashboard_summary(
+    request: Request,
+    current_user: User = Depends(get_current_active_admin_user)
+):
+    """仪表板统计数据 - 真实数据库查询 (Admin only)"""
     try:
-        logger.info("Dashboard summary requested")
+        logger.info(f"Dashboard summary requested by admin user: {current_user.username} (ID: {current_user.id})")
         stats = get_dashboard_stats()
         return {
             "code": 200,
@@ -805,10 +813,14 @@ async def dashboard_summary():
         raise HTTPException(status_code=500, detail=f"获取仪表板数据失败: {str(e)}")
 
 @app.get("/api/intelligence/screening/list")
-async def screening_list():
-    """情报筛选列表 - 真实数据库查询"""
+@limiter.limit("60/minute")  # Moderate limit for intelligence data
+async def screening_list(
+    request: Request,
+    current_user: User = Depends(get_current_active_admin_user)
+):
+    """情报筛选列表 - 真实数据库查询 (Admin only)"""
     try:
-        logger.info("Intelligence screening list requested")
+        logger.info(f"Intelligence screening list requested by admin user: {current_user.username} (ID: {current_user.id})")
         result = get_intelligence_screening_list()
         return {
             "code": 200,
@@ -819,9 +831,13 @@ async def screening_list():
         raise HTTPException(status_code=500, detail=f"获取情报筛选列表失败: {str(e)}")
 
 @app.get("/api/stats/data-center")
-async def get_data_center_stats():
-    """数据中心统计信息"""
-    logger.info("Data center stats requested")
+@limiter.limit("60/minute")  # Moderate limit for stats data
+async def get_data_center_stats(
+    request: Request,
+    current_user: User = Depends(get_current_active_admin_user)
+):
+    """数据中心统计信息 (Admin only)"""
+    logger.info(f"Data center stats requested by admin user: {current_user.username} (ID: {current_user.id})")
     return {
         "code": 200,
         "data": {

@@ -2,7 +2,7 @@ import sqlite3
 import os
 
 # 连接到数据库
-db_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'sport_lottery.db')
+db_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'data', 'data/sport_lottery.db')
 conn = sqlite3.connect(db_path)
 cursor = conn.cursor()
 

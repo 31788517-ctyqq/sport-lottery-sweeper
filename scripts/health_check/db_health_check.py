@@ -9,7 +9,7 @@ import subprocess
 import sys
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-DB_PATH = os.path.join(PROJECT_ROOT, 'sport_lottery.db')
+DB_PATH = os.path.join(PROJECT_ROOT, 'data/sport_lottery.db')
 
 def check_alembic_version():
     """检查 Alembic 当前版本"""

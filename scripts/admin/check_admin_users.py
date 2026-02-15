@@ -2,7 +2,7 @@ import sqlite3
 import sys
 
 def main():
-    db_path = "sport_lottery.db"
+    db_path = "data/sport_lottery.db"
     try:
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()

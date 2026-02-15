@@ -526,6 +526,12 @@ async def test_100qiu_data_source_connection(
         config = db_data_source.config_dict
         date_time = config.get("date_time", "latest")
         
+        # 确保date_time不为None且为字符串类型
+        if date_time is None:
+            date_time = "latest"
+        if not isinstance(date_time, str):
+            date_time = str(date_time)
+        
         # 修复：当date_time为'latest'时，使用默认的有效dateTime值
         if date_time == "latest":
             # 使用一个默认的有效dateTime值，可以根据实际需求调整
@@ -639,6 +645,12 @@ async def fetch_100qiu_data(
         # 获取配置
         config = db_data_source.config_dict
         date_time = config.get("date_time", "latest")
+        
+        # 确保date_time不为None且为字符串类型
+        if date_time is None:
+            date_time = "latest"
+        if not isinstance(date_time, str):
+            date_time = str(date_time)
         
         # 修复：当date_time为'latest'时，使用默认的有效dateTime值
         if date_time == "latest":
@@ -839,11 +851,15 @@ async def fetch_100qiu_data(
                 print(f"[DEBUG] 正在处理第 {i+1}/{len(matches_data)} 个项目: {str(item)[:500]}...")
                 processed_count += 1
                 
+                # 调试：打印date_time值
+                print(f"[DEBUG] 传递给parse_match_from_100qiu的date_time参数: {date_time} (类型: {type(date_time)})")
+                
                 # 解析比赛数据
                 match_data = parse_match_from_100qiu(item, date_time)
+                # 调试：打印match_data完整内容（限制长度）
                 if match_data:
+                    print(f"[DEBUG] parse_match_from_100qiu返回的完整match_data: {match_data}")
                     print(f"[INFO] 成功解析比赛数据: {match_data.get('match_id', 'N/A')}")
-                    
                     # 检查是否已存在
                     existing_match = session.query(FootballMatch).filter(
                         FootballMatch.match_id == match_data["match_id"]
@@ -1042,32 +1058,41 @@ def parse_match_from_100qiu(item: Dict[str, Any], date_time: Optional[str] = Non
         
         # 转换期号和序号为整数
         try:
-            date_time = int(date_time) if date_time else 0
+            date_time_int = int(date_time) if date_time else 0
             line_id_int = int(line_id_str) if line_id_str else 0
         except ValueError:
-            date_time = 0
+            date_time_int = 0
             line_id_int = 0
         
         # 生成新的match_id格式：date_time_line_id（如：26024_001）
-        if date_time > 0 and line_id_int > 0:
-            match_id = f"{date_time}_{line_id_int:03d}"
-        elif match_id := line_id_str:
+        if date_time_int > 0 and line_id_int > 0:
+            match_id = f"{date_time_int}_{line_id_int:03d}"
+        elif line_id_str:
             # 兼容旧格式
-            match_id = f"100qiu_{match_id}"
+            match_id = f"100qiu_{line_id_str}"
         else:
             # 如果没有有效数据，使用时间戳生成临时ID
+            import time
             match_id = f"{int(time.time() * 1000)}"
+        
+        # 确保date_time不为None（数据库约束可能为NOT NULL）
+        final_date_time = date_time_int if date_time_int != 0 else 26022  # 默认期号
+        # 确保line_id不为0
+        final_line_id = line_id_int if line_id_int != 0 else 1
+        
+        # 调试：打印关键值
+        print(f"[DEBUG] parse_match_from_100qiu内部: date_time参数={date_time}, date_time_int={date_time_int}, final_date_time={final_date_time}, line_id_int={line_id_int}, final_line_id={final_line_id}")
         
         # 将date_time和line_id添加到source_attributes中
         source_attributes = item.copy()
-        if date_time:
-            source_attributes['date_time'] = date_time
-        if line_id_str:
-            source_attributes['line_id'] = line_id_int
+        source_attributes['date_time'] = final_date_time
+        source_attributes['line_id'] = final_line_id
         
         # 返回符合FootballMatch模型的字段
         match_data = {
             "match_id": match_id,
+            "date_time": final_date_time,
+            "line_id": final_line_id,
             "home_team": home_team,
             "away_team": away_team,
             "match_time": match_time,
@@ -1078,6 +1103,10 @@ def parse_match_from_100qiu(item: Dict[str, Any], date_time: Optional[str] = Non
             "data_source": "100qiu",
             "source_attributes": source_attributes
         }
+        
+        # 调试：打印返回的match_data中的date_time值
+        print(f"[DEBUG] parse_match_from_100qiu返回的match_data['date_time']: {match_data['date_time']} (类型: {type(match_data['date_time'])})")
+        print(f"[DEBUG] parse_match_from_100qiu返回的match_data['line_id']: {match_data['line_id']} (类型: {type(match_data['line_id'])})")
         
         return match_data
     except Exception as e:

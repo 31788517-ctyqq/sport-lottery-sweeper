@@ -13,7 +13,7 @@ import sqlite3
 
 def check_ds008_tasks():
     # 连接到SQLite数据库
-    db_path = backend_path / "sport_lottery.db"
+    db_path = backend_path / "data/sport_lottery.db"
     if not db_path.exists():
         print(f"数据库文件不存在: {db_path}")
         return

@@ -18,7 +18,7 @@ def test_user_authentication():
     print("=== 测试用户认证 ===")
     
     # 直接数据库连接
-    db_path = "sport_lottery.db"
+    db_path = "data/sport_lottery.db"
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()

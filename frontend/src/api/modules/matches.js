@@ -10,7 +10,7 @@ export const matchesAPI = {
    * @returns {Promise<Object>} - 包含分页信息和数据列表
    */
   getMatches(params = {}) {
-    return client.get('/api/v1/matches', { params });
+    return client.get('/api/matches', { params });
   },
 
   /**
@@ -19,7 +19,7 @@ export const matchesAPI = {
    * @returns {Promise<Object>}
    */
   getMatchById(id) {
-    return client.get(`/api/v1/matches/${id}`);
+    return client.get(`/api/matches/${id}`);
   },
 
   /**
@@ -28,7 +28,7 @@ export const matchesAPI = {
    * @returns {Promise<Object>}
    */
   getOddsByMatchId(id) {
-    return client.get(`/api/v1/matches/${id}/odds`);
+    return client.get(`/api/matches/${id}/odds`);
   },
 
   /**
@@ -37,7 +37,7 @@ export const matchesAPI = {
    * @returns {Promise<Object>}
    */
   getStatsByMatchId(id) {
-    return client.get(`/api/v1/matches/${id}/stats`);
+    return client.get(`/api/matches/${id}/stats`);
   },
 
   /**
@@ -45,7 +45,7 @@ export const matchesAPI = {
    * @returns {Promise<Array>}
    */
   getPopularMatches() {
-    return client.get('/api/v1/matches/popular');
+    return client.get('/api/matches/popular');
   },
 
   /**

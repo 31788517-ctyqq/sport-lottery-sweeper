@@ -1,6 +1,6 @@
 import sqlite3
 
-conn = sqlite3.connect('sport_lottery.db')
+conn = sqlite3.connect('data/sport_lottery.db')
 cursor = conn.cursor()
 
 # 验证传统业务表数据

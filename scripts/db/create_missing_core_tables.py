@@ -9,7 +9,7 @@ def create_missing_core_tables():
     print("🚀 创建缺失的核心业务表")
     print("="*60)
     
-    db_path = "sport_lottery.db"
+    db_path = "data/sport_lottery.db"
     if not os.path.exists(db_path):
         print("❌ 数据库文件不存在")
         return False

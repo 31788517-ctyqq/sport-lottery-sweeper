@@ -266,5 +266,5 @@ class MultiStrategyScheduler:
 
 # 创建全局实例
 multi_strategy_scheduler = MultiStrategyScheduler()
-# 启动调度器
-multi_strategy_scheduler.start()
+# 注意：调度器启动移至main.py中，避免在模块导入时阻塞
+# multi_strategy_scheduler.start()

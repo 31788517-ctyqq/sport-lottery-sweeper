@@ -37,6 +37,19 @@ export const processLogResponse = (response) => {
 };
 
 /**
+ * 获取日志级别对应的 UI 类型
+ */
+export const getLogLevelType = (level) => {
+  const levelMap = {
+    ERROR: 'danger',
+    WARN: 'warning',
+    INFO: 'info',
+    DEBUG: 'primary'
+  };
+  return levelMap[level] || 'info';
+};
+
+/**
  * 安全日志加载函数
  */
 export const safeLoadLogs = async (apiCall, errorHandler = null) => {

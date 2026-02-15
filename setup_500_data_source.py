@@ -14,7 +14,7 @@ os.chdir(project_root)
 
 def setup_data_source():
     """创建500万彩票数据源"""
-    conn = sqlite3.connect('backend/sport_lottery.db')
+    conn = sqlite3.connect('data/sport_lottery.db')
     cursor = conn.cursor()
     
     try:

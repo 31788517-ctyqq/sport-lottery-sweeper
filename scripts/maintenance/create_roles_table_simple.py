@@ -3,7 +3,7 @@ import sqlite3
 import sys
 
 def main():
-    db_path = "sport_lottery.db"
+    db_path = "data/sport_lottery.db"
     
     # SQL创建roles表（根据backend/models/role.py定义）
     create_sql = """

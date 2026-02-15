@@ -6,7 +6,7 @@ import os
 
 # 获取数据库路径
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.join(PROJECT_ROOT, "sport_lottery.db")
+DB_PATH = os.path.join(PROJECT_ROOT, "data/sport_lottery.db")
 
 def check_admin_users_schema():
     # 连接到数据库

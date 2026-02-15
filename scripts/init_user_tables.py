@@ -171,7 +171,7 @@ def init_user_tables():
     """初始化用户相关表"""
     try:
         # 创建数据库引擎
-        db_path = os.path.join(project_root, 'backend', 'sport_lottery.db')
+        db_path = os.path.join(project_root, 'backend', 'data/sport_lottery.db')
         engine = create_engine(f'sqlite:///{db_path}')
         
         # 创建所有用户相关的表

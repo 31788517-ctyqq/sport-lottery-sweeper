@@ -37,7 +37,7 @@ describe('用户管理API集成测试', () => {
       const params = { page: 1, size: 10 };
       const response = await getUserList(params);
 
-      expect(mockAxios.get).toHaveBeenCalledWith('/api/v1/admin/backend-users', { params });
+      expect(mockAxios.get).toHaveBeenCalledWith('/api/admin/backend-users', { params });
       expect(response).toEqual(mockResponse);
     });
 
@@ -54,7 +54,7 @@ describe('用户管理API集成测试', () => {
       const params = { page: 1, size: 10, search: 'test', status: 'active' };
       const response = await getUserList(params);
 
-      expect(mockAxios.get).toHaveBeenCalledWith('/api/v1/admin/backend-users', { params });
+      expect(mockAxios.get).toHaveBeenCalledWith('/api/admin/backend-users', { params });
       expect(response).toEqual(mockResponse);
     });
   });
@@ -84,7 +84,7 @@ describe('用户管理API集成测试', () => {
 
       const response = await createUser(newUser);
 
-      expect(mockAxios.post).toHaveBeenCalledWith('/api/v1/admin/backend-users', newUser);
+      expect(mockAxios.post).toHaveBeenCalledWith('/api/admin/backend-users', newUser);
       expect(response).toEqual(mockResponse);
     });
 
@@ -128,7 +128,7 @@ describe('用户管理API集成测试', () => {
 
       const response = await updateUser(userId, updatedUserData);
 
-      expect(mockAxios.put).toHaveBeenCalledWith(`/api/v1/admin/backend-users/${userId}`, updatedUserData);
+      expect(mockAxios.put).toHaveBeenCalledWith(`/api/admin/backend-users/${userId}`, updatedUserData);
       expect(response).toEqual(mockResponse);
     });
 
@@ -146,7 +146,7 @@ describe('用户管理API集成测试', () => {
 
       const response = await updateUserStatus(userId, newStatus);
 
-      expect(mockAxios.patch).toHaveBeenCalledWith(`/api/v1/admin/backend-users/${userId}/status`, { status: newStatus });
+      expect(mockAxios.patch).toHaveBeenCalledWith(`/api/admin/backend-users/${userId}/status`, { status: newStatus });
       expect(response).toEqual(mockResponse);
     });
   });
@@ -165,7 +165,7 @@ describe('用户管理API集成测试', () => {
 
       const response = await deleteUser(userId);
 
-      expect(mockAxios.delete).toHaveBeenCalledWith(`/api/v1/admin/backend-users/${userId}`);
+      expect(mockAxios.delete).toHaveBeenCalledWith(`/api/admin/backend-users/${userId}`);
       expect(response).toEqual(mockResponse);
     });
 
@@ -177,7 +177,7 @@ describe('用户管理API集成测试', () => {
       const results = await Promise.all(deletePromises);
 
       userIds.forEach((id, index) => {
-        expect(mockAxios.delete).toHaveBeenCalledWith(`/api/v1/admin/backend-users/${id}`);
+        expect(mockAxios.delete).toHaveBeenCalledWith(`/api/admin/backend-users/${id}`);
         expect(results[index]).toBeDefined();
       });
     });
@@ -198,7 +198,7 @@ describe('用户管理API集成测试', () => {
 
       const response = await resetUserPassword(userId, newPassword);
 
-      expect(mockAxios.post).toHaveBeenCalledWith(`/api/v1/admin/backend-users/${userId}/reset-password`, {
+      expect(mockAxios.post).toHaveBeenCalledWith(`/api/admin/backend-users/${userId}/reset-password`, {
         password: newPassword
       });
       expect(response).toEqual(mockResponse);
@@ -228,7 +228,7 @@ describe('用户管理API集成测试', () => {
       const params = { page: 2, size: 20 };
       await getUserList(params);
 
-      expect(mockAxios.get).toHaveBeenCalledWith('/api/v1/admin/backend-users', { params });
+      expect(mockAxios.get).toHaveBeenCalledWith('/api/admin/backend-users', { params });
     });
 
     it('应该正确传递筛选参数', async () => {
@@ -238,7 +238,7 @@ describe('用户管理API集成测试', () => {
       const params = { page: 1, size: 10, search: 'test', role: 'admin', status: 'active' };
       await getUserList(params);
 
-      expect(mockAxios.get).toHaveBeenCalledWith('/api/v1/admin/backend-users', { params });
+      expect(mockAxios.get).toHaveBeenCalledWith('/api/admin/backend-users', { params });
     });
   });
 });

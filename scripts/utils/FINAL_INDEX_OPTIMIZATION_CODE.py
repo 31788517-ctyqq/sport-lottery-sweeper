@@ -13,7 +13,7 @@ def optimize_database():
     print("="*50)
     
     # 数据库路径
-    db_path = BASE_DIR / "sport_lottery.db"
+    db_path = BASE_DIR / "data" / "data/sport_lottery.db"
     
     if not db_path.exists():
         print("❌ 数据库文件不存在")

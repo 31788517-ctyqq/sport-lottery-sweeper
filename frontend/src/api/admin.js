@@ -3,7 +3,8 @@ import { ElMessage } from 'element-plus';
 
 // 创建axios实例用于管理员API
 const adminApi = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api',
+  // 强制使用空字符串，通过 Vite proxy 转发到后端，避免重复/api路径
+  baseURL: '',
   timeout: 10000,
 });
 
@@ -40,9 +41,14 @@ adminApi.interceptors.response.use(
     if (error.response?.status === 401) {
       // 清除本地token
       localStorage.removeItem('admin_token');
-      // 重定向到登录页（如果在浏览器环境中）
-      if (typeof window !== 'undefined') {
-        window.location.href = '/admin/login';
+      // 开发环境下跳过强制跳转，避免循环
+      if (import.meta.env.MODE !== 'development') {
+        // 重定向到登录页（如果在浏览器环境中）
+        if (typeof window !== 'undefined') {
+          window.location.href = '/admin/login';
+        }
+      } else {
+        console.warn('🔧 开发模式：跳过admin.js 401跳转')
       }
     }
     

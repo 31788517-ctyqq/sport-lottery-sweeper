@@ -10,26 +10,26 @@ async def final_complete_e2e_test():
         page = await browser.new_page()
         
         try:
-            print("🚀 开始最终的端到端测试...")
+            print("[START] 开始最终的端到端测试...")
             
             # 1. 访问数据源管理页面
-            print("\n1️⃣ 访问数据源管理页面...")
+            print("\n[STEP 1] 访问数据源管理页面...")
             await page.goto("http://localhost:3000/admin/data-source/config")
             await page.wait_for_load_state('networkidle')
             
             # 等待页面加载完成
             await page.wait_for_selector('text="数据源管理"', timeout=10000)
-            print("✅ 页面标题加载成功")
+            print("[OK] 页面标题加载成功")
             
             # 2. 验证统计卡片
             print("\n2️⃣ 验证统计卡片...")
             stats_cards = await page.locator('.stats-card').count()
-            print(f"📊 找到 {stats_cards} 个统计卡片")
+            print(f"[STATS] 找到 {stats_cards} 个统计卡片")
             
             # 获取统计数字
             total_sources = await page.locator('.text-primary').first.inner_text()
             online_sources = await page.locator('.text-success').first.inner_text()
-            print(f"📈 总数据源: {total_sources}, 在线: {online_sources}")
+            print(f"[DATA] 总数据源: {total_sources}, 在线: {online_sources}")
             
             # 3. 验证筛选区域
             print("\n3️⃣ 验证筛选区域...")
@@ -219,7 +219,7 @@ async def final_complete_e2e_test():
             print("✅ 分类信息显示和保存功能正常")
             
         except Exception as e:
-            print(f"❌ 测试过程中出现错误: {str(e)}")
+            print(f"[ERROR] 测试过程中出现错误: {str(e)}")
             await page.screenshot(path='final_complete_e2e_test_error.png')
             raise e
         finally:

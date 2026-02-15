@@ -2,7 +2,7 @@ import sqlite3
 import datetime
 import json
 
-conn = sqlite3.connect('sport_lottery.db')
+conn = sqlite3.connect('data/sport_lottery.db')
 c = conn.cursor()
 
 print("修复admin用户...")

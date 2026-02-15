@@ -3,7 +3,7 @@ import os
 
 def fix_database_schema():
     """修复数据库表结构，添加缺失的列"""
-    db_path = "sport_lottery.db"
+    db_path = "data/sport_lottery.db"
     
     if not os.path.exists(db_path):
         print(f"数据库文件 {db_path} 不存在")

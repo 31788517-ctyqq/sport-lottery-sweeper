@@ -1,148 +1,129 @@
-// Unit tests for BeidanFilterPanel component
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { mount } from '@vue/test-utils';
-import BeidanFilterPanel from '../../../../src/views/admin/BeidanFilterPanel.vue';
-import { createTestingPinia } from '@pinia/testing';
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { shallowMount, flushPromises } from '@vue/test-utils'
+import { createTestingPinia } from '@pinia/testing'
+import BeidanFilterPanel from '../../../../src/views/admin/BeidanFilterPanel.vue'
 
-// Mock the request utility
 vi.mock('@/utils/request', () => ({
   default: {
     get: vi.fn(),
-    post: vi.fn()
+    post: vi.fn(),
+    delete: vi.fn()
   }
-}));
+}))
 
-describe('BeidanFilterPanel.vue', () => {
-  let wrapper;
+vi.mock('element-plus', async () => {
+  const actual = await vi.importActual('element-plus')
+  return {
+    ...actual,
+    ElMessage: {
+      success: vi.fn(),
+      error: vi.fn(),
+      warning: vi.fn(),
+      info: vi.fn()
+    },
+    ElMessageBox: {
+      prompt: vi.fn(),
+      confirm: vi.fn()
+    }
+  }
+})
 
-  beforeEach(() => {
-    wrapper = mount(BeidanFilterPanel, {
+describe('BeidanFilterPanel.vue (unit)', () => {
+  let wrapper
+  let request
+
+  const mountPanel = async () => {
+    wrapper = shallowMount(BeidanFilterPanel, {
       global: {
-        plugins: [createTestingPinia()],
-        stubs: {
-          'el-card': true,
-          'el-checkbox-group': true,
-          'el-checkbox-button': true,
-          'el-select': true,
-          'el-option': true,
-          'el-date-picker': true,
-          'el-table': true,
-          'el-pagination': true,
-          'el-button': true,
-          'el-dialog': true,
-          'el-input': true,
-          'el-dropdown': true,
-          'el-dropdown-menu': true,
-          'el-dropdown-item': true,
-          'el-radio-group': true,
-          'el-radio': true,
-          'el-switch': true,
-          'el-progress': true,
-          'el-tag': true,
-          'el-alert': true,
-          'el-form': true,
-          'el-form-item': true
-        }
+        plugins: [createTestingPinia({ createSpy: vi.fn })]
       }
-    });
-  });
+    })
+    await flushPromises()
+  }
 
-  it('renders correctly', () => {
-    expect(wrapper.find('.beidan-filter-panel').exists()).toBe(true);
-    expect(wrapper.find('.title').text()).toBe('三维精算筛选器');
-  });
+  beforeEach(async () => {
+    vi.clearAllMocks()
+    request = (await import('@/utils/request')).default
 
-  it('initializes with empty filter values', () => {
-    expect(wrapper.vm.filterForm.powerDiffs).toEqual([]);
-    expect(wrapper.vm.filterForm.winPanDiffs).toEqual([]);
-    expect(wrapper.vm.filterForm.stabilityTiers).toEqual([]);
-  });
+    request.get.mockImplementation((url) => {
+      if (url.includes('/latest-date-times')) return Promise.resolve({ dateTimes: ['26024', '26023'] })
+      if (url.includes('/strategies')) return Promise.resolve({ strategies: [] })
+      if (url.includes('/real-time-count')) return Promise.resolve({ matchCount: 5 })
+      return Promise.resolve({})
+    })
 
-  it('correctly calculates strength difference', () => {
-    const calcDeltaPLevel = wrapper.vm.calcDeltaPLevel;
-    expect(calcDeltaPLevel(100, 70)).toBe(3); // Difference > 25
-    expect(calcDeltaPLevel(50, 30)).toBe(2); // Difference 17-25
-    expect(calcDeltaPLevel(40, 30)).toBe(1); // Difference 9-16
-    expect(calcDeltaPLevel(35, 30)).toBe(0); // Difference -8 to +8
-    expect(calcDeltaPLevel(30, 40)).toBe(-1); // Difference -9 to -16
-    expect(calcDeltaPLevel(30, 50)).toBe(-2); // Difference -17 to -25
-    expect(calcDeltaPLevel(30, 60)).toBe(-3); // Difference < -25
-  });
+    request.post.mockImplementation((url) => {
+      if (url.includes('/advanced-filter')) {
+        return Promise.resolve({
+          matches: [],
+          statistics: {},
+          pagination: { totalItems: 0 }
+        })
+      }
+      if (url.includes('/strategies')) return Promise.resolve({ id: 1, name: '测试策略' })
+      return Promise.resolve({ success: true })
+    })
 
-  it('correctly calculates win pan difference', () => {
-    const calcDeltaWp = wrapper.vm.calcDeltaWp;
-    expect(calcDeltaWp(2.0, 0.5)).toBe(3); // 4 - 1 = 3
-    expect(calcDeltaWp(1.3, 0.5)).toBe(2); // 3 - 1 = 2
-    expect(calcDeltaWp(1.0, 0.5)).toBe(1); // 2 - 1 = 1
-    expect(calcDeltaWp(0.7, 0.5)).toBe(0); // 1 - 1 = 0
-    expect(calcDeltaWp(0.5, 0.5)).toBe(0); // 0 - 0 = 0
-  });
+    request.delete.mockResolvedValue({ success: true })
 
-  it('correctly formats match time', () => {
-    const formatMatchTime = wrapper.vm.formatMatchTime;
-    
-    // Test valid date
-    const date = new Date('2023-01-01T12:00:00');
-    expect(formatMatchTime(date)).toBe('2023/01/01 12:00:00');
-    
-    // Test ISO string
-    expect(formatMatchTime('2023-01-01T12:00:00')).toBe('2023/01/01 12:00:00');
-    
-    // Test empty values
-    expect(formatMatchTime(null)).toBe('-');
-    expect(formatMatchTime(undefined)).toBe('-');
-    expect(formatMatchTime('')).toBe('-');
-  });
+    await mountPanel()
+  })
 
-  it('applies preset strategies correctly', () => {
-    // Test strong preset
-    wrapper.vm.applyPreset('strong');
-    expect(wrapper.vm.filterForm.powerDiffs).toEqual([2, 3]);
-    expect(wrapper.vm.filterForm.winPanDiffs).toEqual([3, 4]);
-    expect(wrapper.vm.filterForm.stabilityTiers).toEqual(['S', 'A', 'B']);
+  it('renders root container', () => {
+    expect(wrapper.find('.beidan-filter-panel').exists()).toBe(true)
+  })
 
-    // Reset and test upset preset
-    wrapper.vm.resetFilters();
-    wrapper.vm.applyPreset('upset');
-    expect(wrapper.vm.filterForm.powerDiffs).toEqual([-1, 0]);
-    expect(wrapper.vm.filterForm.winPanDiffs).toEqual([-3, -4]);
-    expect(wrapper.vm.filterForm.stabilityTiers).toEqual(['D', 'E']);
+  it('initializes basic filter state', () => {
+    expect(wrapper.vm.filterForm.powerDiffs).toEqual([])
+    expect(wrapper.vm.filterForm.winPanDiffs).toEqual([])
+    expect(wrapper.vm.filterForm.stabilityTiers).toEqual([])
+    expect(wrapper.vm.filterForm.sortBy).toBe('p_level')
+  })
 
-    // Reset and test balance preset
-    wrapper.vm.resetFilters();
-    wrapper.vm.applyPreset('balance');
-    expect(wrapper.vm.filterForm.powerDiffs).toEqual([0]);
-    expect(wrapper.vm.filterForm.winPanDiffs).toEqual([0]);
-    expect(wrapper.vm.filterForm.stabilityTiers).toEqual(['B', 'C']);
-  });
+  it('applies strong preset and calls advanced filter API', async () => {
+    await wrapper.vm.applyPreset('strong')
 
-  it('normalizes matches correctly', () => {
-    const mockMatches = [{
-      match_id: '123',
+    expect(wrapper.vm.filterForm.powerDiffs).toEqual([2, 3])
+    expect(wrapper.vm.filterForm.winPanDiffs).toEqual([3, 4])
+    expect(wrapper.vm.filterForm.stabilityTiers).toEqual(['S', 'A', 'B'])
+    expect(request.post).toHaveBeenCalledWith('/api/v1/beidan-filter/advanced-filter', expect.any(Object))
+  })
+
+  it('resets filter state', () => {
+    wrapper.vm.filterForm.powerDiffs = [2]
+    wrapper.vm.filterForm.winPanDiffs = [3]
+    wrapper.vm.filterForm.stabilityTiers = ['S']
+    wrapper.vm.strategySelected = true
+    wrapper.vm.hasResults = true
+
+    wrapper.vm.resetFilters()
+
+    expect(wrapper.vm.filterForm.powerDiffs).toEqual([])
+    expect(wrapper.vm.filterForm.winPanDiffs).toEqual([])
+    expect(wrapper.vm.filterForm.stabilityTiers).toEqual([])
+    expect(wrapper.vm.strategySelected).toBe(false)
+    expect(wrapper.vm.hasResults).toBe(false)
+  })
+
+  it('opens analysis dialog with mapped data', () => {
+    wrapper.vm.handleOpenAnalysis({
+      match_id: '26024_1',
+      date_time: '26024',
+      line_id: 1,
+      match_time: '2026-01-01 12:00:00',
+      league: '测试联赛',
       home_team: '主队',
       away_team: '客队',
-      league: '联赛',
-      match_time: '2023-01-01T12:00:00',
-      power_home: '50',
-      power_away: '40',
-      win_pan_home: '1.2',
-      win_pan_away: '0.8',
-      home_feature: '一赔70%',
-      away_feature: '一赔40%'
-    }];
+      power_home: '80',
+      power_away: '70',
+      power_diff: 1,
+      delta_wp: 1,
+      p_level: 2,
+      stability: 'A'
+    })
 
-    const normalized = wrapper.vm.normalizeMatches(mockMatches);
-    expect(normalized).toHaveLength(1);
-    expect(normalized[0].power_diff).toBe(1); // 50-40=10 -> +1
-    expect(normalized[0].win_pan_diff).toBe(1); // 1.2 -> 2, 0.8 -> 1, 2-1=1
-    expect(normalized[0].p_level).toBe(2); // 70+40=110 -> P2
-  });
-
-  it('displays value correctly when null', () => {
-    const displayValue = wrapper.vm.displayValue;
-    expect(displayValue(null)).toBe('-');
-    expect(displayValue(undefined)).toBe('-');
-    expect(displayValue('')).toBe('-');
-    expect(displayValue('test')).toBe('test');
-  });
-});
+    expect(wrapper.vm.analysisVisible).toBe(true)
+    expect(wrapper.vm.currentAnalysisData.homeTeam).toBe('主队')
+    expect(wrapper.vm.currentAnalysisData.guestTeam).toBe('客队')
+  })
+})

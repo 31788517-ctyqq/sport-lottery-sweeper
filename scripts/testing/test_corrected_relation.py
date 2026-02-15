@@ -42,7 +42,7 @@ def test_corrected_relation():
             
             # 查询数据库验证关联关系
             print("\n=== 验证数据库关联关系 ===")
-            db_path = backend_path / "sport_lottery.db"
+            db_path = project_root / "data" / "data/sport_lottery.db"
             if not db_path.exists():
                 print(f"数据库文件不存在: {db_path}")
                 return

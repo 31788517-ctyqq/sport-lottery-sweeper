@@ -1,7 +1,7 @@
 // AI_WORKING: coder1 @2026-01-29 18:36:01 - 修复导入路径和语法问题
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
-import { useAppStore } from '../../stores/app.js'
+import { useAppStore } from '@/stores/app'
 
 // 模拟 localStorage
 global.localStorage = {

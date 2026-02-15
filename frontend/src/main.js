@@ -55,6 +55,15 @@ app.config.errorHandler = (err, instance, info) => {
   }
 }
 
+// ===== 新增：全局 JavaScript 错误捕获 =====
+window.addEventListener('error', event => {
+  console.error('Global JS error (window.onerror):', event.error || event.message)
+})
+window.addEventListener('unhandledrejection', event => {
+  console.error('Unhandled promise rejection:', event.reason)
+})
+// ===========================================
+
 // Global properties
 app.config.globalProperties.$config = config
 app.config.globalProperties.$ENV = ENV_HELPERS.getEnvironment()

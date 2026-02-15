@@ -11,6 +11,14 @@ from backend.models.crawler_tasks import CrawlerTask as CrawlerTaskModel
 from backend.models.crawler_logs import CrawlerTaskLog as CrawlerLogModel
 from sqlalchemy import select, delete, func
 from sqlalchemy.exc import IntegrityError
+import re
+CRON_REGEX = re.compile(r'^(\S+\s){4}\S+$')
+
+def validate_cron(expr: str):
+    if len(expr) > 50:
+        raise HTTPException(status_code=400, detail="cron_expression长度不能超过50个字符")
+    if not CRON_REGEX.match(expr.strip()):
+        raise HTTPException(status_code=400, detail="cron_expression格式不正确，需包含5个非空字段")
 
 router = APIRouter(prefix="/crawler/tasks", tags=["crawler-tasks"])
 
@@ -112,6 +120,11 @@ async def create_task(
         if not source_id.isdigit():
             raise HTTPException(status_code=400, detail="source_id必须是数字")
         source_id_int = int(source_id)
+        if source_id_int <= 0:
+            raise HTTPException(status_code=400, detail="source_id必须大于0")
+        
+        # 校验cron_expression
+        validate_cron(cron_expression)
         
         # 创建新任务对象
         new_task = CrawlerTaskModel(
@@ -170,10 +183,14 @@ async def update_task(
             # 验证source_id是否为数字
             if not source_id.isdigit():
                 raise HTTPException(status_code=400, detail="source_id必须是数字")
-            task.source_id = int(source_id)
+            source_id_int = int(source_id)
+            if source_id_int <= 0:
+                raise HTTPException(status_code=400, detail="source_id必须大于0")
+            task.source_id = source_id_int
         if task_type is not None:
             task.task_type = task_type
         if cron_expression is not None:
+            validate_cron(cron_expression)
             task.cron_expression = cron_expression
         if is_active is not None:
             task.is_active = is_active

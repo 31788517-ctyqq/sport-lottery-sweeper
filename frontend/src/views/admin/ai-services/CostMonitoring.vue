@@ -111,9 +111,9 @@
           <div class="chart-header">
             <span>📈 AI服务月度成本趋势</span>
             <el-radio-group v-model="chartPeriod" size="small">
-              <el-radio-button label="月">月</el-radio-button>
-              <el-radio-button label="周">周</el-radio-button>
-              <el-radio-button label="日">日</el-radio-button>
+              <el-radio-button value="月">月</el-radio-button>
+              <el-radio-button value="周">周</el-radio-button>
+              <el-radio-button value="日">日</el-radio-button>
             </el-radio-group>
           </div>
         </template>

@@ -163,10 +163,10 @@
       <el-col :span="24">
         <el-card class="recent-activities">
           <template #header>
-            <div class="section-header">
-              <span>📋 最近活动</span>
-              <el-button type="text" @click="navigateTo('/admin/logs')">查看全部</el-button>
-            </div>
+<div class="section-header">
+  <span>📋 最近活动</span>
+  <el-button link @click="navigateTo('/admin/logs')">查看全部</el-button>
+</div>
           </template>
           
           <el-table :data="recentActivities" style="width: 100%">

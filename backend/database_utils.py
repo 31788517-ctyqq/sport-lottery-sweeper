@@ -20,7 +20,7 @@ try:
 except ImportError:
     # 回退逻辑：直接使用data目录
     PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    DB_PATH = os.path.join(PROJECT_ROOT, "data", "sport_lottery.db")
+    DB_PATH = os.path.join(PROJECT_ROOT, "data", "data/sport_lottery.db")
 
     DB_PATH = None
     for path in possible_paths:
@@ -30,7 +30,7 @@ except ImportError:
 
     if DB_PATH is None:
         # 如果都不存在，使用根目录的默认路径
-        DB_PATH = os.path.join(PROJECT_ROOT, "sport_lottery.db")
+        DB_PATH = os.path.join(PROJECT_ROOT, "data/sport_lottery.db")
 
 def get_db_connection():
     """获取数据库连接"""

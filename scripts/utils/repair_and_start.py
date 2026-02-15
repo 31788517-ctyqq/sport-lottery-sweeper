@@ -8,7 +8,7 @@ import os
 
 def repair_database():
     print("修复数据库...")
-    conn = sqlite3.connect('sport_lottery.db')
+    conn = sqlite3.connect('data/sport_lottery.db')
     c = conn.cursor()
     
     # 修复admin用户的datetime字段

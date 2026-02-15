@@ -1,6 +1,6 @@
 import sqlite3
 
-DB_PATH = 'sport_lottery.db'
+DB_PATH = 'data/sport_lottery.db'
 
 conn = sqlite3.connect(DB_PATH)
 cursor = conn.cursor()

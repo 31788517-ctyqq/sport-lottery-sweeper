@@ -4,7 +4,7 @@ def check_admin_tables():
     expected_admin_tables = ['admin_users', 'departments', 'roles', 'permissions']
     
     try:
-        conn = sqlite3.connect('sport_lottery.db')
+        conn = sqlite3.connect('data/sport_lottery.db')
         cursor = conn.cursor()
         
         cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")

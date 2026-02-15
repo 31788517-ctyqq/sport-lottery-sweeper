@@ -6,7 +6,7 @@ from pathlib import Path
 
 # 项目根目录 - 使用当前文件所在目录
 PROJECT_ROOT = Path(__file__).parent.parent
-DATABASE_PATH = PROJECT_ROOT / "sport_lottery.db"
+DATABASE_PATH = PROJECT_ROOT / "data/sport_lottery.db"
 
 
 class Settings(BaseSettings):

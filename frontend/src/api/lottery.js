@@ -16,7 +16,7 @@ import apiClient from './index';
  */
 export const getLotteryMatches = async (params = {}) => {
   try {
-    const response = await apiClient.get('/api/v1/lottery/matches', { params });
+    const response = await apiClient.get('/api/lottery/matches', { params });
     return response.data;
   } catch (error) {
     console.error('Failed to fetch lottery match data:', error);
@@ -30,7 +30,7 @@ export const getLotteryMatches = async (params = {}) => {
  */
 export const getMondayMatches = async () => {
   try {
-    const response = await apiClient.get('/api/v1/lottery/matches', {
+    const response = await apiClient.get('/api/lottery/matches', {
       params: {
         source: '500',
         days: 1
@@ -89,7 +89,7 @@ export const deleteLotterySchedule = adminDeleteMatch;
 // Auto import from crawler database
 export const importLotterySchedulesAuto = async (params = {}) => {
   try {
-    const response = await apiClient.post('/api/v1/admin/lottery-schedules/import/auto', params);
+    const response = await apiClient.post('/api/admin/lottery-schedules/import/auto', params);
     return {
       code: 200,
       message: response.data.message || `成功导入 ${response.data.imported_count || 0} 条赛程数据`,
@@ -108,7 +108,7 @@ export const importLotterySchedulesAuto = async (params = {}) => {
 // Manual import from external API
 export const importLotterySchedulesManual = async (params = {}) => {
   try {
-    const response = await apiClient.post('/api/v1/admin/lottery-schedules/import/manual', params);
+    const response = await apiClient.post('/api/admin/lottery-schedules/import/manual', params);
     return {
       code: 200,
       message: response.data.message || `成功从接口导入 ${response.data.imported_count || 0} 条赛程数据`,
@@ -127,7 +127,7 @@ export const importLotterySchedulesManual = async (params = {}) => {
 // File import (CSV/Excel)
 export const importLotterySchedulesFile = async (formData) => {
   try {
-    const response = await apiClient.post('/api/v1/admin/lottery-schedules/import/file', formData, {
+    const response = await apiClient.post('/api/admin/lottery-schedules/import/file', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }

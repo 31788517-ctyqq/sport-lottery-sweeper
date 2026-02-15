@@ -4,7 +4,7 @@
 import sqlite3
 
 def check_100qiu_data():
-    conn = sqlite3.connect('sport_lottery.db')
+    conn = sqlite3.connect('data/sport_lottery.db')
     cursor = conn.cursor()
     
     # 查询match_id以数字开头的记录（100qiu的数据）

@@ -9,7 +9,7 @@ sys.path.insert(0, project_root)
 
 def check_user_fields():
     # 直接查询数据库
-    conn = sqlite3.connect('sport_lottery.db')
+    conn = sqlite3.connect('data/sport_lottery.db')
     cursor = conn.cursor()
     cursor.execute("SELECT username, department, position FROM admin_users WHERE username = 'admin'")
     result = cursor.fetchone()
