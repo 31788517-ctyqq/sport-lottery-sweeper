@@ -70,7 +70,14 @@
   width="600px"
   :before-close="closeStrategyManage"
 >
-  <el-table :data="strategyOptionsAll.filter(name => !exampleStrategyNames.includes(name)).map(name => ({ name }))" style="width: 100%">
+  <el-table
+    ref="strategyManageTableRef"
+    :data="getManageStrategyRows()"
+    row-key="name"
+    style="width: 100%"
+    @selection-change="handleManageSelectionChange"
+  >
+    <el-table-column type="selection" width="50" />
     <el-table-column prop="name" label="策略名称" width="180" />
     <el-table-column label="条件摘要" width="260">
       <template #default="{ row }">
@@ -86,6 +93,7 @@
   </el-table>
   <template #footer>
     <span class="dialog-footer">
+      <el-button type="primary" @click="applySelectedStrategiesToMultiConfig">同步到多策略配置</el-button>
       <el-button @click="closeStrategyManage">关闭</el-button>
     </span>
   </template>
@@ -117,7 +125,9 @@
     
     <!-- 多策略管理弹窗 -->
     <MultiStrategyManager 
-      :visible="multiStrategyVisible" 
+      :visible="multiStrategyVisible"
+      :preset-strategies="selectedMultiStrategies"
+      :strategy-options-source="strategyOptionsAll"
       @close="multiStrategyVisible = false"
     />
 
@@ -133,7 +143,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, watch } from 'vue'
+import { nextTick, ref, reactive, onMounted, watch } from 'vue'
 import { 
   ElMessage, 
   ElMessageBox,
@@ -273,6 +283,9 @@ const strategyOptions = ref([]) // 策略筛选区域显示（最多 9 条 + 当
 const strategyOptionsAll = ref([]) // 管理列表完整策略
 const strategyDetailItems = ref([])
 const MAX_FILTER_STRATEGIES = 9
+const MULTI_STRATEGY_SELECTION_KEY = 'beidan_multi_strategy_selected'
+const selectedMultiStrategies = ref([])
+const strategyManageTableRef = ref(null)
 
 // 缁熻数据
 const statistics = ref({})
@@ -320,6 +333,7 @@ const rebuildFilterStrategyOptions = () => {
 // 鐢熷懡鍛ㄦ湡
 onMounted(async () => {
   console.log('页面加载，开始初始化...')
+  loadSelectedMultiStrategies()
   await loadStrategyOptions()
   console.log('loadStrategyOptions瀹屾垚锛岃皟鐢╮efreshDateTimeOptions鍓?filterForm.dateTime:', filterForm.dateTime)
   await refreshDateTimeOptions()
@@ -1161,6 +1175,7 @@ const loadStrategyOptions = async () => {
         console.warn('鏈煡鐨勫搷搴旀牸寮?', response)
         strategyOptionsAll.value = []
         rebuildFilterStrategyOptions()
+        syncSelectedMultiStrategiesWithAvailable()
         return
       }
       
@@ -1170,6 +1185,7 @@ const loadStrategyOptions = async () => {
         .filter(name => typeof name === 'string' && name.trim().length > 0)
       strategyOptionsAll.value = strategyNames
       rebuildFilterStrategyOptions()
+      syncSelectedMultiStrategiesWithAvailable()
 
       // 同时更新 strategiesMap，将后端策略转换为前端结构
       strategies.forEach(strategy => {
@@ -1192,6 +1208,7 @@ const loadStrategyOptions = async () => {
     }
     strategyOptionsAll.value = []
     rebuildFilterStrategyOptions()
+    syncSelectedMultiStrategiesWithAvailable()
   }
 }
 
@@ -1203,10 +1220,30 @@ const editStrategyName = ref('')
 
 const openStrategyManage = () => {
   strategyManageVisible.value = true
+  nextTick(() => {
+    const table = strategyManageTableRef.value
+    if (!table) return
+    table.clearSelection()
+    const selectedSet = new Set(selectedMultiStrategies.value)
+    getManageStrategyRows().forEach((row) => {
+      if (selectedSet.has(row.name)) {
+        table.toggleRowSelection(row, true)
+      }
+    })
+  })
 }
 
 const closeStrategyManage = () => {
   strategyManageVisible.value = false
+}
+
+const handleManageSelectionChange = (rows) => {
+  selectedMultiStrategies.value = (rows || []).map((row) => row.name).filter(Boolean)
+}
+
+const applySelectedStrategiesToMultiConfig = () => {
+  persistSelectedMultiStrategies()
+  ElMessage.success('已同步到多策略筛选配置')
 }
 
 const getStrategySummary = (name) => {
@@ -1269,6 +1306,8 @@ const deleteStrategy = async (name) => {
       const idx = strategyOptions.value.indexOf(name)
       if (idx > -1) strategyOptions.value.splice(idx, 1)
       rebuildFilterStrategyOptions()
+      selectedMultiStrategies.value = selectedMultiStrategies.value.filter((item) => item !== name)
+      persistSelectedMultiStrategies()
       ElMessage.success('删除成功')
       return
     }
@@ -1286,6 +1325,8 @@ const deleteStrategy = async (name) => {
     const idx = strategyOptions.value.indexOf(name)
     if (idx > -1) strategyOptions.value.splice(idx, 1)
     rebuildFilterStrategyOptions()
+    selectedMultiStrategies.value = selectedMultiStrategies.value.filter((item) => item !== name)
+    persistSelectedMultiStrategies()
     
     ElMessage.success('删除成功')
   } catch (error) {
@@ -1372,6 +1413,12 @@ const confirmEditStrategy = async () => {
       }
       rebuildFilterStrategyOptions()
     }
+
+    selectedMultiStrategies.value = selectedMultiStrategies.value
+      .map((item) => (item === oldName ? editStrategyName.value.trim() : item))
+      .filter(Boolean)
+    selectedMultiStrategies.value = [...new Set(selectedMultiStrategies.value)]
+    syncSelectedMultiStrategiesWithAvailable()
     
     // 更新editingStrategy鐨勫悕绉帮紙鐢ㄤ簬鏄剧ず锛?    editingStrategy.value.name = editStrategyName.value
     if (selectedStrategyName.value === oldName) {
@@ -1625,6 +1672,34 @@ const updateStrategyDetails = (strategy) => {
   ]
 }
 
+const getManageStrategyRows = () => {
+  return strategyOptionsAll.value
+    .filter(name => !exampleStrategyNames.includes(name))
+    .map(name => ({ name }))
+}
+
+const loadSelectedMultiStrategies = () => {
+  try {
+    const raw = localStorage.getItem(MULTI_STRATEGY_SELECTION_KEY)
+    const parsed = JSON.parse(raw || '[]')
+    const selected = Array.isArray(parsed) ? parsed.map(name => String(name || '').trim()).filter(Boolean) : []
+    const validSet = new Set(strategyOptionsAll.value)
+    selectedMultiStrategies.value = selected.filter(name => validSet.has(name))
+  } catch {
+    selectedMultiStrategies.value = []
+  }
+}
+
+const persistSelectedMultiStrategies = () => {
+  localStorage.setItem(MULTI_STRATEGY_SELECTION_KEY, JSON.stringify(selectedMultiStrategies.value))
+}
+
+const syncSelectedMultiStrategiesWithAvailable = () => {
+  const validSet = new Set(strategyOptionsAll.value)
+  selectedMultiStrategies.value = selectedMultiStrategies.value.filter(name => validSet.has(name))
+  persistSelectedMultiStrategies()
+}
+
 // 从API鏁版嵁鏇存柊绛栫暐璇︽儏鏄剧ず
   const updateStrategyDetailsFromApi = (strategyData) => {
     const otherCond = strategyData.otherConditions || {}
@@ -1856,6 +1931,7 @@ const updateStrategyDetails = (strategy) => {
   color: #667eea;
 }
 </style>
+
 
 
 
