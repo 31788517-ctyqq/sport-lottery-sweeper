@@ -1,63 +1,63 @@
-﻿<template>
+<template>
   <el-dialog
-    title="缂栬緫涓汉淇℃伅"
     v-model="visible"
+    title="编辑个人信息"
     width="500px"
     @close="handleClose"
   >
     <el-form ref="formRef" :model="formData" :rules="rules" label-width="100px">
-      <el-form-item label="鐢ㄦ埛鍚? prop="username">
-        <el-input v-model="formData.username" placeholder="璇疯緭鍏ョ敤鎴峰悕" disabled />
+      <el-form-item label="用户名" prop="username">
+        <el-input v-model="formData.username" disabled />
       </el-form-item>
-      
-      <el-form-item label="鏄电О" prop="nickname">
-        <el-input v-model="formData.nickname" placeholder="璇疯緭鍏ユ樀绉? />
+
+      <el-form-item label="昵称" prop="nickname">
+        <el-input v-model="formData.nickname" placeholder="请输入昵称" />
       </el-form-item>
-      
-      <el-form-item label="閭" prop="email">
-        <el-input v-model="formData.email" placeholder="璇疯緭鍏ラ偖绠卞湴鍧€" />
+
+      <el-form-item label="邮箱" prop="email">
+        <el-input v-model="formData.email" placeholder="请输入邮箱地址" />
       </el-form-item>
-      
-      <el-form-item label="鎵嬫満鍙? prop="phone">
-        <el-input v-model="formData.phone" placeholder="璇疯緭鍏ユ墜鏈哄彿" />
+
+      <el-form-item label="手机号" prop="phone">
+        <el-input v-model="formData.phone" placeholder="请输入手机号" />
       </el-form-item>
-      
-      <el-form-item label="鎬у埆" prop="gender">
+
+      <el-form-item label="性别" prop="gender">
         <el-radio-group v-model="formData.gender">
-          <el-radio :value="1">鐢?/el-radio>
-          <el-radio :value="2">濂?/el-radio>
-          <el-radio :value="0">淇濆瘑</el-radio>
+          <el-radio :label="1">男</el-radio>
+          <el-radio :label="2">女</el-radio>
+          <el-radio :label="0">保密</el-radio>
         </el-radio-group>
       </el-form-item>
-      
-      <el-form-item label="鐢熸棩" prop="birthday">
+
+      <el-form-item label="生日" prop="birthday">
         <el-date-picker
           v-model="formData.birthday"
           type="date"
-          placeholder="閫夋嫨鐢熸棩"
+          placeholder="选择生日"
           format="YYYY-MM-DD"
           value-format="YYYY-MM-DD"
           style="width: 100%"
         />
       </el-form-item>
-      
-      <el-form-item label="涓汉绠€浠?>
+
+      <el-form-item label="个人简介">
         <el-input
           v-model="formData.bio"
           type="textarea"
           :rows="3"
-          placeholder="璇疯緭鍏ヤ釜浜虹畝浠?
+          placeholder="请输入个人简介"
           maxlength="200"
           show-word-limit
         />
       </el-form-item>
     </el-form>
-    
+
     <template #footer>
       <span class="dialog-footer">
-        <el-button @click="handleClose">鍙栨秷</el-button>
-        <el-button type="primary" @click="handleSubmit" :loading="submitting">
-          淇濆瓨
+        <el-button @click="handleClose">取消</el-button>
+        <el-button type="primary" :loading="submitting" @click="handleSubmit">
+          保存
         </el-button>
       </span>
     </template>
@@ -65,20 +65,24 @@
 </template>
 
 <script setup>
-import { ref, reactive, watch, nextTick } from 'vue'
+import { nextTick, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { updateProfile } from '@/api/modules/user-profile'
 
-// Props
 const props = defineProps({
-  modelValue: Boolean,
-  userData: Object
+  modelValue: {
+    type: Boolean,
+    default: false
+  },
+  userData: {
+    type: Object,
+    default: () => ({})
+  }
 })
 
-// Emits
 const emit = defineEmits(['update:modelValue', 'updated'])
 
-// 鍝嶅簲寮忔暟鎹?const visible = ref(false)
+const visible = ref(false)
 const submitting = ref(false)
 const formRef = ref()
 
@@ -95,53 +99,54 @@ const formData = reactive({
 
 const rules = {
   nickname: [
-    { required: true, message: '璇疯緭鍏ユ樀绉?, trigger: 'blur' },
-    { min: 2, max: 20, message: '闀垮害鍦?2 鍒?20 涓瓧绗?, trigger: 'blur' }
+    { required: true, message: '请输入昵称', trigger: 'blur' },
+    { min: 2, max: 20, message: '昵称长度需在 2 到 20 个字符之间', trigger: 'blur' }
   ],
   email: [
-    { required: true, message: '璇疯緭鍏ラ偖绠卞湴鍧€', trigger: 'blur' },
-    { type: 'email', message: '璇疯緭鍏ユ纭殑閭鍦板潃', trigger: 'blur' }
+    { required: true, message: '请输入邮箱地址', trigger: 'blur' },
+    { type: 'email', message: '请输入正确的邮箱地址', trigger: 'blur' }
   ],
   phone: [
-    { pattern: /^1[3-9]\d{9}$/, message: '璇疯緭鍏ユ纭殑鎵嬫満鍙?, trigger: 'blur' }
+    { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号', trigger: 'blur' }
   ]
 }
 
-// 鐩戝惉鍣?watch(() => props.modelValue, (val) => {
-  visible.value = val
-  if (val && props.userData) {
-    loadUserData()
-  }
-})
+watch(
+  () => props.modelValue,
+  (val) => {
+    visible.value = val
+    if (val) {
+      loadUserData()
+    }
+  },
+  { immediate: true }
+)
 
 watch(visible, (val) => {
   emit('update:modelValue', val)
 })
 
-// 鏂规硶
 const loadUserData = () => {
+  const user = props.userData || {}
   Object.assign(formData, {
-    id: props.userData.userId || props.userData.id,
-    username: props.userData.username,
-    nickname: props.userData.nickname || props.userData.username,
-    email: props.userData.email,
-    phone: props.userData.phone,
-    gender: props.userData.gender || 0,
-    birthday: props.userData.birthday,
-    bio: props.userData.bio || props.userData.description || ''
+    id: user.userId || user.id || null,
+    username: user.username || '',
+    nickname: user.nickname || user.username || '',
+    email: user.email || '',
+    phone: user.phone || '',
+    gender: Number(user.gender ?? 0),
+    birthday: user.birthday || '',
+    bio: user.bio || user.description || ''
   })
-  
-  nextTick(() => {
-    formRef.value?.clearValidate()
-  })
+  nextTick(() => formRef.value?.clearValidate())
 }
 
 const handleSubmit = async () => {
   try {
-    await formRef.value.validate()
+    await formRef.value?.validate()
     submitting.value = true
-    
-    const submitData = { 
+
+    const payload = {
       nickname: formData.nickname,
       email: formData.email,
       phone: formData.phone,
@@ -149,18 +154,19 @@ const handleSubmit = async () => {
       birthday: formData.birthday,
       bio: formData.bio
     }
-    
-    // 璋冪敤API鏇存柊鐢ㄦ埛淇℃伅
-    const response = await updateProfile(submitData)
-    if (response.code === 200 || response.status === 200) {
-      ElMessage.success('涓汉淇℃伅鏇存柊鎴愬姛')
-      emit('updated', { ...formData }) // 浼犻€掓洿鏂板悗鐨勬暟鎹?      visible.value = false
-    } else {
-      ElMessage.error(response.message || '鏇存柊澶辫触')
+
+    const response = await updateProfile(payload)
+    const success = response?.code === 200 || response?.status === 200
+    if (!success) {
+      throw new Error(response?.message || '更新失败')
     }
+
+    ElMessage.success('个人信息更新成功')
+    emit('updated', { ...formData })
+    visible.value = false
   } catch (error) {
-    console.error('鏇存柊涓汉淇℃伅澶辫触:', error)
-    ElMessage.error('鏇存柊澶辫触锛岃绋嶅悗閲嶈瘯')
+    const message = error?.message || '更新失败，请稍后重试'
+    ElMessage.error(message)
   } finally {
     submitting.value = false
   }
@@ -169,11 +175,6 @@ const handleSubmit = async () => {
 const handleClose = () => {
   visible.value = false
 }
-
-// 鏆撮湶鏂规硶
-defineExpose({
-  visible
-})
 </script>
 
 <style scoped>

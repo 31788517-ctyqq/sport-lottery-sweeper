@@ -23,6 +23,35 @@ export const useTaskMonitorStore = defineStore('taskMonitor', () => {
   })
   
   // Actions
+  const normalizeExecution = (item) => {
+    const rawStatus = String(item.status || '').toLowerCase()
+    const statusMap = {
+      pending: 'PENDING',
+      running: 'RUNNING',
+      success: 'SUCCESS',
+      succeeded: 'SUCCESS',
+      completed: 'SUCCESS',
+      failed: 'FAILED',
+      error: 'FAILED',
+      cancelled: 'CANCELLED',
+      canceled: 'CANCELLED',
+      stopped: 'CANCELLED'
+    }
+
+    return {
+      ...item,
+      taskId: item.taskId ?? item.task_id,
+      taskName: item.taskName ?? item.task_name ?? `Task ${item.task_id || item.taskId || '-'}`,
+      startedAt: item.startedAt ?? item.started_at ?? null,
+      endedAt: item.endedAt ?? item.finished_at ?? item.ended_at ?? null,
+      recordsProcessed: item.recordsProcessed ?? item.records_processed ?? 0,
+      recordsSuccess: item.recordsSuccess ?? item.records_success ?? 0,
+      recordsFailed: item.recordsFailed ?? item.records_failed ?? 0,
+      status: statusMap[rawStatus] || String(item.status || 'UNKNOWN').toUpperCase(),
+      type: item.type || 'crawler'
+    }
+  }
+
   const fetchExecutions = async (params = {}) => {
     try {
       const response = await taskMonitorApi.getExecutions(params)
@@ -53,7 +82,8 @@ export const useTaskMonitorStore = defineStore('taskMonitor', () => {
           throw new Error('API响应格式不符合预期')
         }
         
-        executions.value = parsedResponse.data.items || []
+        const items = parsedResponse.data.items || []
+        executions.value = items.map(normalizeExecution)
         totalCount.value = parsedResponse.data.total || 0
         currentPage.value = parsedResponse.data.page || 1
       } else {
