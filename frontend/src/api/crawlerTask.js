@@ -46,7 +46,9 @@ export function triggerTask(id) {
 // 停止任务
 export function stopTask(id) {
   return request({
-    url: `/api/admin/crawler/tasks/${id}/stop`,
+    // 与后端稳定路由对齐：/api/v1/admin/tasks/{id}/stop
+    // 前端经 Vite 代理后使用 /api/admin/tasks/{id}/stop
+    url: `/api/admin/tasks/${id}/stop`,
     method: 'post'
   })
 }

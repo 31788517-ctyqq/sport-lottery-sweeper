@@ -76,7 +76,7 @@
     <!-- 操作栏 (已删除500彩票网相关按钮) -->
     <div class="operation-bar">
       <!-- AI_WORKING: coder1 @1770014206 - 删除500彩票网爬虫按钮和创建500数据源按钮 -->
-      <el-button type="primary" @click="showCreateDialog = true">
+      <el-button type="primary" @click="handleAdd">
         <el-icon><Plus /></el-icon>
         新建任务
       </el-button>
@@ -201,7 +201,7 @@
               size="small" 
               @click="handleToggleTask(scope.row)"
               :loading="scope.row.loadingTrigger">
-              {{ scope.row.status === 'RUNNING' ? '停止' : '启动' }}
+              {{ isRunning(scope.row.status) ? '停止' : '启动' }}
             </el-button>
             <el-button 
               type="info" 
@@ -213,21 +213,21 @@
               type="primary" 
               size="small" 
               @click="viewLogs(scope.row)"
-              :disabled="scope.row.status !== 'RUNNING'">
+              :disabled="!isRunning(scope.row.status)">
               日志
             </el-button>
             <el-button 
               type="warning" 
               size="small" 
               @click="editTask(scope.row)"
-              :disabled="['RUNNING', 'CANCELLED'].includes(scope.row.status)">
+              :disabled="isEditDisabled(scope.row.status)">
               编辑
             </el-button>
             <el-button 
               type="danger" 
               size="small" 
               @click="deleteTask(scope.row)"
-              :disabled="scope.row.status === 'RUNNING'">
+              :disabled="isRunning(scope.row.status)">
               删除
             </el-button>
           </template>
@@ -404,7 +404,7 @@
             </el-tag>
           </el-descriptions-item>
           <el-descriptions-item label="进度">
-            <el-progress :percentage="currentProgress" :status="currentTask?.status === 'RUNNING' ? null : 'success'" />
+            <el-progress :percentage="currentProgress" :status="isRunning(currentTask?.status) ? null : 'success'" />
           </el-descriptions-item>
           <el-descriptions-item label="数据源ID">{{ currentTask?.source_id }}</el-descriptions-item>
           <el-descriptions-item label="上次运行时间">{{ formatDate(currentTask?.last_run_time || null) }}</el-descriptions-item>
@@ -437,6 +437,12 @@ import {
   batchDeleteTasks as batchDeleteTasksApi,
   getTaskStatistics
 } from '@/api/crawlerTask'
+import {
+  bindHeadersToTask,
+  getHeaderBindings,
+  getHeadersList,
+  unbindHeadersFromTask
+} from '@/api/headers'
 
 // 响应式数据
 const loading = ref(false)
@@ -447,6 +453,13 @@ const showLogDrawer = ref(false)
 const isEdit = ref(false)
 const logsPaused = ref(false)
 const taskFormRef = ref()
+const editActiveTab = ref('basic')
+const headerOptions = ref([])
+const taskHeaderBindings = ref([])
+const bindTaskForm = reactive({
+  headerIds: [],
+  priorityOverride: null
+})
 
 // 统计数据
 const statistics = reactive({
@@ -564,6 +577,10 @@ const displayTotalValue = computed(() => {
   return hasActiveFilters.value ? pagination.total : (Number(statistics.totalTasks) || 0);
 });
 
+const normalizeStatus = (status) => String(status || '').toUpperCase()
+const isRunning = (status) => normalizeStatus(status) === 'RUNNING'
+const isEditDisabled = (status) => ['RUNNING', 'CANCELLED'].includes(normalizeStatus(status))
+
 // 任务日志
 const taskLogs = ref([])
 let logWebSocket = null
@@ -586,13 +603,100 @@ onUnmounted(() => {
 })
 
 // 方法定义
+const loadHeaderOptions = async (query = '') => {
+  try {
+    const res = await getHeadersList({
+      page: 1,
+      size: 100,
+      search: query || ''
+    })
+    headerOptions.value = res.data?.items || []
+  } catch (error) {
+    console.error('Error loading header options:', error)
+    headerOptions.value = []
+  }
+}
+
+const loadTaskHeaderBindings = async () => {
+  if (!taskForm.id) {
+    taskHeaderBindings.value = []
+    return
+  }
+  try {
+    const res = await getHeaderBindings({ task_id: Number(taskForm.id) })
+    taskHeaderBindings.value = res.data?.taskBindings || []
+  } catch (error) {
+    console.error('Error loading task header bindings:', error)
+    taskHeaderBindings.value = []
+  }
+}
+
+const bindTaskHeaders = async () => {
+  if (!taskForm.id) {
+    ElMessage.warning('请先保存任务后再绑定请求头')
+    return
+  }
+  if (!bindTaskForm.headerIds.length) {
+    ElMessage.warning('请选择请求头')
+    return
+  }
+  try {
+    await bindHeadersToTask({
+      taskId: Number(taskForm.id),
+      headerIds: bindTaskForm.headerIds,
+      enabled: true,
+      priorityOverride: bindTaskForm.priorityOverride
+    })
+    ElMessage.success('绑定成功')
+    bindTaskForm.headerIds = []
+    bindTaskForm.priorityOverride = null
+    await loadTaskHeaderBindings()
+  } catch (error) {
+    ElMessage.error('绑定失败')
+  }
+}
+
+const toggleTaskBinding = async (row) => {
+  try {
+    await bindHeadersToTask({
+      taskId: Number(taskForm.id),
+      headerIds: [row.headerId],
+      enabled: !row.enabled,
+      priorityOverride: row.priorityOverride
+    })
+    ElMessage.success('更新成功')
+    await loadTaskHeaderBindings()
+  } catch (error) {
+    ElMessage.error('更新失败')
+  }
+}
+
+const removeTaskBinding = async (row) => {
+  try {
+    await unbindHeadersFromTask({
+      taskId: Number(taskForm.id),
+      headerIds: [row.headerId]
+    })
+    ElMessage.success('解绑成功')
+    await loadTaskHeaderBindings()
+  } catch (error) {
+    ElMessage.error('解绑失败')
+  }
+}
+
+const handleAdd = () => {
+  resetForm()
+  showCreateDialog.value = true
+}
+
 const loadTasks = async () => {
   loading.value = true
   try {
     const params = {
       page: pagination.page,
       size: pagination.size,
-      ...filters
+      ...filters,
+      status: filters.status ? String(filters.status).toLowerCase() : ''
     }
     const response = await listTasks(params)
     tasks.value = (response.data?.items || response.items || []).map(task => ({
@@ -620,12 +724,15 @@ const loadTasks = async () => {
 const loadStatistics = async () => {
   try {
     const response = await getTaskStatistics()
-    // 修正：从statusStats对象中获取各个状态的统计值
-    const statusStats = response.data.statusStats || {}
-    statistics.runningTasks = (statusStats.RUNNING || statusStats.running || 0)
-    statistics.successTasks = (statusStats.SUCCESS || statusStats.success || 0)
-    statistics.failedTasks = (statusStats.FAILED || statusStats.failed || 0)
-    // totalTasks已经在loadTasks中处理，这里不需要重复设置
+    const statsData = response?.data || response || {}
+    const statusStats = statsData.statusStats || {}
+    statistics.runningTasks = Number(statusStats.RUNNING ?? statusStats.running ?? statsData.runningTasks ?? 0)
+    statistics.successTasks = Number(statusStats.SUCCESS ?? statusStats.success ?? statsData.successTasks ?? 0)
+    statistics.failedTasks = Number(statusStats.FAILED ?? statusStats.failed ?? statsData.failedTasks ?? 0)
+    const totalFromStats = Number(statsData.totalTasks ?? statsData.total ?? 0)
+    if (!hasActiveFilters.value && Number.isFinite(totalFromStats) && totalFromStats >= 0) {
+      statistics.totalTasks = totalFromStats
+    }
   } catch (error) {
     console.error('加载统计数据失败:', error)
   }
@@ -676,7 +783,7 @@ const submitTaskForm = async () => {
     await taskFormRef.value.validate()
 
     // 检查数据源是否可用
-    if (!sourceOptions || sourceOptions.length === 0) {
+    if (typeof sourceOptions !== 'undefined' && (!sourceOptions || sourceOptions.length === 0)) {
       ElMessage.warning('请先添加数据源后再创建任务')
       return
     }
@@ -747,6 +854,7 @@ const submitTaskForm = async () => {
 
 const editTask = (task) => {
   isEdit.value = true
+  editActiveTab.value = 'basic'
   Object.assign(taskForm, {
     id: task.id,
     name: task.name,
@@ -757,6 +865,10 @@ const editTask = (task) => {
     scheduled_at: task.scheduled_at ? new Date(task.scheduled_at) : null,
     is_active: task.is_active !== undefined ? task.is_active : true
   })
+  bindTaskForm.headerIds = []
+  bindTaskForm.priorityOverride = null
+  loadHeaderOptions()
+  loadTaskHeaderBindings()
   showCreateDialog.value = true
 }
 
@@ -801,6 +913,7 @@ const batchDeleteTasks = async () => {
 
 const viewLogs = async (task) => {
   try {
+    currentTask.value = task
     showLogDrawer.value = true;
     const response = await getLogs(task.id);
     // 直接使用后端返回的日志数据，而不是构建消息
@@ -878,11 +991,12 @@ const resumeLogs = () => {
 }
 
 const handleToggleTask = async (task) => {
+  const wasRunning = isRunning(task.status)
   try {
     // 设置加载状态
     task.loadingTrigger = true;
 
-    if (task.status === 'RUNNING') {
+    if (wasRunning) {
       // 如果任务正在运行，则停止任务
       await stopTask(task.id);
       ElMessage.success('任务停止成功');
@@ -903,8 +1017,8 @@ const handleToggleTask = async (task) => {
     loadTasks();
     loadStatistics();
   } catch (error) {
-    console.error(task.status === 'RUNNING' ? '停止任务失败:' : '启动任务失败:', error);
-    ElMessage.error(task.status === 'RUNNING' ? '停止任务失败' : '启动任务失败');
+    console.error(wasRunning ? '停止任务失败:' : '启动任务失败:', error);
+    ElMessage.error(wasRunning ? '停止任务失败' : '启动任务失败');
   } finally {
     // 清除加载状态
     task.loadingTrigger = false;
@@ -920,10 +1034,15 @@ const resetForm = () => {
     name: '',
     task_type: '',
     source_id: '',
-    priority: 2,
+    cron_expression: '* * * * *',
     config: '',
-    scheduled_at: null
+    scheduled_at: null,
+    is_active: true
   })
+  editActiveTab.value = 'basic'
+  bindTaskForm.headerIds = []
+  bindTaskForm.priorityOverride = null
+  taskHeaderBindings.value = []
   isEdit.value = false
 }
 
@@ -949,6 +1068,7 @@ const getTaskTypeName = (type) => {
 }
 
 const getStatusColor = (status) => {
+  const normalizedStatus = normalizeStatus(status)
   const colors = {
     'PENDING': 'info',
     'RUNNING': 'warning',
@@ -956,10 +1076,11 @@ const getStatusColor = (status) => {
     'FAILED': 'danger',
     'CANCELLED': 'info'
   }
-  return colors[status] || 'info'  // 确保默认返回值也是'info'
+  return colors[normalizedStatus] || 'info'  // 确保默认返回值也是'info'
 }
 
 const getStatusName = (status) => {
+  const normalizedStatus = normalizeStatus(status)
   const names = {
     'PENDING': '待执行',
     'RUNNING': '运行中',
@@ -967,7 +1088,7 @@ const getStatusName = (status) => {
     'FAILED': '失败',
     'CANCELLED': '已取消'
   }
-  return names[status] || status
+  return names[normalizedStatus] || String(status || '')
 }
 
 // 添加格式化时间戳函数

@@ -31,7 +31,7 @@ export function startTask() {
 export function stopTask(taskId) {
   return request({
     // 修正：使用新版API路径
-    url: `/api/admin/crawler/tasks/${taskId}/stop`,
+    url: `/api/admin/tasks/${taskId}/stop`,
     method: 'post'
   })
 }
