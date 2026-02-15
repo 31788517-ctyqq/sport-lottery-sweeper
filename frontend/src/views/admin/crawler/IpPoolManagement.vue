@@ -175,6 +175,23 @@ const total = ref(0)
 const ipFormRef = ref()
 const selectedIds = ref([])
 
+const toBackendStatus = (status) => {
+  switch (status) {
+    case 'available': return 'active'
+    case 'unavailable': return 'inactive'
+    default: return status
+  }
+}
+
+const toFrontendStatus = (status) => {
+  switch (status) {
+    case 'active': return 'available'
+    case 'inactive': return 'unavailable'
+    case 'banned': return 'unavailable'
+    default: return status
+  }
+}
+
 // 查询参数
 const queryParams = reactive({
   ipAddress: '',
@@ -225,20 +242,24 @@ const getIpList = async () => {
     const res = await getIpPoolList({
       page: currentPage.value,
       size: pageSize.value,
-      status: queryParams.status || undefined,
+      status: queryParams.status ? toBackendStatus(queryParams.status) : undefined,
       search: queryParams.ipAddress || queryParams.port || undefined
     })
     const payload = res.data || res
     const data = payload.items ? payload : (payload.data || {})
     const items = data.items || []
     total.value = data.total || 0
-    ipList.value = items.map((item) => ({
-      ...item,
-      responseTime: item.responseTime ?? 0,
-      successRate: item.successRate ?? 0,
-      lastChecked: item.lastChecked || '',
-      isEnabled: item.isEnabled ?? item.status === 'available'
-    }))
+    ipList.value = items.map((item) => {
+      const normalizedStatus = toFrontendStatus(item.status)
+      return {
+        ...item,
+        status: normalizedStatus,
+        responseTime: item.responseTime ?? 0,
+        successRate: item.successRate ?? 0,
+        lastChecked: item.lastChecked || '',
+        isEnabled: item.isEnabled ?? normalizedStatus === 'available'
+      }
+    })
   } catch (error) {
     console.error(error)
     ElMessage.error('获取IP池失败')
@@ -298,13 +319,16 @@ const editIp = (row) => {
 // 保存IP
 const saveIp = async () => {
   try {
+    if (!ipFormRef.value) return
+    await ipFormRef.value.validate()
+
     if (currentIp.id) {
       await updateIp(currentIp.id, {
         ip: currentIp.ipAddress,
         port: currentIp.port,
         protocol: currentIp.protocol,
         location: currentIp.location,
-        status: currentIp.status,
+        status: toBackendStatus(currentIp.status),
         latency_ms: currentIp.responseTime,
         success_rate: currentIp.successRate,
         source: currentIp.source,
@@ -319,7 +343,7 @@ const saveIp = async () => {
         port: currentIp.port,
         protocol: currentIp.protocol,
         location: currentIp.location,
-        status: currentIp.status,
+        status: toBackendStatus(currentIp.status),
         latency_ms: currentIp.responseTime,
         success_rate: currentIp.successRate,
         source: currentIp.source,
@@ -429,10 +453,11 @@ const testIpRow = async (row) => {
     const data = res.data?.data || res.data || {}
     const target = ipList.value.find((ip) => ip.id === row.id)
     if (target) {
-      target.status = data.status || 'available'
+      target.status = toFrontendStatus(data.status || 'available')
       target.responseTime = data.response_time || target.responseTime
       target.successRate = data.success_rate || target.successRate
       target.lastChecked = new Date().toISOString()
+      target.isEnabled = target.status === 'available'
     }
     ElMessage.success('测试完成')
   } catch (error) {
@@ -452,8 +477,35 @@ const testAllIps = () => {
 
 // 切换状态
 const toggleStatus = (row) => {
-  row.isEnabled = !row.isEnabled
-  row.status = row.isEnabled ? 'available' : 'unavailable'
+  const prevEnabled = row.isEnabled
+  const nextEnabled = !prevEnabled
+  const nextStatusFrontend = nextEnabled ? 'available' : 'unavailable'
+  const nextStatusBackend = nextEnabled ? 'active' : 'inactive'
+
+  // 先做乐观更新，失败时回滚
+  row.isEnabled = nextEnabled
+  row.status = nextStatusFrontend
+
+  updateIp(row.id, {
+    ip: row.ipAddress,
+    port: row.port,
+    protocol: row.protocol,
+    location: row.location,
+    status: nextStatusBackend,
+    latency_ms: row.responseTime,
+    success_rate: row.successRate,
+    source: row.source,
+    anonymity: row.anonymity,
+    score: row.score,
+    fail_reason: row.failReason
+  }).then(() => {
+    ElMessage.success(nextEnabled ? '启用成功' : '禁用成功')
+  }).catch((error) => {
+    row.isEnabled = prevEnabled
+    row.status = prevEnabled ? 'available' : 'unavailable'
+    console.error(error)
+    ElMessage.error('状态更新失败')
+  })
 }
 
 // 刷新列表
