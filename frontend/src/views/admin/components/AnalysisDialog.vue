@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <el-dialog title="比赛分析" v-model="dialogVisible" width="70%" class="analysis-dialog">
     <div v-if="analysisData">
       <div class="analysis-sim-container">
@@ -11,16 +11,16 @@
           <div class="analysis-sim-card-title">比赛基本信息</div>
           <div class="analysis-sim-basic">
             <div class="analysis-sim-team">
-              <div class="analysis-sim-team-name">{{ analysisData.homeTeam || '-' }}</div>
+              <div class="analysis-sim-team-name">{{ displayValue(analysisData.homeTeam) }}</div>
               <div class="analysis-sim-team-meta">实力值: {{ analysisData.homePower ?? '-' }}</div>
             </div>
             <div class="analysis-sim-vs">
-              <div class="analysis-sim-league">{{ analysisData.gameShortName || '-' }}</div>
+              <div class="analysis-sim-league">{{ displayValue(analysisData.gameShortName) }}</div>
               <div class="analysis-sim-vs-text">VS</div>
-              <div class="analysis-sim-time">{{ analysisData.matchTimeStr || '-' }}</div>
+              <div class="analysis-sim-time">{{ displayValue(analysisData.matchTimeStr) }}</div>
             </div>
             <div class="analysis-sim-team">
-              <div class="analysis-sim-team-name">{{ analysisData.guestTeam || '-' }}</div>
+              <div class="analysis-sim-team-name">{{ displayValue(analysisData.guestTeam) }}</div>
               <div class="analysis-sim-team-meta">实力值: {{ analysisData.guestPower ?? '-' }}</div>
             </div>
           </div>
@@ -36,8 +36,8 @@
           <div class="analysis-sim-card-title">球队实力对比</div>
           <div class="analysis-sim-progress">
             <div class="analysis-sim-progress-labels">
-              <span>{{ analysisData.homeTeam || '-' }}</span>
-              <span>{{ analysisData.guestTeam || '-' }}</span>
+              <span>{{ displayValue(analysisData.homeTeam) }}</span>
+              <span>{{ displayValue(analysisData.guestTeam) }}</span>
             </div>
             <div class="analysis-sim-progress-bars">
               <el-progress :percentage="getProgressValue(analysisData.homePower)" :show-text="false" :color="'#a4b2a4'" />
@@ -50,56 +50,56 @@
             </div>
             <div class="analysis-sim-table-row">
               <span>积分（主场/总）</span>
-              <span>{{ analysisData.homeJiFenHome || '-' }}/{{ analysisData.homeJiFenHomeAll || '-' }}</span>
-              <span>{{ analysisData.awayJiFenHome || '-' }}/{{ analysisData.awayJiFenHomeAll || '-' }}</span>
+              <span>{{ displayValue(analysisData.homeJiFenHome) }}/{{ displayValue(analysisData.homeJiFenHomeAll) }}</span>
+              <span>{{ displayValue(analysisData.awayJiFenHome) }}/{{ displayValue(analysisData.awayJiFenHomeAll) }}</span>
               <span>{{ compareAdvantage(analysisData.homeJiFenHome, analysisData.awayJiFenHome) }}</span>
             </div>
             <div class="analysis-sim-table-row">
               <span>客场积分</span>
               <span>-</span>
-              <span>{{ analysisData.awayJiFenGuest || '-' }}</span>
+              <span>{{ displayValue(analysisData.awayJiFenGuest) }}</span>
               <span>客队</span>
             </div>
             <div class="analysis-sim-table-row">
               <span>特征</span>
-              <span>{{ analysisData.homeFeature || '-' }}</span>
-              <span>{{ analysisData.guestFeature || '-' }}</span>
+              <span>{{ displayValue(analysisData.homeFeature) }}</span>
+              <span>{{ displayValue(analysisData.guestFeature) }}</span>
               <span>{{ compareAdvantage(getPercentValue(analysisData.homeFeature), getPercentValue(analysisData.guestFeature)) }}</span>
             </div>
             <div class="analysis-sim-table-row">
               <span>进攻效率</span>
-              <span>{{ analysisData.homeEnterEfficiency || '-' }}</span>
-              <span>{{ analysisData.guestEnterEfficiency || '-' }}</span>
+              <span>{{ displayValue(analysisData.homeEnterEfficiency) }}</span>
+              <span>{{ displayValue(analysisData.guestEnterEfficiency) }}</span>
               <span>{{ compareAdvantage(getEfficiencyValue(analysisData.homeEnterEfficiency), getEfficiencyValue(analysisData.guestEnterEfficiency)) }}</span>
             </div>
             <div class="analysis-sim-table-row">
               <span>防守效率</span>
-              <span>{{ analysisData.homePreventEfficiency || '-' }}</span>
-              <span>{{ analysisData.guestPreventEfficiency || '-' }}</span>
+              <span>{{ displayValue(analysisData.homePreventEfficiency) }}</span>
+              <span>{{ displayValue(analysisData.guestPreventEfficiency) }}</span>
               <span>{{ compareAdvantage(getEfficiencyValue(analysisData.homePreventEfficiency), getEfficiencyValue(analysisData.guestPreventEfficiency)) }}</span>
             </div>
             <div class="analysis-sim-table-row">
               <span>近期战绩</span>
-              <span>{{ analysisData.homeSpf || '-' }}</span>
-              <span>{{ analysisData.guestSpf || '-' }}</span>
+              <span>{{ displayValue(analysisData.homeSpf) }}</span>
+              <span>{{ displayValue(analysisData.guestSpf) }}</span>
               <span>{{ compareAdvantage(getSpfWins(analysisData.homeSpf), getSpfWins(analysisData.guestSpf)) }}</span>
             </div>
             <div class="analysis-sim-table-row">
               <span>大球百分比</span>
-              <span>{{ analysisData.homeDxqPercentStr || '-' }}</span>
-              <span>{{ analysisData.guestDxqPercentStr || '-' }}</span>
+              <span>{{ displayValue(analysisData.homeDxqPercentStr) }}</span>
+              <span>{{ displayValue(analysisData.guestDxqPercentStr) }}</span>
               <span>{{ compareAdvantage(getPercentValue(analysisData.homeDxqPercentStr), getPercentValue(analysisData.guestDxqPercentStr)) }}</span>
             </div>
             <div class="analysis-sim-table-row">
               <span>近期进球/失球</span>
-              <span>{{ analysisData.homeDxqDesc || '-' }}</span>
-              <span>{{ analysisData.guestDxqDesc || '-' }}</span>
+              <span>{{ displayValue(analysisData.homeDxqDesc) }}</span>
+              <span>{{ displayValue(analysisData.guestDxqDesc) }}</span>
               <span>需分析</span>
             </div>
             <div class="analysis-sim-table-row">
               <span>主场/客场表现</span>
-              <span>{{ analysisData.homeDxqSame10Desc || '-' }}</span>
-              <span>{{ analysisData.awayDxqSame10Desc || '-' }}</span>
+              <span>{{ displayValue(analysisData.homeDxqSame10Desc) }}</span>
+              <span>{{ displayValue(analysisData.awayDxqSame10Desc) }}</span>
               <span>需分析</span>
             </div>
           </div>
@@ -169,7 +169,7 @@
 
         <div class="analysis-sim-card">
           <div class="analysis-sim-card-title">历史交锋</div>
-          <div class="analysis-sim-summary">{{ analysisData.jiaoFenDesc || '-' }}</div>
+          <div class="analysis-sim-summary">{{ displayValue(analysisData.jiaoFenDesc) }}</div>
           <div class="analysis-sim-history">
             <div v-for="item in getJiaoFenMatches(analysisData)" :key="item" class="analysis-sim-history-item">{{ item }}</div>
             <div v-if="!getJiaoFenMatches(analysisData).length" class="analysis-sim-history-item">暂无交锋记录</div>
@@ -179,9 +179,9 @@
         <div class="analysis-sim-card">
           <div class="analysis-sim-card-title">数据源信息</div>
           <div class="analysis-sim-source">
-            <div><span>lineId:</span><strong>{{ analysisData.lineId || '-' }}</strong></div>
+            <div><span>lineId:</span><strong>{{ displayValue(analysisData.lineId) }}</strong></div>
             <div><span>数据来源:</span><strong>100球分析页面</strong></div>
-            <div><span>URL:</span><strong>https://m.100qiu.com/analysis/detail.php?lotteryType=40&term=26023&lineId={{ analysisData.lineId || '-' }}</strong></div>
+            <div><span>URL:</span><strong>https://m.100qiu.com/analysis/detail.php?lotteryType=40&term=26023&lineId={{ displayValue(analysisData.lineId) }}</strong></div>
           </div>
         </div>
       </div>
@@ -203,7 +203,7 @@ export default defineComponent({
   props: {
     visible: {
       type: Boolean,
-      required: true
+      default: false
     },
     analysisData: {
       type: Object,
@@ -264,6 +264,11 @@ export default defineComponent({
       return '持平';
     };
 
+    const displayValue = (value) => {
+      if (value === null || value === undefined || value === '') return '-';
+      return value;
+    };
+
     return {
       dialogVisible,
       getJiaoFenMatches,
@@ -271,7 +276,8 @@ export default defineComponent({
       getProgressValue,
       getEfficiencyValue,
       getSpfWins,
-      compareAdvantage
+      compareAdvantage,
+      displayValue
     };
   }
 });
@@ -530,3 +536,4 @@ export default defineComponent({
   padding: 16px 0;
 }
 </style>
+

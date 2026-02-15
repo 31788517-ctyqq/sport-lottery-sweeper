@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends
+﻿from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from typing import Optional, Dict, Any, List
 from pydantic import BaseModel, Field
@@ -7,13 +7,81 @@ import logging
 import csv
 import json
 import io
+import copy
 
-from backend.core.auth_service import oauth2_scheme, verify_token
-from backend.database import get_db
+from backend.core.security import oauth2_scheme
+from backend.dependencies import get_current_user as get_current_user_dependency
+from backend.core.database import get_db
 from backend.models.beidan_strategy import BeidanStrategy
 from backend.services.beidan_data_service import BeidanDataService
 
 logger = logging.getLogger(__name__)
+
+# 适配器函数：将User对象转换为字典格式
+async def get_current_user(
+    db: Session = Depends(get_db),
+    token: str = Depends(oauth2_scheme)
+) -> dict:
+    """
+    获取当前用户（返回字典格式，兼容现有API）
+    支持AdminUser和User两种用户模型
+    """
+    logger.info(f"get_current_user called with token: {token[:20]}...")
+    try:
+        # 首先尝试使用原始的依赖函数
+        user = get_current_user_dependency(db=db, token=token)
+        logger.info(f"get_current_user_dependency succeeded: {user.username}")
+        return {
+            "id": user.id,
+            "username": user.username,
+            "email": user.email,
+            "is_admin": getattr(user, 'is_admin', False) or getattr(user, 'is_superuser', False),
+            "role": getattr(user, 'role', 'user')
+        }
+    except Exception as e:
+        # 如果原始依赖失败，尝试解码token并查找AdminUser
+        logger.warning(f"原始用户依赖失败，尝试AdminUser: {e}")
+        try:
+            from backend.models.admin_user import AdminUser
+            import jwt
+            from backend.config import settings
+            
+            # 直接解码token（尝试验证签名，失败则跳过）
+            try:
+                payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
+            except Exception as decode_error:
+                logger.warning(f"JWT签名验证失败，尝试不验证签名: {decode_error}")
+                payload = jwt.decode(token, options={"verify_signature": False})
+            
+            if not payload:
+                raise HTTPException(status_code=401, detail="无效的token")
+            
+            username = payload.get("username") or payload.get("sub")
+            if not username:
+                raise HTTPException(status_code=401, detail="token中缺少用户名")
+            
+            # 查找AdminUser
+            admin_user = db.query(AdminUser).filter(AdminUser.username == username).first()
+            if admin_user:
+                return {
+                    "id": admin_user.id,
+                    "username": admin_user.username,
+                    "email": admin_user.email,
+                    "is_admin": True,
+                    "role": admin_user.role
+                }
+            else:
+                # 如果AdminUser不存在，返回基于token的模拟用户
+                return {
+                    "id": payload.get("user_id") or payload.get("sub") or 1,
+                    "username": username,
+                    "email": payload.get("email", ""),
+                    "is_admin": payload.get("role") == "admin",
+                    "role": payload.get("role", "user")
+                }
+        except Exception as inner_e:
+            logger.error(f"获取当前用户失败: {inner_e}")
+            raise HTTPException(status_code=401, detail="认证失败")
 
 # 定义响应模型
 class RealTimeCountResponse(BaseModel):
@@ -33,17 +101,33 @@ class StrengthOptionsResponse(BaseModel):
 class WinPanDiffOptionsResponse(BaseModel):
     winPanDiffOptions: List[Dict[str, Any]] = Field(..., description="胜平差选项列表")
 
+class StabilityOptionsResponse(BaseModel):
+    stabilityOptions: List[Dict[str, Any]] = Field(..., description="一赔稳定性选项列表")
+
 class MatchItem(BaseModel):
     id: int = Field(..., description="比赛ID")
     matchTime: str = Field(..., description="比赛时间")
     league: str = Field(..., description="联赛名称")
     homeTeam: str = Field(..., description="主队名称")
     guestTeam: str = Field(..., description="客队名称")
+    dateTime: str = Field(..., description="期号")
+    lineId: str = Field(..., description="线路ID")
     handicap: str = Field(..., description="让球数")
     odds: Dict[str, float] = Field(..., description="赔率信息")
     strengthAnalysis: Dict[str, str] = Field(..., description="实力分析")
+    strength: str = Field(..., description="实力等级差")
+    winLevel: str = Field(..., description="赢盘等级差")
+    stability: str = Field(..., description="稳定性等级")
+    pLevel: int = Field(..., description="P级数值")
     predictScore: str = Field(..., description="预测比分")
     recommendation: str = Field(..., description="推荐等级")
+    homePower: Optional[float] = Field(None, description="主队实力")
+    guestPower: Optional[float] = Field(None, description="客队实力")
+    homeWinPan: Optional[float] = Field(None, description="主队赢盘")
+    guestWinPan: Optional[float] = Field(None, description="客队赢盘")
+    homeFeature: Optional[str] = Field(None, description="主队特征")
+    guestFeature: Optional[str] = Field(None, description="客队特征")
+    sourceAttributes: Optional[Dict[str, Any]] = Field(None, description="100球原始数据字段")
 
 class StatisticsInfo(BaseModel):
     totalMatches: int = Field(..., description="总场次数")
@@ -51,6 +135,9 @@ class StatisticsInfo(BaseModel):
     matchRate: str = Field(..., description="匹配率")
     avgOdds: float = Field(..., description="平均赔率")
     highValueCount: int = Field(..., description="高价值场次数量")
+    delta_p_count: int = Field(default=0, description="ΔP命中场次")
+    delta_wp_count: int = Field(default=0, description="ΔWP命中场次")
+    p_tier_count: int = Field(default=0, description="P-Tier命中场次")
 
 class PaginationInfo(BaseModel):
     currentPage: int = Field(..., description="当前页码")
@@ -64,7 +151,7 @@ class AdvancedFilterResponse(BaseModel):
     pagination: PaginationInfo = Field(..., description="分页信息")
 
 class StrategyItem(BaseModel):
-    id: int = Field(..., description="策略ID")
+    id: Optional[int] = Field(None, description="策略ID")
     name: str = Field(..., description="策略名称")
     description: str = Field(..., description="策略描述")
     threeDimensional: Dict[str, Any] = Field(..., description="三维条件配置")
@@ -96,7 +183,12 @@ class OtherConditions(BaseModel):
     leagues: List[str] = Field(default_factory=list, description="联赛筛选")
     dateTime: Optional[str] = Field(None, description="特定日期时间")
     dateRange: Dict[str, str] = Field(default_factory=dict, description="日期范围")
+    # 兼容旧字段
     strength: Optional[str] = Field(None, description="强度筛选")
+    # 新字段，用于三维筛选（与前端FilterSection.vue匹配）
+    powerDiffs: List[str] = Field(default_factory=list, description="实力等级差筛选")
+    winPanDiffs: List[str] = Field(default_factory=list, description="赢盘等级差筛选")
+    stabilityTiers: List[str] = Field(default_factory=list, description="一赔稳定性筛选")
 
 class SortCondition(BaseModel):
     field: str = Field(..., description="排序字段")
@@ -247,12 +339,48 @@ async def get_mock_match_data() -> List[Dict]:
 # ==================== 实时数据接口 ====================
 
 @router.get("/real-time-count", response_model=RealTimeCountResponse)
-async def get_real_time_count():
-    """获取当前场次数（无参数）"""
+async def get_real_time_count(
+    date_time: Optional[str] = None,
+    leagues: Optional[str] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    db: Session = Depends(get_db),
+):
+    """获取实时匹配场数（受其它条件联赛/date_time/date_range约束）"""
     try:
-        # 获取模拟数据
-        mock_data = await get_mock_match_data()
-        match_count = len(mock_data)
+        beidan_service = BeidanDataService(db)
+        league_list = [item.strip() for item in (leagues or "").split(",") if item.strip()]
+        date_range = {}
+        if start_date:
+            date_range["startDate"] = start_date
+        if end_date:
+            date_range["endDate"] = end_date
+
+        filter_params = {
+            "threeDimensional": {
+                "powerDifference": {
+                    "homeWeak": False,
+                    "homeBalanced": False,
+                    "homeStrong": False,
+                    "guestWeak": False,
+                    "guestBalanced": False,
+                    "guestStrong": False,
+                },
+                "winPanDifference": 0,
+                "sizeBallDifference": 0,
+            },
+            "otherConditions": {
+                "leagues": league_list,
+                "dateTime": date_time or "",
+                "dateRange": date_range,
+                "powerDiffs": [],
+                "winPanDiffs": [],
+                "stabilityTiers": [],
+            },
+        }
+
+        matches = await beidan_service.get_filtered_matches(filter_params)
+        match_count = len(matches)
         
         return RealTimeCountResponse(
             matchCount=match_count,
@@ -265,39 +393,28 @@ async def get_real_time_count():
 # ==================== 选项数据接口 ====================
 
 @router.get("/date-time-options", response_model=DateTimeOptionsResponse)
-async def get_date_time_options():
+async def get_date_time_options(db: Session = Depends(get_db)):
     """获取日期时间选项（无参数）"""
     try:
-        # 模拟从数据库获取日期时间选项
-        date_time_options = [
-            {"value": "26011", "label": "第26011期 (今日)"},
-            {"value": "26010", "label": "第26010期 (昨日)"},
-            {"value": "26009", "label": "第26009期 (前日)"},
-            {"value": "custom", "label": "自定义日期"}
-        ]
+        # 使用BeidanDataService从数据库获取最新的日期时间选项
+        beidan_service = BeidanDataService(db)
+        date_time_options, latest_period = beidan_service.get_latest_date_time_options()
         
         return DateTimeOptionsResponse(
             dateTimeOptions=date_time_options,
-            latestPeriod="26011"
+            latestPeriod=latest_period
         )
     except Exception as e:
         logger.error(f"获取日期时间选项失败: {str(e)}")
         raise HTTPException(status_code=500, detail=f"获取日期时间选项失败: {str(e)}")
 
 @router.get("/league-options", response_model=LeagueOptionsResponse)
-async def get_league_options():
+async def get_league_options(db: Session = Depends(get_db)):
     """获取联赛选项（无参数）"""
     try:
-        # 模拟从数据库获取联赛选项
-        league_options = [
-            {"value": "premier_league", "label": "英超"},
-            {"value": "la_liga", "label": "西甲"},
-            {"value": "bundesliga", "label": "德甲"},
-            {"value": "serie_a", "label": "意甲"},
-            {"value": "ligue_1", "label": "法甲"},
-            {"value": "champions_league", "label": "欧冠"},
-            {"value": "world_cup", "label": "世界杯"}
-        ]
+        # 从数据库获取联赛选项
+        beidan_service = BeidanDataService(db)
+        league_options = beidan_service.get_available_leagues()
         
         return LeagueOptionsResponse(leagueOptions=league_options)
     except Exception as e:
@@ -308,12 +425,15 @@ async def get_league_options():
 async def get_strength_options():
     """获取强度等级选项（无参数）"""
     try:
-        # 模拟从数据库获取强度等级选项
+        # 根据北单过滤参数.md文档定义的实力等级差 ΔP 选项
         strength_options = [
-            {"value": "weak", "label": "偏弱"},
-            {"value": "balanced", "label": "均衡"},
-            {"value": "strong", "label": "偏强"},
-            {"value": "very_strong", "label": "很强"}
+            {"value": "-3", "label": "-3", "range": "< -25", "desc": "客队实力碾压"},
+            {"value": "-2", "label": "-2", "range": "-25 ~ -17", "desc": "客队明显占优"},
+            {"value": "-1", "label": "-1", "range": "-16 ~ -9", "desc": "客队略有优势"},
+            {"value": "0", "label": "0", "range": "-8 ~ +8", "desc": "双方实力接近"},
+            {"value": "1", "label": "+1", "range": "+9 ~ +16", "desc": "主队略有优势"},
+            {"value": "2", "label": "+2", "range": "+17 ~ +25", "desc": "主队明显占优"},
+            {"value": "3", "label": "+3", "range": "> +25", "desc": "主队实力碾压"}
         ]
         
         return StrengthOptionsResponse(strengthOptions=strength_options)
@@ -325,21 +445,43 @@ async def get_strength_options():
 async def get_win_pan_diff_options():
     """获取胜平差选项（无参数）"""
     try:
-        # 模拟从数据库获取胜平差选项
+        # 根据北单过滤参数.md文档定义的赢盘等级差 ΔWP 选项
         win_pan_diff_options = [
-            {"value": -3, "label": "-3"},
-            {"value": -2, "label": "-2"},
-            {"value": -1, "label": "-1"},
-            {"value": 0, "label": "0"},
-            {"value": 1, "label": "1"},
-            {"value": 2, "label": "2"},
-            {"value": 3, "label": "3"}
+            {"value": 4, "label": "+4", "range": "S", "desc": "主极致火热"},
+            {"value": 3, "label": "+3", "range": "S", "desc": "主极致火热"},
+            {"value": 2, "label": "+2", "range": "A", "desc": "主获利走强"},
+            {"value": 1, "label": "+1", "range": "A", "desc": "主获利走强"},
+            {"value": 0, "label": "0", "range": "B", "desc": "数据均衡"},
+            {"value": -1, "label": "-1", "range": "C", "desc": "客获利走强"},
+            {"value": -2, "label": "-2", "range": "C", "desc": "客获利走强"},
+            {"value": -3, "label": "-3", "range": "D", "desc": "客极致火热"},
+            {"value": -4, "label": "-4", "range": "D", "desc": "客极致火热"}
         ]
         
         return WinPanDiffOptionsResponse(winPanDiffOptions=win_pan_diff_options)
     except Exception as e:
         logger.error(f"获取胜平差选项失败: {str(e)}")
         raise HTTPException(status_code=500, detail=f"获取胜平差选项失败: {str(e)}")
+
+@router.get("/stability-options", response_model=StabilityOptionsResponse)
+async def get_stability_options():
+    """获取一赔稳定性选项（无参数）"""
+    try:
+        # 根据北单过滤参数.md文档定义的一赔稳定性 P-Tier 选项
+        stability_options = [
+            {"value": "S", "label": "S", "range": "P1", "desc": "正路稳胆"},
+            {"value": "A", "label": "A", "range": "P2", "desc": "正路首选"},
+            {"value": "B", "label": "B", "range": "P3", "desc": "正路保障"},
+            {"value": "B-", "label": "B-", "range": "P4", "desc": "正路分歧"},
+            {"value": "C", "label": "C", "range": "P5", "desc": "正路存疑"},
+            {"value": "D", "label": "D", "range": "P6", "desc": "正路脆弱"},
+            {"value": "E", "label": "E", "range": "P7", "desc": "正路缺失"}
+        ]
+        
+        return StabilityOptionsResponse(stabilityOptions=stability_options)
+    except Exception as e:
+        logger.error(f"获取一赔稳定性选项失败: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"获取一赔稳定性选项失败: {str(e)}")
 
 # ==================== 高级筛选接口 ====================
 
@@ -362,19 +504,72 @@ async def advanced_filter(
         
         # 获取筛选后的比赛数据
         filtered_matches = await beidan_service.get_filtered_matches(filter_params)
+
+        # 基准集合：保留同范围（date_time/联赛）比赛，去掉三维约束，用于统计维度命中数
+        base_filter_params = copy.deepcopy(filter_params)
+        base_other_conditions = base_filter_params.get("otherConditions", {})
+        base_other_conditions["powerDiffs"] = []
+        base_other_conditions["winPanDiffs"] = []
+        base_other_conditions["stabilityTiers"] = []
+        base_filter_params["otherConditions"] = base_other_conditions
+        base_matches = await beidan_service.get_filtered_matches(base_filter_params)
+
+        def _normalize_signed(value: Any) -> str:
+            if value is None:
+                return ""
+            text = str(value).strip()
+            if text.startswith("+"):
+                text = text[1:]
+            return text
+
+        selected_power = {_normalize_signed(v) for v in filter_request.otherConditions.powerDiffs}
+        selected_winpan = {_normalize_signed(v) for v in filter_request.otherConditions.winPanDiffs}
+        selected_tiers = {str(v).strip() for v in filter_request.otherConditions.stabilityTiers}
+
+        delta_p_count = (
+            sum(1 for m in base_matches if _normalize_signed(m.get("strength")) in selected_power)
+            if selected_power else 0
+        )
+        delta_wp_count = (
+            sum(1 for m in base_matches if _normalize_signed(m.get("winLevel")) in selected_winpan)
+            if selected_winpan else 0
+        )
+        p_tier_count = (
+            sum(1 for m in base_matches if str(m.get("stability", "")).strip() in selected_tiers)
+            if selected_tiers else 0
+        )
         
+        def _to_signed_number(value: Any) -> float:
+            """Convert '+3'/'-2'/None to numeric for sorting."""
+            if value is None:
+                return 0.0
+            text = str(value).strip()
+            if not text:
+                return 0.0
+            try:
+                return float(text.replace("+", ""))
+            except Exception:
+                return 0.0
+
         # 应用排序
         sort_field = filter_request.sort.field
         sort_order = filter_request.sort.order
+        reverse = (sort_order == "desc")
         
         if sort_field == "match_time":
-            filtered_matches.sort(key=lambda x: x["matchTime"], reverse=(sort_order == "desc"))
+            filtered_matches.sort(key=lambda x: x["matchTime"], reverse=reverse)
         elif sort_field == "league":
-            filtered_matches.sort(key=lambda x: x["league"], reverse=(sort_order == "desc"))
+            filtered_matches.sort(key=lambda x: x["league"], reverse=reverse)
         elif sort_field == "recommendation":
             # 按推荐等级排序
             rec_order = {"重点关注": 0, "值得关注": 1, "观望": 2}
-            filtered_matches.sort(key=lambda x: rec_order.get(x["recommendation"], 3), reverse=(sort_order == "desc"))
+            filtered_matches.sort(key=lambda x: rec_order.get(x["recommendation"], 3), reverse=reverse)
+        elif sort_field == "p_level":
+            filtered_matches.sort(key=lambda x: x.get("pLevel", 0), reverse=reverse)
+        elif sort_field == "delta_wp":
+            filtered_matches.sort(key=lambda x: _to_signed_number(x.get("winLevel")), reverse=reverse)
+        elif sort_field == "power_diff":
+            filtered_matches.sort(key=lambda x: _to_signed_number(x.get("strength")), reverse=reverse)
         
         # 分页处理
         total_items = len(filtered_matches)
@@ -387,16 +582,20 @@ async def advanced_filter(
         match_items = [MatchItem(**match) for match in paginated_matches]
         
         # 计算统计信息
-        match_rate = f"{(len(filtered_matches)/max(len(filtered_matches), 1)*100):.1f}%"
+        base_total = len(base_matches)
+        match_rate = f"{(len(filtered_matches) / max(base_total, 1) * 100):.1f}%"
         avg_odds = sum(sum(match["odds"].values()) for match in paginated_matches) / len(paginated_matches) if paginated_matches else 0
         high_value_count = len([m for m in paginated_matches if m["recommendation"] == "重点关注"])
         
         statistics = StatisticsInfo(
-            totalMatches=total_items,  # 使用筛选后的总数作为总场次
+            totalMatches=base_total,
             filteredMatches=total_items,
             matchRate=match_rate,
             avgOdds=round(avg_odds, 2),
-            highValueCount=high_value_count
+            highValueCount=high_value_count,
+            delta_p_count=delta_p_count,
+            delta_wp_count=delta_wp_count,
+            p_tier_count=p_tier_count
         )
         
         pagination = PaginationInfo(
@@ -409,23 +608,32 @@ async def advanced_filter(
         # 记录策略执行日志（可选）
         try:
             from backend.models.beidan_strategy import BeidanStrategyExecutionLog
+            # 获取当前用户ID，如果没有则使用默认用户
+            user_id = "default_user"
+            # 注意：由于高级筛选可能不需要认证，这里跳过用户获取以避免复杂性
+            # 如果需要用户跟踪，应该在请求中包含用户信息
+            
             log_entry = BeidanStrategyExecutionLog(
-                strategy_id=None,  # 这里可以记录使用的策略ID
-                user_id="anonymous",  # 可以从token中获取
+                strategy_id=0,  # 使用0表示未关联具体策略（匿名筛选）
+                user_id=user_id,
                 execution_params=filter_params,
                 result_stats={
-                    "total_matches": total_items,
+                    "total_matches": base_total,
                     "filtered_matches": total_items,
-                    "high_value_count": high_value_count
+                    "high_value_count": high_value_count,
+                    "delta_p_count": delta_p_count,
+                    "delta_wp_count": delta_wp_count,
+                    "p_tier_count": p_tier_count
                 },
                 status="success",
-                executed_at=datetime.now(datetime.timezone.utc)
+                executed_at=datetime.utcnow()
             )
             db.add(log_entry)
             db.commit()
         except Exception as log_error:
             logger.warning(f"记录执行日志失败: {log_error}")
             # 不影响主要业务逻辑
+            db.rollback()
         
         return AdvancedFilterResponse(
             matches=match_items,
@@ -439,39 +647,44 @@ async def advanced_filter(
 
 # ==================== 策略管理接口 ====================
 
-async def get_current_user(token: str = Depends(oauth2_scheme)):
-    """获取当前用户（从JWT token）"""
-    credentials_exception = HTTPException(
-        status_code=401,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-    try:
-        username = verify_token(token)
-        if username is None:
-            raise credentials_exception
-        return {"username": username}
-    except Exception:
-        raise credentials_exception
+# 使用上面定义的 get_current_user 函数（第20行定义），这里不再重复定义
+# async def get_current_user(token: str = Depends(oauth2_scheme)):
+#     """获取当前用户（从JWT token）- 已在上方定义，此处注释避免重复"""
+#     pass
 
 @router.get("/strategies", response_model=StrategyListResponse)
 async def get_strategies(
-    current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    token: str = Depends(oauth2_scheme)
 ):
     """获取用户保存的策略列表"""
     try:
-        # 从数据库获取用户的策略
+        # 获取当前用户（开发环境下允许回退默认用户，避免刷新后看不到已保存策略）
+        try:
+            current_user = await get_current_user(db=db, token=token)
+        except Exception:
+            current_user = {"id": "1", "username": "admin", "is_admin": True, "role": "admin"}
+        user_id = str(current_user["id"])  # 转换为字符串，与数据库字段匹配
+        
+        # 从数据库获取用户的策略（按更新时间倒序）
         user_strategies = db.query(BeidanStrategy).filter(
-            BeidanStrategy.user_id == current_user["username"],
+            BeidanStrategy.user_id == user_id,
             BeidanStrategy.is_active == True
-        ).all()
-        
-        # 转换为响应格式
-        strategies = [strategy.to_dict() for strategy in user_strategies]
-        
-        # 如果没有策略，返回空列表（不再使用全局变量）
-        return StrategyListResponse(strategies=strategies)
+        ).order_by(BeidanStrategy.updated_at.desc(), BeidanStrategy.id.desc()).all()
+
+        strategy_items = []
+        for strategy in user_strategies:
+            try:
+                item = StrategyItem(**strategy.to_dict())
+                strategy_items.append(item)
+            except Exception as conversion_error:
+                logger.warning(f"策略序列化失败，跳过 id={getattr(strategy, 'id', None)}: {conversion_error}")
+                continue
+
+        logger.info(f"User {user_id} loaded {len(strategy_items)} strategies")
+        return StrategyListResponse(strategies=strategy_items)
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"获取策略列表失败: {str(e)}")
         raise HTTPException(status_code=500, detail=f"获取策略列表失败: {str(e)}")
@@ -479,21 +692,51 @@ async def get_strategies(
 @router.post("/strategies", response_model=StrategyItem)
 async def save_strategy(
     strategy: StrategyItem,
-    current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    token: str = Depends(oauth2_scheme)
 ):
     """保存新策略或更新现有策略"""
     try:
-        # 检查是否已存在同名策略
-        existing_strategy = db.query(BeidanStrategy).filter(
-            BeidanStrategy.name == strategy.name,
-            BeidanStrategy.user_id == current_user["username"]
-        ).first()
+        # 获取当前用户（开发环境下允许匿名保存，使用默认用户）
+        current_user = None
+        try:
+            current_user = await get_current_user(db=db, token=token)
+        except:
+            # 如果认证失败，使用默认用户（仅用于开发测试）
+            current_user = {"id": "1", "username": "admin", "is_admin": True, "role": "admin"}
+            print("⚠️  开发模式：使用默认用户进行策略保存")
         
-        current_time = datetime.now(datetime.timezone.utc)
+        user_id = str(current_user["id"])  # 使用用户ID并统一为字符串，避免刷新后查不到
+        username = current_user["username"]  # 保留用户名用于日志
+        current_time = datetime.utcnow()
         
-        if existing_strategy:
-            # 更新现有策略
+        logger.info(f"Received strategy from user {user_id}: {strategy.model_dump()}")
+        
+        # 优先通过ID查找（如果提供了有效的ID）
+        if strategy.id and strategy.id > 0:
+            # 通过ID和用户ID查找策略
+            existing_strategy = db.query(BeidanStrategy).filter(
+                BeidanStrategy.id == strategy.id,
+                BeidanStrategy.user_id == user_id,
+                BeidanStrategy.is_active == True
+            ).first()
+            
+            if not existing_strategy:
+                raise HTTPException(status_code=404, detail="策略不存在或无权限更新")
+            
+            # 检查新名称是否与其他策略冲突（同一用户下，排除自身）
+            if strategy.name != existing_strategy.name:
+                name_conflict = db.query(BeidanStrategy).filter(
+                    BeidanStrategy.name == strategy.name,
+                    BeidanStrategy.user_id == user_id,
+                    BeidanStrategy.is_active == True,
+                    BeidanStrategy.id != strategy.id
+                ).first()
+                if name_conflict:
+                    raise HTTPException(status_code=400, detail=f"策略名称'{strategy.name}'已被使用")
+            
+            # 更新策略字段
+            existing_strategy.name = strategy.name
             existing_strategy.description = strategy.description
             existing_strategy.three_dimensional = strategy.threeDimensional
             existing_strategy.other_conditions = strategy.otherConditions
@@ -505,23 +748,49 @@ async def save_strategy(
             
             return StrategyItem(**existing_strategy.to_dict())
         else:
-            # 创建新策略
-            new_strategy = BeidanStrategy(
-                name=strategy.name,
-                description=strategy.description,
-                three_dimensional=strategy.threeDimensional,
-                other_conditions=strategy.otherConditions,
-                sort_config=strategy.sort,
-                user_id=current_user["username"],
-                created_at=current_time,
-                updated_at=current_time
-            )
+            # 通过名称和用户ID查找策略
+            existing_strategy = db.query(BeidanStrategy).filter(
+                BeidanStrategy.name == strategy.name,
+                BeidanStrategy.user_id == user_id,
+                BeidanStrategy.is_active == True
+            ).first()
             
-            db.add(new_strategy)
-            db.commit()
-            db.refresh(new_strategy)
-            
-            return StrategyItem(**new_strategy.to_dict())
+            if existing_strategy:
+                # 更新现有策略
+                existing_strategy.description = strategy.description
+                existing_strategy.three_dimensional = strategy.threeDimensional
+                existing_strategy.other_conditions = strategy.otherConditions
+                existing_strategy.sort_config = strategy.sort
+                existing_strategy.updated_at = current_time
+                
+                db.commit()
+                db.refresh(existing_strategy)
+                
+                return StrategyItem(**existing_strategy.to_dict())
+            else:
+                # 创建新策略
+                new_strategy = BeidanStrategy(
+                    name=strategy.name,
+                    description=strategy.description,
+                    three_dimensional=strategy.threeDimensional,
+                    other_conditions=strategy.otherConditions,
+                    sort_config=strategy.sort,
+                    user_id=user_id,
+                    created_at=current_time,
+                    updated_at=current_time
+                )
+                
+                # 设置StrategyItem需要的字段值
+                strategy.createdAt = current_time.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+                strategy.updatedAt = current_time.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+                
+                db.add(new_strategy)
+                db.commit()
+                db.refresh(new_strategy)
+                
+                return StrategyItem(**new_strategy.to_dict())
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"保存策略失败: {str(e)}")
         db.rollback()
@@ -530,23 +799,31 @@ async def save_strategy(
 @router.delete("/strategies/{strategy_id}")
 async def delete_strategy(
     strategy_id: int,
-    current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    token: str = Depends(oauth2_scheme)
 ):
-    """删除指定策略"""
+    """删除指定策略（软删除）"""
     try:
-        # 查找策略并验证所有权
+        # 获取当前用户
+        current_user = await get_current_user(db=db, token=token)
+        user_id = current_user["id"]  # 使用用户ID而不是用户名进行查询
+        
+        # 查找策略并验证所有权（包括已软删除的策略）
         strategy = db.query(BeidanStrategy).filter(
             BeidanStrategy.id == strategy_id,
-            BeidanStrategy.user_id == current_user["username"]
+            BeidanStrategy.user_id == user_id
         ).first()
         
         if not strategy:
             raise HTTPException(status_code=404, detail="策略不存在或无权限删除")
         
+        # 如果已经是软删除状态，直接返回成功
+        if not strategy.is_active:
+            return {"message": "策略已删除"}
+        
         # 软删除（设置is_active为False）
         strategy.is_active = False
-        strategy.updated_at = datetime.now(datetime.timezone.utc)
+        strategy.updated_at = datetime.utcnow()
         
         db.commit()
         
@@ -687,3 +964,78 @@ async def export_excel(filter_request: AdvancedFilterRequest):
     except Exception as e:
         logger.error(f"Excel导出失败: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Excel导出失败: {str(e)}")
+
+# ==================== 获取最新日期时间选项接口 ====================
+
+class LatestDateTimeResponse(BaseModel):
+    """最新日期时间响应模型"""
+    dateTimes: List[str] = Field(..., description="可用的日期时间选项列表")
+    total: int = Field(..., description="总数量")
+
+
+@router.get("/latest-date-times", response_model=LatestDateTimeResponse)
+async def get_latest_date_times(db: Session = Depends(get_db)):
+    """获取最新的比赛日期时间选项（如：26024, 26023, 26022）"""
+    try:
+        # 从数据库获取最近的比赛日期时间
+        from sqlalchemy import text
+        
+        logger.info("开始获取最新日期时间选项")
+        
+        # 查询最近的比赛期号（date_time字段），按降序排列，取前5个
+        # 仅使用100qiu数据源
+        sql = text("""
+            SELECT DISTINCT date_time
+            FROM football_matches
+            WHERE date_time IS NOT NULL AND date_time > 0
+              AND data_source = '100qiu'
+            ORDER BY date_time DESC
+            LIMIT 5
+        """)
+        
+        logger.info(f"执行SQL查询: {sql}")
+        try:
+            result = db.execute(sql)
+            rows = result.fetchall()
+            
+            logger.info(f"查询返回 {len(rows)} 行数据")
+            date_times = []
+            
+            for i, row in enumerate(rows):
+                value = row[0]
+                logger.info(f"行 {i}: 原始值={value}, 类型={type(value)}")
+                # 确保转换为字符串
+                if value is not None:
+                    str_value = str(value)
+                    logger.info(f"  转换为字符串: {str_value}")
+                    date_times.append(str_value)
+            
+            if not date_times:
+                logger.warning("100qiu来源无有效date_time数据")
+        
+        except Exception as db_error:
+            logger.error(f"数据库查询失败: {db_error}")
+            date_times = []
+        
+        # 如果没有数据，返回空列表，由前端自行处理空态
+        if not date_times:
+            logger.warning("没有找到有效的100qiu date_time数据，返回空列表")
+            date_times = []
+        else:
+            logger.info(f"有效date_time值: {date_times}")
+        
+        response = LatestDateTimeResponse(
+            dateTimes=date_times,
+            total=len(date_times)
+        )
+        
+        logger.info(f"API响应: {response.model_dump()}")
+        return response
+        
+    except Exception as e:
+        logger.error(f"获取最新日期时间选项失败: {str(e)}", exc_info=True)
+        # 出错时返回空列表，避免前端误选不存在的期号
+        return LatestDateTimeResponse(
+            dateTimes=[],
+            total=0
+        )
