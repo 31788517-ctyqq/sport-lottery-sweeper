@@ -5,7 +5,7 @@
         <div class="card-header">
           <div>
             <h3>请求头管理</h3>
-            <p class="subtitle">管理爬虫系统的HTTP请求头，提高数据抓取成功率</p>
+            <p class="subtitle">管理爬虫系统的 HTTP 请求头，提升数据抓取成功率</p>
           </div>
           <div class="header-actions">
             <el-button type="primary" @click="addHeader">添加请求头</el-button>
@@ -88,8 +88,8 @@
         <el-table-column prop="usageCount" label="使用次数" width="100" />
         <el-table-column prop="successRate" label="成功率" width="100">
           <template #default="scope">
-            <el-progress 
-              :percentage="scope.row.successRate" 
+            <el-progress
+              :percentage="scope.row.successRate"
               :color="getSuccessRateColor(scope.row.successRate)"
               :show-text="false"
               :stroke-width="20"
@@ -101,9 +101,9 @@
           <template #default="scope">
             <el-button size="small" @click="editHeader(scope.row)">编辑</el-button>
             <el-button size="small" type="danger" @click="deleteHeader(scope.row)">删除</el-button>
-            <el-button 
-              size="small" 
-              :type="scope.row.status === 'enabled' ? 'info' : 'success'" 
+            <el-button
+              size="small"
+              :type="scope.row.status === 'enabled' ? 'info' : 'success'"
               @click="toggleStatus(scope.row)"
             >
               {{ scope.row.status === 'enabled' ? '禁用' : '启用' }}
@@ -127,9 +127,8 @@
       />
     </el-card>
 
-    <!-- 请求头编辑对话框 -->
     <el-dialog :title="dialogTitle" v-model="dialogVisible" width="700px">
-      <el-form :model="currentHeader" :rules="headerRules" ref="headerFormRef" label-width="120px">
+      <el-form ref="headerFormRef" :model="currentHeader" :rules="headerRules" label-width="120px">
         <el-form-item label="目标域名" prop="domain">
           <el-input v-model="currentHeader.domain" placeholder="请输入目标域名，如：example.com" />
         </el-form-item>
@@ -137,17 +136,17 @@
           <el-input v-model="currentHeader.name" placeholder="请输入请求头名称，如：User-Agent" />
         </el-form-item>
         <el-form-item label="请求头值" prop="value">
-          <el-input 
-            v-model="currentHeader.value" 
-            type="textarea" 
+          <el-input
+            v-model="currentHeader.value"
+            type="textarea"
             :rows="4"
-            placeholder="请输入请求头值" 
+            placeholder="请输入请求头值"
           />
         </el-form-item>
         <el-form-item label="类型">
           <el-select v-model="currentHeader.type" placeholder="请选择请求头类型">
             <el-option label="通用" value="common" />
-            <el-option label="特定网站" value="specific" />
+            <el-option label="特定站点" value="specific" />
             <el-option label="移动端" value="mobile" />
             <el-option label="桌面端" value="desktop" />
           </el-select>
@@ -169,11 +168,11 @@
           />
         </el-form-item>
         <el-form-item label="备注">
-          <el-input 
-            v-model="currentHeader.remarks" 
-            type="textarea" 
+          <el-input
+            v-model="currentHeader.remarks"
+            type="textarea"
             :rows="3"
-            placeholder="请输入备注信息" 
+            placeholder="请输入备注信息"
           />
         </el-form-item>
       </el-form>
@@ -183,7 +182,6 @@
       </template>
     </el-dialog>
 
-    <!-- 批量导入对话框 -->
     <el-dialog title="批量导入请求头" v-model="batchImportVisible" width="600px">
       <el-form :model="batchImportForm" label-width="100px">
         <el-form-item label="导入格式">
@@ -194,11 +192,11 @@
           </el-radio-group>
         </el-form-item>
         <el-form-item label="数据内容">
-          <el-input 
-            v-model="batchImportForm.content" 
-            type="textarea" 
+          <el-input
+            v-model="batchImportForm.content"
+            type="textarea"
             :rows="8"
-            placeholder="请粘贴要导入的请求头数据..." 
+            placeholder="请粘贴要导入的请求头数据..."
           />
         </el-form-item>
       </el-form>
@@ -208,7 +206,6 @@
       </template>
     </el-dialog>
 
-    <!-- 绑定对话框 -->
     <el-dialog title="绑定请求头" v-model="bindDialogVisible" width="520px">
       <el-form :model="bindForm" label-width="110px">
         <el-form-item label="数据源ID">
@@ -251,7 +248,7 @@
       </div>
       <template #footer>
         <el-button @click="bindDialogVisible = false">取消</el-button>
-        <el-button @click="loadBindings()">加载绑定</el-button>
+        <el-button @click="loadBindings">加载绑定</el-button>
         <el-button type="primary" @click="confirmBind">绑定</el-button>
       </template>
     </el-dialog>
@@ -261,24 +258,19 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-// AI_WORKING: coder1 @2026-02-04T18:46:06 - 修复导入错误：将getHeaderDetail改为getHeaderById，getHeadersStats改为getHeaderStats，batchImportHeaders改为importHeaders
 import {
   getHeadersList as getHeadersListApi,
-  getHeaderById,
   createHeader,
   updateHeader,
   deleteHeader as deleteHeaderApi,
   batchDeleteHeaders,
-  testHeader,
   batchTestHeaders,
   getHeaderStats,
-  exportHeaders,
   importHeaders,
   bindHeadersToDataSource,
   bindHeadersToTask,
   getHeaderBindings
 } from '@/api/headers'
-// AI_DONE: coder1 @2026-02-04T18:46:06
 
 const loading = ref(false)
 const dialogVisible = ref(false)
@@ -289,6 +281,8 @@ const currentPage = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
 const selectedIds = ref([])
+const headerFormRef = ref()
+
 const stats = reactive({
   total: 0,
   enabled: 0,
@@ -296,13 +290,11 @@ const stats = reactive({
   successRate: 100
 })
 
-// 查询参数
 const queryParams = reactive({
   domain: '',
   status: ''
 })
 
-// 当前编辑的请求头
 const currentHeader = reactive({
   id: null,
   domain: '',
@@ -317,7 +309,6 @@ const currentHeader = reactive({
   remarks: ''
 })
 
-// 批量导入表单
 const batchImportForm = reactive({
   format: 'json',
   content: ''
@@ -336,23 +327,14 @@ const bindingInfo = reactive({
   taskBindings: []
 })
 
-// 表格数据
 const headersList = ref([])
 
-// 请求头表单验证规则
 const headerRules = {
-  domain: [
-    { required: true, message: '请输入目标域名', trigger: 'blur' }
-  ],
-  name: [
-    { required: true, message: '请输入请求头名称', trigger: 'blur' }
-  ],
-  value: [
-    { required: true, message: '请输入请求头值', trigger: 'blur' }
-  ]
+  domain: [{ required: true, message: '请输入目标域名', trigger: 'blur' }],
+  name: [{ required: true, message: '请输入请求头名称', trigger: 'blur' }],
+  value: [{ required: true, message: '请输入请求头值', trigger: 'blur' }]
 }
 
-// 获取请求头列表
 const getHeadersList = async () => {
   loading.value = true
   try {
@@ -361,8 +343,6 @@ const getHeadersList = async () => {
       size: pageSize.value,
       ...queryParams
     })
-    
-    // 假设API返回格式为 { data: { items: [], total: number } }
     const data = res.data?.items || res.items || []
     headersList.value = data
     total.value = res.data?.total || res.total || 0
@@ -381,21 +361,19 @@ const loadStats = async () => {
     stats.total = data.total || 0
     stats.enabled = data.enabled || 0
     stats.disabled = data.disabled || 0
-    const total = data.total || 0
-    stats.successRate = total > 0 ? Math.round((data.enabled / total) * 100) : 100
+    const totalCount = data.total || 0
+    stats.successRate = totalCount > 0 ? Math.round((data.enabled / totalCount) * 100) : 100
   } catch (error) {
     console.error('Error loading header stats:', error)
   }
 }
 
-// 搜索
 const onQuery = () => {
   currentPage.value = 1
   getHeadersList()
   loadStats()
 }
 
-// 重置查询
 const resetQuery = () => {
   queryParams.domain = ''
   queryParams.status = ''
@@ -405,15 +383,14 @@ const resetQuery = () => {
 }
 
 const onSelectionChange = (rows) => {
-  selectedIds.value = rows.map(row => row.id)
+  selectedIds.value = rows.map((row) => row.id)
 }
 
 const batchEnable = async () => {
   try {
-    await Promise.all(selectedIds.value.map(id => updateHeader(id, { status: 'enabled' })))
+    await Promise.all(selectedIds.value.map((id) => updateHeader(id, { status: 'enabled' })))
     ElMessage.success('批量启用成功')
     getHeadersList()
-    loadStats()
     loadStats()
   } catch (error) {
     ElMessage.error('批量启用失败')
@@ -422,7 +399,7 @@ const batchEnable = async () => {
 
 const batchDisable = async () => {
   try {
-    await Promise.all(selectedIds.value.map(id => updateHeader(id, { status: 'disabled' })))
+    await Promise.all(selectedIds.value.map((id) => updateHeader(id, { status: 'disabled' })))
     ElMessage.success('批量禁用成功')
     getHeadersList()
     loadStats()
@@ -460,11 +437,7 @@ const batchRemove = async () => {
 }
 
 const openBindDialog = (row) => {
-  if (row) {
-    bindForm.headerIds = [row.id]
-  } else {
-    bindForm.headerIds = [...selectedIds.value]
-  }
+  bindForm.headerIds = row ? [row.id] : [...selectedIds.value]
   bindForm.dataSourceId = ''
   bindForm.taskId = ''
   bindForm.priorityOverride = null
@@ -495,6 +468,7 @@ const confirmBind = async () => {
       ElMessage.warning('请填写数据源ID或任务ID')
       return
     }
+
     if (bindForm.dataSourceId) {
       await bindHeadersToDataSource({
         dataSourceId: Number(bindForm.dataSourceId),
@@ -503,6 +477,7 @@ const confirmBind = async () => {
         priorityOverride: bindForm.priorityOverride
       })
     }
+
     if (bindForm.taskId) {
       await bindHeadersToTask({
         taskId: Number(bindForm.taskId),
@@ -511,15 +486,14 @@ const confirmBind = async () => {
         priorityOverride: bindForm.priorityOverride
       })
     }
+
     ElMessage.success('绑定成功')
-    loadBindings()
     bindDialogVisible.value = false
   } catch (error) {
     ElMessage.error('绑定失败')
   }
 }
 
-// 添加请求头
 const addHeader = () => {
   Object.assign(currentHeader, {
     id: null,
@@ -534,39 +508,47 @@ const addHeader = () => {
     successRate: 0,
     remarks: ''
   })
-  
+  headerFormRef.value?.clearValidate()
   dialogTitle.value = '添加请求头'
   dialogVisible.value = true
 }
 
-// 编辑请求头
 const editHeader = (row) => {
   Object.assign(currentHeader, { ...row })
+  headerFormRef.value?.clearValidate()
   dialogTitle.value = '编辑请求头'
   dialogVisible.value = true
 }
 
-// 复制请求头
 const duplicateHeader = (row) => {
   const newRow = { ...row, id: null, lastUsed: '', usageCount: 0, successRate: 0 }
   Object.assign(currentHeader, newRow)
+  headerFormRef.value?.clearValidate()
   dialogTitle.value = '复制请求头'
   dialogVisible.value = true
 }
 
-// 保存请求头
 const saveHeader = async () => {
   try {
+    if (!headerFormRef.value) return
+    await headerFormRef.value.validate()
+
+    const payload = {
+      ...currentHeader,
+      domain: currentHeader.domain.trim(),
+      name: currentHeader.name.trim(),
+      value: currentHeader.value.trim(),
+      remarks: (currentHeader.remarks || '').trim()
+    }
+
     if (currentHeader.id) {
-      // 更新现有请求头
-      await updateHeader(currentHeader.id, currentHeader)
+      await updateHeader(currentHeader.id, payload)
       ElMessage.success('更新成功')
     } else {
-      // 创建新请求头
-      await createHeader(currentHeader)
+      await createHeader(payload)
       ElMessage.success('创建成功')
     }
-    
+
     dialogVisible.value = false
     getHeadersList()
     loadStats()
@@ -576,19 +558,14 @@ const saveHeader = async () => {
   }
 }
 
-// 删除请求头
 const deleteHeader = async (row) => {
   try {
-    await ElMessageBox.confirm(
-      `确定要删除请求头 "${row.name}" 吗？`,
-      '确认删除',
-      {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }
-    )
-    
+    await ElMessageBox.confirm(`确定要删除请求头 "${row.name}" 吗？`, '确认删除', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+
     await deleteHeaderApi(row.id)
     ElMessage.success('删除成功')
     getHeadersList()
@@ -601,14 +578,12 @@ const deleteHeader = async (row) => {
   }
 }
 
-// 切换状态
 const toggleStatus = async (row) => {
   try {
     const newStatus = row.status === 'enabled' ? 'disabled' : 'enabled'
     await updateHeader(row.id, { status: newStatus })
     row.status = newStatus
-    const statusText = row.status === 'enabled' ? '启用' : '禁用'
-    ElMessage.success(`请求头 ${statusText}成功`)
+    ElMessage.success(`请求头${newStatus === 'enabled' ? '启用' : '禁用'}成功`)
     loadStats()
   } catch (error) {
     ElMessage.error('切换状态失败')
@@ -616,33 +591,28 @@ const toggleStatus = async (row) => {
   }
 }
 
-// 批量导入
 const batchImport = () => {
   batchImportForm.content = ''
   batchImportVisible.value = true
 }
 
-// 执行批量导入
 const doBatchImport = async () => {
   try {
-    // 根据格式解析内容
     let importData
     try {
       if (batchImportForm.format === 'json') {
         importData = JSON.parse(batchImportForm.content)
       } else if (batchImportForm.format === 'text') {
-        // 文本格式解析逻辑
-        const lines = batchImportForm.content.split('\n').filter(line => line.trim())
-        importData = lines.map(line => {
+        const lines = batchImportForm.content.split('\n').filter((line) => line.trim())
+        importData = lines.map((line) => {
           const [domain, name, value, type = 'common', priority = 'medium'] = line.split('|')
           return { domain, name, value, type, priority, status: 'enabled' }
         })
       } else if (batchImportForm.format === 'csv') {
-        // CSV格式解析逻辑
-        const lines = batchImportForm.content.split('\n').filter(line => line.trim())
-        const headers = lines[0].split(',').map(h => h.trim())
-        importData = lines.slice(1).map(line => {
-          const values = line.split(',').map(v => v.trim())
+        const lines = batchImportForm.content.split('\n').filter((line) => line.trim())
+        const headers = lines[0].split(',').map((h) => h.trim())
+        importData = lines.slice(1).map((line) => {
+          const values = line.split(',').map((v) => v.trim())
           const obj = {}
           headers.forEach((header, index) => {
             obj[header] = values[index] || ''
@@ -650,12 +620,12 @@ const doBatchImport = async () => {
           return obj
         })
       }
-    } catch (parseError) {
+    } catch {
       ElMessage.error('数据格式错误，请检查输入内容')
       return
     }
-    
-    await importHeaders(importData)  // AI_MODIFIED: coder1 @2026-02-04T18:46:06
+
+    await importHeaders(importData)
     batchImportVisible.value = false
     ElMessage.success('批量导入成功')
     getHeadersList()
@@ -666,13 +636,11 @@ const doBatchImport = async () => {
   }
 }
 
-// 刷新列表
 const refreshList = () => {
   getHeadersList()
   loadStats()
 }
 
-// 分页处理
 const handleSizeChange = (size) => {
   pageSize.value = size
   currentPage.value = 1
@@ -686,7 +654,6 @@ const handleCurrentChange = (page) => {
   loadStats()
 }
 
-// 获取状态文本
 const getStatusText = (status) => {
   switch (status) {
     case 'enabled': return '启用'
@@ -695,7 +662,6 @@ const getStatusText = (status) => {
   }
 }
 
-// 获取状态标签类型
 const getStatusTagType = (status) => {
   switch (status) {
     case 'enabled': return 'success'
@@ -704,7 +670,6 @@ const getStatusTagType = (status) => {
   }
 }
 
-// 获取类型标签类型
 const getTypeTagType = (type) => {
   switch (type) {
     case 'common': return 'primary'
@@ -715,7 +680,6 @@ const getTypeTagType = (type) => {
   }
 }
 
-// 获取优先级标签类型
 const getPriorityTagType = (priority) => {
   switch (priority) {
     case 'high': return 'danger'
@@ -725,11 +689,10 @@ const getPriorityTagType = (priority) => {
   }
 }
 
-// 获取成功率颜色
 const getSuccessRateColor = (rate) => {
-  if (rate >= 90) return '#67c23a' // green
-  if (rate >= 70) return '#e6a23c' // yellow
-  return '#f56c6c' // red
+  if (rate >= 90) return '#67c23a'
+  if (rate >= 70) return '#e6a23c'
+  return '#f56c6c'
 }
 
 onMounted(() => {
