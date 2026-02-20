@@ -142,6 +142,7 @@
                 <el-option label="待执行" value="pending" />
                 <el-option label="执行中" value="running" />
                 <el-option label="执行成功" value="success" />
+                <el-option label="部分成功" value="partial" />
                 <el-option label="已取消" value="cancelled" />
                 <el-option label="执行失败" value="failed" />
               </el-select>
@@ -195,7 +196,7 @@
           </template>
           <div v-if="taskTracker.visible" class="task-tracker">
             <el-alert
-              :type="taskTracker.status === 'failed' ? 'error' : taskTracker.status === 'success' ? 'success' : 'info'"
+              :type="taskTracker.status === 'failed' ? 'error' : taskTracker.status === 'success' ? 'success' : taskTracker.status === 'partial' ? 'warning' : 'info'"
               :title="taskTracker.message"
               :closable="false"
               show-icon
@@ -269,6 +270,17 @@
                 {{ row.__parsed?.qualityScore ?? '-' }}
               </template>
             </el-table-column>
+            <el-table-column label="AI增强" width="90">
+              <template #default="{ row }">
+                <el-tag v-if="row.__parsed?.aiEnhanced" type="success" size="small">已增强</el-tag>
+                <el-tag v-else type="info" size="small">未增强</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="AI置信度" width="100">
+              <template #default="{ row }">
+                {{ row.__parsed?.aiConfidence ?? '-' }}
+              </template>
+            </el-table-column>
             <el-table-column prop="confidence" label="置信度评分" width="100" />
             <el-table-column prop="title" label="标题" min-width="170" show-overflow-tooltip />
             <el-table-column label="原文" width="80">
@@ -286,7 +298,12 @@
             </el-table-column>
             <el-table-column label="来源观点摘要" min-width="200" show-overflow-tooltip>
               <template #default="{ row }">
-                {{ row.__parsed?.summary || row.content_raw || '-' }}
+                {{ row.__parsed?.aiSummary || row.__parsed?.summary || row.content_raw || '-' }}
+              </template>
+            </el-table-column>
+            <el-table-column label="AI观点" min-width="160" show-overflow-tooltip>
+              <template #default="{ row }">
+                {{ row.__parsed?.aiViewpoint || '-' }}
               </template>
             </el-table-column>
             <el-table-column label="采纳原因" min-width="150" show-overflow-tooltip>
@@ -312,6 +329,7 @@
             <el-tag size="small" type="warning">兜底 {{ itemStats.fallback }}</el-tag>
             <el-tag size="small" type="info">来源摘要 {{ itemStats.sourceView }}</el-tag>
             <el-tag size="small" type="success">高质量 {{ itemStats.highQuality }}</el-tag>
+            <el-tag size="small" type="primary">AI增强 {{ itemStats.aiEnhanced }}</el-tag>
           </div>
 
           <el-empty
@@ -339,6 +357,12 @@
               <el-descriptions-item label="置信度">{{ activeItemRow?.confidence ?? '-' }}</el-descriptions-item>
               <el-descriptions-item label="匹配分">{{ activeItemParsed.matchScore || '-' }}</el-descriptions-item>
               <el-descriptions-item label="质量分">{{ activeItemParsed.qualityScore ?? '-' }}</el-descriptions-item>
+              <el-descriptions-item label="AI增强">{{ activeItemParsed.aiEnhanced ? '是' : '否' }}</el-descriptions-item>
+              <el-descriptions-item label="AI置信度">{{ activeItemParsed.aiConfidence ?? '-' }}</el-descriptions-item>
+              <el-descriptions-item label="AI提供商">{{ activeItemParsed.aiProvider || '-' }}</el-descriptions-item>
+              <el-descriptions-item label="AI模型">{{ activeItemParsed.aiModel || '-' }}</el-descriptions-item>
+              <el-descriptions-item label="AI风险等级">{{ activeItemParsed.aiRiskLevel || '-' }}</el-descriptions-item>
+              <el-descriptions-item label="AI观点" :span="2">{{ activeItemParsed.aiViewpoint || '-' }}</el-descriptions-item>
               <el-descriptions-item label="解析器">{{ activeItemParsed.sourceParser || '-' }}</el-descriptions-item>
               <el-descriptions-item label="命中词" :span="2">
                 {{ activeItemParsed.matchHitTerms?.length ? activeItemParsed.matchHitTerms.join(' / ') : '-' }}
@@ -356,7 +380,10 @@
                 <span v-else>-</span>
               </el-descriptions-item>
               <el-descriptions-item label="摘要/观点" :span="2">
-                {{ activeItemParsed.summary || '-' }}
+                {{ activeItemParsed.aiSummary || activeItemParsed.summary || '-' }}
+              </el-descriptions-item>
+              <el-descriptions-item label="AI说明" :span="2">
+                {{ activeItemParsed.aiReason || '-' }}
               </el-descriptions-item>
               <el-descriptions-item label="采纳原因" :span="2">
                 {{ activeItemParsed.qualityPassReason || '-' }}
@@ -419,6 +446,7 @@
             {{ taskDetail.success_count || 0 }}/{{ taskDetail.total_count || 0 }}
           </el-descriptions-item>
           <el-descriptions-item label="失败数">{{ taskDetail.failed_count || 0 }}</el-descriptions-item>
+          <el-descriptions-item label="成功率">{{ formatPercent(taskDetail.success_rate) }}</el-descriptions-item>
           <el-descriptions-item label="场次覆盖">
             {{ taskDetail.matched_matches || 0 }}/{{ taskDetail.total_matches || 0 }}
           </el-descriptions-item>
@@ -443,6 +471,48 @@
           <el-descriptions-item label="创建时间">{{ taskDetail.created_at || '-' }}</el-descriptions-item>
           <el-descriptions-item label="更新时间">{{ taskDetail.updated_at || '-' }}</el-descriptions-item>
         </el-descriptions>
+
+        <el-divider />
+        <div class="block-header-inline" style="margin-bottom: 8px">
+          <span>失败摘要</span>
+          <el-button
+            v-if="taskDetail?.id"
+            size="small"
+            text
+            type="primary"
+            :loading="loading.taskFailureSummary"
+            @click="loadTaskFailureSummary(taskDetail.id)"
+          >
+            刷新
+          </el-button>
+        </div>
+        <el-empty
+          v-if="!taskFailureSummary || (!taskFailureSummary.top_reasons?.length && !taskFailureSummary.source_failures?.length)"
+          description="暂无失败摘要"
+        />
+        <template v-else>
+          <el-alert
+            type="warning"
+            :closable="false"
+            show-icon
+            :title="`Top 原因：${formatTopReasons(taskFailureSummary.top_reasons)}`"
+            style="margin-bottom: 8px"
+          />
+          <el-table
+            v-if="taskFailureSummary.source_failures?.length"
+            :data="taskFailureSummary.source_failures"
+            stripe
+            max-height="220"
+            style="margin-bottom: 8px"
+          >
+            <el-table-column prop="source" label="来源" width="110" />
+            <el-table-column prop="timeout" label="超时" width="80" />
+            <el-table-column prop="errors" label="错误" width="80" />
+            <el-table-column prop="retries" label="重试" width="80" />
+            <el-table-column prop="circuit_skipped" label="熔断跳过" width="100" />
+            <el-table-column prop="blocked_decisions" label="拦截数" width="90" />
+          </el-table>
+        </template>
 
         <el-divider />
         <div class="block-header-inline" style="margin-bottom: 8px">
@@ -476,6 +546,12 @@
           <el-descriptions-item label="置信度">{{ itemDetail.confidence }}</el-descriptions-item>
           <el-descriptions-item label="匹配分">{{ itemDetail.matchScore || '-' }}</el-descriptions-item>
           <el-descriptions-item label="质量分">{{ itemDetail.qualityScore ?? '-' }}</el-descriptions-item>
+          <el-descriptions-item label="AI增强">{{ itemDetail.aiEnhanced ? '是' : '否' }}</el-descriptions-item>
+          <el-descriptions-item label="AI置信度">{{ itemDetail.aiConfidence ?? '-' }}</el-descriptions-item>
+          <el-descriptions-item label="AI提供商">{{ itemDetail.aiProvider || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="AI模型">{{ itemDetail.aiModel || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="AI风险等级">{{ itemDetail.aiRiskLevel || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="AI观点" :span="2">{{ itemDetail.aiViewpoint || '-' }}</el-descriptions-item>
           <el-descriptions-item label="解析器">{{ itemDetail.sourceParser || '-' }}</el-descriptions-item>
           <el-descriptions-item label="命中词" :span="2">
             {{ itemDetail.matchHitTerms?.length ? itemDetail.matchHitTerms.join(' / ') : '-' }}
@@ -487,7 +563,8 @@
             </el-link>
             <span v-else>-</span>
           </el-descriptions-item>
-          <el-descriptions-item label="摘要" :span="2">{{ itemDetail.summary || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="摘要" :span="2">{{ itemDetail.aiSummary || itemDetail.summary || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="AI说明" :span="2">{{ itemDetail.aiReason || '-' }}</el-descriptions-item>
           <el-descriptions-item label="采纳原因" :span="2">{{ itemDetail.qualityPassReason || '-' }}</el-descriptions-item>
           <el-descriptions-item label="兜底原因" :span="2">{{ itemDetail.qualityBlockReason || itemDetail.fallbackReason || '-' }}</el-descriptions-item>
         </el-descriptions>
@@ -675,8 +752,10 @@ import {
   createPushTask,
   debugReplay,
   debugMatchCandidates,
+  openCollectionTaskEventsStream,
   getCollectionSources,
   getCollectionTask,
+  getCollectionTaskFailureSummary,
   getCollectionTaskSubtasks,
   getCollectionTaskLogs,
   getCollectionTasks,
@@ -711,7 +790,8 @@ const loading = reactive({
   loadAdvancedSettings: false,
   saveBinding: false,
   testBinding: false,
-  push: false
+  push: false,
+  taskFailureSummary: false
 })
 
 const query = reactive({
@@ -767,7 +847,7 @@ const networkForm = reactive({
   retryBackoffMs: 120,
   circuitBreakerThreshold: 6,
   circuitBreakerSeconds: 45,
-  sourceTimeoutJson: '{\n  "default": 1.2,\n  "500w": 1.8,\n  "ttyingqiu": 2.2,\n  "tencent": 1.8,\n  "weibo": 1.8,\n  "sina": 1.8\n}'
+  sourceTimeoutJson: '{\n  "default": 2.5,\n  "500w": 2.8,\n  "ttyingqiu": 3.5,\n  "tencent": 2.8,\n  "weibo": 2.8,\n  "sina": 2.8\n}'
 })
 const sourceRuleForm = reactive({
   ttyBlacklistText: '/news/-1, /news/75',
@@ -802,6 +882,7 @@ const taskDetailLoading = ref(false)
 const taskDetail = ref(null)
 const taskSubtasks = ref([])
 const taskSubtasksLoading = ref(false)
+const taskFailureSummary = ref(null)
 const itemDialogVisible = ref(false)
 const itemDetail = ref(null)
 const activeItemRow = ref(null)
@@ -820,7 +901,8 @@ const itemStats = reactive({
   article: 0,
   fallback: 0,
   sourceView: 0,
-  highQuality: 0
+  highQuality: 0,
+  aiEnhanced: 0
 })
 const activeResultCategory = ref('')
 const resultCache = ref(new Map())
@@ -840,6 +922,9 @@ const emptyResultDescription = computed(() => {
   if (!activeMatchId.value) return '请先在左侧赛程表选择一场比赛'
   if (taskTracker.visible && (taskTracker.status === 'running' || taskTracker.status === 'pending')) {
     return `任务 ${taskTracker.taskId || '-'} 正在执行，结果将在完成后自动刷新`
+  }
+  if (taskTracker.visible && taskTracker.status === 'partial') {
+    return `任务 ${taskTracker.taskId || '-'} 部分成功，可先查看已采集结果`
   }
   if (taskTracker.visible && taskTracker.status === 'failed') {
     return `任务 ${taskTracker.taskId || '-'} 执行失败，请先查看任务日志`
@@ -863,6 +948,7 @@ const statusLabelMap = {
   pending: '待执行',
   running: '执行中',
   success: '执行成功',
+  partial: '部分成功',
   failed: '执行失败',
   cancelled: '已取消',
   unknown: '状态未知'
@@ -872,6 +958,19 @@ const RESULT_CACHE_TTL_MS = 2 * 60 * 1000
 const formatCoverage = (coverageRate) => {
   const value = Number(coverageRate || 0)
   return `${(value * 100).toFixed(1)}%`
+}
+
+const formatPercent = (value) => {
+  const num = Number(value || 0)
+  return `${(num * 100).toFixed(1)}%`
+}
+
+const formatTopReasons = (rows = []) => {
+  if (!Array.isArray(rows) || !rows.length) return '-'
+  return rows
+    .slice(0, 3)
+    .map((x) => `${x.reason} x${x.count}`)
+    .join('；')
 }
 
 const formatMatchProgress = (rows) => {
@@ -1274,22 +1373,41 @@ const openTaskDetail = async (row) => {
   taskDetailDialogVisible.value = true
   taskDetailLoading.value = true
   taskSubtasksLoading.value = true
+  loading.taskFailureSummary = true
   taskDetail.value = { ...row }
   taskSubtasks.value = []
+  taskFailureSummary.value = null
   try {
-    const [detail, subtasksResp] = await Promise.all([
+    const [detail, subtasksResp, failureSummary] = await Promise.all([
       getCollectionTask(row.id, { timeout: 60000 }),
-      getCollectionTaskSubtasks(row.id, {}, { timeout: 60000 })
+      getCollectionTaskSubtasks(row.id, {}, { timeout: 60000 }),
+      getCollectionTaskFailureSummary(row.id, { timeout: 60000 }).catch(() => null)
     ])
     taskDetail.value = detail || { ...row }
     taskSubtasks.value = subtasksResp?.items || []
+    taskFailureSummary.value = failureSummary || null
   } catch (e) {
     ElMessage.warning('加载任务详情失败，已展示列表快照')
     taskDetail.value = { ...row }
     taskSubtasks.value = []
+    taskFailureSummary.value = null
   } finally {
     taskDetailLoading.value = false
     taskSubtasksLoading.value = false
+    loading.taskFailureSummary = false
+  }
+}
+
+const loadTaskFailureSummary = async (taskId) => {
+  if (!taskId) return
+  loading.taskFailureSummary = true
+  try {
+    taskFailureSummary.value = await getCollectionTaskFailureSummary(taskId, { timeout: 60000 })
+  } catch (e) {
+    console.error(e)
+    ElMessage.warning('加载失败摘要失败')
+  } finally {
+    loading.taskFailureSummary = false
   }
 }
 
@@ -1305,6 +1423,13 @@ const retryTask = async (row) => {
     })
     if (finalStatus === 'success') {
       ElMessage.success(`任务 ${row.id} 重试完成`)
+      if (activeMatchId.value || row?.match_ids?.[0]) {
+        activeMatchId.value = activeMatchId.value || row.match_ids[0]
+        clearMatchResultCache(activeMatchId.value)
+        await loadResult('', { force: true })
+      }
+    } else if (finalStatus === 'partial') {
+      ElMessage.warning(`任务 ${row.id} 部分成功，请查看失败摘要定位问题`)
       if (activeMatchId.value || row?.match_ids?.[0]) {
         activeMatchId.value = activeMatchId.value || row.match_ids[0]
         clearMatchResultCache(activeMatchId.value)
@@ -1338,10 +1463,109 @@ const isTaskRetrying = (taskId) => !!retryingTaskMap.value[taskId]
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
+const parseTaskSseChunk = (rawChunk) => {
+  const lines = String(rawChunk || '')
+    .split('\n')
+    .map((line) => line.trimEnd())
+  let event = 'message'
+  const dataRows = []
+  for (const line of lines) {
+    if (!line || line.startsWith(':')) continue
+    if (line.startsWith('event:')) {
+      event = line.slice(6).trim() || 'message'
+      continue
+    }
+    if (line.startsWith('data:')) {
+      dataRows.push(line.slice(5).trim())
+    }
+  }
+  if (!dataRows.length) return null
+  const dataText = dataRows.join('\n')
+  let data = null
+  try {
+    data = JSON.parse(dataText)
+  } catch (e) {
+    data = null
+  }
+  return { event, data }
+}
+
+const trackTaskViaSse = async (taskId, options = {}) => {
+  const action = options.action || 'create'
+  const matchId = options.matchId || null
+  const terminal = new Set(['success', 'partial', 'failed', 'cancelled'])
+  const controller = new AbortController()
+
+  try {
+    const response = await openCollectionTaskEventsStream(taskId, {
+      intervalMs: 2500,
+      maxDurationSeconds: 120,
+      signal: controller.signal
+    })
+    if (!response?.ok || !response.body) {
+      return ''
+    }
+
+    const reader = response.body.getReader()
+    const decoder = new TextDecoder('utf-8')
+    let buffer = ''
+    let latestStatus = ''
+
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      buffer += decoder.decode(value, { stream: true })
+      const chunks = buffer.split('\n\n')
+      buffer = chunks.pop() || ''
+
+      for (const chunk of chunks) {
+        const parsed = parseTaskSseChunk(chunk)
+        if (!parsed) continue
+        if (parsed.event === 'timeout') {
+          return ''
+        }
+        if (parsed.event === 'error') {
+          return ''
+        }
+        if (parsed.event !== 'progress') {
+          continue
+        }
+        const detail = parsed.data || {}
+        const status = detail.status || latestStatus
+        latestStatus = status || latestStatus
+        updateTaskTracker({ taskId, status: latestStatus || 'running', action, matchId, detail })
+        if (latestStatus && terminal.has(latestStatus)) {
+          await loadTasks({ silent: true, timeout: 20000 })
+          if ((latestStatus === 'success' || latestStatus === 'partial') && matchId) {
+            activeMatchId.value = matchId
+            clearMatchResultCache(matchId)
+            await loadResult('', { force: true })
+          }
+          return latestStatus
+        }
+      }
+    }
+
+    return latestStatus && terminal.has(latestStatus) ? latestStatus : ''
+  } catch (e) {
+    const msg = String(e?.message || '')
+    if (!msg.includes('aborted')) {
+      console.warn('SSE 任务跟踪失败，降级为轮询模式', e)
+    }
+    return ''
+  } finally {
+    controller.abort()
+  }
+}
+
 const trackTaskUntilStable = async (taskId, options = {}) => {
   const action = options.action || 'create'
   const matchId = options.matchId || null
-  const terminal = new Set(['success', 'failed', 'cancelled'])
+  const terminal = new Set(['success', 'partial', 'failed', 'cancelled'])
+  const sseStatus = await trackTaskViaSse(taskId, options)
+  if (sseStatus) {
+    return sseStatus
+  }
   const maxRounds = 24
   for (let i = 0; i < maxRounds; i += 1) {
     try {
@@ -1354,7 +1578,7 @@ const trackTaskUntilStable = async (taskId, options = {}) => {
       updateTaskTracker({ taskId, status, action, matchId, detail })
       if (status && terminal.has(status)) {
         await loadTasks({ silent: true, timeout: 20000 })
-        if (status === 'success' && matchId) {
+        if ((status === 'success' || status === 'partial') && matchId) {
           activeMatchId.value = matchId
           clearMatchResultCache(matchId)
           await loadResult('', { force: true })
@@ -1376,7 +1600,8 @@ const trackTaskUntilStable = async (taskId, options = {}) => {
         return ''
       }
     }
-    await sleep(2500)
+    const waitMs = i <= 0 ? 2500 : i === 1 ? 4000 : 6000
+    await sleep(waitMs)
   }
   return ''
 }
@@ -1393,6 +1618,7 @@ const applyResultItems = (rows) => {
   itemStats.fallback = items.value.filter((x) => x.__parsed?.qualityStatus === 'blocked').length
   itemStats.sourceView = items.value.filter((x) => x.__parsed?.qualityStatus === 'source_view').length
   itemStats.highQuality = items.value.filter((x) => Number(x.__parsed?.qualityScore || 0) >= 1.8).length
+  itemStats.aiEnhanced = items.value.filter((x) => x.__parsed?.aiEnhanced).length
   if (items.value.length) {
     setActiveItem(items.value[0])
   } else {
@@ -1442,6 +1668,14 @@ const resolveItemDetail = (row) => {
   const rowQualityBlockReason = row?.quality_block_reason
   const rowSourceParser = row?.source_parser
   const rowQualityStatus = row?.quality_status
+  const rowAiEnhanced = row?.ai_enhanced
+  const rowAiProvider = row?.ai_provider
+  const rowAiModel = row?.ai_model
+  const rowAiSummary = row?.ai_summary
+  const rowAiViewpoint = row?.ai_viewpoint
+  const rowAiRiskLevel = row?.ai_risk_level
+  const rowAiConfidence = row?.ai_confidence
+  const rowAiReason = row?.ai_reason
   const detail = {
     viewType: '',
     viewTypeLabel: '未知',
@@ -1455,7 +1689,15 @@ const resolveItemDetail = (row) => {
     qualityBlockReason: rowQualityBlockReason || '',
     sourceParser: rowSourceParser || '',
     matchHitTerms: rowHitTerms,
-    qualityStatus: rowQualityStatus || ''
+    qualityStatus: rowQualityStatus || '',
+    aiEnhanced: !!rowAiEnhanced,
+    aiProvider: rowAiProvider || '',
+    aiModel: rowAiModel || '',
+    aiSummary: rowAiSummary || '',
+    aiViewpoint: rowAiViewpoint || '',
+    aiRiskLevel: rowAiRiskLevel || '',
+    aiConfidence: rowAiConfidence ?? null,
+    aiReason: rowAiReason || ''
   }
   if (!raw) return detail
 
@@ -1480,7 +1722,7 @@ const resolveItemDetail = (row) => {
     }
   }
 
-  const summaryMatch = raw.match(/summary=([\s\S]*)$/)
+  const summaryMatch = raw.match(/summary=([^;]+);/)
   if (summaryMatch?.[1]) detail.summary = summaryMatch[1].trim()
 
   const scoreMatch = raw.match(/match_score=([^;]+);/)
@@ -1508,6 +1750,33 @@ const resolveItemDetail = (row) => {
 
   const parserMatch = raw.match(/source_parser=([^;]+);/)
   if (parserMatch?.[1] && !detail.sourceParser) detail.sourceParser = parserMatch[1].trim()
+
+  const aiEnhancedMatch = raw.match(/ai_enhanced=([^;]+);/)
+  if (aiEnhancedMatch?.[1]) detail.aiEnhanced = ['1', 'true', 'True'].includes(aiEnhancedMatch[1].trim())
+
+  const aiProviderMatch = raw.match(/ai_provider=([^;]+);/)
+  if (aiProviderMatch?.[1] && !detail.aiProvider) detail.aiProvider = aiProviderMatch[1].trim()
+
+  const aiModelMatch = raw.match(/ai_model=([^;]+);/)
+  if (aiModelMatch?.[1] && !detail.aiModel) detail.aiModel = aiModelMatch[1].trim()
+
+  const aiSummaryMatch = raw.match(/ai_summary=([^;]+);/)
+  if (aiSummaryMatch?.[1] && !detail.aiSummary) detail.aiSummary = aiSummaryMatch[1].trim()
+
+  const aiViewpointMatch = raw.match(/ai_viewpoint=([^;]+);/)
+  if (aiViewpointMatch?.[1] && !detail.aiViewpoint) detail.aiViewpoint = aiViewpointMatch[1].trim()
+
+  const aiRiskMatch = raw.match(/ai_risk_level=([^;]+);/)
+  if (aiRiskMatch?.[1] && !detail.aiRiskLevel) detail.aiRiskLevel = aiRiskMatch[1].trim()
+
+  const aiConfidenceMatch = raw.match(/ai_confidence=([^;]+);/)
+  if (aiConfidenceMatch?.[1] && detail.aiConfidence == null) {
+    const parsed = Number(aiConfidenceMatch[1].trim())
+    detail.aiConfidence = Number.isNaN(parsed) ? null : parsed
+  }
+
+  const aiReasonMatch = raw.match(/ai_reason=([^;]+);/)
+  if (aiReasonMatch?.[1] && !detail.aiReason) detail.aiReason = aiReasonMatch[1].trim()
 
   const hitTermsMatch = raw.match(/hit_terms=([^;]+);/)
   if (hitTermsMatch?.[1] && (!detail.matchHitTerms || !detail.matchHitTerms.length)) {

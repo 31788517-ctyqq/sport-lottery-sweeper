@@ -2,6 +2,20 @@ import request from '@/utils/request'
 
 const BASE = '/api/v1/admin/intelligence/collection'
 
+const getSafeToken = () => {
+  try {
+    return (
+      localStorage.getItem('access_token') ||
+      localStorage.getItem('token') ||
+      localStorage.getItem('auth_token') ||
+      localStorage.getItem('admin_token') ||
+      ''
+    )
+  } catch (e) {
+    return ''
+  }
+}
+
 export const getCollectionSources = () => request.get(`${BASE}/sources`)
 
 export const getTimeWindowSettings = () => request.get(`${BASE}/settings/time-window`)
@@ -94,6 +108,38 @@ export const cancelCollectionTask = (taskId) => request.post(`${BASE}/tasks/${ta
 
 export const getCollectionTaskLogs = (taskId, params = {}) =>
   request.get(`${BASE}/tasks/${taskId}/logs`, { params })
+
+export const getCollectionTaskFailureSummary = (taskId, options = {}) =>
+  request.get(`${BASE}/tasks/${taskId}/failure-summary`, {
+    timeout: options.timeout || 60000
+  })
+
+export const openCollectionTaskEventsStream = (taskId, options = {}) => {
+  const params = new URLSearchParams()
+  if (options.intervalMs != null) {
+    params.set('interval_ms', String(options.intervalMs))
+  }
+  if (options.maxDurationSeconds != null) {
+    params.set('max_duration_seconds', String(options.maxDurationSeconds))
+  }
+  if (options.includeMatchProgress) {
+    params.set('include_match_progress', 'true')
+  }
+  const query = params.toString()
+  const url = `${BASE}/tasks/${taskId}/events${query ? `?${query}` : ''}`
+  const token = options.token || getSafeToken()
+  const headers = {
+    Accept: 'text/event-stream'
+  }
+  if (token && token !== 'undefined' && token !== 'null') {
+    headers.Authorization = `Bearer ${token}`
+  }
+  return fetch(url, {
+    method: 'GET',
+    headers,
+    signal: options.signal
+  })
+}
 
 export const getMatchCollectionItems = (matchId, params) =>
   request.get(`${BASE}/matches/${matchId}/items`, { params })

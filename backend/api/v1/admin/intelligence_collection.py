@@ -3,6 +3,7 @@
 import asyncio
 import json
 import logging
+import os
 import re
 import uuid
 from datetime import datetime, timedelta
@@ -11,7 +12,8 @@ from typing import Any, Dict, List, Optional
 from urllib.parse import urljoin, urlparse
 
 import requests
-from fastapi import APIRouter, Body, Depends, HTTPException, Query
+from fastapi import APIRouter, Body, Depends, HTTPException, Query, Request
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -27,9 +29,13 @@ from ....models.intelligence_collection import (
     IntelligenceUserSubscription,
 )
 from ....models.match import League, Match, Team
+from ....models.llm_provider import LLMProvider, LLMProviderTypeEnum
 from ....models.system_config import SystemConfig
 from ...deps import get_current_admin
+from ....core.security import decrypt_sensitive_data
+from ....config import settings as app_settings
 from ....services.dingtalk_integration import send_dingtalk_message
+from ....tasks.intelligence_collection_queue_app import celery_app as task_queue_app
 
 
 router = APIRouter(prefix="/intelligence/collection", tags=["intelligence-collection"])
@@ -71,6 +77,40 @@ TIME_WINDOW_BEFORE_HOURS_MIN = 1
 TIME_WINDOW_BEFORE_HOURS_MAX = 720
 TIME_WINDOW_AFTER_HOURS_MIN = 0
 TIME_WINDOW_AFTER_HOURS_MAX = 72
+
+DEFAULT_AI_ENHANCEMENT_SETTINGS = {
+    "enabled": True,
+    "provider": "qwen",
+    "model": "qwen-turbo",
+    "temperature": 0.2,
+    "max_tokens": 420,
+    "timeout_seconds": 10,
+    "min_quality_score": 1.8,
+    "max_calls_per_task": 40,
+}
+
+TASK_TERMINAL_STATUSES = {"success", "partial", "failed", "cancelled"}
+TASK_QUEUE_NAME = "backend.tasks.intelligence_collection_tasks.run_intelligence_collection_task"
+TASK_QUEUE_ACTIVE_STATES = {"PENDING", "RECEIVED", "STARTED", "RETRY"}
+TASK_QUEUE_FAILURE_STATES = {"FAILURE"}
+TASK_QUEUE_CANCELLED_STATES = {"REVOKED"}
+TASK_EVENT_DEFAULT_INTERVAL_MS = 2500
+TASK_EVENT_MIN_INTERVAL_MS = 800
+TASK_EVENT_MAX_INTERVAL_MS = 10000
+TASK_EVENT_DEFAULT_MAX_DURATION_SECONDS = 600
+TASK_EVENT_MIN_DURATION_SECONDS = 15
+TASK_EVENT_MAX_DURATION_SECONDS = 3600
+
+TASK_EVENT_STAGE_PATTERNS = [
+    (re.compile(r"retry triggered", re.IGNORECASE), "retrying"),
+    (re.compile(r"task cancelled|queue job revoked|queue revoke failed", re.IGNORECASE), "cancelled"),
+    (re.compile(r"queued task via celery|immediate task queued", re.IGNORECASE), "queued"),
+    (re.compile(r"pending task dispatched|queue state synced: .* -> running", re.IGNORECASE), "dispatching"),
+    (re.compile(r"match run started|decision match_id=", re.IGNORECASE), "collecting"),
+    (re.compile(r"source_runtime|ai_runtime summary|top fallback reasons", re.IGNORECASE), "aggregating"),
+    (re.compile(r"queue state synced: success|match run done", re.IGNORECASE), "completed"),
+    (re.compile(r"failed", re.IGNORECASE), "failed"),
+]
 
 
 def _normalize_int(value: Any, *, default: int, min_value: int, max_value: int) -> int:
@@ -133,12 +173,12 @@ def _default_network_settings() -> Dict[str, Any]:
     return {
         "trust_env": False,
         "source_timeout_seconds": {
-            "default": 1.2,
-            "500w": 1.8,
-            "ttyingqiu": 2.2,
-            "tencent": 1.8,
-            "weibo": 1.8,
-            "sina": 1.8,
+            "default": 2.5,
+            "500w": 2.8,
+            "ttyingqiu": 3.5,
+            "tencent": 2.8,
+            "weibo": 2.8,
+            "sina": 2.8,
         },
         "max_retry": 2,
         "retry_backoff_ms": 120,
@@ -235,9 +275,9 @@ def _normalize_source_timeout_map(raw: Any, fallback: Dict[str, Any]) -> Dict[st
         k = str(key).strip()
         if not k:
             continue
-        out[k] = _normalize_float(value, default=out.get(k, 1.2), min_value=0.3, max_value=30.0)
+        out[k] = _normalize_float(value, default=out.get(k, 2.5), min_value=0.3, max_value=30.0)
     if "default" not in out:
-        out["default"] = 1.2
+        out["default"] = 2.5
     return out
 
 
@@ -758,6 +798,11 @@ def _subtask_to_dict(subtask: IntelligenceCollectionMatchSubtask) -> Dict[str, A
     item_count = int(subtask.item_count or 0)
     success_count = int(subtask.success_count or 0)
     failed_count = int(subtask.failed_count or 0)
+    candidate_count = int(subtask.candidate_count or item_count)
+    parsed_count = int(subtask.parsed_count or item_count)
+    matched_count = int(subtask.matched_count or success_count)
+    accepted_count = int(subtask.accepted_count or success_count)
+    blocked_count = int(subtask.blocked_count or failed_count)
     return {
         "id": subtask.id,
         "task_id": subtask.task_id,
@@ -767,11 +812,11 @@ def _subtask_to_dict(subtask: IntelligenceCollectionMatchSubtask) -> Dict[str, A
         "item_count": item_count,
         "success_count": success_count,
         "failed_count": failed_count,
-        "candidate_count": item_count,
-        "parsed_count": item_count,
-        "matched_count": success_count,
-        "accepted_count": success_count,
-        "blocked_count": failed_count,
+        "candidate_count": candidate_count,
+        "parsed_count": parsed_count,
+        "matched_count": matched_count,
+        "accepted_count": accepted_count,
+        "blocked_count": blocked_count,
         "retry_count": subtask.retry_count,
         "last_error": subtask.last_error,
         "started_at": subtask.started_at.isoformat() if subtask.started_at else None,
@@ -785,6 +830,10 @@ def _task_to_dict(task: IntelligenceCollectionTask) -> Dict[str, Any]:
     total_count = int(task.total_count or 0)
     success_count = int(task.success_count or 0)
     progress_percent = round((success_count / total_count) * 100, 2) if total_count > 0 else 0.0
+    stored_success_rate = task.success_rate
+    if stored_success_rate is None:
+        stored_success_rate = round((success_count / total_count), 4) if total_count > 0 else 0.0
+    success_rate = round(_safe_float(stored_success_rate, 0.0), 4)
     return {
         "id": task.id,
         "task_uuid": task.task_uuid,
@@ -798,9 +847,12 @@ def _task_to_dict(task: IntelligenceCollectionTask) -> Dict[str, Any]:
         "total_count": total_count,
         "success_count": success_count,
         "failed_count": task.failed_count,
+        "success_rate": success_rate,
         "retry_count": task.retry_count,
         "late_run": task.late_run,
         "progress_percent": progress_percent,
+        "queue_job_id": task.queue_job_id,
+        "estimated_start": task.planned_at.isoformat() if task.planned_at else None,
         "planned_at": task.planned_at.isoformat() if task.planned_at else None,
         "started_at": task.started_at.isoformat() if task.started_at else None,
         "finished_at": task.finished_at.isoformat() if task.finished_at else None,
@@ -815,6 +867,791 @@ def _task_to_dict(task: IntelligenceCollectionTask) -> Dict[str, Any]:
         "coverage_rate": 0.0,
         "expected_per_match": 0,
         "match_progress": [],
+    }
+
+
+def _derive_task_status(
+    *,
+    total_matches: int,
+    success_matches: int,
+    failed_matches: int,
+    partial_matches: int,
+) -> str:
+    if total_matches <= 0:
+        return "failed"
+    if success_matches >= total_matches and failed_matches <= 0 and partial_matches <= 0:
+        return "success"
+    if failed_matches >= total_matches and success_matches <= 0 and partial_matches <= 0:
+        return "failed"
+    if success_matches > 0 and failed_matches <= 0 and partial_matches <= 0:
+        return "success"
+    if failed_matches > 0 and success_matches <= 0 and partial_matches <= 0:
+        return "failed"
+    return "partial"
+
+
+def _parse_source_runtime_log(message: str) -> Optional[Dict[str, Any]]:
+    text = str(message or "")
+    m = re.search(
+        r"source_runtime source=([^;]+);\s*requests=(\d+);\s*ok=(\d+);\s*timeout=(\d+);\s*errors=(\d+);\s*retries=(\d+);\s*circuit_skipped=(\d+)",
+        text,
+    )
+    if not m:
+        return None
+    return {
+        "source": _sanitize_meta_text(m.group(1)),
+        "requests": int(m.group(2) or 0),
+        "ok": int(m.group(3) or 0),
+        "timeout": int(m.group(4) or 0),
+        "errors": int(m.group(5) or 0),
+        "retries": int(m.group(6) or 0),
+        "circuit_skipped": int(m.group(7) or 0),
+    }
+
+
+def _extract_reason_tokens_from_log(message: str) -> List[str]:
+    text = str(message or "")
+    reasons: List[str] = []
+    for m in re.findall(r"reason=([^;]+)", text):
+        token = _sanitize_meta_text(m)
+        if token and token != "-":
+            reasons.append(token)
+    for pattern in (r"collect failed:\s*(.+)$", r"retry failed:\s*(.+)$", r"match run failed:[^;]*; reason=([^;]+)"):
+        m = re.search(pattern, text)
+        if not m:
+            continue
+        token = _sanitize_meta_text(m.group(1))
+        if token and token != "-":
+            reasons.append(token)
+    return reasons
+
+
+def _task_status_to_stage(status: str) -> str:
+    normalized = str(status or "").strip().lower()
+    if normalized in {"pending"}:
+        return "queued"
+    if normalized in {"running"}:
+        return "collecting"
+    if normalized in {"success", "partial"}:
+        return "completed"
+    if normalized in {"failed"}:
+        return "failed"
+    if normalized in {"cancelled"}:
+        return "cancelled"
+    return "unknown"
+
+
+def _infer_task_stage_from_logs(status: str, logs: List[Dict[str, Any]]) -> str:
+    for entry in reversed(logs[-30:]):
+        message = str(entry.get("message") or "")
+        for pattern, stage in TASK_EVENT_STAGE_PATTERNS:
+            if pattern.search(message):
+                return stage
+    return _task_status_to_stage(status)
+
+
+def _extract_task_runtime_context(logs: List[Dict[str, Any]]) -> Dict[str, Any]:
+    current_source = ""
+    current_intel_type = ""
+    current_match_id: Optional[int] = None
+    last_log: Optional[Dict[str, Any]] = None
+
+    for entry in reversed(logs[-120:]):
+        message = str(entry.get("message") or "")
+        if not message:
+            continue
+        if last_log is None:
+            last_log = {
+                "time": entry.get("time"),
+                "level": str(entry.get("level") or "").lower(),
+                "message": message[:300],
+            }
+
+        if not current_source:
+            m_source = re.search(r"\bsource=([^;,\s]+)", message, re.IGNORECASE)
+            if m_source:
+                current_source = _sanitize_meta_text(m_source.group(1))
+        if current_match_id is None:
+            m_match = re.search(r"\bmatch_id=(\d+)", message, re.IGNORECASE)
+            if m_match:
+                try:
+                    current_match_id = int(m_match.group(1))
+                except Exception:
+                    current_match_id = None
+        if not current_intel_type:
+            m_intel_type = re.search(r"\bintel_type=([^;,\s]+)", message, re.IGNORECASE)
+            if m_intel_type:
+                current_intel_type = _sanitize_meta_text(m_intel_type.group(1))
+        if current_source and current_match_id is not None and current_intel_type:
+            break
+
+    return {
+        "current_source": current_source or None,
+        "current_match_id": current_match_id,
+        "current_intel_type": current_intel_type or None,
+        "last_log": last_log,
+    }
+
+
+async def _build_task_events_payload(
+    db: AsyncSession,
+    task: IntelligenceCollectionTask,
+    *,
+    include_match_progress: bool = False,
+) -> Dict[str, Any]:
+    task_data = _task_to_dict(task)
+    progress_stats = await _collect_task_progress_stats(db, [task])
+    task_data.update(progress_stats.get(task.id, {}))
+
+    status = str(task_data.get("status") or "").strip().lower() or "pending"
+    logs = _json_loads(task.logs_json, [])
+    runtime_ctx = _extract_task_runtime_context(logs)
+    stage = _infer_task_stage_from_logs(status, logs)
+
+    payload: Dict[str, Any] = {
+        "task_id": int(task_data.get("id") or task.id),
+        "task_uuid": task_data.get("task_uuid"),
+        "status": status,
+        "stage": stage,
+        "progress_percent": round(_safe_float(task_data.get("progress_percent"), 0.0), 2),
+        "success_rate": round(_safe_float(task_data.get("success_rate"), 0.0), 4),
+        "completed_count": int(task_data.get("success_count") or 0),
+        "failed_count": int(task_data.get("failed_count") or 0),
+        "total_count": int(task_data.get("total_count") or 0),
+        "total_matches": int(task_data.get("total_matches") or 0),
+        "success_matches": int(task_data.get("success_matches") or 0),
+        "failed_matches": int(task_data.get("failed_matches") or 0),
+        "partial_matches": int(task_data.get("partial_matches") or 0),
+        "coverage_rate": round(_safe_float(task_data.get("coverage_rate"), 0.0), 4),
+        "queue_job_id": task_data.get("queue_job_id"),
+        "retry_count": int(task_data.get("retry_count") or 0),
+        "error_message": _sanitize_meta_text(task_data.get("error_message"), ""),
+        "current_source": runtime_ctx.get("current_source"),
+        "current_match_id": runtime_ctx.get("current_match_id"),
+        "current_intel_type": runtime_ctx.get("current_intel_type"),
+        "last_log": runtime_ctx.get("last_log"),
+        "terminal": status in TASK_TERMINAL_STATUSES,
+        "updated_at": task_data.get("updated_at"),
+        "generated_at": datetime.utcnow().isoformat(),
+    }
+    if include_match_progress:
+        payload["match_progress"] = task_data.get("match_progress", [])
+    return payload
+
+
+def _build_task_events_fingerprint(payload: Dict[str, Any]) -> str:
+    fingerprint_payload: Dict[str, Any] = {
+        "task_id": payload.get("task_id"),
+        "status": payload.get("status"),
+        "stage": payload.get("stage"),
+        "progress_percent": payload.get("progress_percent"),
+        "success_rate": payload.get("success_rate"),
+        "completed_count": payload.get("completed_count"),
+        "failed_count": payload.get("failed_count"),
+        "total_count": payload.get("total_count"),
+        "total_matches": payload.get("total_matches"),
+        "success_matches": payload.get("success_matches"),
+        "failed_matches": payload.get("failed_matches"),
+        "partial_matches": payload.get("partial_matches"),
+        "coverage_rate": payload.get("coverage_rate"),
+        "current_source": payload.get("current_source"),
+        "current_match_id": payload.get("current_match_id"),
+        "current_intel_type": payload.get("current_intel_type"),
+        "terminal": payload.get("terminal"),
+        "error_message": payload.get("error_message"),
+    }
+    last_log = payload.get("last_log") or {}
+    fingerprint_payload["last_log"] = {
+        "time": last_log.get("time"),
+        "level": last_log.get("level"),
+        "message": last_log.get("message"),
+    }
+    if "match_progress" in payload:
+        fingerprint_payload["match_progress"] = payload.get("match_progress")
+    return json.dumps(fingerprint_payload, ensure_ascii=False, sort_keys=True)
+
+
+def _format_sse_message(event: str, payload: Dict[str, Any], *, event_id: Optional[int] = None) -> str:
+    lines: List[str] = []
+    if event_id is not None:
+        lines.append(f"id: {int(event_id)}")
+    if event:
+        lines.append(f"event: {event}")
+    json_text = _json_dumps(payload)
+    for row in json_text.splitlines():
+        lines.append(f"data: {row}")
+    return "\n".join(lines) + "\n\n"
+
+
+async def _build_task_completion_snapshot(
+    db: AsyncSession,
+    task: IntelligenceCollectionTask,
+    match_ids: Optional[List[int]] = None,
+) -> Dict[str, Any]:
+    clean_match_ids = [int(x) for x in (match_ids or []) if str(x).isdigit()]
+    stmt = select(IntelligenceCollectionMatchSubtask).where(
+        IntelligenceCollectionMatchSubtask.task_id == task.id
+    )
+    if clean_match_ids:
+        stmt = stmt.where(IntelligenceCollectionMatchSubtask.match_id.in_(clean_match_ids))
+    rows = (await db.execute(stmt)).scalars().all()
+
+    if not rows:
+        fallback_match_ids = clean_match_ids or [int(x) for x in _json_loads(task.match_ids_json, []) if str(x).isdigit()]
+        total_matches = len(fallback_match_ids)
+        success_matches = 1 if int(task.success_count or 0) > 0 else 0
+        failed_matches = total_matches if int(task.success_count or 0) <= 0 else 0
+        partial_matches = max(total_matches - success_matches - failed_matches, 0)
+        return {
+            "total_matches": total_matches,
+            "success_matches": success_matches,
+            "failed_matches": failed_matches,
+            "partial_matches": partial_matches,
+            "expected_count": int(task.total_count or 0),
+            "success_count": int(task.success_count or 0),
+            "failed_count": int(task.failed_count or 0),
+            "top_reason": _sanitize_meta_text(task.error_message),
+            "status": _derive_task_status(
+                total_matches=total_matches,
+                success_matches=success_matches,
+                failed_matches=failed_matches,
+                partial_matches=partial_matches,
+            ),
+        }
+
+    status_counter = {"success": 0, "failed": 0, "partial": 0, "pending": 0, "running": 0, "cancelled": 0}
+    reason_counter: Dict[str, int] = {}
+    expected_count = 0
+    success_count = 0
+    failed_count = 0
+
+    for row in rows:
+        status = str(row.status or "pending").strip().lower()
+        if status not in status_counter:
+            status = "pending"
+        status_counter[status] += 1
+        expected_count += int(row.expected_count or 0)
+        success_count += int(row.success_count or 0)
+        failed_count += int(row.failed_count or 0)
+        if row.last_error:
+            key = _sanitize_meta_text(row.last_error)
+            if key:
+                reason_counter[key] = reason_counter.get(key, 0) + 1
+
+    total_matches = len(rows)
+    success_matches = int(status_counter["success"])
+    failed_matches = int(status_counter["failed"])
+    partial_matches = int(status_counter["partial"])
+    top_reason = ""
+    if reason_counter:
+        top_reason = sorted(reason_counter.items(), key=lambda kv: kv[1], reverse=True)[0][0]
+
+    status = _derive_task_status(
+        total_matches=total_matches,
+        success_matches=success_matches,
+        failed_matches=failed_matches,
+        partial_matches=partial_matches,
+    )
+    return {
+        "total_matches": total_matches,
+        "success_matches": success_matches,
+        "failed_matches": failed_matches,
+        "partial_matches": partial_matches,
+        "expected_count": expected_count,
+        "success_count": success_count,
+        "failed_count": failed_count,
+        "top_reason": top_reason,
+        "status": status,
+    }
+
+
+async def _finalize_task_after_run(
+    db: AsyncSession,
+    task: IntelligenceCollectionTask,
+    *,
+    match_ids: Optional[List[int]] = None,
+    sources: Optional[List[str]] = None,
+    intel_types: Optional[List[str]] = None,
+    trigger: str = "run",
+) -> Dict[str, Any]:
+    snapshot = await _build_task_completion_snapshot(db, task, match_ids=match_ids)
+    run_match_ids = [int(x) for x in (match_ids or _json_loads(task.match_ids_json, [])) if str(x).isdigit()]
+    run_sources = [str(x) for x in (sources or _json_loads(task.sources_json, [])) if str(x).strip()]
+    run_intel_types = [str(x) for x in (intel_types or _json_loads(task.intel_types_json, [])) if str(x).strip()]
+    desired_total = len(run_match_ids) * len(run_sources) * len(run_intel_types)
+
+    total_count = max(
+        desired_total,
+        int(snapshot.get("expected_count") or 0),
+        int(snapshot.get("success_count") or 0) + int(snapshot.get("failed_count") or 0),
+        int(task.total_count or 0),
+    )
+    success_count = int(snapshot.get("success_count") or 0)
+    failed_count = int(snapshot.get("failed_count") or 0)
+    task.total_count = int(total_count)
+    task.success_count = int(success_count)
+    task.failed_count = int(failed_count)
+    task.status = str(snapshot.get("status") or "failed")
+    task.finished_at = datetime.utcnow()
+    success_rate = round((success_count / total_count), 4) if total_count > 0 else 0.0
+    task.success_rate = success_rate
+    top_reason = _sanitize_meta_text(snapshot.get("top_reason"), "")
+    if task.status == "failed":
+        task.error_message = top_reason or "all-failed"
+    elif task.status == "partial":
+        task.error_message = top_reason or None
+    else:
+        task.error_message = None
+
+    final_log_level = "success" if task.status == "success" else ("warning" if task.status == "partial" else "error")
+    _append_log(
+        task,
+        final_log_level,
+        (
+            f"{trigger} finalized: status={task.status}; "
+            f"success_count={success_count}; failed_count={failed_count}; total_count={total_count}; "
+            f"success_rate={success_rate}"
+        ),
+    )
+    return {
+        **snapshot,
+        "success_rate": success_rate,
+        "status": task.status,
+    }
+
+
+async def _run_collection_task_async(
+    task_id: int,
+    *,
+    trigger: str,
+    run_match_ids: Optional[List[int]] = None,
+    run_sources: Optional[List[str]] = None,
+    run_intel_types: Optional[List[str]] = None,
+) -> None:
+    async with AsyncSessionLocal() as session:
+        task = await session.get(IntelligenceCollectionTask, task_id)
+        if not task:
+            return
+        if str(task.status or "").lower() == "cancelled":
+            return
+
+        actual_match_ids = [int(x) for x in (run_match_ids or _json_loads(task.match_ids_json, [])) if str(x).isdigit()]
+        actual_sources = [str(x) for x in (run_sources or _json_loads(task.sources_json, [])) if str(x).strip()]
+        actual_intel_types = [str(x) for x in (run_intel_types or _json_loads(task.intel_types_json, [])) if str(x).strip()]
+        if not actual_match_ids or not actual_sources or not actual_intel_types:
+            task.status = "failed"
+            task.finished_at = datetime.utcnow()
+            task.error_message = "task scope is empty"
+            task.success_rate = 0.0
+            _append_log(task, "error", f"{trigger} failed: task scope is empty")
+            await session.commit()
+            return
+
+        try:
+            task.status = "running"
+            task.started_at = task.started_at or datetime.utcnow()
+            task.finished_at = None
+            task.error_message = None
+            task.total_count = max(int(task.total_count or 0), len(actual_match_ids) * len(actual_sources) * len(actual_intel_types))
+            _append_log(
+                task,
+                "info",
+                (
+                    f"{trigger} started: "
+                    f"scope(match_ids={actual_match_ids}, sources={actual_sources}, intel_types={actual_intel_types})"
+                ),
+            )
+            await _ensure_task_match_subtasks(
+                db=session,
+                task=task,
+                match_ids=actual_match_ids,
+                sources=actual_sources,
+                intel_types=actual_intel_types,
+            )
+            await session.commit()
+
+            stats = await _simulate_collect_items(
+                db=session,
+                task=task,
+                match_ids=actual_match_ids,
+                sources=actual_sources,
+                intel_types=actual_intel_types,
+            )
+            if stats.get("fail_reasons"):
+                top = sorted(stats["fail_reasons"].items(), key=lambda x: x[1], reverse=True)[:5]
+                _append_log(task, "warning", "top fallback reasons: " + "; ".join([f"{k}={v}" for k, v in top]))
+
+            await _finalize_task_after_run(
+                session,
+                task,
+                match_ids=actual_match_ids,
+                sources=actual_sources,
+                intel_types=actual_intel_types,
+                trigger=trigger,
+            )
+            await session.commit()
+        except asyncio.CancelledError:
+            task_ref = await session.get(IntelligenceCollectionTask, task_id)
+            if task_ref and str(task_ref.status or "").lower() not in TASK_TERMINAL_STATUSES:
+                task_ref.status = "cancelled"
+                task_ref.finished_at = datetime.utcnow()
+                _append_log(task_ref, "warning", f"{trigger} cancelled")
+                await session.commit()
+            raise
+        except Exception as exc:
+            task_ref = await session.get(IntelligenceCollectionTask, task_id)
+            if not task_ref:
+                return
+            task_ref.status = "failed"
+            task_ref.finished_at = datetime.utcnow()
+            task_ref.error_message = str(exc)
+            task_ref.success_rate = 0.0
+            _append_log(task_ref, "error", f"{trigger} failed: {exc}")
+            await session.commit()
+
+
+def _queue_countdown_seconds(delay_seconds: float) -> int:
+    try:
+        delay = float(delay_seconds or 0.0)
+    except Exception:
+        delay = 0.0
+    if delay <= 0:
+        return 0
+    return max(0, int(round(delay)))
+
+
+def _query_queue_state(queue_job_id: Optional[str]) -> str:
+    job_id = str(queue_job_id or "").strip()
+    if not job_id:
+        return ""
+    try:
+        state = str(task_queue_app.AsyncResult(job_id).state or "PENDING").upper()
+        return state
+    except Exception as exc:
+        logger.warning("[intelligence.collection.queue] query state failed job_id=%s err=%s", job_id, exc)
+        return "UNKNOWN"
+
+
+def _is_queue_job_active(queue_job_id: Optional[str]) -> bool:
+    state = _query_queue_state(queue_job_id)
+    return state in TASK_QUEUE_ACTIVE_STATES
+
+
+def _enqueue_task_execution(
+    task: IntelligenceCollectionTask,
+    *,
+    trigger: str,
+    delay_seconds: float = 0.0,
+    run_match_ids: Optional[List[int]] = None,
+    run_sources: Optional[List[str]] = None,
+    run_intel_types: Optional[List[str]] = None,
+) -> Dict[str, Any]:
+    countdown = _queue_countdown_seconds(delay_seconds)
+    payload: Dict[str, Any] = {
+        "task_id": int(task.id),
+        "trigger": str(trigger or "collect"),
+    }
+    if run_match_ids is not None:
+        payload["run_match_ids"] = [int(x) for x in run_match_ids if str(x).isdigit()]
+    if run_sources is not None:
+        payload["run_sources"] = [str(x) for x in run_sources if str(x).strip()]
+    if run_intel_types is not None:
+        payload["run_intel_types"] = [str(x) for x in run_intel_types if str(x).strip()]
+
+    try:
+        async_result = task_queue_app.send_task(
+            TASK_QUEUE_NAME,
+            kwargs=payload,
+            countdown=countdown,
+        )
+        queue_job_id = str(async_result.id or "").strip()
+        if not queue_job_id:
+            raise RuntimeError("empty queue_job_id from task queue")
+        task.queue_job_id = queue_job_id
+        _append_log(
+            task,
+            "info",
+            (
+                f"queued task via celery: trigger={trigger}; queue_job_id={queue_job_id}; "
+                f"countdown={countdown}"
+            ),
+        )
+        return {
+            "accepted": True,
+            "queue_job_id": queue_job_id,
+            "countdown": countdown,
+            "queue_state": "PENDING",
+            "error": None,
+        }
+    except Exception as exc:
+        logger.exception("[intelligence.collection.queue] enqueue failed task_id=%s", task.id)
+        _append_log(task, "error", f"queue submit failed: {exc}")
+        return {
+            "accepted": False,
+            "queue_job_id": "",
+            "countdown": countdown,
+            "queue_state": "FAILED",
+            "error": str(exc),
+        }
+
+
+async def _sync_task_status_from_queue(
+    db: AsyncSession,
+    task: IntelligenceCollectionTask,
+) -> bool:
+    if not task or not task.queue_job_id:
+        return False
+    task_status = str(task.status or "").strip().lower()
+    if task_status in TASK_TERMINAL_STATUSES:
+        return False
+
+    queue_state = _query_queue_state(task.queue_job_id)
+    if not queue_state:
+        return False
+
+    now = datetime.utcnow()
+    changed = False
+
+    if queue_state in {"RECEIVED", "STARTED", "RETRY"}:
+        if task_status != "running":
+            task.status = "running"
+            task.started_at = task.started_at or now
+            task.finished_at = None
+            changed = True
+            _append_log(task, "info", f"queue state synced: {queue_state.lower()} -> running")
+        return changed
+
+    if queue_state in TASK_QUEUE_FAILURE_STATES:
+        task.status = "failed"
+        task.finished_at = now
+        if not task.error_message:
+            task.error_message = "queue failure"
+        task.success_rate = round(_safe_float(task.success_rate, 0.0), 4)
+        changed = True
+        _append_log(task, "error", "queue state synced: failure")
+        return changed
+
+    if queue_state in TASK_QUEUE_CANCELLED_STATES:
+        task.status = "cancelled"
+        task.finished_at = now
+        changed = True
+        _append_log(task, "warning", "queue state synced: revoked")
+        return changed
+
+    if queue_state == "SUCCESS" and task_status in {"pending", "running"}:
+        snapshot = await _build_task_completion_snapshot(db, task)
+        total_count = max(
+            int(task.total_count or 0),
+            int(snapshot.get("expected_count") or 0),
+            int(snapshot.get("success_count") or 0) + int(snapshot.get("failed_count") or 0),
+        )
+        success_count = int(snapshot.get("success_count") or 0)
+        failed_count = int(snapshot.get("failed_count") or 0)
+        task.total_count = total_count
+        task.success_count = success_count
+        task.failed_count = failed_count
+        task.success_rate = round((success_count / total_count), 4) if total_count > 0 else 0.0
+        task.status = str(snapshot.get("status") or "success")
+        task.finished_at = task.finished_at or now
+        top_reason = _sanitize_meta_text(snapshot.get("top_reason"), "")
+        if task.status == "failed":
+            task.error_message = top_reason or task.error_message or "queue failure"
+        elif task.status == "partial":
+            task.error_message = top_reason or task.error_message
+        else:
+            task.error_message = None
+        changed = True
+        _append_log(task, "info", f"queue state synced: success -> {task.status}")
+        return changed
+
+    return False
+
+
+async def _recover_active_tasks_from_queue(
+    db: AsyncSession,
+    *,
+    focus_tasks: Optional[List[IntelligenceCollectionTask]] = None,
+    limit: int = 80,
+) -> int:
+    now = datetime.utcnow()
+    if focus_tasks is None:
+        rows = (
+            await db.execute(
+                select(IntelligenceCollectionTask)
+                .where(
+                    IntelligenceCollectionTask.status.in_(["pending", "running"])
+                )
+                .order_by(IntelligenceCollectionTask.updated_at.desc(), IntelligenceCollectionTask.id.desc())
+                .limit(limit)
+            )
+        ).scalars().all()
+    else:
+        rows = list(focus_tasks)
+
+    recovered = 0
+    changed = False
+    for task in rows:
+        if task.queue_job_id:
+            if await _sync_task_status_from_queue(db, task):
+                changed = True
+                recovered += 1
+            continue
+
+        task_status = str(task.status or "").strip().lower()
+        should_requeue = False
+        if task_status == "running":
+            should_requeue = True
+        elif task_status == "pending":
+            planned_at = task.planned_at
+            should_requeue = planned_at is None or planned_at <= now
+
+        if not should_requeue:
+            continue
+
+        if task_status == "running":
+            task.status = "pending"
+            task.started_at = None
+            task.finished_at = None
+            _append_log(task, "warning", "queue_job_id missing on running task, converted to pending for recovery")
+
+        enqueue_result = _enqueue_task_execution(
+            task,
+            trigger="restart-recovery",
+            delay_seconds=0.0,
+        )
+        if enqueue_result["accepted"]:
+            recovered += 1
+            changed = True
+            if task.planned_at and task.planned_at < now:
+                task.late_run = True
+        else:
+            task.error_message = enqueue_result["error"] or "queue submit failed"
+            changed = True
+
+    if changed:
+        await db.commit()
+    return recovered
+
+
+async def _dispatch_due_pending_tasks(db: AsyncSession, limit: int = 20) -> int:
+    now = datetime.utcnow()
+    rows = (
+        await db.execute(
+            select(IntelligenceCollectionTask)
+            .where(
+                IntelligenceCollectionTask.status == "pending",
+                IntelligenceCollectionTask.planned_at.isnot(None),
+                IntelligenceCollectionTask.planned_at <= now,
+                or_(
+                    IntelligenceCollectionTask.queue_job_id.is_(None),
+                    IntelligenceCollectionTask.queue_job_id == "",
+                ),
+            )
+            .order_by(IntelligenceCollectionTask.planned_at.asc(), IntelligenceCollectionTask.id.asc())
+            .limit(limit)
+        )
+    ).scalars().all()
+    dispatched = 0
+    changed = False
+    for task in rows:
+        enqueue_result = _enqueue_task_execution(task, trigger="scheduled-dispatch", delay_seconds=0.0)
+        if not enqueue_result["accepted"]:
+            continue
+        dispatched += 1
+        changed = True
+        planned_at = task.planned_at
+        if planned_at and planned_at < now:
+            task.late_run = True
+        _append_log(task, "info", "pending task dispatched by runtime scheduler")
+    if changed:
+        await db.commit()
+    return dispatched
+
+
+async def _build_task_failure_summary(db: AsyncSession, task: IntelligenceCollectionTask) -> Dict[str, Any]:
+    logs = _json_loads(task.logs_json, [])
+    reason_counter: Dict[str, int] = {}
+    source_runtime: Dict[str, Dict[str, Any]] = {}
+    source_block_counter: Dict[str, int] = {}
+    sample_logs: List[Dict[str, Any]] = []
+
+    for entry in logs:
+        message = str(entry.get("message") or "")
+        level = str(entry.get("level") or "").lower()
+        if level in {"error", "warning"}:
+            sample_logs.append(
+                {
+                    "time": entry.get("time"),
+                    "level": level,
+                    "message": message[:300],
+                }
+            )
+
+        runtime_row = _parse_source_runtime_log(message)
+        if runtime_row:
+            src = runtime_row["source"]
+            bucket = source_runtime.setdefault(
+                src,
+                {"source": src, "requests": 0, "ok": 0, "timeout": 0, "errors": 0, "retries": 0, "circuit_skipped": 0},
+            )
+            for key in ("requests", "ok", "timeout", "errors", "retries", "circuit_skipped"):
+                bucket[key] = int(bucket.get(key, 0)) + int(runtime_row.get(key, 0))
+
+        decision_match = re.search(r"decision .*source=([^;]+);.*decision=blocked;", message)
+        if decision_match:
+            source = _sanitize_meta_text(decision_match.group(1))
+            if source:
+                source_block_counter[source] = source_block_counter.get(source, 0) + 1
+
+        reason_tokens = _extract_reason_tokens_from_log(message)
+        for token in reason_tokens:
+            reason_counter[token] = reason_counter.get(token, 0) + 1
+
+    subtask_rows = (
+        await db.execute(
+            select(IntelligenceCollectionMatchSubtask).where(
+                IntelligenceCollectionMatchSubtask.task_id == task.id
+            )
+        )
+    ).scalars().all()
+    for row in subtask_rows:
+        if row.last_error:
+            key = _sanitize_meta_text(row.last_error)
+            if key:
+                reason_counter[key] = reason_counter.get(key, 0) + 1
+
+    top_reasons = [
+        {"reason": key, "count": count}
+        for key, count in sorted(reason_counter.items(), key=lambda kv: kv[1], reverse=True)[:8]
+    ]
+
+    source_failures: List[Dict[str, Any]] = []
+    for source, stats in source_runtime.items():
+        blocked_count = int(source_block_counter.get(source, 0))
+        severity_score = int(stats.get("timeout", 0)) + int(stats.get("errors", 0)) + int(stats.get("circuit_skipped", 0))
+        if severity_score <= 0 and blocked_count <= 0:
+            continue
+        source_failures.append(
+            {
+                "source": source,
+                "timeout": int(stats.get("timeout", 0)),
+                "errors": int(stats.get("errors", 0)),
+                "retries": int(stats.get("retries", 0)),
+                "circuit_skipped": int(stats.get("circuit_skipped", 0)),
+                "blocked_decisions": blocked_count,
+                "severity_score": severity_score + blocked_count,
+            }
+        )
+    source_failures.sort(key=lambda x: x.get("severity_score", 0), reverse=True)
+    sample_logs = sample_logs[-10:]
+
+    return {
+        "task_id": task.id,
+        "task_status": task.status,
+        "top_reasons": top_reasons,
+        "source_failures": source_failures,
+        "sample_logs": sample_logs,
+        "generated_at": datetime.utcnow().isoformat(),
     }
 
 
@@ -833,6 +1670,42 @@ def _safe_float(value: Any, default: float = 0.0) -> float:
         return float(value)
     except Exception:
         return default
+
+
+def _get_runtime_llm_service():
+    svc = None
+    try:
+        from .... import main as main_module
+        svc = getattr(main_module, "llm_service", None)
+    except Exception:
+        svc = None
+    if not svc:
+        try:
+            import __main__ as main_module
+            svc = getattr(main_module, "llm_service", None)
+        except Exception:
+            svc = None
+    return svc
+
+
+def _extract_first_json_object(raw_text: str) -> Dict[str, Any]:
+    text = (raw_text or "").strip()
+    if not text:
+        return {}
+    try:
+        obj = json.loads(text)
+        return obj if isinstance(obj, dict) else {}
+    except Exception:
+        pass
+
+    match = re.search(r"\{[\s\S]*\}", text)
+    if not match:
+        return {}
+    try:
+        obj = json.loads(match.group(0))
+        return obj if isinstance(obj, dict) else {}
+    except Exception:
+        return {}
 
 
 def _graph_node_id(node_type: str, raw_id: Any) -> str:
@@ -895,8 +1768,17 @@ def _extract_quality_from_raw(raw_text: str) -> Dict[str, Any]:
     quality_pass_reason = ""
     quality_block_reason = ""
     source_parser = ""
+    article_url = ""
     match_hit_terms: List[str] = []
     is_article_page = False
+    ai_enhanced = False
+    ai_provider = ""
+    ai_model = ""
+    ai_summary = ""
+    ai_viewpoint = ""
+    ai_risk_level = ""
+    ai_confidence: Optional[float] = None
+    ai_reason = ""
 
     if raw.startswith("[match-article]"):
         is_article_page = True
@@ -927,6 +1809,10 @@ def _extract_quality_from_raw(raw_text: str) -> Dict[str, Any]:
     if m:
         source_parser = _sanitize_meta_text(m.group(1))
 
+    m = re.search(r"article_url=([^;]+);", raw)
+    if m:
+        article_url = _sanitize_meta_text(m.group(1))
+
     m = re.search(r"hit_terms=([^;]+);", raw)
     if m:
         terms_raw = _sanitize_meta_text(m.group(1))
@@ -939,6 +1825,38 @@ def _extract_quality_from_raw(raw_text: str) -> Dict[str, Any]:
     m = re.search(r"is_article_page=([^;]+);", raw)
     if m:
         is_article_page = m.group(1).strip() in {"1", "true", "True"}
+
+    m = re.search(r"ai_enhanced=([^;]+);", raw)
+    if m:
+        ai_enhanced = m.group(1).strip() in {"1", "true", "True"}
+
+    m = re.search(r"ai_provider=([^;]+);", raw)
+    if m:
+        ai_provider = _sanitize_meta_text(m.group(1))
+
+    m = re.search(r"ai_model=([^;]+);", raw)
+    if m:
+        ai_model = _sanitize_meta_text(m.group(1))
+
+    m = re.search(r"ai_summary=([^;]+);", raw)
+    if m:
+        ai_summary = _sanitize_meta_text(m.group(1))
+
+    m = re.search(r"ai_viewpoint=([^;]+);", raw)
+    if m:
+        ai_viewpoint = _sanitize_meta_text(m.group(1))
+
+    m = re.search(r"ai_risk_level=([^;]+);", raw)
+    if m:
+        ai_risk_level = _sanitize_meta_text(m.group(1))
+
+    m = re.search(r"ai_confidence=([^;]+);", raw)
+    if m:
+        ai_confidence = round(_safe_float(m.group(1), 0.0), 3)
+
+    m = re.search(r"ai_reason=([^;]+);", raw)
+    if m:
+        ai_reason = _sanitize_meta_text(m.group(1))
 
     if quality_score is None:
         quality_score = 0.0
@@ -954,9 +1872,128 @@ def _extract_quality_from_raw(raw_text: str) -> Dict[str, Any]:
         "quality_pass_reason": quality_pass_reason,
         "quality_block_reason": quality_block_reason,
         "source_parser": source_parser,
+        "article_url": article_url,
         "match_hit_terms": match_hit_terms,
         "is_article_page": bool(is_article_page),
         "quality_status": quality_status,
+        "ai_enhanced": bool(ai_enhanced),
+        "ai_provider": ai_provider,
+        "ai_model": ai_model,
+        "ai_summary": ai_summary,
+        "ai_viewpoint": ai_viewpoint,
+        "ai_risk_level": ai_risk_level,
+        "ai_confidence": ai_confidence,
+        "ai_reason": ai_reason,
+    }
+
+
+def _normalize_match_hit_terms(raw_terms: Any) -> List[str]:
+    if isinstance(raw_terms, str):
+        candidate_tokens = re.split(r"[,\|/]", raw_terms)
+    elif isinstance(raw_terms, list):
+        candidate_tokens = raw_terms
+    else:
+        return []
+    out: List[str] = []
+    for token in candidate_tokens:
+        txt = _sanitize_meta_text(token)
+        if txt and txt not in out:
+            out.append(txt)
+    return out
+
+
+def _build_structured_quality_fields(
+    source_snapshot: Dict[str, Any],
+    article_pick: Dict[str, Any],
+) -> Dict[str, Any]:
+    matched = bool(article_pick.get("matched"))
+    source_code = _sanitize_meta_text(source_snapshot.get("source_code"), "")
+    source_parser = _sanitize_meta_text(article_pick.get("source_parser"), f"{source_code}-snapshot" if source_code else "")
+    hit_terms = _normalize_match_hit_terms(article_pick.get("match_hit_terms"))
+    raw_score = article_pick.get("quality_score", article_pick.get("match_score", 0.0))
+    quality_score = round(_safe_float(raw_score, 0.0), 2)
+    pass_reason = _sanitize_meta_text(article_pick.get("quality_pass_reason"), "detail-page-context-hit" if matched else "")
+    block_reason = _sanitize_meta_text(article_pick.get("quality_block_reason"), "")
+    if not block_reason:
+        block_reason = _sanitize_meta_text(article_pick.get("error") or source_snapshot.get("error"), "")
+
+    quality_status = "accepted" if matched else "source_view"
+    if not matched and block_reason:
+        quality_status = "blocked"
+    if not matched and not block_reason:
+        block_reason = "no-article-match"
+
+    article_url = _sanitize_meta_text(article_pick.get("article_url"), "")
+    return {
+        "quality_status": quality_status,
+        "quality_score": quality_score,
+        "quality_pass_reason": pass_reason,
+        "quality_block_reason": block_reason,
+        "source_parser": source_parser,
+        "article_url": article_url,
+        "match_hit_terms": hit_terms,
+        "is_article_page": matched,
+    }
+
+
+def _extract_quality_from_item(item: IntelligenceCollectionItem) -> Dict[str, Any]:
+    legacy = _extract_quality_from_raw(item.content_raw or "")
+
+    structured_terms = _normalize_match_hit_terms(_json_loads(item.match_hit_terms_json, []))
+    quality_status = str(item.quality_status or "").strip().lower()
+    if quality_status not in {"accepted", "blocked", "source_view"}:
+        quality_status = str(legacy.get("quality_status") or "source_view")
+    # Existing rows migrated from raw may carry default source_view values.
+    if quality_status == "source_view" and str(legacy.get("quality_status")) in {"accepted", "blocked"}:
+        no_structured_signal = not (
+            _sanitize_meta_text(item.quality_pass_reason, "")
+            or _sanitize_meta_text(item.quality_block_reason, "")
+            or _sanitize_meta_text(item.source_parser, "")
+            or _sanitize_meta_text(item.article_url, "")
+            or structured_terms
+        )
+        if no_structured_signal:
+            quality_status = str(legacy.get("quality_status"))
+
+    quality_score = round(_safe_float(item.quality_score, _safe_float(legacy.get("quality_score"), 0.0)), 2)
+    if quality_score <= 0 and _safe_float(legacy.get("quality_score"), 0.0) > 0 and quality_status in {"accepted", "blocked"}:
+        quality_score = round(_safe_float(legacy.get("quality_score"), 0.0), 2)
+
+    quality_pass_reason = _sanitize_meta_text(item.quality_pass_reason, "")
+    if not quality_pass_reason and quality_status == "accepted":
+        quality_pass_reason = _sanitize_meta_text(legacy.get("quality_pass_reason"), "")
+    quality_block_reason = _sanitize_meta_text(item.quality_block_reason, "")
+    if not quality_block_reason and quality_status != "accepted":
+        quality_block_reason = _sanitize_meta_text(legacy.get("quality_block_reason"), "")
+    source_parser = _sanitize_meta_text(item.source_parser, "") or _sanitize_meta_text(legacy.get("source_parser"), "")
+    article_url = (
+        _sanitize_meta_text(item.article_url, "")
+        or _sanitize_meta_text(legacy.get("article_url"), "")
+        or _sanitize_meta_text(item.source_url, "")
+    )
+    match_hit_terms = structured_terms or _normalize_match_hit_terms(legacy.get("match_hit_terms"))
+
+    is_article_page = quality_status == "accepted"
+    if quality_status == "source_view":
+        is_article_page = bool(legacy.get("is_article_page"))
+
+    return {
+        "quality_score": quality_score,
+        "quality_pass_reason": quality_pass_reason,
+        "quality_block_reason": quality_block_reason,
+        "source_parser": source_parser,
+        "article_url": article_url,
+        "match_hit_terms": match_hit_terms,
+        "is_article_page": bool(is_article_page),
+        "quality_status": quality_status,
+        "ai_enhanced": legacy.get("ai_enhanced"),
+        "ai_provider": legacy.get("ai_provider"),
+        "ai_model": legacy.get("ai_model"),
+        "ai_summary": legacy.get("ai_summary"),
+        "ai_viewpoint": legacy.get("ai_viewpoint"),
+        "ai_risk_level": legacy.get("ai_risk_level"),
+        "ai_confidence": legacy.get("ai_confidence"),
+        "ai_reason": legacy.get("ai_reason"),
     }
 
 
@@ -1100,6 +2137,11 @@ async def _ensure_task_match_subtasks(
         if row:
             if int(row.expected_count or 0) != expected_per_match:
                 row.expected_count = expected_per_match
+            row.candidate_count = int(row.candidate_count or 0)
+            row.parsed_count = int(row.parsed_count or 0)
+            row.matched_count = int(row.matched_count or 0)
+            row.accepted_count = int(row.accepted_count or 0)
+            row.blocked_count = int(row.blocked_count or 0)
             continue
         row = IntelligenceCollectionMatchSubtask(
             task_id=task.id,
@@ -1109,6 +2151,11 @@ async def _ensure_task_match_subtasks(
             item_count=0,
             success_count=0,
             failed_count=0,
+            candidate_count=0,
+            parsed_count=0,
+            matched_count=0,
+            accepted_count=0,
+            blocked_count=0,
         )
         _append_subtask_log(row, "info", "subtask created")
         db.add(row)
@@ -1136,6 +2183,11 @@ async def _reset_task_match_subtasks(
         row.item_count = 0
         row.success_count = 0
         row.failed_count = 0
+        row.candidate_count = 0
+        row.parsed_count = 0
+        row.matched_count = 0
+        row.accepted_count = 0
+        row.blocked_count = 0
         row.started_at = None
         row.finished_at = None
         row.last_error = None
@@ -1411,13 +2463,290 @@ async def _simulate_collect_items(
             max_value=10.0,
         )
 
+    ai_enabled = _normalize_bool(
+        os.getenv("INTELLIGENCE_COLLECTION_AI_ENABLED"),
+        DEFAULT_AI_ENHANCEMENT_SETTINGS["enabled"],
+    )
+    ai_provider = str(
+        os.getenv("INTELLIGENCE_COLLECTION_AI_PROVIDER", DEFAULT_AI_ENHANCEMENT_SETTINGS["provider"])
+    ).strip().lower()
+    ai_model = str(
+        os.getenv("INTELLIGENCE_COLLECTION_AI_MODEL", DEFAULT_AI_ENHANCEMENT_SETTINGS["model"])
+    ).strip() or DEFAULT_AI_ENHANCEMENT_SETTINGS["model"]
+    ai_temperature = _normalize_float(
+        os.getenv("INTELLIGENCE_COLLECTION_AI_TEMPERATURE"),
+        default=float(DEFAULT_AI_ENHANCEMENT_SETTINGS["temperature"]),
+        min_value=0.0,
+        max_value=1.5,
+    )
+    ai_max_tokens = _normalize_int(
+        os.getenv("INTELLIGENCE_COLLECTION_AI_MAX_TOKENS"),
+        default=int(DEFAULT_AI_ENHANCEMENT_SETTINGS["max_tokens"]),
+        min_value=64,
+        max_value=1500,
+    )
+    ai_timeout_seconds = _normalize_float(
+        os.getenv("INTELLIGENCE_COLLECTION_AI_TIMEOUT_SECONDS"),
+        default=float(DEFAULT_AI_ENHANCEMENT_SETTINGS["timeout_seconds"]),
+        min_value=2.0,
+        max_value=40.0,
+    )
+    ai_min_quality_score = _normalize_float(
+        os.getenv("INTELLIGENCE_COLLECTION_AI_MIN_QUALITY_SCORE"),
+        default=float(DEFAULT_AI_ENHANCEMENT_SETTINGS["min_quality_score"]),
+        min_value=0.0,
+        max_value=10.0,
+    )
+    ai_max_calls_per_task = _normalize_int(
+        os.getenv("INTELLIGENCE_COLLECTION_AI_MAX_CALLS_PER_TASK"),
+        default=int(DEFAULT_AI_ENHANCEMENT_SETTINGS["max_calls_per_task"]),
+        min_value=1,
+        max_value=300,
+    )
+
+    ai_runtime: Dict[str, Any] = {
+        "enabled": ai_enabled,
+        "provider": ai_provider,
+        "model": ai_model,
+        "provider_ready": None,
+        "calls": 0,
+        "success": 0,
+        "failed": 0,
+        "cache_hit": 0,
+        "skipped_unmatched": 0,
+        "skipped_low_quality": 0,
+        "skipped_budget": 0,
+        "last_error": "",
+    }
+    ai_cache: Dict[tuple, Dict[str, Any]] = {}
+    ai_db_runtime = {
+        "checked": False,
+        "api_key": "",
+        "provider_name": "",
+    }
+
+    async def _load_qwen_api_key_from_db() -> tuple[str, str]:
+        if ai_db_runtime["checked"]:
+            return str(ai_db_runtime.get("api_key") or ""), str(ai_db_runtime.get("provider_name") or "")
+        ai_db_runtime["checked"] = True
+        try:
+            row = (
+                await db.execute(
+                    select(LLMProvider)
+                    .where(
+                        LLMProvider.enabled.is_(True),
+                        LLMProvider.provider_type == LLMProviderTypeEnum.ALIBABA,
+                    )
+                    .order_by(LLMProvider.priority.asc(), LLMProvider.id.asc())
+                    .limit(1)
+                )
+            ).scalars().first()
+            if not row or not row.api_key:
+                return "", ""
+            encrypted = str(row.api_key or "")
+            if not encrypted:
+                return "", ""
+            try:
+                secret_raw = str(getattr(app_settings, "SECRET_KEY", "") or "")
+                cipher_key = secret_raw.encode()[:32].ljust(32, b"0")[:32] if secret_raw else b"0" * 32
+                decrypted = decrypt_sensitive_data(encrypted, cipher_key)
+            except Exception:
+                decrypted = encrypted
+            ai_db_runtime["api_key"] = str(decrypted or "")
+            ai_db_runtime["provider_name"] = str(row.name or f"provider-{row.id}")
+            return str(ai_db_runtime["api_key"]), str(ai_db_runtime["provider_name"])
+        except Exception:
+            return "", ""
+
+    async def _call_qwen(prompt: str) -> tuple[str, str]:
+        # First try already-initialized runtime llm_service.
+        svc = _get_runtime_llm_service()
+        if svc and getattr(svc, "providers", None):
+            providers = set(getattr(svc, "providers", {}).keys())
+            provider_name = "qwen" if "qwen" in providers else ("alibaba" if "alibaba" in providers else "")
+            if provider_name:
+                try:
+                    txt = await asyncio.wait_for(
+                        svc.generate_response(
+                            prompt,
+                            provider=provider_name,
+                            model=ai_model,
+                            temperature=ai_temperature,
+                            max_tokens=ai_max_tokens,
+                        ),
+                        timeout=ai_timeout_seconds + 2.0,
+                    )
+                    ai_runtime["provider_ready"] = True
+                    return str(txt or ""), provider_name
+                except Exception as e:
+                    ai_runtime["last_error"] = _sanitize_meta_text(e)
+
+        # Fallback: call QWEN directly using key from llm_providers(alibaba).
+        api_key, provider_name = await _load_qwen_api_key_from_db()
+        if not api_key:
+            ai_runtime["provider_ready"] = False
+            return "", ""
+
+        def _sync_call() -> str:
+            resp = requests.post(
+                "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {api_key}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "model": ai_model,
+                    "messages": [{"role": "user", "content": prompt}],
+                    "temperature": ai_temperature,
+                    "max_tokens": ai_max_tokens,
+                },
+                timeout=ai_timeout_seconds,
+            )
+            resp.raise_for_status()
+            payload = resp.json() if resp.content else {}
+            return str((((payload or {}).get("choices") or [{}])[0].get("message") or {}).get("content") or "")
+
+        try:
+            txt = await asyncio.wait_for(asyncio.to_thread(_sync_call), timeout=ai_timeout_seconds + 2.0)
+            ai_runtime["provider_ready"] = True
+            return txt, (provider_name or "qwen-direct")
+        except Exception as e:
+            ai_runtime["last_error"] = _sanitize_meta_text(e)
+            return "", ""
+
+    async def _ai_enhance_article(
+        *,
+        match_id: int,
+        source_code: str,
+        intel_category: str,
+        intel_type: str,
+        league_name: str,
+        home_team: str,
+        away_team: str,
+        article_pick: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        result = {
+            "enabled": ai_enabled,
+            "used": False,
+            "provider": "",
+            "model": ai_model,
+            "summary": "",
+            "viewpoint": "",
+            "risk_level": "",
+            "confidence": None,
+            "reason": "disabled",
+            "key_factors": "",
+        }
+        if not ai_enabled:
+            return result
+
+        if not article_pick.get("matched"):
+            ai_runtime["skipped_unmatched"] = int(ai_runtime.get("skipped_unmatched", 0) or 0) + 1
+            result["reason"] = "skip-unmatched"
+            return result
+
+        if ai_runtime.get("provider_ready") is False:
+            result["reason"] = "llm-provider-unavailable"
+            return result
+
+        quality_score = _safe_float(article_pick.get("quality_score", article_pick.get("match_score", 0.0)), 0.0)
+        if quality_score < ai_min_quality_score:
+            ai_runtime["skipped_low_quality"] = int(ai_runtime.get("skipped_low_quality", 0) or 0) + 1
+            result["reason"] = f"skip-low-quality:{round(quality_score, 2)}"
+            return result
+
+        cache_key = (
+            int(match_id),
+            str(source_code),
+            str(intel_category),
+            str(article_pick.get("article_url") or article_pick.get("article_title") or ""),
+        )
+        if cache_key in ai_cache:
+            ai_runtime["cache_hit"] = int(ai_runtime.get("cache_hit", 0) or 0) + 1
+            cached = dict(ai_cache[cache_key])
+            cached["reason"] = cached.get("reason") or "cache-hit"
+            return cached
+
+        if int(ai_runtime.get("calls", 0) or 0) >= ai_max_calls_per_task:
+            ai_runtime["skipped_budget"] = int(ai_runtime.get("skipped_budget", 0) or 0) + 1
+            result["reason"] = "skip-call-budget"
+            return result
+
+        article_title = _sanitize_meta_text(article_pick.get("article_title"), "")
+        article_excerpt = _sanitize_meta_text(article_pick.get("article_excerpt"), "")
+        article_url = _sanitize_meta_text(article_pick.get("article_url"), "")
+        hit_terms = article_pick.get("match_hit_terms") if isinstance(article_pick.get("match_hit_terms"), list) else []
+        hit_terms_text = ", ".join([str(x) for x in hit_terms[:8]])
+
+        prompt = (
+            "你是体育竞猜情报结构化助手。请根据给定比赛与文章来源观点，输出严格 JSON（不要 markdown，不要解释）。\n"
+            "字段要求：\n"
+            "summary: 50~90字，聚焦可操作信息；\n"
+            "key_factors: 长度2~4的字符串数组；\n"
+            "viewpoint: 1句话，给出倾向/关注点（非投注建议）；\n"
+            "risk_level: 仅 low/medium/high；\n"
+            "confidence: 0~1 浮点数。\n"
+            f"比赛: {league_name} {home_team} vs {away_team} (match_id={match_id})\n"
+            f"情报分类: {intel_category}; 情报类型: {intel_type}; 来源: {source_code}\n"
+            f"文章来源: {article_title}\n"
+            f"链接: {article_url}\n"
+            f"命中词: {hit_terms_text}\n"
+            f"正文摘要: {article_excerpt[:1200]}\n"
+        )
+
+        ai_runtime["calls"] = int(ai_runtime.get("calls", 0) or 0) + 1
+        raw_text, used_provider = await _call_qwen(prompt)
+        if not raw_text:
+            ai_runtime["failed"] = int(ai_runtime.get("failed", 0) or 0) + 1
+            result["reason"] = ai_runtime.get("last_error") or "llm-empty-response"
+            return result
+
+        parsed = _extract_first_json_object(raw_text)
+        summary = _sanitize_meta_text(parsed.get("summary") if isinstance(parsed, dict) else "", "")
+        key_factors = parsed.get("key_factors") if isinstance(parsed, dict) else []
+        viewpoint = _sanitize_meta_text(parsed.get("viewpoint") if isinstance(parsed, dict) else "", "")
+        risk_level = _sanitize_meta_text(parsed.get("risk_level") if isinstance(parsed, dict) else "", "").lower()
+        confidence = _safe_float(parsed.get("confidence") if isinstance(parsed, dict) else None, -1)
+
+        if not summary:
+            summary = article_excerpt[:120]
+        if not viewpoint:
+            viewpoint = summary[:70]
+        if risk_level not in {"low", "medium", "high"}:
+            risk_level = "medium"
+        if confidence < 0:
+            confidence = min(0.95, max(0.45, round(quality_score / 4.0, 2)))
+        confidence = round(_normalize_float(confidence, default=0.65, min_value=0.0, max_value=1.0), 3)
+
+        if isinstance(key_factors, list):
+            factors = [str(x).strip() for x in key_factors if str(x).strip()][:4]
+        else:
+            factors = [x.strip() for x in str(key_factors or "").split(",") if x.strip()][:4]
+
+        result = {
+            "enabled": True,
+            "used": True,
+            "provider": used_provider or ai_provider,
+            "model": ai_model,
+            "summary": summary,
+            "viewpoint": viewpoint,
+            "risk_level": risk_level,
+            "confidence": confidence,
+            "reason": "ai-structured",
+            "key_factors": _sanitize_meta_text(" | ".join(factors), ""),
+        }
+        ai_runtime["success"] = int(ai_runtime.get("success", 0) or 0) + 1
+        ai_cache[cache_key] = dict(result)
+        return result
+
     _append_log(
         task,
         "info",
         (
             f"time-window-config loaded: before={time_window_before_hours}h after={time_window_after_hours}h "
             f"strict={time_window_strict_mode}; network(max_retry={source_max_retry}, trust_env={network_trust_env}); "
-            f"quality(min_title_len={min_title_len}, min_context_hits={min_context_hits})"
+            f"quality(min_title_len={min_title_len}, min_context_hits={min_context_hits}); "
+            f"ai(enabled={ai_enabled}, provider={ai_provider}, model={ai_model}, min_quality={ai_min_quality_score}, max_calls={ai_max_calls_per_task})"
         ),
     )
     source_state: Dict[str, Dict[str, Any]] = {
@@ -2998,9 +4327,35 @@ async def _simulate_collect_items(
             }
         return meta
 
+    def _build_ai_meta_segment(ai_result: Optional[Dict[str, Any]]) -> str:
+        if not ai_result:
+            return "ai_enhanced=0; ai_reason=not-requested; "
+        enhanced = bool(ai_result.get("used"))
+        provider = _sanitize_meta_text(ai_result.get("provider"), "")
+        model_name = _sanitize_meta_text(ai_result.get("model"), "")
+        ai_summary = _sanitize_meta_text(ai_result.get("summary"), "")
+        ai_viewpoint = _sanitize_meta_text(ai_result.get("viewpoint"), "")
+        ai_risk_level = _sanitize_meta_text(ai_result.get("risk_level"), "")
+        ai_reason = _sanitize_meta_text(ai_result.get("reason"), "")
+        ai_key_factors = _sanitize_meta_text(ai_result.get("key_factors"), "")
+        ai_conf = ai_result.get("confidence")
+        ai_conf_text = ""
+        if ai_conf is not None:
+            try:
+                ai_conf_text = str(round(float(ai_conf), 3))
+            except Exception:
+                ai_conf_text = ""
+        return (
+            f"ai_enhanced={(1 if enhanced else 0)}; "
+            f"ai_provider={provider}; ai_model={model_name}; ai_confidence={ai_conf_text}; "
+            f"ai_risk_level={ai_risk_level}; ai_viewpoint={ai_viewpoint}; ai_key_factors={ai_key_factors}; "
+            f"ai_reason={ai_reason}; ai_summary={ai_summary}; "
+        )
+
     def _build_content_raw(
         source_snapshot: Dict[str, Any],
         article_pick: Dict[str, Any],
+        ai_result: Optional[Dict[str, Any]],
         match_id: int,
         intel_type: str,
         league_name: str,
@@ -3022,11 +4377,13 @@ async def _simulate_collect_items(
         quality_score = round(_safe_float(article_pick.get("quality_score", article_pick.get("match_score", 0)), 0.0), 2)
         pass_reason = _sanitize_meta_text(article_pick.get("quality_pass_reason"), "")
         block_reason = _sanitize_meta_text(article_pick.get("quality_block_reason"), _sanitize_meta_text(err))
+        ai_meta_segment = _build_ai_meta_segment(ai_result)
         if err:
             return (
                 f"[match-article-fallback] source={source_code}; source_parser={parser_name}; fetched_at={fetched_at}; "
                 f"match={match_text}; intel_type={intel_type}; quality_score=0; quality_block_reason={block_reason}; "
                 f"hit_terms={hit_terms_text}; fetch_error=({block_reason}); homepage_hint={_sanitize_meta_text(title or excerpt)}; "
+                f"{ai_meta_segment}"
                 "is_article_page=0;"
             )
         if article_pick.get("matched"):
@@ -3041,13 +4398,16 @@ async def _simulate_collect_items(
                 f"intel_type={intel_type}; article_url={article_url}; article_title={article_title}; "
                 f"match_score={score}; quality_score={quality_score}; source_parser={parser_name}; "
                 f"quality_pass_reason={pass_reason or 'detail-page-context-hit'}; quality_block_reason=; "
-                f"hit_terms={hit_terms_text}; article_published_at={inferred_publish_time}; match_kickoff={kickoff_text}; summary={article_excerpt}; is_article_page=1;"
+                f"hit_terms={hit_terms_text}; article_published_at={inferred_publish_time}; match_kickoff={kickoff_text}; "
+                f"{ai_meta_segment}"
+                f"summary={article_excerpt}; is_article_page=1;"
             )
         core = _sanitize_meta_text(title or excerpt or f"{source_code} homepage reachable but title not extracted")
         return (
             f"[source-view] source={source_code}; source_parser={parser_name}; fetched_at={fetched_at}; "
             f"match={match_text}; intel_type={intel_type}; quality_score=0; quality_block_reason={block_reason or 'no-article-match'}; "
-            f"hit_terms={hit_terms_text}; summary={core}; is_article_page=0;"
+            f"hit_terms={hit_terms_text}; {ai_meta_segment}"
+            f"summary={core}; is_article_page=0;"
         )
 
     created = 0
@@ -3130,8 +4490,25 @@ async def _simulate_collect_items(
                             }
                         )
 
+                ai_result = await _ai_enhance_article(
+                    match_id=match_id,
+                    source_code=source,
+                    intel_category=cat,
+                    intel_type=intel_type,
+                    league_name=meta["league_name"],
+                    home_team=meta["home_team"],
+                    away_team=meta["away_team"],
+                    article_pick=article_pick,
+                )
+
                 if article_pick.get("matched"):
                     confidence = min(0.94, round(confidence + min(article_pick.get("match_score", 0) / 30.0, 0.18), 2))
+                    ai_confidence = ai_result.get("confidence")
+                    if ai_result.get("used") and ai_confidence is not None:
+                        confidence = round(
+                            min(0.97, max(0.35, confidence * 0.72 + _safe_float(ai_confidence, confidence) * 0.28)),
+                            2,
+                        )
                     match_success += 1
                 else:
                     confidence = max(0.42, round(confidence - 0.14, 2))
@@ -3144,6 +4521,7 @@ async def _simulate_collect_items(
                 content_raw = _build_content_raw(
                     snapshot,
                     article_pick,
+                    ai_result,
                     match_id,
                     intel_type,
                     meta["league_name"],
@@ -3159,10 +4537,17 @@ async def _simulate_collect_items(
                 _append_log(
                     task,
                     "debug",
-                    f"decision match_id={match_id}; source={source}; intel_type={intel_type}; decision={decision}; score={round(_safe_float(article_pick.get('quality_score', article_pick.get('match_score', 0)), 0.0), 2)}; reason={decision_reason}",
+                    (
+                        f"decision match_id={match_id}; source={source}; intel_type={intel_type}; decision={decision}; "
+                        f"score={round(_safe_float(article_pick.get('quality_score', article_pick.get('match_score', 0)), 0.0), 2)}; "
+                        f"reason={decision_reason}; ai_enhanced={(1 if ai_result.get('used') else 0)}; "
+                        f"ai_provider={_sanitize_meta_text(ai_result.get('provider'), '-')}; "
+                        f"ai_confidence={ai_result.get('confidence') if ai_result.get('confidence') is not None else '-'}"
+                    ),
                 )
                 title = article_pick.get("article_title") if article_pick.get("matched") else f"{intel_type} - {source}"
                 source_url = article_pick.get("article_url") if article_pick.get("matched") else SOURCE_URL_MAP.get(source, "")
+                quality_fields = _build_structured_quality_fields(snapshot, article_pick)
                 key = (match_id, source, intel_type)
                 existed = existing_map.get(key)
                 if existed:
@@ -3170,6 +4555,13 @@ async def _simulate_collect_items(
                     existed.intel_category = cat
                     existed.title = title
                     existed.content_raw = content_raw
+                    existed.quality_status = quality_fields["quality_status"]
+                    existed.quality_score = quality_fields["quality_score"]
+                    existed.quality_pass_reason = quality_fields["quality_pass_reason"]
+                    existed.quality_block_reason = quality_fields["quality_block_reason"]
+                    existed.source_parser = quality_fields["source_parser"]
+                    existed.article_url = quality_fields["article_url"] or source_url
+                    existed.match_hit_terms_json = _json_dumps(quality_fields["match_hit_terms"])
                     existed.source_url = source_url
                     existed.published_at = now
                     existed.crawled_at = now
@@ -3184,6 +4576,13 @@ async def _simulate_collect_items(
                         intel_type=intel_type,
                         title=title,
                         content_raw=content_raw,
+                        quality_status=quality_fields["quality_status"],
+                        quality_score=quality_fields["quality_score"],
+                        quality_pass_reason=quality_fields["quality_pass_reason"],
+                        quality_block_reason=quality_fields["quality_block_reason"],
+                        source_parser=quality_fields["source_parser"],
+                        article_url=quality_fields["article_url"] or source_url,
+                        match_hit_terms_json=_json_dumps(quality_fields["match_hit_terms"]),
                         source_url=source_url,
                         published_at=now,
                         crawled_at=now,
@@ -3197,6 +4596,11 @@ async def _simulate_collect_items(
             subtask.item_count = match_success + match_failed
             subtask.success_count = match_success
             subtask.failed_count = match_failed
+            subtask.candidate_count = expected_per_match
+            subtask.parsed_count = expected_per_match
+            subtask.matched_count = match_success
+            subtask.accepted_count = match_success
+            subtask.blocked_count = match_failed
             subtask.finished_at = datetime.utcnow()
             if match_failed <= 0:
                 subtask.status = "success"
@@ -3281,12 +4685,27 @@ async def _simulate_collect_items(
             f"source_runtime source={src}; requests={source_runtime[src]['requests']}; ok={source_runtime[src]['ok']}; timeout={source_runtime[src]['timeout']}; errors={source_runtime[src]['errors']}; retries={source_runtime[src]['retries']}; circuit_skipped={source_runtime[src]['circuit_skipped']}",
         )
 
+    if ai_runtime.get("enabled"):
+        _append_log(
+            task,
+            "debug",
+            (
+                "ai_runtime summary: "
+                f"provider={ai_runtime.get('provider')}; model={ai_runtime.get('model')}; "
+                f"calls={ai_runtime.get('calls')}; success={ai_runtime.get('success')}; failed={ai_runtime.get('failed')}; "
+                f"cache_hit={ai_runtime.get('cache_hit')}; skipped_unmatched={ai_runtime.get('skipped_unmatched')}; "
+                f"skipped_low_quality={ai_runtime.get('skipped_low_quality')}; skipped_budget={ai_runtime.get('skipped_budget')}; "
+                f"last_error={_sanitize_meta_text(ai_runtime.get('last_error'), '-')}"
+            ),
+        )
+
     return {
         "created": created,
         "updated": updated,
         "failed": failed,
         "fail_reasons": fail_reasons,
         "source_runtime": source_runtime,
+        "ai_runtime": ai_runtime,
     }
 
 
@@ -3328,20 +4747,15 @@ async def get_sources_health(
     since = datetime.utcnow() - timedelta(days=days)
     rows = (
         await db.execute(
-            select(
-                IntelligenceCollectionItem.source_code,
-                IntelligenceCollectionItem.content_raw,
-                IntelligenceCollectionItem.confidence,
-                IntelligenceCollectionItem.crawled_at,
-            ).where(IntelligenceCollectionItem.crawled_at >= since)
+            select(IntelligenceCollectionItem).where(IntelligenceCollectionItem.crawled_at >= since)
         )
-    ).all()
+    ).scalars().all()
     if not rows:
         return _ok({"days": days, "items": []})
 
     agg: Dict[str, Dict[str, Any]] = {}
-    for source_code, content_raw, confidence, crawled_at in rows:
-        src = str(source_code or "unknown")
+    for item in rows:
+        src = str(item.source_code or "unknown")
         row = agg.setdefault(
             src,
             {
@@ -3356,8 +4770,8 @@ async def get_sources_health(
             },
         )
         row["total_items"] += 1
-        row["confidence_sum"] += float(confidence or 0)
-        q = _extract_quality_from_raw(content_raw or "")
+        row["confidence_sum"] += float(item.confidence or 0)
+        q = _extract_quality_from_item(item)
         status = str(q.get("quality_status") or "source_view")
         if status == "accepted":
             row["accepted_count"] += 1
@@ -3366,6 +4780,7 @@ async def get_sources_health(
         else:
             row["source_view_count"] += 1
         row["quality_score_sum"] += float(q.get("quality_score") or 0.0)
+        crawled_at = item.crawled_at
         if crawled_at and (
             row["latest_crawled_at"] is None
             or crawled_at > row["latest_crawled_at"]
@@ -4005,13 +5420,17 @@ async def create_collection_task(
         task_uuid=uuid.uuid4().hex,
         task_name=f"intelligence-collect-{datetime.utcnow().strftime('%m%d-%H%M%S')}",
         mode=mode,
-        status="running" if mode == "immediate" else "pending",
+        status="pending",
         match_ids_json=_json_dumps(payload.match_ids),
         sources_json=_json_dumps(payload.sources),
         intel_types_json=_json_dumps(payload.intel_types),
         offset_hours_json=_json_dumps(payload.offset_hours or []),
+        request_payload_json=_json_dumps(request_payload),
+        config_snapshot_json=_json_dumps(config_snapshot),
+        success_rate=0.0,
+        queue_job_id=None,
         created_by=int(current_admin.get("id") or 0),
-        started_at=datetime.utcnow() if mode == "immediate" else None,
+        started_at=None,
         planned_at=datetime.utcnow() if mode == "immediate" else datetime.utcnow() + timedelta(minutes=5),
     )
     _append_log(task, "info", "task created")
@@ -4028,78 +5447,49 @@ async def create_collection_task(
         sources=payload.sources,
         intel_types=payload.intel_types,
     )
-
-    if mode == "immediate":
-        await db.commit()
-        await db.refresh(task)
-
-        async def _run_task_job(task_id_for_job: int) -> None:
-            async with AsyncSessionLocal() as session:
-                task_in_job = await session.get(IntelligenceCollectionTask, task_id_for_job)
-                if not task_in_job:
-                    return
-                try:
-                    match_ids = _json_loads(task_in_job.match_ids_json, [])
-                    sources = _json_loads(task_in_job.sources_json, [])
-                    intel_types = _json_loads(task_in_job.intel_types_json, [])
-                    await _ensure_task_match_subtasks(
-                        db=session,
-                        task=task_in_job,
-                        match_ids=match_ids,
-                        sources=sources,
-                        intel_types=intel_types,
-                    )
-                    stats = await _simulate_collect_items(
-                        db=session,
-                        task=task_in_job,
-                        match_ids=match_ids,
-                        sources=sources,
-                        intel_types=intel_types,
-                    )
-                    desired_total_in_job = len(match_ids) * len(sources) * len(intel_types)
-                    task_in_job.total_count = desired_total_in_job
-                    task_in_job.success_count = max(desired_total_in_job - int(stats["failed"]), 0)
-                    task_in_job.failed_count = stats["failed"]
-                    task_in_job.status = "success"
-                    task_in_job.finished_at = datetime.utcnow()
-                    _append_log(
-                        task_in_job,
-                        "success",
-                        f"collect done: created={stats['created']}, updated={stats['updated']}, source_errors={stats['failed']}",
-                    )
-                    if stats.get("source_runtime"):
-                        _append_log(task_in_job, "debug", "source runtime summary: " + _sanitize_meta_text(stats["source_runtime"]))
-                    if stats.get("fail_reasons"):
-                        top = sorted(stats["fail_reasons"].items(), key=lambda x: x[1], reverse=True)[:5]
-                        _append_log(task_in_job, "warning", "top fallback reasons: " + "; ".join([f"{k}={v}" for k, v in top]))
-                    await session.commit()
-                except Exception as e:
-                    task_in_job.status = "failed"
-                    task_in_job.finished_at = datetime.utcnow()
-                    task_in_job.error_message = str(e)
-                    _append_log(task_in_job, "error", f"collect failed: {e}")
-                    await session.commit()
-
-        asyncio.create_task(_run_task_job(task.id))
-        logger.warning(
-            "[intelligence.collection.tasks.create] accepted task_id=%s status=%s total_count=%s",
-            task.id,
-            task.status,
-            task.total_count,
-        )
-        return _ok(_task_to_dict(task), "task accepted")
+    await db.commit()
+    await db.refresh(task)
+    planned_at = task.planned_at or datetime.utcnow()
+    delay_seconds = max((planned_at - datetime.utcnow()).total_seconds(), 0.0)
+    enqueue_result = _enqueue_task_execution(
+        task,
+        trigger="collect",
+        delay_seconds=delay_seconds,
+    )
+    accepted = bool(enqueue_result["accepted"])
+    if mode == "scheduled":
+        if accepted:
+            _append_log(
+                task,
+                "info",
+                f"scheduled task queued; estimated_start={planned_at.strftime('%Y-%m-%d %H:%M:%S')}",
+            )
     else:
-        _append_log(task, "info", "scheduled task queued")
-
+        if accepted:
+            _append_log(task, "info", "immediate task queued")
+    if not accepted:
+        task.status = "failed"
+        task.finished_at = datetime.utcnow()
+        task.error_message = enqueue_result["error"] or "queue submit failed"
+        _append_log(task, "error", f"task enqueue failed: {task.error_message}")
     await db.commit()
     await db.refresh(task)
     logger.warning(
-        "[intelligence.collection.tasks.create] created task_id=%s status=%s total_count=%s",
+        "[intelligence.collection.tasks.create] created task_id=%s status=%s total_count=%s accepted=%s",
         task.id,
         task.status,
         task.total_count,
+        accepted,
     )
-    return _ok(_task_to_dict(task), "task created successfully")
+    task_data = _task_to_dict(task)
+    task_data.update(
+        {
+            "accepted": bool(accepted),
+            "queue_job_id": task.queue_job_id,
+            "estimated_start": planned_at.isoformat() if planned_at else None,
+        }
+    )
+    return _ok(task_data, "task accepted" if accepted else "task enqueue failed")
 
 
 @router.post("/schedules")
@@ -4121,6 +5511,8 @@ async def list_collection_tasks(
     db: AsyncSession = Depends(get_async_db),
     _: Dict[str, Any] = Depends(get_current_admin),
 ):
+    await _dispatch_due_pending_tasks(db)
+    await _recover_active_tasks_from_queue(db)
     conditions = []
     if status:
         conditions.append(IntelligenceCollectionTask.status == status)
@@ -4156,9 +5548,12 @@ async def get_collection_task(
     db: AsyncSession = Depends(get_async_db),
     _: Dict[str, Any] = Depends(get_current_admin),
 ):
+    await _dispatch_due_pending_tasks(db)
     task = await db.get(IntelligenceCollectionTask, task_id)
     if not task:
         raise HTTPException(status_code=404, detail="task not found")
+    await _recover_active_tasks_from_queue(db, focus_tasks=[task])
+    await db.refresh(task)
     data = _task_to_dict(task)
     if lightweight:
         data["polling_mode"] = "lightweight"
@@ -4219,6 +5614,111 @@ async def get_collection_task_logs(
     return _ok({"task_id": task_id, "logs": logs, "total": len(logs)})
 
 
+@router.get("/tasks/{task_id}/failure-summary")
+async def get_collection_task_failure_summary(
+    task_id: int,
+    db: AsyncSession = Depends(get_async_db),
+    _: Dict[str, Any] = Depends(get_current_admin),
+):
+    task = await db.get(IntelligenceCollectionTask, task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="task not found")
+    await _recover_active_tasks_from_queue(db, focus_tasks=[task])
+    await db.refresh(task)
+    summary = await _build_task_failure_summary(db, task)
+    return _ok(summary)
+
+
+@router.get("/tasks/{task_id}/events")
+async def get_collection_task_events(
+    task_id: int,
+    request: Request,
+    interval_ms: int = Query(
+        TASK_EVENT_DEFAULT_INTERVAL_MS,
+        ge=TASK_EVENT_MIN_INTERVAL_MS,
+        le=TASK_EVENT_MAX_INTERVAL_MS,
+    ),
+    max_duration_seconds: int = Query(
+        TASK_EVENT_DEFAULT_MAX_DURATION_SECONDS,
+        ge=TASK_EVENT_MIN_DURATION_SECONDS,
+        le=TASK_EVENT_MAX_DURATION_SECONDS,
+    ),
+    include_match_progress: bool = Query(False),
+    db: AsyncSession = Depends(get_async_db),
+    _: Dict[str, Any] = Depends(get_current_admin),
+):
+    task = await db.get(IntelligenceCollectionTask, task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="task not found")
+
+    async def _event_stream():
+        interval_seconds = max(float(interval_ms) / 1000.0, TASK_EVENT_MIN_INTERVAL_MS / 1000.0)
+        keepalive_seconds = max(interval_seconds * 3, 8.0)
+        stream_start = datetime.utcnow()
+        last_emit_at = stream_start
+        last_fingerprint = ""
+        event_id = 1
+
+        while True:
+            if await request.is_disconnected():
+                break
+
+            if (datetime.utcnow() - stream_start).total_seconds() >= float(max_duration_seconds):
+                timeout_payload = {
+                    "task_id": task_id,
+                    "event": "timeout",
+                    "message": "task events stream max duration reached",
+                    "generated_at": datetime.utcnow().isoformat(),
+                }
+                yield _format_sse_message("timeout", timeout_payload, event_id=event_id)
+                break
+
+            try:
+                await _recover_active_tasks_from_queue(db, focus_tasks=[task])
+                await db.refresh(task)
+                payload = await _build_task_events_payload(
+                    db,
+                    task,
+                    include_match_progress=include_match_progress,
+                )
+            except Exception as exc:
+                logger.exception("[intelligence.collection.task.events] stream failed task_id=%s", task_id)
+                error_payload = {
+                    "task_id": task_id,
+                    "event": "error",
+                    "message": _sanitize_meta_text(exc, "stream failure"),
+                    "generated_at": datetime.utcnow().isoformat(),
+                }
+                yield _format_sse_message("error", error_payload, event_id=event_id)
+                break
+
+            fingerprint = _build_task_events_fingerprint(payload)
+            now = datetime.utcnow()
+            if fingerprint != last_fingerprint:
+                last_fingerprint = fingerprint
+                last_emit_at = now
+                yield _format_sse_message("progress", payload, event_id=event_id)
+                event_id += 1
+            elif (now - last_emit_at).total_seconds() >= keepalive_seconds:
+                last_emit_at = now
+                yield ": keep-alive\n\n"
+
+            if payload.get("terminal"):
+                break
+
+            await asyncio.sleep(interval_seconds)
+
+    return StreamingResponse(
+        _event_stream(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
+
+
 @router.post("/tasks/{task_id}/retry")
 async def retry_collection_task(
     task_id: int,
@@ -4229,6 +5729,12 @@ async def retry_collection_task(
     task = await db.get(IntelligenceCollectionTask, task_id)
     if not task:
         raise HTTPException(status_code=404, detail="task not found")
+    await _recover_active_tasks_from_queue(db, focus_tasks=[task])
+    await db.refresh(task)
+    if str(task.status or "").strip().lower() == "running":
+        raise HTTPException(status_code=409, detail="task is already running")
+    if task.queue_job_id and _is_queue_job_active(task.queue_job_id):
+        raise HTTPException(status_code=409, detail="task queue job is still active")
 
     saved_match_ids = [int(x) for x in _json_loads(task.match_ids_json, []) if str(x).isdigit()]
     saved_sources = [str(x) for x in _json_loads(task.sources_json, []) if str(x).strip()]
@@ -4240,10 +5746,23 @@ async def retry_collection_task(
         raise HTTPException(status_code=400, detail="retry scope is empty")
 
     task.retry_count += 1
-    task.status = "running"
-    task.started_at = datetime.utcnow()
+    task.status = "pending"
+    task.started_at = None
     task.finished_at = None
     task.error_message = None
+    task.success_rate = 0.0
+    task.queue_job_id = None
+    task.request_payload_json = _json_dumps(
+        {
+            "mode": task.mode,
+            "match_ids": retry_match_ids,
+            "sources": retry_sources,
+            "intel_types": retry_intel_types,
+            "offset_hours": _json_loads(task.offset_hours_json, []),
+            "action": "retry",
+            "retry_count": task.retry_count,
+        }
+    )
     _append_log(
         task,
         "info",
@@ -4255,67 +5774,32 @@ async def retry_collection_task(
     await _reset_task_match_subtasks(db, task.id, match_ids=retry_match_ids)
     await db.commit()
     await db.refresh(task)
-
-    async def _run_retry_job(
-        task_id_for_job: int,
-        run_match_ids: List[int],
-        run_sources: List[str],
-        run_intel_types: List[str],
-    ) -> None:
-        async with AsyncSessionLocal() as session:
-            task_in_job = await session.get(IntelligenceCollectionTask, task_id_for_job)
-            if not task_in_job:
-                return
-            try:
-                await _ensure_task_match_subtasks(
-                    db=session,
-                    task=task_in_job,
-                    match_ids=run_match_ids,
-                    sources=run_sources,
-                    intel_types=run_intel_types,
-                )
-                stats = await _simulate_collect_items(
-                    session,
-                    task_in_job,
-                    run_match_ids,
-                    run_sources,
-                    run_intel_types,
-                )
-
-                desired_total = len(run_match_ids) * len(run_sources) * len(run_intel_types)
-                task_in_job.total_count = desired_total
-                task_in_job.success_count = max(desired_total - int(stats["failed"]), 0)
-                task_in_job.failed_count = stats["failed"]
-                task_in_job.status = "success"
-                task_in_job.finished_at = datetime.utcnow()
-                _append_log(
-                    task_in_job,
-                    "success",
-                    f"retry done: created={stats['created']}, updated={stats['updated']}, source_errors={stats['failed']}",
-                )
-                if stats.get("source_runtime"):
-                    _append_log(task_in_job, "debug", "source runtime summary: " + _sanitize_meta_text(stats["source_runtime"]))
-                if stats.get("fail_reasons"):
-                    top = sorted(stats["fail_reasons"].items(), key=lambda x: x[1], reverse=True)[:5]
-                    _append_log(task_in_job, "warning", "top fallback reasons: " + "; ".join([f"{k}={v}" for k, v in top]))
-                await session.commit()
-            except Exception as e:
-                task_in_job.status = "failed"
-                task_in_job.finished_at = datetime.utcnow()
-                task_in_job.error_message = str(e)
-                _append_log(task_in_job, "error", f"retry failed: {e}")
-                await session.commit()
-
-    asyncio.create_task(
-        _run_retry_job(task.id, retry_match_ids, retry_sources, retry_intel_types)
+    enqueue_result = _enqueue_task_execution(
+        task,
+        trigger="retry",
+        delay_seconds=0.0,
+        run_match_ids=retry_match_ids,
+        run_sources=retry_sources,
+        run_intel_types=retry_intel_types,
     )
+    accepted = bool(enqueue_result["accepted"])
+    if not accepted:
+        task.status = "failed"
+        task.finished_at = datetime.utcnow()
+        task.error_message = enqueue_result["error"] or "retry queue submit failed"
+        _append_log(task, "error", f"retry queue submit failed: {task.error_message}")
+    await db.commit()
+    await db.refresh(task)
     task_data = _task_to_dict(task)
     task_data["retry_scope"] = {
         "match_ids": retry_match_ids,
         "sources": retry_sources,
         "intel_types": retry_intel_types,
     }
-    return _ok(task_data, "retry accepted")
+    task_data["accepted"] = bool(accepted)
+    task_data["queue_job_id"] = task.queue_job_id
+    task_data["estimated_start"] = datetime.utcnow().isoformat()
+    return _ok(task_data, "retry accepted" if accepted else "retry enqueue failed")
 
 
 @router.post("/tasks/{task_id}/cancel")
@@ -4327,8 +5811,15 @@ async def cancel_collection_task(
     task = await db.get(IntelligenceCollectionTask, task_id)
     if not task:
         raise HTTPException(status_code=404, detail="task not found")
-    if task.status in {"success", "failed", "cancelled"}:
+    if task.status in TASK_TERMINAL_STATUSES:
         return _ok(_task_to_dict(task), "task already finished")
+    if task.queue_job_id:
+        try:
+            task_queue_app.control.revoke(task.queue_job_id, terminate=False)
+            _append_log(task, "warning", f"queue job revoked: {task.queue_job_id}")
+        except Exception as exc:
+            logger.warning("[intelligence.collection.tasks.cancel] revoke failed task_id=%s err=%s", task_id, exc)
+            _append_log(task, "warning", f"queue revoke failed: {exc}")
     task.status = "cancelled"
     task.finished_at = datetime.utcnow()
     _append_log(task, "warning", "task cancelled")
@@ -4340,7 +5831,7 @@ async def cancel_collection_task(
         )
     ).scalars().all()
     for row in subtask_rows:
-        if row.status not in {"success", "failed"}:
+        if row.status not in {"success", "failed", "partial"}:
             row.status = "cancelled"
         row.finished_at = row.finished_at or datetime.utcnow()
         _append_subtask_log(row, "warning", "cancelled by task cancel action")
@@ -4370,14 +5861,10 @@ async def get_match_items(
     dedupe_seen: set = set()
     items = []
     for x in rows:
-        quality_meta = _extract_quality_from_raw(x.content_raw)
+        quality_meta = _extract_quality_from_item(x)
         if normalized_quality_status and quality_meta["quality_status"] != normalized_quality_status:
             continue
-        article_url = ""
-        if x.content_raw:
-            m = re.search(r"article_url=([^;]+);", x.content_raw)
-            if m:
-                article_url = _sanitize_meta_text(m.group(1))
+        article_url = _sanitize_meta_text(quality_meta.get("article_url"), "")
         dedupe_key = f"{x.source_code}|{article_url or x.source_url or ''}|{x.title or ''}"
         if dedupe and dedupe_key in dedupe_seen:
             continue
@@ -4408,6 +5895,14 @@ async def get_match_items(
                 "match_hit_terms": quality_meta["match_hit_terms"],
                 "is_article_page": quality_meta["is_article_page"],
                 "quality_status": quality_meta["quality_status"],
+                "ai_enhanced": quality_meta.get("ai_enhanced"),
+                "ai_provider": quality_meta.get("ai_provider"),
+                "ai_model": quality_meta.get("ai_model"),
+                "ai_summary": quality_meta.get("ai_summary"),
+                "ai_viewpoint": quality_meta.get("ai_viewpoint"),
+                "ai_risk_level": quality_meta.get("ai_risk_level"),
+                "ai_confidence": quality_meta.get("ai_confidence"),
+                "ai_reason": quality_meta.get("ai_reason"),
                 "article_url": article_url or x.source_url,
                 "published_at_parse_status": published_parse_status,
             }
@@ -4996,7 +6491,7 @@ async def build_push_preview(
 
     filtered_rows = []
     for row in rows:
-        quality_meta = _extract_quality_from_raw(row.content_raw or "")
+        quality_meta = _extract_quality_from_item(row)
         if not payload.include_blocked and quality_meta.get("quality_status") == "blocked":
             continue
         if payload.min_score is not None and float(quality_meta.get("quality_score") or 0.0) < float(payload.min_score):
@@ -5020,21 +6515,33 @@ async def build_push_preview(
     filtered_rows.sort(
         key=lambda pair: (
             float(pair[1].get("quality_score") or 0.0),
+            float(pair[1].get("ai_confidence") or 0.0),
             float(pair[0].confidence or 0.0),
             pair[0].crawled_at or datetime.min,
         ),
         reverse=True,
     )
 
-    confidence = round(sum(float(x.confidence or 0.0) for x, _ in filtered_rows) / len(filtered_rows), 2)
+    confidence_pool: List[float] = []
+    for row, q in filtered_rows:
+        ai_conf = q.get("ai_confidence")
+        if ai_conf is not None:
+            confidence_pool.append(_normalize_float(ai_conf, default=float(row.confidence or 0.0), min_value=0.0, max_value=1.0))
+        else:
+            confidence_pool.append(_normalize_float(row.confidence, default=0.0, min_value=0.0, max_value=1.0))
+    confidence = round(sum(confidence_pool) / len(confidence_pool), 2) if confidence_pool else 0.0
     evidence = [
         {
             "source": x.source_code,
             "intel_type": x.intel_type,
-            "content": x.content_raw,
+            "content": q.get("ai_summary") or q.get("ai_viewpoint") or x.content_raw,
             "time": x.crawled_at.strftime("%Y-%m-%d %H:%M:%S") if x.crawled_at else None,
             "quality_score": q.get("quality_score"),
             "quality_status": q.get("quality_status"),
+            "ai_enhanced": q.get("ai_enhanced"),
+            "ai_confidence": q.get("ai_confidence"),
+            "ai_risk_level": q.get("ai_risk_level"),
+            "ai_viewpoint": q.get("ai_viewpoint"),
         }
         for x, q in filtered_rows[:top_n]
     ]
