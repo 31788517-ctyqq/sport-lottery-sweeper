@@ -16,3 +16,6 @@ precache  2 entries (0.12 KiB)
 files generated
   dev-dist/sw.js
   dev-dist/workbox-5a5d9309.js
+[2m00:24:24[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/admin/sp/ScheduleManagement.vue, /src/views/admin/sp/ScheduleManagement.vue?vue&type=style&index=0&scoped=25967c18&lang.css[22m
+[2m00:29:19[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/admin/sp/ScheduleManagement.vue[22m
+[2m00:35:17[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/admin/sp/ScheduleManagement.vue?vue&type=style&index=0&scoped=25967c18&lang.css, /src/views/admin/sp/ScheduleManagement.vue[22m
