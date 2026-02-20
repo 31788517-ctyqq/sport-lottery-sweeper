@@ -1,94 +1,104 @@
-import http from '@/utils/http'
+﻿import http from '@/utils/http'
 import { API_ENDPOINTS } from '@/config/api'
 
-/**
- * 操作日志相关API
- */
+const asDataResponse = async (promise) => {
+  const result = await promise
+  return result && typeof result === 'object' && 'data' in result ? result : { data: result }
+}
+
+const compactParams = (obj = {}) =>
+  Object.fromEntries(
+    Object.entries(obj).filter(([, value]) => value !== '' && value !== undefined && value !== null)
+  )
+
+const normalizeListParams = (params = {}) => {
+  const hasPage = Number.isFinite(Number(params.page))
+  const hasSize = Number.isFinite(Number(params.size))
+  const size = hasSize ? Math.max(1, Number(params.size)) : 20
+  const page = hasPage ? Math.max(1, Number(params.page)) : 1
+
+  const search = params.search || params.action || params.module
+  return compactParams({
+    skip: (page - 1) * size,
+    limit: size,
+    user_id: params.userId,
+    search,
+    start_date: params.startTime,
+    end_date: params.endTime
+  })
+}
+
+const normalizeLogItem = (item = {}) => {
+  const extra = (() => {
+    if (!item.extra_data) return {}
+    try {
+      return typeof item.extra_data === 'string' ? JSON.parse(item.extra_data) : item.extra_data
+    } catch {
+      return {}
+    }
+  })()
+
+  const responseStatus = item.response_status || extra.status_code || 200
+  return {
+    id: item.id,
+    createdAt: item.created_at || item.timestamp,
+    userRealName: extra.resource_name || '',
+    username: extra.resource_name || '',
+    module: item.module,
+    action: extra.action || '',
+    resource: extra.resource_type ? `${extra.resource_type}:${extra.resource_id || '-'}` : extra.resource_id || '-',
+    description: item.message || '',
+    ipAddress: item.ip_address,
+    userAgent: item.user_agent,
+    result: responseStatus >= 400 ? 'failed' : 'success',
+    raw: item
+  }
+}
 
 // 获取操作日志列表
-export const getOperationLogs = (params) => {
-  return http.get(API_ENDPOINTS.OPERATION_LOGS.LIST, { params })
+export const getOperationLogs = async (params) => {
+  const payload = await http.get(API_ENDPOINTS.OPERATION_LOGS.LIST, { params: normalizeListParams(params) })
+  const items = Array.isArray(payload?.items) ? payload.items.map(normalizeLogItem) : []
+  const total = Number(payload?.total || 0)
+  const page = Number(params?.page || 1)
+  const size = Number(params?.size || 20)
+  return {
+    data: {
+      items,
+      total,
+      page,
+      size,
+      pages: Math.ceil(total / size)
+    }
+  }
 }
 
 // 获取日志详情
-export const getLogDetail = (id) => {
-  return http.get(`${API_ENDPOINTS.OPERATION_LOGS.LIST}/${id}`)
-}
+export const getLogDetail = (id) => asDataResponse(http.get(`${API_ENDPOINTS.OPERATION_LOGS.LIST}/${id}`))
 
 // 删除日志
-export const deleteLog = (id) => {
-  return http.delete(`${API_ENDPOINTS.OPERATION_LOGS.LIST}/${id}`)
-}
+export const deleteLog = (id) => asDataResponse(http.delete(`${API_ENDPOINTS.OPERATION_LOGS.LIST}/item/${id}`))
 
 // 批量删除日志
-export const batchDeleteLogs = (ids) => {
-  return http.delete(`${API_ENDPOINTS.OPERATION_LOGS.LIST}/batch`, { data: { ids } })
-}
+export const batchDeleteLogs = (ids) => asDataResponse(http.delete(`${API_ENDPOINTS.OPERATION_LOGS.LIST}/batch`, { data: { ids } }))
 
 // 清空日志
-export const clearLogs = (beforeDate) => {
-  return http.delete(`${API_ENDPOINTS.OPERATION_LOGS.LIST}/clear`, { params: { beforeDate } })
+export const clearLogs = (beforeDateOrParams) => {
+  const params =
+    typeof beforeDateOrParams === 'object' && beforeDateOrParams !== null
+      ? beforeDateOrParams
+      : { beforeDate: beforeDateOrParams }
+  return asDataResponse(http.delete(`${API_ENDPOINTS.OPERATION_LOGS.LIST}/clear`, { params }))
 }
 
 // 获取日志统计信息
-export const getLogStats = (params) => {
-  return http.get(API_ENDPOINTS.OPERATION_LOGS.STATISTICS, { params })
-}
+export const getLogStats = (params) => asDataResponse(http.get(API_ENDPOINTS.OPERATION_LOGS.STATISTICS, { params }))
 
 // 导出日志
-export const exportLogs = (params) => {
-  return http.get(API_ENDPOINTS.OPERATION_LOGS.EXPORT, { params, responseType: 'blob' })
-}
-
-// 获取操作模块列表 - 这个端点可能不存在，暂时注释掉
-// export const getOperationModules = () => {
-//   return http.get('/api/admin/operation-logs/modules')
-// }
-
-// 获取操作类型列表 - 这个端点可能不存在，暂时注释掉  
-// export const getOperationActions = () => {
-//   return http.get('/api/admin/operation-logs/actions')
-// }
-
-// 获取用户操作统计 - 这个端点可能不存在，暂时注释掉
-// export const getUserOperationStats = (userId, params) => {
-//   return http.get(`/api/admin/users/${userId}/operation-stats`, { params })
-// }
-
-// 获取热门操作排行 - 这个端点可能不存在，暂时注释掉
-// export const getPopularOperations = (params) => {
-//   return http.get('/api/admin/operation-logs/popular', { params })
-// }
-
-// 获取异常操作记录 - 这个端点可能不存在，暂时注释掉
-// export const getErrorOperations = (params) => {
-//   return http.get('/api/admin/operation-logs/errors', { params })
-// }
-
-// 获取登录统计 - 这个端点可能不存在，暂时注释掉
-// export const getLoginStats = (params) => {
-//   return http.get('/api/admin/operation-logs/login-stats', { params })
-// }
-
-// 实时监控日志 - 这个端点可能不存在，暂时注释掉
-// export const getRealtimeLogs = (params) => {
-//   return http.get('/api/admin/operation-logs/realtime', { params })
-// }
-
-// 获取日志趋势数据 - 这个端点可能不存在，暂时注释掉
-// export const getLogTrends = (params) => {
-//   return http.get('/api/admin/operation-logs/trends', { params })
-// }
-
-// 归档日志 - 这个端点可能不存在，暂时注释掉
-// export const archiveLogs = (beforeDate) => {
-//   return http.post('/api/admin/operation-logs/archive', null, { params: { beforeDate } })
-// }
-
-// 下载日志文件 - 这个端点可能不存在，暂时注释掉
-// export const downloadLogFile = (logFile) => {
-//   return http.get(`/api/admin/operation-logs/download/${logFile}`, { responseType: 'blob' })
-// }
+export const exportLogs = (params) => http.get(API_ENDPOINTS.OPERATION_LOGS.EXPORT, {
+  params: normalizeListParams(params),
+  responseType: 'blob'
+})
 
 // 别名导出，以匹配组件中的导入
 export const deleteOperationLog = deleteLog

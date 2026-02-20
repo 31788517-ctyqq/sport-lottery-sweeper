@@ -44,8 +44,17 @@ class LLMProvider(BaseAuditModel):
     # 基本信息
     name = Column(String(200), nullable=False, index=True, unique=True, 
                   comment="供应商名称（唯一标识）")
-    provider_type = Column(Enum(LLMProviderTypeEnum), nullable=False, 
-                          index=True, comment="供应商类型")
+    provider_type = Column(
+        Enum(
+            LLMProviderTypeEnum,
+            values_callable=lambda enum_cls: [member.value for member in enum_cls],
+            native_enum=False,
+            validate_strings=True,
+        ),
+        nullable=False,
+        index=True,
+        comment="供应商类型",
+    )
     description = Column(Text, nullable=True, comment="供应商描述")
     
     # API配置
@@ -66,9 +75,18 @@ class LLMProvider(BaseAuditModel):
                              comment="API调用超时时间（秒）")
     
     # 状态监控
-    health_status = Column(Enum(LLMProviderStatusEnum), 
-                          default=LLMProviderStatusEnum.CHECKING,
-                          nullable=False, index=True, comment="健康状态")
+    health_status = Column(
+        Enum(
+            LLMProviderStatusEnum,
+            values_callable=lambda enum_cls: [member.value for member in enum_cls],
+            native_enum=False,
+            validate_strings=True,
+        ),
+        default=LLMProviderStatusEnum.CHECKING,
+        nullable=False,
+        index=True,
+        comment="健康状态",
+    )
     last_checked_at = Column(DateTime, nullable=True, comment="最后检查时间")
     last_success_at = Column(DateTime, nullable=True, comment="最后成功时间")
     total_requests = Column(Integer, default=0, nullable=False,

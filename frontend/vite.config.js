@@ -5,11 +5,20 @@ import { resolve } from 'path'
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  root: __dirname,
+  appType: 'spa',
   plugins: [
     vue(),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png'],
+      workbox: {
+        navigateFallbackAllowlist: [/^\/$/, /^\/admin(?:\/.*)?$/, /^\/m(?:\/.*)?$/]
+      },
+      devOptions: {
+        enabled: true,
+        navigateFallbackAllowlist: [/^\/$/, /^\/admin(?:\/.*)?$/, /^\/m(?:\/.*)?$/]
+      },
       manifest: {
         name: '体育彩票扫盘系统',
         short_name: '体育扫盘系统',
@@ -31,6 +40,15 @@ export default defineConfig({
   server: {
     port: 3000,
     host: '0.0.0.0',
+    strict: false, // 启用历史 API 回退，对于 SPA 应用
+    fs: {
+      allow: [
+        // 允许访问前端目录
+        process.cwd(),
+        // 允许访问项目根目录
+        resolve(__dirname, '..'),
+      ]
+    },
     proxy: {
       '/api/v1': {
         target: 'http://127.0.0.1:8000',

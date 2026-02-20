@@ -1,18 +1,14 @@
-<template>
+﻿<template>
   <div class="filter-section">
-    <el-row :gutter="20" class="dimension-row">
-      <el-col :span="8">
+    <el-row :gutter="16" class="dimension-row">
+      <el-col :xs="24" :sm="24" :md="12" :lg="8">
         <div class="filter-group">
           <div class="group-title">
             <span>实力等级差 ΔP</span>
-            <span class="group-hint">主客实力差分层</span>
+            <span class="group-hint">主客实力分层</span>
           </div>
-          <el-checkbox-group v-model="filterForm.powerDiffs" class="checkbox-grid strength-options">
-            <el-checkbox-button
-              v-for="option in strengthOptions"
-              :key="option.value"
-              :value="option.value"
-            >
+          <el-checkbox-group v-model="filterForm.powerDiffs" class="checkbox-grid">
+            <el-checkbox-button v-for="option in strengthOptions" :key="option.value" :value="option.value">
               <div class="option-tile">
                 <div class="option-value">{{ option.label }}</div>
                 <div class="option-desc">{{ option.desc }}</div>
@@ -23,18 +19,14 @@
         </div>
       </el-col>
 
-      <el-col :span="8">
+      <el-col :xs="24" :sm="24" :md="12" :lg="8">
         <div class="filter-group">
           <div class="group-title">
             <span>赢盘等级差 ΔWP</span>
-            <span class="group-hint">盘路兑现力对撞</span>
+            <span class="group-hint">盘路兑现对照</span>
           </div>
-          <el-checkbox-group v-model="filterForm.winPanDiffs" class="checkbox-grid win-pan-options">
-            <el-checkbox-button
-              v-for="option in winPanOptions"
-              :key="option.value"
-              :value="option.value"
-            >
+          <el-checkbox-group v-model="filterForm.winPanDiffs" class="checkbox-grid">
+            <el-checkbox-button v-for="option in winPanOptions" :key="option.value" :value="option.value">
               <div class="option-tile">
                 <div class="option-value">{{ option.label }}</div>
                 <div class="option-desc">{{ option.desc }}</div>
@@ -45,22 +37,18 @@
         </div>
       </el-col>
 
-      <el-col :span="8">
+      <el-col :xs="24" :sm="24" :md="12" :lg="8">
         <div class="filter-group">
           <div class="group-title">
             <span>一赔稳定性 P-Tier</span>
-            <span class="group-hint">正路可信度等级</span>
+            <span class="group-hint">正路可信度分级</span>
           </div>
-          <el-checkbox-group v-model="filterForm.stabilityTiers" class="tier-grid stability-options">
-            <el-checkbox-button
-              v-for="option in stabilityOptions"
-              :key="option.value"
-              :value="option.value"
-            >
-              <div class="tier-tile">
-                <div class="tier-label">{{ option.label }}</div>
-                <div class="tier-desc">{{ option.desc }}</div>
-                <div class="tier-range">{{ option.range }}</div>
+          <el-checkbox-group v-model="filterForm.stabilityTiers" class="tier-grid">
+            <el-checkbox-button v-for="option in stabilityOptions" :key="option.value" :value="option.value">
+              <div class="option-tile">
+                <div class="option-value">{{ option.label }}</div>
+                <div class="option-desc">{{ option.desc }}</div>
+                <div class="option-range">{{ option.range }}</div>
               </div>
             </el-checkbox-button>
           </el-checkbox-group>
@@ -68,48 +56,27 @@
       </el-col>
     </el-row>
 
-    <el-row :gutter="20" class="control-row">
-      <el-col :span="8">
+    <el-row :gutter="16" class="control-row">
+      <el-col :xs="24" :sm="24" :md="12" :lg="8">
         <div class="filter-group">
           <div class="group-title">
             <span>其它条件</span>
-            <span class="group-hint">多维叠加</span>
+            <span class="group-hint">补充筛选</span>
           </div>
           <div class="filter-item">
             <label>联赛筛选</label>
-            <el-select
-              v-model="filterForm.leagues"
-              placeholder="请选择联赛"
-              multiple
-              collapse-tags
-              style="width: 100%"
-            >
-              <el-option
-                v-for="league in availableLeagues"
-                :key="league"
-                :label="league"
-                :value="league"
-              />
+            <el-select v-model="filterForm.leagues" placeholder="请选择联赛" multiple collapse-tags style="width: 100%">
+              <el-option v-for="league in availableLeagues" :key="league" :label="league" :value="league" />
             </el-select>
           </div>
           <div class="filter-item">
-            <label>date_time</label>
-            <el-select
-              v-model="filterForm.dateTime"
-              placeholder="date_time"
-              clearable
-              style="width: 100%"
-            >
-              <el-option
-                v-for="value in dateTimeOptions"
-                :key="value"
-                :label="value"
-                :value="value"
-              />
+            <label>期号筛选</label>
+            <el-select v-model="filterForm.dateTime" placeholder="请选择期号" clearable style="width: 100%">
+              <el-option v-for="value in dateTimeOptions" :key="value" :label="value" :value="value" />
             </el-select>
           </div>
           <div class="filter-item">
-            <label>日期范围</label>
+            <label>时间范围</label>
             <el-date-picker
               v-model="filterForm.dateRange"
               type="daterange"
@@ -122,11 +89,11 @@
         </div>
       </el-col>
 
-      <el-col :span="8">
+      <el-col :xs="24" :sm="24" :md="12" :lg="8">
         <div class="filter-group">
           <div class="group-title">
-            <span>策略筛选</span>
-            <span class="group-hint">排序与规则</span>
+            <span>策略规则</span>
+            <span class="group-hint">排序与降级</span>
           </div>
           <div class="filter-item">
             <label>排序方式</label>
@@ -147,48 +114,46 @@
             <label>应用降级规则</label>
             <el-switch v-model="filterForm.includeDerating" />
           </div>
-          <div class="rule-preview">排序预览：P级降序 → ΔWP降序</div>
+          <div class="rule-preview">排序预览：P级优先，次级按 ΔWP 排序</div>
         </div>
       </el-col>
 
-      <el-col :span="8">
+      <el-col :xs="24" :sm="24" :md="24" :lg="8">
         <div class="filter-group">
           <div class="group-title">
-            <span>策略应用和保存</span>
-            <span class="group-hint">策略管理操作区</span>
+            <span>策略应用</span>
+            <span class="group-hint">应用、保存与管理</span>
           </div>
+
           <div class="example-strategies">
-            <div class="group-title">示例策略</div>
+            <div class="quick-title">示例策略</div>
             <div class="preset-grid">
-              <el-button @click="onLoadExampleStrategy('strong')">强势正路</el-button>
-              <el-button @click="onLoadExampleStrategy('upset')">冷门潜质</el-button>
-              <el-button @click="onLoadExampleStrategy('balance')">均衡博弈</el-button>
+              <el-button @click="emit('loadExampleStrategy', 'strong')">强势正路</el-button>
+              <el-button @click="emit('loadExampleStrategy', 'upset')">冷门潜质</el-button>
+              <el-button @click="emit('loadExampleStrategy', 'balance')">均衡博弈</el-button>
             </div>
           </div>
 
           <el-alert
             v-if="directionWarning"
-            title="方向背离预警：实力与盘路选择方向相反，可能触发降级"
+            title="方向背离预警：实力与盘路筛选方向相反，可能触发降级"
             type="warning"
             :closable="false"
             class="direction-alert"
           />
 
           <div class="filter-actions">
-            <el-tooltip content="根据当前条件生成临时策略" placement="top">
-              <el-button type="primary" @click="onApplyAdvancedFilter" :loading="loading">生成当前策略</el-button>
+            <el-tooltip content="基于当前三维条件执行筛选" placement="top">
+              <el-button type="primary" @click="emit('applyAdvancedFilter')" :loading="loading">应用筛选</el-button>
             </el-tooltip>
-            
-            <el-tooltip content="清除所有筛选条件" placement="top">
-              <el-button @click="onResetFilters">重置</el-button>
+            <el-tooltip content="清空全部筛选条件" placement="top">
+              <el-button @click="emit('resetFilters')">重置</el-button>
             </el-tooltip>
-            
-            <el-tooltip content="将当前三维筛选条件保存为永久策略" placement="top">
-              <el-button type="success" @click="onSaveStrategy">保存策略</el-button>
+            <el-tooltip content="保存当前筛选为策略" placement="top">
+              <el-button type="success" @click="emit('saveStrategy')">保存策略</el-button>
             </el-tooltip>
-            
-            <el-tooltip content="修改或删除已保存的策略" placement="top">
-              <el-button @click="onManageStrategies">管理策略</el-button>
+            <el-tooltip content="查看、修改或删除已保存策略" placement="top">
+              <el-button @click="emit('manageStrategies')">管理策略</el-button>
             </el-tooltip>
           </div>
         </div>
@@ -197,159 +162,68 @@
   </div>
 </template>
 
-<script>
-import { defineComponent } from 'vue';
-import { 
-  ElRow, 
-  ElCol, 
-  ElCheckboxGroup, 
-  ElCheckboxButton, 
-  ElSelect, 
-  ElOption, 
-  ElDatePicker, 
-  ElRadioGroup, 
-  ElRadio, 
-  ElSwitch, 
-  ElAlert, 
-  ElButton, 
-  ElDropdown, 
-  ElDropdownMenu, 
-  ElDropdownItem,
-  ElTooltip
-} from 'element-plus';
+<script setup>
+defineProps({
+  filterForm: { type: Object, required: true },
+  strengthOptions: { type: Array, required: true },
+  winPanOptions: { type: Array, required: true },
+  stabilityOptions: { type: Array, required: true },
+  availableLeagues: { type: Array, required: true },
+  dateTimeOptions: { type: Array, required: true },
+  loading: { type: Boolean, required: true },
+  directionWarning: { type: Boolean, required: true }
+})
 
-export default defineComponent({
-  name: 'FilterSection',
-  components: {
-    ElRow,
-    ElCol,
-    ElCheckboxGroup,
-    ElCheckboxButton,
-    ElSelect,
-    ElOption,
-    ElDatePicker,
-    ElRadioGroup,
-    ElRadio,
-    ElSwitch,
-    ElAlert,
-    ElButton,
-    ElDropdown,
-    ElDropdownMenu,
-    ElDropdownItem,
-    ElTooltip
-  },
-  props: {
-    filterForm: {
-      type: Object,
-      required: true
-    },
-    strengthOptions: {
-      type: Array,
-      required: true
-    },
-    winPanOptions: {
-      type: Array,
-      required: true
-    },
-    stabilityOptions: {
-      type: Array,
-      required: true
-    },
-    availableLeagues: {
-      type: Array,
-      required: true
-    },
-    dateTimeOptions: {
-      type: Array,
-      required: true
-    },
-    loading: {
-      type: Boolean,
-      required: true
-    },
-    directionWarning: {
-      type: Boolean,
-      required: true
-    }
-  },
-  emits: ['applyPreset', 'saveStrategy', 'manageStrategies', 'applyAdvancedFilter', 'resetFilters', 'loadExampleStrategy'],
-  setup(props, { emit }) {
-    const onApplyPreset = (preset) => {
-      emit('applyPreset', preset);
-    };
-
-    const onSaveStrategy = () => {
-      emit('saveStrategy');
-    };
-
-    const onManageStrategies = () => {
-      emit('manageStrategies');
-    };
-
-    const onApplyAdvancedFilter = () => {
-      emit('applyAdvancedFilter');
-    };
-
-    const onResetFilters = () => {
-      emit('resetFilters');
-    };
-
-    const onLoadExampleStrategy = (exampleName) => {
-      emit('loadExampleStrategy', exampleName);
-    };
-
-    return {
-      onApplyPreset,
-      onSaveStrategy,
-      onManageStrategies,
-      onApplyAdvancedFilter,
-      onResetFilters,
-      onLoadExampleStrategy
-    };
-  }
-});
+const emit = defineEmits([
+  'applyPreset',
+  'saveStrategy',
+  'manageStrategies',
+  'applyAdvancedFilter',
+  'resetFilters',
+  'loadExampleStrategy'
+])
 </script>
 
 <style scoped>
 .filter-section {
-  margin-top: 24px;
+  margin-top: 0;
 }
 
 .dimension-row {
-  margin-bottom: 24px;
+  margin-bottom: 14px;
 }
 
 .control-row {
-  margin-top: 20px;
+  margin-top: 6px;
 }
 
 .filter-group {
   border: 1px solid #d6d2cb;
   border-radius: 10px;
-  padding: 18px 20px;
-  margin-bottom: 16px;
+  padding: 16px 18px;
+  margin-bottom: 10px;
   background-color: #fdfcfb;
-  box-shadow: 0 10px 18px rgba(107, 103, 99, 0.08);
+  box-shadow: 0 8px 16px rgba(107, 103, 99, 0.06);
 }
 
 .group-title {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
-  font-size: 16px;
+  margin-bottom: 14px;
+  font-size: 15px;
   font-weight: 600;
   color: #6b6763;
 }
 
 .group-hint {
-  font-size: 13px;
+  font-size: 12px;
   color: #8b8680;
   font-weight: normal;
 }
 
 .filter-item {
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .filter-item label {
@@ -357,15 +231,10 @@ export default defineComponent({
   margin-bottom: 6px;
   font-weight: 600;
   color: #6b6763;
-  font-size: 14px;
+  font-size: 13px;
 }
 
-.checkbox-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-}
-
+.checkbox-grid,
 .tier-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -374,7 +243,7 @@ export default defineComponent({
 
 .option-tile {
   text-align: left;
-  line-height: 1.3;
+  line-height: 1.25;
   padding: 6px 8px;
 }
 
@@ -396,84 +265,60 @@ export default defineComponent({
   margin-top: 2px;
 }
 
-.tier-tile {
-  text-align: left;
-  line-height: 1.3;
-  padding: 6px 8px;
-}
-
-.tier-label {
-  font-weight: 700;
-  color: #6b6763;
-  font-size: 13px;
-}
-
-.tier-desc {
-  font-size: 12px;
-  color: #aabead;
-  margin-top: 2px;
-}
-
-.tier-range {
-  font-size: 11px;
-  color: #8b8680;
-  margin-top: 2px;
-}
-
-.pill-group {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 4px;
-}
-
 .switch-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
 }
 
 .rule-preview {
-  margin-top: 12px;
-  font-size: 13px;
+  margin-top: 8px;
+  font-size: 12px;
   color: #8b8680;
-  font-style: italic;
 }
 
-.preset-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-  margin-bottom: 20px;
-}
-
-.direction-alert {
-  margin-bottom: 20px;
-}
-
-.example-strategies {
-  margin-bottom: 20px;
-}
-
-.example-strategies .group-title {
-  font-size: 14px;
+.quick-title {
+  font-size: 13px;
   color: #8b8680;
   margin-bottom: 8px;
   font-weight: 600;
 }
 
+.preset-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.direction-alert {
+  margin-bottom: 12px;
+}
+
 .filter-actions {
-  margin-top: 24px;
+  margin-top: 8px;
   display: flex;
-  gap: 12px;
+  gap: 10px;
   flex-wrap: wrap;
-  justify-content: flex-start;
 }
 
 .control-row .el-col:last-child .filter-group {
   background-color: #f6f5f4;
   border-color: #d6d2cb;
-  box-shadow: none;
+}
+
+@media (max-width: 1200px) {
+  .checkbox-grid,
+  .tier-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .checkbox-grid,
+  .tier-grid,
+  .preset-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

@@ -342,7 +342,7 @@ const getProviderTagType = (providerType) => {
     ALIBABA: 'danger',
     OLLAMA: 'success',
     VLLM: 'warning',
-    CUSTOM: 'default'
+    CUSTOM: 'info'
   }
   return types[typeUpper] || 'info'
 }

@@ -75,6 +75,7 @@ except Exception as e:
 try:
     from . import draw_prediction
     logger.info("SUCCESS draw_prediction 妯″潡瀵煎叆鎴愬姛")
+    router.include_router(draw_prediction.router)
 except Exception as e:
     logger.error(f"FAILED draw_prediction 妯″潡瀵煎叆澶辫触: {e}")
 

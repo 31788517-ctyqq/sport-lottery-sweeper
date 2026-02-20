@@ -1,10 +1,13 @@
 <template>
   <div class="user-logs-container">
-    <el-page-header title="用户日志" @back="$router.go(-1)" />
+    <el-page-header title="返回" content="用户日志" @back="$router.go(-1)" />
     <LogTable
       :logs="logs"
       :loading="loading"
       :total-logs="totalLogs"
+      :show-actions="false"
+      :show-selection="false"
+      :enable-level-filter="false"
       @search="handleSearch"
       @reset="handleReset"
       @export="handleExport"
@@ -13,6 +16,8 @@
       @current-change="handleCurrentChange"
       @view-details="viewLogDetails"
     />
+
+    <LogEntryDetailDialog v-model="detailVisible" :log="selectedLog" />
   </div>
 </template>
 
@@ -20,15 +25,17 @@
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import LogTable from '@/components/LogTable.vue'
+import LogEntryDetailDialog from '@/components/admin/LogEntryDetailDialog.vue'
 import http from '@/utils/http'
 import { processLogResponse } from '@/utils/logUtils.js'
 
-const API_BASE = '/api/admin/system';
+const API_BASE = '/api/v1/admin/system';
 
 export default {
   name: 'UserLogs',
   components: {
-    LogTable
+    LogTable,
+    LogEntryDetailDialog
   },
   setup() {
     const logs = ref([])
@@ -36,6 +43,8 @@ export default {
     const loading = ref(false)
     const currentPage = ref(1)
     const pageSize = ref(50)
+    const detailVisible = ref(false)
+    const selectedLog = ref(null)
 
     const loadLogs = async (params = {}) => {
       loading.value = true
@@ -60,6 +69,7 @@ export default {
     }
 
     const handleSearch = (filters) => {
+      currentPage.value = 1
       loadLogs(filters)
     }
 
@@ -76,19 +86,20 @@ export default {
       ElMessage.info('批量删除功能开发中...')
     }
 
-    const handleSizeChange = (size) => {
+    const handleSizeChange = (size, filters) => {
       pageSize.value = size
-      loadLogs()
+      currentPage.value = 1
+      loadLogs(filters || {})
     }
 
-    const handleCurrentChange = (page) => {
+    const handleCurrentChange = (page, filters) => {
       currentPage.value = page
-      loadLogs()
+      loadLogs(filters || {})
     }
 
     const viewLogDetails = (log) => {
-      console.log('查看用户日志详情:', log)
-      ElMessage.info('用户日志详情功能开发中...')
+      selectedLog.value = log
+      detailVisible.value = true
     }
 
     onMounted(() => {
@@ -99,6 +110,8 @@ export default {
       logs,
       totalLogs,
       loading,
+      detailVisible,
+      selectedLog,
       handleSearch,
       handleReset,
       handleExport,

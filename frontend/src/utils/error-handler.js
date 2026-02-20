@@ -2,6 +2,7 @@
  * 错误处理工具类
  * 统一处理前端错误，包括API错误、JS运行时错误等
  */
+import { isBenignBrowserError } from './benign-browser-errors';
 
 /**
  * 错误类型枚举
@@ -114,7 +115,10 @@ export class ErrorHandlerConfig {
     this.enableToast = options.enableToast !== false;
     this.enableSentry = options.enableSentry || false;
     this.toastDuration = options.toastDuration || 3000;
-    this.ignoredErrors = options.ignoredErrors || [];
+    this.ignoredErrors = options.ignoredErrors ?? [
+      /ResizeObserver loop completed with undelivered notifications/i,
+      /ResizeObserver loop limit exceeded/i
+    ];
   }
 }
 
@@ -249,6 +253,10 @@ export class GlobalErrorHandler {
    * 检查是否应该忽略此错误
    */
   shouldIgnoreError(error) {
+    if (isBenignBrowserError(error?.message)) {
+      return true;
+    }
+
     return this.config.ignoredErrors.some(ignored => {
       if (typeof ignored === 'string') {
         return error.message.includes(ignored);

@@ -52,6 +52,16 @@ const intelligenceRoutes = [
         }
       },
       {
+        path: 'graph',
+        name: 'IntelligenceGraph',
+        component: () => import('@/views/admin/intelligence/GraphManagement.vue'),
+        meta: {
+          title: '图谱管理',
+          icon: 'share',
+          roles: ['admin', 'manager']
+        }
+      },
+      {
         path: 'sentiment',
         name: 'SentimentAnalysis',
         component: () => import('@/views/admin/intelligence/SentimentAnalysis.vue'),

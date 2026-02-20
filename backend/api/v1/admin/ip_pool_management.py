@@ -57,7 +57,7 @@ async def get_ip_pools(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/ip-pools/{pool_id}")
+@router.get("/ip-pools/{pool_id:int}")
 async def get_ip_pool(
     pool_id: int,
     db: Session = Depends(get_db)
@@ -119,7 +119,7 @@ async def create_ip_pool(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.put("/ip-pools/{pool_id}")
+@router.put("/ip-pools/{pool_id:int}")
 async def update_ip_pool(
     pool_id: int,
     pool_update: IPPoolUpdate,
@@ -152,7 +152,7 @@ async def update_ip_pool(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.delete("/ip-pools/{pool_id}")
+@router.delete("/ip-pools/{pool_id:int}")
 async def delete_ip_pool(
     pool_id: int,
     db: Session = Depends(get_db)
@@ -178,7 +178,7 @@ async def delete_ip_pool(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/ip-pools/{pool_id}/test-connection")
+@router.post("/ip-pools/{pool_id:int}/test-connection")
 async def test_ip_pool_connection(
     pool_id: int,
     db: Session = Depends(get_db)
@@ -239,7 +239,7 @@ async def batch_update_ip_pool_status(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/ip-pools/{pool_id}/health")
+@router.get("/ip-pools/{pool_id:int}/health")
 async def get_ip_pool_health(
     pool_id: int,
     db: Session = Depends(get_db)

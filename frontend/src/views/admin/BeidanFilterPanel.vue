@@ -14,38 +14,70 @@
       </template>
     </FilterCardHeader>
     
-    <FilterSection
-      :filter-form="filterForm"
-      :strength-options="strengthOptions"
-      :win-pan-options="winPanOptions"
-      :stability-options="stabilityOptions"
-      :available-leagues="availableLeagues"
-      :date-time-options="dateTimeOptions"
-      :loading="loading"
-      :direction-warning="directionWarning"
-      @apply-preset="handlePreset"
-      @save-strategy="onSaveStrategy"
-      @manage-strategies="onManageStrategies"
-      @load-example-strategy="handleLoadExampleStrategy"
-      @apply-advanced-filter="() => applyAdvancedFilter(true)"
-      @reset-filters="resetFilters"
-    />
+    <!-- 骨架屏 -->
+    <div v-if="loading" class="skeleton-container">
+      <!-- 筛选区域骨架屏 -->
+      <div class="skeleton-filter-section">
+        <div class="skeleton-row" v-for="i in 3" :key="i">
+          <div class="skeleton-title"></div>
+          <div class="skeleton-options">
+            <div class="skeleton-option" v-for="j in 4" :key="j"></div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 统计区域骨架屏 -->
+      <div class="skeleton-stats-section">
+        <div class="skeleton-stat-card" v-for="i in 4" :key="i"></div>
+      </div>
+      
+      <!-- 结果区域骨架屏 -->
+      <div class="skeleton-results-section">
+        <div class="skeleton-table-header"></div>
+        <div class="skeleton-table-row" v-for="i in 5" :key="i"></div>
+      </div>
+    </div>
     
-    <StrategySection
-      :selected-strategy-name="selectedStrategyName"
-      :strategy-options="strategyOptions"
-      :strategy-detail-items="strategyDetailItems"
-      @handle-select-strategy="handleSelectStrategy"
-      @load-strategy-options="loadStrategyOptions"
-    />
-<StatsCard 
-  v-if="strategySelected"
-  :statistics="statistics"
-  :filter-form="filterForm"
-/>
+    <!-- 正常内容 -->
+    <template v-else>
+      <div class="main-content">
+        <section class="panel-section panel-filter">
+      <FilterSection
+        :filter-form="filterForm"
+        :strength-options="strengthOptions"
+        :win-pan-options="winPanOptions"
+        :stability-options="stabilityOptions"
+        :available-leagues="availableLeagues"
+        :date-time-options="dateTimeOptions"
+        :loading="loading"
+        :direction-warning="directionWarning"
+        @apply-preset="handlePreset"
+        @save-strategy="onSaveStrategy"
+        @manage-strategies="onManageStrategies"
+        @load-example-strategy="handleLoadExampleStrategy"
+        @apply-advanced-filter="() => applyAdvancedFilter(true)"
+        @reset-filters="resetFilters"
+      />
+        </section>
 
-<!-- 绛涢€夌粨鏋?-->
-<div v-if="strategySelected">
+        <section class="panel-section panel-strategy">
+      <StrategySection
+        :selected-strategy-name="selectedStrategyName"
+        :strategy-options="strategyOptions"
+        :strategy-detail-items="strategyDetailItems"
+        @handle-select-strategy="handleSelectStrategy"
+        @load-strategy-options="loadStrategyOptions"
+      />
+        </section>
+
+        <section class="panel-section panel-stats" v-if="strategySelected">
+          <StatsCard
+            :statistics="statistics"
+            :filter-form="filterForm"
+          />
+        </section>
+
+        <section class="panel-section panel-results" v-if="strategySelected">
   <ResultsSection
     :paged-results="pagedResults"
     :loading="loading"
@@ -60,68 +92,9 @@
     @handle-current-change="handleCurrentChange"
     @open-analysis="handleOpenAnalysis"
   />
-</div>
-  </div>
-
-<!-- 策略管理弹窗 -->
-<el-dialog
-  v-model="strategyManageVisible"
-  title="管理筛选策略"
-  width="600px"
-  :before-close="closeStrategyManage"
->
-  <el-table
-    ref="strategyManageTableRef"
-    :data="getManageStrategyRows()"
-    row-key="name"
-    style="width: 100%"
-    @selection-change="handleManageSelectionChange"
-  >
-    <el-table-column type="selection" width="50" />
-    <el-table-column prop="name" label="策略名称" width="180" />
-    <el-table-column label="条件摘要" width="260">
-      <template #default="{ row }">
-        <span>{{ getStrategySummary(row.name) }}</span>
-      </template>
-    </el-table-column>
-    <el-table-column label="操作" width="160">
-      <template #default="{ row }">
-        <el-button size="small" @click="openEditStrategy(row.name)">修改</el-button>
-        <el-button size="small" type="danger" @click="deleteStrategy(row.name)">删除</el-button>
-      </template>
-    </el-table-column>
-  </el-table>
-  <template #footer>
-    <span class="dialog-footer">
-      <el-button type="primary" @click="applySelectedStrategiesToMultiConfig">同步到多策略配置</el-button>
-      <el-button @click="closeStrategyManage">关闭</el-button>
-    </span>
-  </template>
-</el-dialog>
-
-<!-- 修改策略弹窗 -->
-<el-dialog
-  v-model="editStrategyVisible"
-  title="修改策略"
-  width="500px"
-  :before-close="closeEditStrategy"
->
-  <div v-if="editingStrategy">
-    <el-form label-width="80px">
-      <el-form-item label="策略名称：">
-        <el-input 
-          v-model="editStrategyName" 
-          placeholder="请输入新策略名称"
-          style="width: 100%;"
-        />
-      </el-form-item>
-    </el-form>
-    <div style="text-align: right; margin-top: 20px;">
-      <el-button @click="closeEditStrategy">取消</el-button>
-      <el-button type="primary" @click="confirmEditStrategy" :disabled="!editStrategyName.trim()">保存修改</el-button>
-    </div>
-  </div>
-</el-dialog>
+        </section>
+      </div>
+    </template>
     
     <!-- 多策略管理弹窗 -->
     <MultiStrategyManager 
@@ -140,6 +113,67 @@
 
     <!-- P级规则说明 -->
     <RulesDialog v-model:visible="rulesDialogVisible" :rules="pLevelRules" />
+
+    <!-- 策略管理弹窗 -->
+    <el-dialog
+      v-model="strategyManageVisible"
+      title="管理筛选策略"
+      width="600px"
+      :before-close="closeStrategyManage"
+    >
+      <el-table
+        ref="strategyManageTableRef"
+        :data="getManageStrategyRows()"
+        row-key="name"
+        style="width: 100%"
+        @selection-change="handleManageSelectionChange"
+      >
+        <el-table-column type="selection" width="50" />
+        <el-table-column prop="name" label="策略名称" width="180" />
+        <el-table-column label="条件摘要" width="260">
+          <template #default="{ row }">
+            <span>{{ getStrategySummary(row.name) }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="160">
+          <template #default="{ row }">
+            <el-button size="small" @click="openEditStrategy(row.name)">修改</el-button>
+            <el-button size="small" type="danger" @click="deleteStrategy(row.name)">删除</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button type="primary" @click="applySelectedStrategiesToMultiConfig">同步到多策略配置</el-button>
+          <el-button @click="closeStrategyManage">关闭</el-button>
+        </span>
+      </template>
+    </el-dialog>
+
+    <!-- 修改策略弹窗 -->
+    <el-dialog
+      v-model="editStrategyVisible"
+      title="修改策略"
+      width="500px"
+      :before-close="closeEditStrategy"
+    >
+      <div v-if="editingStrategy">
+        <el-form label-width="80px">
+          <el-form-item label="策略名称：">
+            <el-input 
+              v-model="editStrategyName" 
+              placeholder="请输入新策略名称"
+              style="width: 100%;"
+            />
+          </el-form-item>
+        </el-form>
+        <div style="text-align: right; margin-top: 20px;">
+          <el-button @click="closeEditStrategy">取消</el-button>
+          <el-button type="primary" @click="confirmEditStrategy" :disabled="!editStrategyName.trim()">保存修改</el-button>
+        </div>
+      </div>
+    </el-dialog>
+  </div>
 </template>
 
 <script setup>
@@ -154,6 +188,7 @@ import {
 } from 'element-plus'
 import request from '@/utils/request'
 // 绛栫暐璇︽儏缂撳瓨锛歬ey 涓虹瓥鐣ュ悕锛寁alue 涓?filters 鏉′欢
+
 const strategiesMap = new Map([
   [
     '强势正路',
@@ -560,7 +595,7 @@ const applyPreset = async (type) => {
   filterForm.stabilityTiers = [...strategy.stabilityTiers]
   filterForm.sortBy = strategy.sortBy || 'p_level'
   filterForm.sortOrder = strategy.sortOrder || 'desc'
-  ElMessage.info('示例策略仅填充条件，请手动点击“生成当前策略”执行筛选')
+  ElMessage.info('示例策略仅填充条件，请手动点击"生成当前策略"执行筛选')
 }
 
 const handlePreset = (type) => {
@@ -586,7 +621,7 @@ const onSaveStrategy = async () => {
       // 妫€鏌ユ槸鍚﹀凡瀛樺湪鍚屽悕绛栫暐
       if (strategyOptionsAll.value.includes(strategyName)) {
         ElMessage.warning({
-          message: '策略“' + strategyName + '”已经存在，请换一个名称',
+          message: '策略"' + strategyName + '"已经存在，请换一个名称',
           duration: 4000,
           showClose: true
         })
@@ -701,7 +736,7 @@ const handleLoadExampleStrategy = (type) => {
     filterForm.sortBy = strategy.sortBy || 'p_level'
     filterForm.sortOrder = strategy.sortOrder || 'desc'
     console.log('更新后的 filterForm:', filterForm)
-    ElMessage.info('已加载' + (type === 'strong' ? '强势正路' : type === 'upset' ? '冷门潜质' : '均衡博弈') + '示例策略，请在筛选卡片中查看并手动点击“应用筛选”生成当前策略')
+    ElMessage.info('已加载' + (type === 'strong' ? '强势正路' : type === 'upset' ? '冷门潜质' : '均衡博弈') + '示例策略，请在筛选卡片中查看并手动点击"应用筛选"生成当前策略')
   }
 }
 
@@ -738,7 +773,7 @@ const applyAdvancedFilter = async (generateCurrentStrategy = false) => {
   
   // 濡傛灉鏄敓鎴愬綋鍓嶇瓥鐣ヤ笖涓夌淮鏉′欢涓虹┖锛岀洿鎺ヨ繑鍥炰笉鎵ц任何操作
   if (generateCurrentStrategy && isThreeDimensionalEmpty) {
-    ElMessage.info('三维筛选条件为空，未生成“当前策略”。请先设置筛选条件。')
+    ElMessage.info('三维筛选条件为空，未生成"当前策略"。请先设置筛选条件。')
     return
   }
   
@@ -810,7 +845,7 @@ const applyAdvancedFilter = async (generateCurrentStrategy = false) => {
         match_id: String(match.dateTime) + '_' + String(match.lineId),
         date_time: match.dateTime,                     // 期号
         line_id: match.lineId,                         // 线路ID
-        match_time: match.matchTime,
+        match_time: pickField(match, ['matchTime', 'match_time', 'matchTimeStr', 'match_time_str'], '', sourceAttrs),
         league: match.league,
         home_team: match.homeTeam,
         away_team: match.guestTeam,
@@ -876,7 +911,7 @@ const applyAdvancedFilter = async (generateCurrentStrategy = false) => {
       // 更新strategiesMap，添加或更新临时策略
       strategiesMap.set(tempStrategyName, currentFilters)
 
-      // 如果筛选选项里没有“当前策略”，则添加
+      // 如果筛选选项里没有"当前策略"，则添加
       if (!strategyOptions.value.includes(tempStrategyName)) {
         strategyOptions.value = [tempStrategyName, ...strategyOptions.value]
       }
@@ -1068,7 +1103,7 @@ const resetFilters = () => {
   selectedStrategyName.value = ''
   CURRENT_STRATEGY.value = ''
   
-  ElMessage.info('筛选条件已重置，“当前策略”已移除')
+  ElMessage.info('筛选条件已重置，"当前策略"已移除')
 }
 
 const handleSelectStrategy = async (name) => {
@@ -1135,7 +1170,7 @@ const handleSelectStrategy = async (name) => {
   if (exampleStrategyNames.includes(name) && !isPersistedStrategy) {
     strategySelected.value = false // 绀轰緥绛栫暐涓嶆縺娲荤粺璁″拰缁撴灉鍗＄墖
     hasResults.value = false
-    ElMessage.info('已加载示例策略 "' + name + '" 条件，请在筛选卡片中查看并手动点击“应用筛选”生成当前策略')
+    ElMessage.info('已加载示例策略 "' + name + '" 条件，请在筛选卡片中查看并手动点击"应用筛选"生成当前策略')
     return
   }
 
@@ -1287,7 +1322,7 @@ const deleteStrategy = async (name) => {
   
     try {
       console.log('显示删除确认对话框')
-      await ElMessageBox.confirm('确定删除策略“' + name + '”？', '警告', {
+      await ElMessageBox.confirm('确定删除策略"' + name + '"？', '警告', {
         confirmButtonText: '删除',
         cancelButtonText: '取消',
         type: 'warning'
@@ -1395,7 +1430,7 @@ const confirmEditStrategy = async () => {
       })
       rebuildFilterStrategyOptions()
     } else {
-      // 本地策略（如“我的策略1”）只更新本地状态
+      // 本地策略（如"我的策略1"）只更新本地状态
       const idxAll = strategyOptionsAll.value.indexOf(oldName)
       if (idxAll > -1) {
         strategyOptionsAll.value[idxAll] = editStrategyName.value
@@ -1721,214 +1756,321 @@ const syncSelectedMultiStrategiesWithAvailable = () => {
 
 <style scoped>
 .beidan-filter-panel {
+  --morandi-bg: #eceff1;
+  --morandi-surface: #f7f6f3;
+  --morandi-elevated: #fdfcfb;
+  --morandi-border: #d6d2cb;
+  --morandi-text: #5f6368;
+  --morandi-text-muted: #8b8680;
+  --morandi-accent: #8ea3b0;
+  --morandi-accent-soft: #e6ebef;
+  --morandi-success: #a8b9aa;
+  --morandi-warn: #c9bba7;
+  --morandi-danger: #c4a7a0;
   padding: 20px;
+  max-width: 1520px;
+  margin: 0 auto;
+  color: var(--morandi-text);
+  background:
+    radial-gradient(1200px 520px at 18% -16%, rgba(142, 163, 176, 0.12), transparent 60%),
+    radial-gradient(980px 420px at 95% 0%, rgba(201, 187, 167, 0.16), transparent 58%),
+    var(--morandi-bg);
 }
 
-/* 浼樺寲缁撴灉琛ㄦ牸鏍峰紡 */
-.el-table {
-  font-size: 12px;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+.main-content {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
-.el-table :deep(.el-table__header) {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+.panel-section {
+  width: 100%;
 }
 
-.el-table :deep(.el-table__header th) {
+.beidan-filter-panel :deep(.el-card) {
+  border-radius: 14px;
+  border: 1px solid var(--morandi-border);
+  background: var(--morandi-surface);
+  box-shadow: 0 12px 28px rgba(95, 99, 104, 0.08);
+}
+
+.beidan-filter-panel :deep(.el-card__header) {
+  border-bottom: 1px solid #e7e3dd;
+  background: linear-gradient(180deg, #f9f8f6 0%, #f2f1ee 100%);
+}
+
+.beidan-filter-panel :deep(.filter-section .filter-group) {
+  border-radius: 12px;
+  border-color: var(--morandi-border);
+  background: var(--morandi-elevated);
+  box-shadow: 0 6px 16px rgba(95, 99, 104, 0.06);
+}
+
+.beidan-filter-panel :deep(.group-title),
+.beidan-filter-panel :deep(.filter-item label),
+.beidan-filter-panel :deep(.strategy-label),
+.beidan-filter-panel :deep(.strategy-list-title) {
+  color: var(--morandi-text);
+}
+
+.beidan-filter-panel :deep(.group-hint),
+.beidan-filter-panel :deep(.rule-preview),
+.beidan-filter-panel :deep(.detail-label) {
+  color: var(--morandi-text-muted);
+}
+
+.beidan-filter-panel :deep(.el-input__wrapper),
+.beidan-filter-panel :deep(.el-select__wrapper),
+.beidan-filter-panel :deep(.el-textarea__inner) {
+  border-radius: 10px;
+  box-shadow: inset 0 0 0 1px #d9d6d0 !important;
+  background: #f9f8f6;
+}
+
+.beidan-filter-panel :deep(.el-input__wrapper.is-focus),
+.beidan-filter-panel :deep(.el-select__wrapper.is-focused) {
+  box-shadow: 0 0 0 1px var(--morandi-accent) !important;
+}
+
+.beidan-filter-panel :deep(.el-button) {
+  border-radius: 10px;
+  min-height: 34px;
+  padding: 0 14px;
+  border-color: #d7d3cc;
+  color: #636870;
+  background: #f5f4f1;
+}
+
+.beidan-filter-panel :deep(.el-button--primary) {
+  background: var(--morandi-accent);
+  border-color: var(--morandi-accent);
+  color: #fff;
+}
+
+.beidan-filter-panel :deep(.el-button--success) {
+  background: var(--morandi-success);
+  border-color: var(--morandi-success);
+  color: #fff;
+}
+
+.beidan-filter-panel :deep(.el-button--warning) {
+  background: var(--morandi-warn);
+  border-color: var(--morandi-warn);
+  color: #fff;
+}
+
+.beidan-filter-panel :deep(.el-button--danger) {
+  background: var(--morandi-danger);
+  border-color: var(--morandi-danger);
+  color: #fff;
+}
+
+.beidan-filter-panel :deep(.el-button + .el-button) {
+  margin-left: 10px;
+}
+
+.beidan-filter-panel :deep(.el-checkbox-button__inner) {
+  border-radius: 10px !important;
+  border-color: #d8d4cd !important;
+  background: #f9f8f6;
+  color: #5f6368;
+}
+
+.beidan-filter-panel :deep(.el-checkbox-button.is-checked .el-checkbox-button__inner) {
+  background: var(--morandi-accent-soft);
+  border-color: var(--morandi-accent);
+  color: #4f5963;
+  box-shadow: none;
+}
+
+.beidan-filter-panel :deep(.strategy-card),
+.beidan-filter-panel :deep(.stats-card),
+.beidan-filter-panel :deep(.result-card) {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.beidan-filter-panel :deep(.strategy-grid) {
+  gap: 10px;
+}
+
+.beidan-filter-panel :deep(.strategy-item) {
+  border-radius: 10px;
+  border-color: #d8d4cd;
+  background: #f9f8f6;
+}
+
+.beidan-filter-panel :deep(.strategy-item.active) {
+  border-color: var(--morandi-accent);
+  box-shadow: 0 8px 18px rgba(142, 163, 176, 0.22);
+}
+
+.beidan-filter-panel :deep(.stat-item) {
+  border-radius: 0;
+  border: none;
   background: transparent;
+  box-shadow: none;
+}
+
+.beidan-filter-panel :deep(.stat-number) {
+  color: #7f95a5;
+}
+
+.beidan-filter-panel :deep(.el-table) {
+  font-size: 12px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 20px rgba(95, 99, 104, 0.08);
+}
+
+.beidan-filter-panel :deep(.result-card .el-card__body) {
+  padding: 8px 0 12px;
+}
+
+.beidan-filter-panel :deep(.result-card .el-table) {
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.beidan-filter-panel :deep(.el-table th.el-table__cell) {
+  background: #eef1f3;
+  color: #60656d;
   font-weight: 600;
   text-align: center;
-  padding: 12px 8px;
+  padding: 11px 8px;
 }
 
-.el-table :deep(.el-table__row) {
-  transition: all 0.3s ease;
-}
-
-.el-table :deep(.el-table__row:hover) {
-  background-color: #f8f9ff !important;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.el-table :deep(.el-table__cell) {
-  padding: 8px;
+.beidan-filter-panel :deep(.el-table td.el-table__cell) {
+  padding: 9px 8px;
   text-align: center;
+  color: #5f6368;
 }
 
-/* 鐘舵€佹爣绛炬牱寮忎紭鍖?*/
-.el-tag {
-  border-radius: 12px;
-  font-weight: 500;
+.beidan-filter-panel :deep(.el-table__row:hover > td.el-table__cell) {
+  background: #f1f4f6 !important;
 }
 
-/* 鎸夐挳缁勬牱寮?*/
-.el-button + .el-button {
-  margin-left: 8px;
+.beidan-filter-panel :deep(.el-tag) {
+  border-radius: 999px;
+  font-weight: 600;
 }
 
-/* 卡片样式优化 */
-.el-card {
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  border: 1px solid #e4e7ed;
+.beidan-filter-panel :deep(.el-pagination) {
+  margin-top: 18px;
+  justify-content: flex-end;
 }
 
-.el-card :deep(.el-card__header) {
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-  border-bottom: 1px solid #e4e7ed;
+.beidan-filter-panel :deep(.el-dialog) {
+  border-radius: 14px;
+  overflow: hidden;
 }
 
-/* 分页样式 */
-.el-pagination {
-  margin-top: 20px;
-  text-align: center;
+.beidan-filter-panel :deep(.el-dialog__header) {
+  margin: 0;
+  padding: 16px 20px;
+  background: #eef1f3;
+  border-bottom: 1px solid #e3dfd8;
 }
 
-/* 缁熻卡片样式 */
-.stats-container {
+.beidan-filter-panel :deep(.el-dialog__title) {
+  color: #59606a;
+  font-weight: 700;
+}
+
+.beidan-filter-panel :deep(.dialog-footer) {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* skeleton */
+.skeleton-container {
+  border: 1px solid var(--morandi-border);
+  border-radius: 14px;
+  background: var(--morandi-surface);
+  padding: 18px;
+}
+
+.skeleton-title,
+.skeleton-option,
+.skeleton-stat-card,
+.skeleton-table-header,
+.skeleton-table-row {
+  background: linear-gradient(90deg, #ece9e4 25%, #f4f2ef 50%, #ece9e4 75%);
+  background-size: 320% 100%;
+  animation: shimmer 1.8s infinite linear;
+  border-radius: 10px;
+}
+
+.skeleton-row {
+  margin-bottom: 16px;
+}
+
+.skeleton-title {
+  height: 16px;
+  width: 240px;
+  margin-bottom: 10px;
+}
+
+.skeleton-options {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
-  margin: 20px 0;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
 }
 
-.stat-card {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  padding: 20px;
-  border-radius: 12px;
-  text-align: center;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+.skeleton-option {
+  height: 44px;
 }
 
-.stat-number {
-  font-size: 2em;
-  font-weight: bold;
+.skeleton-stats-section {
+  margin: 10px 0 16px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.skeleton-stat-card {
+  height: 72px;
+}
+
+.skeleton-table-header {
+  height: 42px;
+  margin-bottom: 10px;
+}
+
+.skeleton-table-row {
+  height: 36px;
   margin-bottom: 8px;
 }
 
-.stat-label {
-  font-size: 0.9em;
-  opacity: 0.9;
+@keyframes shimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: 0 0; }
 }
 
-/* 鍝嶅簲寮忚璁?*/
 @media (max-width: 768px) {
   .beidan-filter-panel {
-    padding: 10px;
+    padding: 12px;
   }
-  
-  .el-table :deep(.el-table__cell) {
-    padding: 8px 4px;  /* 增加垂直padding鎻愬崌瑙︽懜浣撻獙 */
-    font-size: 12px;   /* 绋嶅井澧炲ぇ瀛椾綋渚夸簬闃呰 */
-    min-height: 44px;  /* 纭繚鏈€灏忚Е鎽哥洰鏍囧昂瀵?*/
-  }
-  
-  .stats-container {
-    grid-template-columns: 1fr;
-    gap: 8px;         /* 增加间距 */
-  }
-  
-  /* 瑙︽懜浜や簰浼樺寲 */
-  .el-button {
-    min-height: 44px;  /* iOS鎺ㄨ崘鐨勬渶灏忚Е鎽哥洰鏍?*/
-    font-size: 14px;   /* 澧炲ぇ按钮文字 */
-    padding: 12px 16px; /* 澧炲ぇ瑙︽懜鍖哄煙 */
-  }
-  
-  .el-input :deep(.el-input__inner) {
-    height: 44px;      /* 杈撳叆妗嗘渶灏忚Е鎽稿昂瀵?*/
-    font-size: 16px;   /* 闃叉iOS缂╂斁 */
-  }
-  
-  .el-select :deep(.el-input__inner) {
-    height: 44px;
-    font-size: 16px;
-  }
-  
-  .el-checkbox {
-    margin-right: 12px; /* 澧炲姞澶嶉€夋间距 */
-  }
-  
-  .el-checkbox :deep(.el-checkbox__input) {
-    width: 18px;
-    height: 18px;      /* 澧炲ぇ澶嶉€夋瑙︽懜鍖哄煙 */
-  }
-  
-  /* 琛ㄦ牸妯悜婊氬姩浼樺寲 */
-  .table-container {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch; /* iOS平滑滚动 */
-  }
-  
-  /* 绌虹姸鎬佹寜閽紭鍖?*/
-  .el-empty :deep(.el-button) {
-    min-width: 120px;  /* 纭繚鎸夐挳瓒冲澶?*/
-    margin: 4px;
-  }
-  
-  /* 琛ㄥ崟闂磋窛浼樺寲 */
-  .el-form-item {
-    margin-bottom: 18px; /* 澧炲姞琛ㄥ崟闂磋窛 */
-  }
-  
-  /* 鍒嗛〉缁勪欢瑙︽懜浼樺寲 */
-  .el-pagination :deep(.btn-prev),
-  .el-pagination :deep(.btn-next),
-  .el-pagination :deep(.number) {
-    min-width: 44px;
-    height: 44px;
-    line-height: 44px;
-  }
-}
 
-/* 鍔犺浇鍔ㄧ敾 */
-.el-loading-mask {
-  backdrop-filter: blur(2px);
-}
+  .beidan-filter-panel :deep(.el-table__cell) {
+    padding: 8px 4px;
+    min-height: 42px;
+  }
 
-/* 瀵硅瘽妗嗘牱寮忎紭鍖?*/
-.el-dialog {
-  border-radius: 12px;
-}
+  .skeleton-options,
+  .skeleton-stats-section {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 
-.el-dialog :deep(.el-dialog__header) {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border-radius: 12px 12px 0 0;
-  margin: 0;
-  padding: 20px;
-}
+  .beidan-filter-panel :deep(.el-button) {
+    min-height: 40px;
+  }
 
-/* 琛ㄥ崟鏍峰紡浼樺寲 */
-.el-form-item__label {
-  font-weight: 600;
-  color: #333;
-}
-
-.el-checkbox-group {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 8px;
-}
-
-/* 琛ㄦ牸鏂戦┈绾逛紭鍖?*/
-.el-table :deep(.el-table__row:nth-child(even)) {
-  background-color: #fafbfc;
-}
-
-/* 閫変腑琛屾牱寮?*/
-.el-table :deep(.el-table__row.current-row) {
-  background-color: #e6f7ff !important;
-}
-
-/* 排序图标样式 */
-.el-table :deep(.el-table__column-sorter) {
-  color: #667eea;
+  .beidan-filter-panel :deep(.el-pagination) {
+    justify-content: center;
+  }
 }
 </style>
 

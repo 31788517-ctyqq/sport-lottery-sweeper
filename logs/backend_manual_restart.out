@@ -1,0 +1,7 @@
+数据库路径配置: sqlite:///C:\Users\11581\Downloads\sport-lottery-sweeper\data\sport_lottery.db
+2026-02-19 05:17:13 - root - INFO - 日志系统初始化完成 - 级别:INFO, 大小轮转:10MB, 时间轮转:midnight, 备份数:30
+2026-02-19 05:17:13 - backend.main - INFO - Application starting up...
+2026-02-19 05:19:14 - backend.core.cache_manager - INFO - Redis未运行(Error 22 connecting to localhost:6379. 22.)，回退到内存缓存 (开发环境中正常)
+2026-02-19 05:19:14 - backend.api.v1.auth - INFO - Login attempt: username=admin, password_length=8
+2026-02-19 05:19:15 - backend.api.v1.auth - INFO - Login successful for user: admin
+2026-02-19 05:19:15 - backend.api.v1.auth - INFO - User attributes: department=None, position=None

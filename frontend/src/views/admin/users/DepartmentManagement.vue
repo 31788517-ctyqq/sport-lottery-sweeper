@@ -243,19 +243,18 @@
     <!-- 部门编辑对话框 -->
     <DeptEditDialog
       v-model="showDeptDialog"
-      :mode="deptDialogMode"
       :dept-data="currentDept"
-      :parent-depts="departmentOptions"
-      @saved="handleDeptSaved"
-      @closed="handleDeptDialogClosed"
+      :department-tree="departmentTree"
+      :managers="users"
+      @submit="handleDeptSubmit"
     />
     
     <!-- 添加成员对话框 -->
     <AddMembersDialog
       v-model="showAddMembersDialog"
-      :dept-id="selectedDept?.id"
+      :department-id="selectedDept?.id"
       :exclude-user-ids="deptUsers.map(u => u.id)"
-      @added="handleMembersAdded"
+      @submit="handleMembersSubmit"
     />
   </div>
 </template>
@@ -312,7 +311,12 @@ const departmentOptions = computed(() => {
 
 const deptUsers = computed(() => {
   if (!selectedDept.value) return []
-  return users.value.filter(user => user.departmentId === selectedDept.value.id)
+  return users.value.filter(
+    (user) =>
+      user.departmentId === selectedDept.value.id ||
+      user.department_id === selectedDept.value.id ||
+      user.department === selectedDept.value.name
+  )
 })
 
 const childDepts = computed(() => {
@@ -351,12 +355,42 @@ const buildDepartmentOptions = (depts, level = 0, result = []) => {
   return result
 }
 
+const normalizeDepartment = (dept) => {
+  if (!dept) return null
+  const statusRaw = dept.status
+  const isActive =
+    statusRaw === true ||
+    statusRaw === 'active' ||
+    statusRaw === 1 ||
+    statusRaw === '1'
+  return {
+    ...dept,
+    parentId: dept.parentId ?? dept.parent_id ?? null,
+    managerId: dept.managerId ?? dept.leader_id ?? null,
+    sortOrder: dept.sortOrder ?? dept.sort_order ?? 0,
+    status: isActive ? 'active' : 'inactive',
+    userCount: dept.userCount ?? dept.user_count ?? 0,
+    children: Array.isArray(dept.children) ? dept.children.map(normalizeDepartment) : []
+  }
+}
+
+const toDepartmentPayload = (dept) => ({
+  name: dept.name,
+  parent_id: dept.parentId ?? null,
+  description: dept.description || '',
+  leader_id: dept.managerId ?? null,
+  sort_order: dept.sortOrder ?? 0,
+  status: dept.status === 'active'
+})
+
 // 加载部门列表
 const loadDepartments = async () => {
   try {
     const response = await getDepartments({ tree: true })
-    if (response && response.data) {
-      departmentTree.value = Array.isArray(response.data) ? response.data : []
+    const payload = response?.data ?? response
+    const rows = Array.isArray(payload?.data) ? payload.data : Array.isArray(payload) ? payload : []
+    if (rows) {
+      departmentTree.value = rows.map(normalizeDepartment)
       departments.value = flattenDepartments(departmentTree.value)
     }
   } catch (error) {
@@ -379,10 +413,9 @@ const flattenDepartments = (tree, result = []) => {
 // 加载用户列表
 const loadUsers = async () => {
   try {
-    const response = await getUsers({ status: 'active' })
-    if (response && response.data) {
-      users.value = Array.isArray(response.data.items) ? response.data.items : []
-    }
+    const response = await getUsers({ skip: 0, limit: 100, status: 'active' })
+    const payload = response?.data ?? response
+    users.value = Array.isArray(payload?.items) ? payload.items : []
   } catch (error) {
     console.error('加载用户列表失败:', error)
   }
@@ -425,7 +458,9 @@ const handleDeleteDept = async (dept) => {
     }
     
     // 检查是否有用户
-    const hasUsers = users.value.some(u => u.departmentId === dept.id)
+    const hasUsers = users.value.some(
+      (u) => u.departmentId === dept.id || u.department_id === dept.id || u.department === dept.name
+    )
     if (hasUsers) {
       ElMessage.warning('该部门下有用户，无法删除')
       return
@@ -464,9 +499,9 @@ const handleSaveDept = async () => {
     saving.value = true
     
     if (selectedDept.value.id) {
-      await updateDepartment(selectedDept.value.id, selectedDept.value)
+      await updateDepartment(selectedDept.value.id, toDepartmentPayload(selectedDept.value))
     } else {
-      await createDepartment(selectedDept.value)
+      await createDepartment(toDepartmentPayload(selectedDept.value))
     }
     
     ElMessage.success('保存成功')
@@ -520,19 +555,39 @@ const handleRemoveMember = async (user) => {
   }
 }
 
-// 部门保存回调
-const handleDeptSaved = () => {
-  loadDepartments()
+// 部门弹窗提交
+const handleDeptSubmit = async (formData) => {
+  try {
+    const payload = {
+      ...formData,
+      sortOrder: formData.sort ?? formData.sortOrder ?? 0
+    }
+    if (payload.id) {
+      await updateDepartment(payload.id, toDepartmentPayload(payload))
+      ElMessage.success('部门更新成功')
+    } else {
+      await createDepartment(toDepartmentPayload(payload))
+      ElMessage.success('部门创建成功')
+    }
+    showDeptDialog.value = false
+    currentDept.value = {}
+    await loadDepartments()
+  } catch (error) {
+    console.error('部门保存失败:', error)
+    ElMessage.error('部门保存失败')
+  }
 }
 
-// 部门对话框关闭回调
-const handleDeptDialogClosed = () => {
-  currentDept.value = {}
-}
-
-// 成员添加完成回调
-const handleMembersAdded = () => {
-  loadUsers()
+// 成员弹窗提交
+const handleMembersSubmit = async ({ userIds }) => {
+  if (!selectedDept.value) return
+  users.value = users.value.map((u) =>
+    userIds.includes(u.id)
+      ? { ...u, departmentId: selectedDept.value.id, department: selectedDept.value.name }
+      : u
+  )
+  showAddMembersDialog.value = false
+  ElMessage.success('成员添加成功')
 }
 
 // 刷新数据

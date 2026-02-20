@@ -110,9 +110,9 @@ export const API_ENDPOINTS = {
   
   // 操作日志
   OPERATION_LOGS: {
-    LIST: '/api/admin/system/logs/db/user',
-    STATISTICS: '/api/admin/system/logs/db/statistics',
-    EXPORT: '/api/admin/system/logs/export'
+    LIST: '/api/v1/admin/system/logs/db/user',
+    STATISTICS: '/api/v1/admin/system/logs/db/statistics',
+    EXPORT: '/api/v1/admin/system/logs/export'
   },
   
   // 系统监控

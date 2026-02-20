@@ -12,7 +12,7 @@ from backend.schemas.department import (
 )
 from backend.crud.department import crud_department
 
-router = APIRouter()
+router = APIRouter(prefix="/departments", tags=["departments"])
 
 
 @router.get("/", response_model=dict)

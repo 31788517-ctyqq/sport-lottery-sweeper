@@ -29,6 +29,7 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
+import { getErrorMessage, isBenignBrowserError } from '@/utils/benign-browser-errors'
 
 // 错误队列
 const errorQueue = ref([])
@@ -73,9 +74,12 @@ defineExpose({
 
 // 全局错误处理器
 const errorHandler = (event) => {
+  const raw = event.error || event.message
+  if (isBenignBrowserError(raw)) return
+
   addError({
     title: 'JavaScript错误',
-    message: event.error ? event.error.message : event.message,
+    message: getErrorMessage(raw) || '未知错误',
     type: 'error',
     duration: 8000
   })
@@ -83,9 +87,11 @@ const errorHandler = (event) => {
 
 // Promise拒绝处理器
 const promiseRejectionHandler = (event) => {
+  if (isBenignBrowserError(event.reason)) return
+
   addError({
     title: 'Promise拒绝',
-    message: event.reason ? event.reason.toString() : '未知原因',
+    message: getErrorMessage(event.reason) || '未知原因',
     type: 'error',
     duration: 8000
   })

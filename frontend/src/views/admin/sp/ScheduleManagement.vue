@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="schedule-management">
     <el-card class="card-container">
       <template #header>
@@ -8,82 +8,105 @@
             <p class="subtitle">{{ subtitle }}</p>
           </div>
           <div class="header-actions">
-            <el-button @click="refreshData" :icon="Refresh">刷新</el-button>
-            <el-button type="primary" @click="importSchedule" :icon="Upload">导入赛程</el-button>
-            <el-button @click="exportSchedule" :icon="Download">导出</el-button>
+            <el-date-picker
+              v-if="isJczq || isBd"
+              v-model="crawlDate"
+              type="date"
+              value-format="YYYY-MM-DD"
+              format="YYYY-MM-DD"
+              placeholder="赛程日期"
+              style="width: 150px"
+            />
+            <el-button v-if="isJczq" type="primary" :loading="crawlLoading" @click="fetchFrom500w">
+              从500W获取竞彩赛程
+            </el-button>
+            <el-button v-if="isBd" type="primary" :loading="crawlLoading" @click="fetchFromYingqiuBd">
+              从盈球获取北单赛程
+            </el-button>
+            <el-button :icon="Refresh" @click="refreshData">刷新</el-button>
           </div>
         </div>
       </template>
 
-      <!-- 搜索栏 -->
       <el-form :model="queryParams" inline class="search-form">
-        <el-row :gutter="10">
-          <el-col :xs="24" :sm="12" :md="6">
-            <el-form-item label="联赛名称">
-              <el-input v-model="queryParams.leagueName" placeholder="请输入联赛名称" clearable />
-            </el-form-item>
-          </el-col>
-          <el-col :xs="24" :sm="12" :md="6">
-            <el-form-item label="比赛日期">
-              <el-date-picker
-                v-model="queryParams.matchDate"
-                type="date"
-                placeholder="选择日期"
-                format="YYYY-MM-DD"
-                value-format="YYYY-MM-DD"
-                style="width: 100%"
-              />
-            </el-form-item>
-          </el-col>
-          <el-col :xs="24" :sm="24" :md="12">
-            <el-form-item>
-              <el-button type="primary" @click="handleQuery" :icon="Search">查询</el-button>
-              <el-button @click="resetQuery" :icon="Delete">重置</el-button>
-            </el-form-item>
-          </el-col>
-        </el-row>
+        <el-form-item label="赛事">
+          <el-input v-model="queryParams.leagueName" placeholder="输入赛事" clearable style="width: 180px" />
+        </el-form-item>
+        <el-form-item label="赛程日期">
+          <el-date-picker
+            v-model="queryParams.matchDate"
+            type="date"
+            value-format="YYYY-MM-DD"
+            format="YYYY-MM-DD"
+            placeholder="选择日期"
+            style="width: 150px"
+          />
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" :icon="Search" @click="handleQuery">查询</el-button>
+          <el-button :icon="Delete" @click="resetQuery">重置</el-button>
+        </el-form-item>
       </el-form>
 
-      <!-- 数据表格 -->
-      <el-table 
-        :data="scheduleList" 
-        v-loading="loading" 
-        style="width: 100%" 
-        stripe
-        height="500"
-        @selection-change="handleSelectionChange">
-        <el-table-column type="selection" width="55" />
-        <el-table-column prop="matchId" label="比赛ID" width="120" fixed="left" />
-        <el-table-column prop="leagueName" label="联赛" width="120" />
-        <el-table-column prop="homeTeam" label="主队" width="120">
-          <template #default="scope">
-            <span class="team-name">{{ scope.row.homeTeam }}</span>
+      <el-table :data="scheduleList" v-loading="loading" stripe height="560" style="width: 100%">
+        <el-table-column prop="number" label="编号" width="90" />
+        <el-table-column prop="leagueName" label="赛事" width="130" show-overflow-tooltip />
+        <el-table-column prop="matchTime" label="开赛时间" width="170" />
+        <el-table-column v-if="isBd" prop="statusText" label="状态" width="100" align="center" />
+        <el-table-column v-if="isBd" label="比分/半场" width="120" align="center">
+          <template #default="{ row }">
+            <div class="dual-line">
+              <span>{{ row.score }}</span>
+              <span class="sub">{{ row.halftimeScore }}</span>
+            </div>
           </template>
         </el-table-column>
-        <el-table-column prop="awayTeam" label="客队" width="120">
-          <template #default="scope">
-            <span class="team-name">{{ scope.row.awayTeam }}</span>
+        <el-table-column prop="homeTeam" label="主队" min-width="150" show-overflow-tooltip />
+        <el-table-column v-if="isJczq" prop="score" label="比分" width="90" align="center">
+          <template #default="{ row }">
+            <span class="score-text">{{ row.score }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="matchDate" label="比赛日期" width="150" />
-        <el-table-column prop="matchTime" label="比赛时间" width="120" />
-        <el-table-column prop="round" label="轮次" width="80" />
-        <el-table-column prop="group" label="分组" width="80" />
-        <el-table-column prop="status" label="状态" width="100">
-          <template #default="scope">
-            <el-tag :type="getStatusType(scope.row.status)">{{ scope.row.status }}</el-tag>
+        <el-table-column prop="awayTeam" label="客队" min-width="150" show-overflow-tooltip />
+        <el-table-column label="让球" width="90" align="center">
+          <template #default="{ row }">
+            <div class="dual-line">
+              <span>{{ row.handicap0 }}</span>
+              <span class="sub">{{ row.handicap }}</span>
+            </div>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="220" fixed="right">
-          <template #default="scope">
-            <el-button size="small" @click="editSchedule(scope.row)" :icon="Edit">编辑</el-button>
-            <el-button size="small" type="primary" @click="viewDetails(scope.row)" :icon="View">详情</el-button>
-            <el-button size="small" type="danger" @click="deleteSchedule(scope.row)" :icon="Delete">删除</el-button>
+        <el-table-column label="胜" width="98" align="center">
+          <template #default="{ row }">
+            <div class="dual-line">
+              <span>{{ row.oddsNspfWin }}</span>
+              <span class="sub">{{ row.oddsSpfWin }}</span>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column label="平" width="98" align="center">
+          <template #default="{ row }">
+            <div class="dual-line">
+              <span>{{ row.oddsNspfDraw }}</span>
+              <span class="sub">{{ row.oddsSpfDraw }}</span>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column label="负" width="98" align="center">
+          <template #default="{ row }">
+            <div class="dual-line">
+              <span>{{ row.oddsNspfLose }}</span>
+              <span class="sub">{{ row.oddsSpfLose }}</span>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column v-if="isJczq || isBd" label="其它赔率" width="110" align="center" fixed="right">
+          <template #default="{ row }">
+            <el-button type="primary" plain size="small" class="other-odds-btn" @click="openOtherOdds(row)">详情</el-button>
           </template>
         </el-table-column>
       </el-table>
 
-      <!-- 分页 -->
       <el-pagination
         v-model:current-page="currentPage"
         v-model:page-size="pageSize"
@@ -91,210 +114,261 @@
         :background="true"
         layout="total, sizes, prev, pager, next, jumper"
         :total="total"
-        style="margin-top: 20px; text-align: center;"
+        style="margin-top: 16px; text-align: center"
         @size-change="handleSizeChange"
         @current-change="handleCurrentChange"
       />
     </el-card>
 
-    <!-- 编辑对话框 -->
-    <el-dialog :title="dialogTitle" v-model="dialogVisible" width="600px" :destroy-on-close="true">
-      <el-form :model="currentSchedule" :rules="scheduleRules" ref="scheduleFormRef" label-width="100px">
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item label="主队" prop="homeTeam">
-              <el-input v-model="currentSchedule.homeTeam" placeholder="请输入主队名称" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="客队" prop="awayTeam">
-              <el-input v-model="currentSchedule.awayTeam" placeholder="请输入客队名称" />
-            </el-form-item>
-          </el-col>
-        </el-row>
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item label="联赛" prop="leagueName">
-              <el-input v-model="currentSchedule.leagueName" placeholder="请输入联赛名称" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="轮次">
-              <el-input v-model="currentSchedule.round" placeholder="请输入轮次" />
-            </el-form-item>
-          </el-col>
-        </el-row>
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item label="比赛日期" prop="matchDate">
-              <el-date-picker
-                v-model="currentSchedule.matchDate"
-                type="date"
-                placeholder="选择日期"
-                format="YYYY-MM-DD"
-                value-format="YYYY-MM-DD"
-                style="width: 100%"
-              />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="比赛时间" prop="matchTime">
-              <el-time-picker
-                v-model="currentSchedule.matchTime"
-                placeholder="选择时间"
-                format="HH:mm"
-                style="width: 100%"
-              />
-            </el-form-item>
-          </el-col>
-        </el-row>
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item label="状态" prop="status">
-              <el-select v-model="currentSchedule.status" placeholder="请选择状态" style="width: 100%">
-                <el-option label="未开始" value="未开始" />
-                <el-option label="进行中" value="进行中" />
-                <el-option label="已结束" value="已结束" />
-                <el-option label="延期" value="延期" />
-                <el-option label="取消" value="取消" />
-              </el-select>
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="分组">
-              <el-input v-model="currentSchedule.group" placeholder="请输入分组" />
-            </el-form-item>
-          </el-col>
-        </el-row>
-      </el-form>
-      <template #footer>
-        <div class="dialog-footer">
-          <el-button @click="dialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="confirmSave">确定</el-button>
-        </div>
-      </template>
+    <el-dialog
+      v-model="otherOddsVisible"
+      title="其它公司赔率汇总"
+      width="860px"
+      :close-on-click-modal="false"
+    >
+      <el-table :data="otherOddsRows" v-loading="otherOddsLoading" stripe max-height="480">
+        <el-table-column prop="company" label="公司" min-width="220" show-overflow-tooltip />
+        <el-table-column prop="updatedAt" label="更新时间" width="170" />
+        <el-table-column prop="initWin" label="初赔胜" width="90" align="center" />
+        <el-table-column prop="initDraw" label="初赔平" width="90" align="center" />
+        <el-table-column prop="initLose" label="初赔负" width="90" align="center" />
+        <el-table-column prop="instantWin" label="即时胜" width="90" align="center" />
+        <el-table-column prop="instantDraw" label="即时平" width="90" align="center" />
+        <el-table-column prop="instantLose" label="即时负" width="90" align="center" />
+      </el-table>
     </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { Refresh, Upload, Download, Search, Delete, Edit, View } from '@element-plus/icons-vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { ElMessage } from 'element-plus'
+import { Delete, Refresh, Search } from '@element-plus/icons-vue'
+import request from '@/utils/request'
 
-// props接收类型参数
 const props = defineProps({
   scheduleType: {
     type: String,
-    default: 'jczq' // jczq: 竞彩足球, bd: 北单
+    default: 'jczq'
   }
 })
 
-// 计算标题和副标题
-const title = computed(() => {
-  return props.scheduleType === 'jczq' ? '竞彩赛程管理' : '北单赛程管理'
-})
+const API_BASE = '/api/v1/admin/lottery-schedules/lottery-schedules'
+const isJczq = computed(() => props.scheduleType === 'jczq')
+const isBd = computed(() => props.scheduleType === 'bd')
 
-const subtitle = computed(() => {
-  return props.scheduleType === 'jczq' 
-    ? '管理竞彩足球相关赛事安排' 
-    : '管理北单足球相关赛事安排'
-})
+const title = computed(() => (isJczq.value ? '竞彩赛程管理' : '北单赛程管理'))
+const subtitle = computed(() => (isJczq.value ? '支持按日期从500W抓取竞彩赛程并入库' : '支持按日期从盈球抓取北单赛程并入库'))
 
-// 表格数据
 const scheduleList = ref([])
 const loading = ref(false)
+const crawlLoading = ref(false)
 const currentPage = ref(1)
-const pageSize = ref(10)
+const pageSize = ref(20)
 const total = ref(0)
-const multipleSelection = ref([])
+const crawlDate = ref(new Date().toISOString().slice(0, 10))
+const otherOddsVisible = ref(false)
+const otherOddsLoading = ref(false)
+const otherOddsRows = ref([])
 
-// 查询参数
 const queryParams = reactive({
   leagueName: '',
-  matchDate: '',
+  matchDate: ''
 })
 
-// 当前编辑的赛程
-const currentSchedule = reactive({
-  matchId: '',
-  homeTeam: '',
-  awayTeam: '',
-  leagueName: '',
-  matchDate: '',
-  matchTime: '',
-  status: '未开始',
-  round: '',
-  group: ''
-})
-
-// 对话框相关
-const dialogVisible = ref(false)
-const dialogTitle = ref('')
-const scheduleFormRef = ref()
-
-// 表单验证规则
-const scheduleRules = {
-  homeTeam: [
-    { required: true, message: '请输入主队名称', trigger: 'blur' }
-  ],
-  awayTeam: [
-    { required: true, message: '请输入客队名称', trigger: 'blur' }
-  ],
-  leagueName: [
-    { required: true, message: '请输入联赛名称', trigger: 'blur' }
-  ],
-  matchDate: [
-    { required: true, message: '请选择比赛日期', trigger: 'change' }
-  ],
-  matchTime: [
-    { required: true, message: '请选择比赛时间', trigger: 'change' }
-  ],
-  status: [
-    { required: true, message: '请选择状态', trigger: 'change' }
-  ]
+const formatOdds = (v) => {
+  if (v === null || v === undefined || v === '') return '-'
+  const n = Number(v)
+  return Number.isFinite(n) ? n.toFixed(2) : String(v)
 }
 
-// 获取赛程列表
-const getScheduleList = () => {
+const formatMatchTime = (v) => {
+  if (!v) return '-'
+  const s = String(v).replace('T', ' ')
+  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2})/)
+  if (m) return `${m[2]}-${m[3]} ${m[4]}:${m[5]}`
+  return s
+}
+
+const formatStatus = (status, statusDes) => {
+  const s = String(status || '').toLowerCase()
+  if (s === 'pending') return '未开赛'
+  if (s === 'running') return '比赛中'
+  if (s === 'finished') return '已完成'
+  if (s === 'cancelled') return '已完成'
+  const raw = String(statusDes || '')
+  if (raw.includes('未开')) return '未开赛'
+  if (raw.includes('完场') || raw.includes('已结束') || raw.includes('已完成')) return '已完成'
+  if (raw.includes('中场') || raw.includes('进行')) return '比赛中'
+  return '-'
+}
+
+const normalizeScore = (value) => {
+  const text = String(value || '').trim()
+  if (!text || text === '-' || text.toLowerCase() === 'null' || text.toLowerCase() === 'none') return '-'
+  const m = text.match(/(\d+)\s*[-:：]\s*(\d+)/)
+  if (m) return `${m[1]}-${m[2]}`
+  return text
+}
+
+const mapJczqRow = (row) => ({
+  id: row.id,
+  number: row.number || '-',
+  leagueName: row.league_name || '-',
+  matchTime: formatMatchTime(row.match_time),
+  homeTeam: row.home_team || '-',
+  score: normalizeScore(row.score ?? row.full_score ?? row.score_full),
+  awayTeam: row.away_team || '-',
+  handicap0: row.handicap_0 || '0',
+  handicap: row.handicap || '-',
+  oddsNspfWin: formatOdds(row.odds_nspf_win ?? row.odds_win),
+  oddsNspfDraw: formatOdds(row.odds_nspf_draw ?? row.odds_draw),
+  oddsNspfLose: formatOdds(row.odds_nspf_lose ?? row.odds_lose),
+  oddsSpfWin: formatOdds(row.odds_spf_win),
+  oddsSpfDraw: formatOdds(row.odds_spf_draw),
+  oddsSpfLose: formatOdds(row.odds_spf_lose)
+})
+
+const mapBdRow = (row) => ({
+  ...mapJczqRow(row),
+  // 优先使用后端归一化文案，兜底再前端归一
+  statusText:
+    row.status_text && row.status_text !== '-'
+      ? row.status_text
+      : formatStatus(row.status, row.status_des),
+  score: normalizeScore(row.score ?? row.full_score ?? row.score_full),
+  halftimeScore: normalizeScore(row.halftime_score ?? row.half_score ?? row.halfTimeScore)
+})
+
+const getScheduleList = async () => {
   loading.value = true
-  
-  // 模拟数据获取
-  setTimeout(() => {
-    // 生成模拟数据
-    scheduleList.value = Array.from({ length: 50 }, (_, idx) => ({
-      matchId: `M${String(idx + 1).padStart(4, '0')}`,
-      homeTeam: `主队${idx + 1}`,
-      awayTeam: `客队${idx + 1}`,
-      leagueName: `联赛${idx % 5 + 1}`,
-      matchDate: `2026-${String(Math.floor(idx / 10) + 1).padStart(2, '0')}-${String((idx % 28) + 1).padStart(2, '0')}`,
-      matchTime: `${String(Math.floor(idx / 2) % 24).padStart(2, '0')}:${String((idx * 3) % 60).padStart(2, '0')}`,
-      status: ['未开始', '进行中', '已结束', '延期'][idx % 4],
-      round: `第${(idx % 10) + 1}轮`,
-      group: ['A组', 'B组', 'C组', 'D组'][idx % 4]
-    }))
-    
-    total.value = 50
+  try {
+    const params = {
+      page: currentPage.value,
+      size: pageSize.value,
+      schedule_type: props.scheduleType
+    }
+
+    if (queryParams.leagueName) {
+      params.league_name = queryParams.leagueName
+    }
+    if (queryParams.matchDate) {
+      params.date_from = queryParams.matchDate
+      params.date_to = queryParams.matchDate
+    }
+
+    const data = await request.get(`${API_BASE}/`, { params })
+    const mapper = isBd.value ? mapBdRow : mapJczqRow
+    scheduleList.value = (data.items || []).map(mapper)
+    total.value = data.total || 0
+  } catch (error) {
+    console.error('加载赛程失败:', error)
+    ElMessage.error('加载赛程失败')
+  } finally {
     loading.value = false
-  }, 500)
+  }
 }
 
-// 查询
+const fetchFrom500w = async () => {
+  if (!crawlDate.value) {
+    ElMessage.warning('请先选择赛程日期')
+    return
+  }
+  crawlLoading.value = true
+  try {
+    const result = await request.post(`${API_BASE}/import/500w`, null, {
+      params: { schedule_date: crawlDate.value }
+    })
+    ElMessage.success(result?.message || `已抓取 ${crawlDate.value} 赛程`)
+    currentPage.value = 1
+    queryParams.matchDate = crawlDate.value
+    await getScheduleList()
+  } catch (error) {
+    console.error('500W抓取失败:', error)
+    ElMessage.error('500W抓取失败')
+  } finally {
+    crawlLoading.value = false
+  }
+}
+
+const fetchFromYingqiuBd = async () => {
+  if (!crawlDate.value) {
+    ElMessage.warning('请先选择赛程日期')
+    return
+  }
+  crawlLoading.value = true
+  try {
+    const result = await request.post(`${API_BASE}/import/yingqiu-bd`, null, {
+      params: { schedule_date: crawlDate.value },
+      timeout: 120000
+    })
+    ElMessage.success(result?.message || `已抓取 ${crawlDate.value} 北单赛程`)
+    currentPage.value = 1
+    queryParams.matchDate = crawlDate.value
+    await getScheduleList()
+  } catch (error) {
+    console.error('盈球北单抓取失败:', error)
+    if (error?.code === 'ECONNABORTED' || String(error?.message || '').includes('timeout')) {
+      ElMessage.error('盈球抓取耗时较长，请稍后刷新列表查看结果')
+      return
+    }
+    const msg = error?.response?.data?.error?.message || error?.response?.data?.detail || '盈球北单抓取失败'
+    ElMessage.error(msg)
+  } finally {
+    crawlLoading.value = false
+  }
+}
+
+const openOtherOdds = async (row) => {
+  otherOddsVisible.value = true
+  otherOddsLoading.value = true
+  otherOddsRows.value = []
+  try {
+    const data = await request.get(`${API_BASE}/${row.id}/other-odds`, {
+      params: { force_refresh: false },
+      timeout: 60000
+    })
+    otherOddsRows.value = (data.items || []).map((x) => ({
+      company: x.company || '-',
+      updatedAt: x.updated_at || '-',
+      initWin: formatOdds(x.init_win),
+      initDraw: formatOdds(x.init_draw),
+      initLose: formatOdds(x.init_lose),
+      instantWin: formatOdds(x.instant_win),
+      instantDraw: formatOdds(x.instant_draw),
+      instantLose: formatOdds(x.instant_lose)
+    }))
+  } catch (error) {
+    console.error('加载其它赔率失败:', error)
+    if (error?.code === 'ECONNABORTED' || String(error?.message || '').includes('timeout')) {
+      ElMessage.error('加载其它赔率超时，请稍后重试')
+      return
+    }
+    ElMessage.error(error?.response?.data?.detail || '加载其它赔率失败')
+  } finally {
+    otherOddsLoading.value = false
+  }
+}
+
 const handleQuery = () => {
+  currentPage.value = 1
   getScheduleList()
 }
 
-// 重置查询
 const resetQuery = () => {
-  Object.keys(queryParams).forEach(key => {
-    queryParams[key] = ''
-  })
+  queryParams.leagueName = ''
+  queryParams.matchDate = ''
+  currentPage.value = 1
   getScheduleList()
 }
 
-// 分页处理
+const refreshData = () => {
+  getScheduleList()
+}
+
 const handleSizeChange = (size) => {
   pageSize.value = size
+  currentPage.value = 1
   getScheduleList()
 }
 
@@ -303,185 +377,87 @@ const handleCurrentChange = (page) => {
   getScheduleList()
 }
 
-// 获取状态类型
-const getStatusType = (status) => {
-  switch (status) {
-    case '未开始': return 'info'
-    case '进行中': return 'warning'
-    case '已结束': return 'success'
-    case '延期': return 'danger'
-    case '取消': return 'danger'
-    default: return 'info'
-  }
-}
-
-// 刷新数据
-const refreshData = () => {
-  getScheduleList()
-  ElMessage.success('数据已刷新')
-}
-
-// 导入赛程
-const importSchedule = () => {
-  ElMessage.info('导入赛程功能')
-}
-
-// 导出赛程
-const exportSchedule = () => {
-  ElMessage.info('导出赛程功能')
-}
-
-// 编辑赛程
-const editSchedule = (row) => {
-  Object.assign(currentSchedule, { ...row })
-  dialogTitle.value = '编辑赛程'
-  dialogVisible.value = true
-}
-
-// 查看详情
-const viewDetails = (row) => {
-  ElMessage.info(`查看比赛 ${row.matchId} 的详情`)
-}
-
-// 删除赛程
-const deleteSchedule = async (row) => {
-  try {
-    await ElMessageBox.confirm(
-      `确定要删除比赛 "${row.homeTeam} VS ${row.awayTeam}" 吗？`,
-      '确认删除',
-      {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }
-    )
-    
-    // 实际删除逻辑
-    scheduleList.value = scheduleList.value.filter(item => item.matchId !== row.matchId)
-    total.value = scheduleList.value.length
-    ElMessage.success('删除成功')
-  } catch (error) {
-    if (error !== 'cancel') {
-      ElMessage.error('删除失败')
-    }
-  }
-}
-
-// 保存赛程
-const confirmSave = () => {
-  scheduleFormRef.value.validate((valid) => {
-    if (valid) {
-      // 这里应该是实际的保存逻辑
-      if (currentSchedule.matchId) {
-        // 更新现有记录
-        const index = scheduleList.value.findIndex(item => item.matchId === currentSchedule.matchId)
-        if (index !== -1) {
-          scheduleList.value[index] = { ...currentSchedule }
-        }
-        ElMessage.success('更新成功')
-      } else {
-        // 添加新记录
-        currentSchedule.matchId = `M${String(scheduleList.value.length + 1).padStart(4, '0')}`
-        scheduleList.value.unshift({ ...currentSchedule })
-        total.value++
-        ElMessage.success('添加成功')
-      }
-      
-      dialogVisible.value = false
-      getScheduleList()
-    }
-  })
-}
-
-// 处理多选
-const handleSelectionChange = (val) => {
-  multipleSelection.value = val
-}
-
 onMounted(() => {
+  queryParams.matchDate = crawlDate.value
   getScheduleList()
 })
+
+watch(
+  () => props.scheduleType,
+  () => {
+    // 同组件复用时，按类型切换后重置查询和列表，避免串页
+    scheduleList.value = []
+    total.value = 0
+    currentPage.value = 1
+    queryParams.leagueName = ''
+    queryParams.matchDate = crawlDate.value
+    getScheduleList()
+  }
+)
 </script>
 
 <style scoped>
+.schedule-management {
+  padding: 20px;
+}
+
 .card-container {
-  margin: 20px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
 }
 
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 12px;
   flex-wrap: wrap;
-  gap: 15px;
 }
 
-.card-header > div:first-child h3 {
-  margin: 0 0 5px 0;
+.card-header h3 {
+  margin: 0;
   font-size: 18px;
-  color: #303133;
+  color: #1f2937;
 }
 
 .subtitle {
-  color: #909399;
-  font-size: 14px;
-  margin: 0;
+  margin: 4px 0 0;
+  color: #6b7280;
+  font-size: 13px;
 }
 
 .header-actions {
   display: flex;
-  gap: 10px;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .search-form {
-  margin-bottom: 20px;
+  margin-bottom: 12px;
 }
 
-.team-name {
-  font-weight: bold;
-  color: #409eff;
+.score-text {
+  color: #dc2626;
+  font-weight: 700;
 }
 
-.dialog-footer {
+.dual-line {
   display: flex;
-  justify-content: flex-end;
-  gap: 10px;
+  flex-direction: column;
+  line-height: 1.25;
 }
 
-.el-row {
-  margin-bottom: 20px;
+.dual-line .sub {
+  color: #16a34a;
 }
 
-.el-col {
-  display: flex;
-  align-items: center;
+.other-odds-btn {
+  min-width: 58px;
 }
 
-.el-form-item {
-  margin-bottom: 0;
-}
-
-:deep(.el-card__header) {
-  padding: 20px;
-}
-
-:deep(.el-card__body) {
-  padding: 20px;
-}
-
-@media screen and (max-width: 768px) {
-  .card-header {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .header-actions {
-    justify-content: center;
-  }
-  
-  .el-col {
-    margin-bottom: 15px;
+@media (max-width: 900px) {
+  .schedule-management {
+    padding: 12px;
   }
 }
 </style>

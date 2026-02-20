@@ -2,8 +2,11 @@
 后台管理用户管理API端点
 """
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional, List
+from io import StringIO
+import csv
 
 # 简化的导入，避免复杂依赖
 from backend import crud, models, schemas
@@ -275,18 +278,56 @@ async def import_admin_users(
     })
 
 
-@router.get("/export", response_model=UnifiedResponse[dict])
+@router.get("/export")
 async def export_admin_users(
+    search: Optional[str] = Query(None, description="按用户名/真实姓名/邮箱搜索"),
+    role: Optional[admin_schemas.AdminRoleEnum] = Query(None, description="按角色筛选"),
+    status: Optional[admin_schemas.AdminStatusEnum] = Query(None, description="按状态筛选"),
+    department: Optional[str] = Query(None, description="按部门筛选"),
     db: AsyncSession = Depends(get_async_db),
     current_admin: models.AdminUser = Depends(get_current_active_admin_user)
 ):
     """
-    导出管理员用户（模拟实现）
+    导出管理员用户（CSV）
     """
-    return UnifiedResponse.success(data={
-        "message": "用户导出功能已收到请求，实际实现需要文件生成和下载处理",
-        "status": "not_implemented"
-    })
+    users, _ = await crud.admin_user.get_multi(
+        db,
+        skip=0,
+        limit=1000,
+        role=role,
+        status=status,
+        department=department,
+        search=search
+    )
+
+    output = StringIO()
+    writer = csv.writer(output)
+    writer.writerow([
+        "id", "username", "real_name", "email", "phone",
+        "department", "position", "role", "status", "created_at", "last_login_at"
+    ])
+
+    for user in users:
+        writer.writerow([
+            user.id,
+            user.username,
+            user.real_name,
+            user.email,
+            user.phone or "",
+            user.department or "",
+            user.position or "",
+            user.role,
+            user.status,
+            user.created_at.isoformat() if user.created_at else "",
+            user.last_login_at.isoformat() if user.last_login_at else ""
+        ])
+
+    output.seek(0)
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": "attachment; filename=admin_users.csv"}
+    )
 
 
 @router.get("/{user_id}", response_model=UnifiedResponse[admin_schemas.AdminUserResponse])

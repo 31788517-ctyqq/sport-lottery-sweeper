@@ -1,116 +1,69 @@
 import http from '@/utils/http'
-import { API_ENDPOINTS } from '@/config/api'
 
 /**
- * 用户管理相关API
+ * 用户管理相关 API
  */
 
-// 获取用户列表
-export const getUserList = (params) => {
-  return http.get('/api/admin/admin-users', { params })
+const asDataResponse = async (promise) => {
+  const result = await promise
+  return result && typeof result === 'object' && 'data' in result ? result : { data: result }
 }
 
-// 获取用户详情
-export const getUserDetail = (id) => {
-  return http.get(`/api/admin/admin-users/${id}`)
+const compactParams = (obj = {}) => {
+  return Object.fromEntries(
+    Object.entries(obj).filter(([, value]) => value !== '' && value !== undefined && value !== null)
+  )
 }
 
-// 创建用户
-export const createUser = (data) => {
-  return http.post('/api/admin/admin-users', data)
+const normalizeListParams = (params = {}) => {
+  const hasPage = Number.isFinite(Number(params.page))
+  const hasSize = Number.isFinite(Number(params.size))
+  const skip = hasPage && hasSize ? (Math.max(1, Number(params.page)) - 1) * Math.max(1, Number(params.size)) : params.skip
+  const limit = hasSize ? Math.max(1, Number(params.size)) : params.limit
+
+  return compactParams({
+    skip,
+    limit,
+    search: params.search,
+    status: params.status,
+    department: params.department || params.departmentName,
+    role: params.role || params.roleName
+  })
 }
 
-// 更新用户信息 - 修正路径为管理员用户更新API
-export const updateUser = (id, data) => {
-  return http.put(`/api/admin/admin-users/${id}`, data)
+export const getUserList = (params) => asDataResponse(http.get('/api/v1/admin/admin-users/', { params: normalizeListParams(params) }))
+export const getUserDetail = (id) => asDataResponse(http.get(`/api/v1/admin/admin-users/${id}`))
+export const createUser = (data) => asDataResponse(http.post('/api/v1/admin/admin-users/', data))
+export const updateUser = (id, data) => asDataResponse(http.put(`/api/v1/admin/admin-users/${id}`, data))
+export const deleteUser = (id) => asDataResponse(http.delete(`/api/v1/admin/admin-users/${id}`))
+export const batchDeleteUsers = (ids) => asDataResponse(http.delete('/api/v1/admin/admin-users/batch', { data: { ids } }))
+
+export const updateUserStatus = async (id, status) => {
+  try {
+    return await asDataResponse(http.patch(`/api/v1/admin/admin-users/${id}/status`, { status }))
+  } catch (error) {
+    return asDataResponse(http.put(`/api/v1/admin/admin-users/${id}/status`, null, { params: { status } }))
+  }
 }
 
-// 删除用户
-export const deleteUser = (id) => {
-  return http.delete(`/api/admin/admin-users/${id}`)
-}
+export const resetUserPassword = (id, data) => asDataResponse(http.post(`/api/v1/admin/admin-users/${id}/reset-password`, data))
+export const getUserRoles = (id) => asDataResponse(http.get(`/api/v1/admin/admin-users/${id}/roles`))
+export const assignUserRoles = (id, roleIds) => asDataResponse(http.post(`/api/v1/admin/admin-users/${id}/roles`, { roleIds }))
+export const batchAssignRoles = (data) => asDataResponse(http.post('/api/v1/admin/admin-users/batch-assign-roles', data))
+export const getUserDepartments = (id) => asDataResponse(http.get(`/api/v1/admin/admin-users/${id}/departments`))
 
-// 批量删除用户
-export const batchDeleteUsers = (ids) => {
-  return http.delete('/api/admin/admin-users/batch', { data: { ids } })
-}
+export const importUsers = (file) => asDataResponse(http.upload('/api/v1/admin/admin-users/import', file))
+export const exportUsers = (params) => http.download('/api/v1/admin/admin-users/export', params, 'admin_users.csv')
 
-// 更新用户状态
-export const updateUserStatus = (id, status) => {
-  return http.patch(`/api/admin/admin-users/${id}/status`, { status })
-}
+export const getUserStats = () => asDataResponse(http.get('/api/v1/admin/admin-users/stats'))
+export const unlockUser = (id) => asDataResponse(http.post(`/api/v1/admin/admin-users/${id}/unlock`))
+export const getUserLoginHistory = (id, params) => asDataResponse(http.get(`/api/v1/admin/admin-users/${id}/login-history`, { params }))
+export const changeCurrentPassword = (data) => asDataResponse(http.put('/api/v1/admin/admin-users/change-password', data))
 
-// 重置用户密码
-export const resetUserPassword = (id, data) => {
-  return http.post(`/api/admin/admin-users/${id}/reset-password`, data)
-}
-
-// 获取用户角色
-export const getUserRoles = (id) => {
-  return http.get(`/api/admin/admin-users/${id}/roles`)
-}
-
-// 分配用户角色
-export const assignUserRoles = (id, roleIds) => {
-  return http.post(`/api/admin/admin-users/${id}/roles`, { roleIds })
-}
-
-// 批量分配角色
-export const batchAssignRoles = (data) => {
-  return http.post('/api/admin/admin-users/batch-assign-roles', data)
-}
-
-// 获取用户部门
-export const getUserDepartments = (id) => {
-  return http.get(`/api/admin/admin-users/${id}/departments`)
-}
-
-// 导入用户
-export const importUsers = (file) => {
-  return http.upload('/api/admin/admin-users/import', file)
-}
-
-// 导出用户
-export const exportUsers = (params) => {
-  return http.download('/api/admin/admin-users/export', params, 'users.xlsx')
-}
-
-// 获取用户统计信息
-export const getUserStats = () => {
-  return http.get('/api/admin/admin-users/stats')
-}
-
-// 解锁用户账户
-export const unlockUser = (id) => {
-  return http.post(`/api/admin/admin-users/${id}/unlock`)
-}
-
-// 获取用户登录历史
-export const getUserLoginHistory = (id, params) => {
-  return http.get(`/api/admin/admin-users/${id}/login-history`, { params })
-}
-
-// 修改当前用户的密码
-export const changeCurrentPassword = (data) => {
-  return http.put('/api/admin/change-password', data)
-}
-
-// 别名导出，以匹配组件中的导入
+// aliases for existing callers
 export const getUsers = getUserList
-export const getCurrentUser = (id) => {
-  return http.get(`/api/admin/admin-users/${id}`)
-}
-export const updateCurrentUser = (id, data) => {
-  return http.put(`/api/admin/admin-users/${id}`, data)
-}
-export const disableUsers = (ids) => {
-  // 批量禁用用户需要特殊处理，将每个ID的状态设为inactive
-  const promises = ids.map(id => updateUserStatus(id, 'inactive'));
-  return Promise.all(promises);
-}
-export const enableUsers = (ids) => {
-  // 批量启用用户需要特殊处理，将每个ID的状态设为active
-  const promises = ids.map(id => updateUserStatus(id, 'active'));
-  return Promise.all(promises);
-}
+export const getCurrentUser = getUserDetail
+export const updateCurrentUser = updateUser
+export const disableUsers = (ids) => Promise.all(ids.map((id) => updateUserStatus(id, 'inactive')))
+export const enableUsers = (ids) => Promise.all(ids.map((id) => updateUserStatus(id, 'active')))
 export const searchUsers = getUserList

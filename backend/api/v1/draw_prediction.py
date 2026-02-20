@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Body
+from fastapi import APIRouter, Depends, HTTPException, Body, Query
 from typing import List, Optional
 from datetime import datetime
 import json
@@ -6,49 +6,77 @@ import json
 # 引入模型和Service
 from backend.models.draw_feature import DrawFeature
 from backend.models.draw_training_job import TrainingJobStatus
-from backend.services.draw_prediction_service import (
-    get_features, create_feature, update_feature, delete_feature,
-    get_training_jobs, create_training_job, update_training_job_status, delete_training_job,
-    get_training_logs, append_training_log,
-    get_model_versions, deploy_model_version, rollback_model_version,
-    get_predictions,
-    get_db
-)
+from backend.models.draw_prediction_result import DrawPredictionResult
+from backend.services import draw_prediction_service as svc
+from backend.api.dependencies import get_db, get_current_active_admin_user
 from sqlalchemy.orm import Session
 
-router = APIRouter(prefix="/draw-prediction", tags=["draw-prediction"])
+router = APIRouter(
+    prefix="/draw-prediction",
+    tags=["draw-prediction"],
+    dependencies=[Depends(get_current_active_admin_user)],
+)
 
 # ===== Feature 相关接口 =====
-@router.get("/features", response_model=List[dict])
-async def list_features(keyword: Optional[str] = None, db: Session = Depends(get_db)):
-    features = get_features(db, keyword)
-    return [
+@router.get("/features", response_model=dict)
+async def list_features(
+    keyword: Optional[str] = Query(None),
+    page: int = Query(1, ge=1),
+    size: int = Query(10, ge=1, le=200),
+    db: Session = Depends(get_db),
+):
+    # DB-level pagination to keep UI paging accurate.
+    q = db.query(DrawFeature)
+    if keyword:
+        q = q.filter(DrawFeature.name.contains(keyword))
+
+    total = q.count()
+    features = (
+        q.order_by(DrawFeature.created_at.desc(), DrawFeature.id.desc())
+        .offset((page - 1) * size)
+        .limit(size)
+        .all()
+    )
+
+    items = [
         {
             "id": f.id,
             "name": f.name,
             "description": f.description,
             "source_type": f.source_type,
             "created_at": f.created_at,
-            "is_active": f.is_active
+            "is_active": f.is_active,
         }
         for f in features
     ]
 
+    # Compatible with frontend `request` interceptor: it returns `res.data`.
+    return {
+        "success": True,
+        "message": "ok",
+        "data": {
+            "data": items,
+            "total": total,
+            "page": page,
+            "size": size,
+        },
+    }
+
 @router.post("/features", response_model=dict)
 async def create_feature(data: dict = Body(...), db: Session = Depends(get_db)):
-    obj = create_feature(db, data)
+    obj = svc.create_feature(db, data)
     return {"id": obj.id, "name": obj.name}
 
 @router.put("/features/{feature_id}", response_model=dict)
 async def update_feature(feature_id: int, data: dict = Body(...), db: Session = Depends(get_db)):
-    obj = update_feature(db, feature_id, data)
+    obj = svc.update_feature(db, feature_id, data)
     if not obj:
         raise HTTPException(status_code=404, detail="Feature not found")
     return {"id": obj.id, "name": obj.name}
 
 @router.delete("/features/{feature_id}", response_model=dict)
 async def delete_feature(feature_id: int, db: Session = Depends(get_db)):
-    ok = delete_feature(db, feature_id)
+    ok = svc.delete_feature(db, feature_id)
     if not ok:
         raise HTTPException(status_code=404, detail="Feature not found")
     return {"msg": "deleted"}
@@ -62,8 +90,8 @@ async def create_training_job(data: dict = Body(...), db: Session = Depends(get_
     created_by = 1  # TODO: 替换为真实用户 ID
 
     # 1. 在数据库中创建任务记录（状态为 PENDING）
-    obj = create_training_job(db, data, created_by)
-    append_training_log(obj.id, "训练任务已创建，等待调度")
+    obj = svc.create_training_job(db, data, created_by)
+    svc.append_training_log(obj.id, "训练任务已创建，等待调度")
 
     # 2. 提交 Celery 异步任务
     task = celery_app.send_task('train_model_task', args=[obj.id])
@@ -81,7 +109,7 @@ async def create_training_job(data: dict = Body(...), db: Session = Depends(get_
 
 @router.get("/training-jobs", response_model=List[dict])
 async def list_training_jobs(keyword: Optional[str] = None, db: Session = Depends(get_db)):
-    jobs = get_training_jobs(db, keyword)
+    jobs = svc.get_training_jobs(db, keyword)
     return [
         {
             "id": j.id,
@@ -96,7 +124,7 @@ async def list_training_jobs(keyword: Optional[str] = None, db: Session = Depend
 
 @router.get("/training-jobs/{job_id}/logs", response_model=dict)
 async def get_job_logs(job_id: int):
-    logs = get_training_logs(job_id)
+    logs = svc.get_training_logs(job_id)
     return {"logs": logs}
 
 # 测试用：手动变更任务状态（实际应由后台任务队列完成）
@@ -113,18 +141,18 @@ async def set_job_status(job_id: int, data: dict = Body(...), db: Session = Depe
     
     metrics_dict = metrics if isinstance(metrics, dict) else (json.loads(metrics) if metrics else None)
     
-    obj = update_training_job_status(db, job_id, status, metrics_dict, model_path)
+    obj = svc.update_training_job_status(db, job_id, status, metrics_dict, model_path)
     if not obj:
         raise HTTPException(status_code=404, detail="Training job not found")
-    append_training_log(job_id, f"状态变更为 {status}")
+    svc.append_training_log(job_id, f"状态变更为 {status}")
     if status == TrainingJobStatus.SUCCESS:
-        append_training_log(job_id, f"自动创建模型版本")
+        svc.append_training_log(job_id, "自动创建模型版本")
     return {"id": obj.id, "status": obj.status}
 
 # ===== Model Version 相关接口 =====
 @router.get("/models", response_model=List[dict])
 async def list_models(keyword: Optional[str] = None, db: Session = Depends(get_db)):
-    models = get_model_versions(db, keyword)
+    models = svc.get_model_versions(db, keyword)
     return [
         {
             "id": m.id,
@@ -139,30 +167,79 @@ async def list_models(keyword: Optional[str] = None, db: Session = Depends(get_d
 
 @router.post("/models/{model_id}/deploy", response_model=dict)
 async def deploy_model(model_id: int, db: Session = Depends(get_db)):
-    obj = deploy_model_version(db, model_id)
+    obj = svc.deploy_model_version(db, model_id)
     if not obj:
         raise HTTPException(status_code=404, detail="Model version not found")
     return {"id": obj.id, "status": obj.status}
 
 @router.post("/models/{model_id}/rollback", response_model=dict)
 async def rollback_model(model_id: int, db: Session = Depends(get_db)):
-    obj = rollback_model_version(db, model_id)
+    obj = svc.rollback_model_version(db, model_id)
     if not obj:
         raise HTTPException(status_code=404, detail="Model version not found")
     return {"id": obj.id, "status": obj.status}
 
 # ===== Prediction 相关接口 =====
-@router.get("/predictions", response_model=List[dict])
-async def list_predictions(match_id: Optional[str] = None, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None, db: Session = Depends(get_db)):
-    preds = get_predictions(db, match_id, start_date, end_date)
-    return [
+@router.get("/predictions", response_model=dict)
+async def list_predictions(
+    match_id: Optional[str] = Query(None),
+    start_date: Optional[datetime] = Query(None),
+    end_date: Optional[datetime] = Query(None),
+    page: int = Query(1, ge=1),
+    size: int = Query(50, ge=1, le=200),
+    db: Session = Depends(get_db),
+):
+    """
+    预测监控数据（带分页 + 统计），返回结构与前端 request 拦截器兼容：{success, message, data: {...}}。
+    """
+    q = db.query(DrawPredictionResult)
+    if match_id:
+        q = q.filter(DrawPredictionResult.match_id == match_id)
+    if start_date:
+        q = q.filter(DrawPredictionResult.predicted_at >= start_date)
+    if end_date:
+        q = q.filter(DrawPredictionResult.predicted_at <= end_date)
+
+    total = q.count()
+    finished_q = q.filter(DrawPredictionResult.actual_result.isnot(None))
+    finished = finished_q.count()
+    hits = finished_q.filter(DrawPredictionResult.actual_result == "draw").count()
+    pending = total - finished
+    accuracy = round((hits / finished) * 100, 1) if finished > 0 else 0.0
+
+    preds = (
+        q.order_by(DrawPredictionResult.predicted_at.desc(), DrawPredictionResult.id.desc())
+        .offset((page - 1) * size)
+        .limit(size)
+        .all()
+    )
+
+    items = [
         {
             "id": p.id,
             "match_id": p.match_id,
             "predicted_draw_prob": p.predicted_draw_prob,
             "actual_result": p.actual_result,
             "predicted_at": p.predicted_at,
-            "match_time": p.match_time
+            "match_time": p.match_time,
         }
         for p in preds
     ]
+
+    return {
+        "success": True,
+        "message": "ok",
+        "data": {
+            "data": items,
+            "total": total,
+            "page": page,
+            "size": size,
+            "stats": {
+                "total": total,
+                "finished": finished,
+                "hits": hits,
+                "accuracy": accuracy,
+                "pending": pending,
+            },
+        },
+    }

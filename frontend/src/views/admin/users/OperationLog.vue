@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="operation-log-container">
     <el-card class="logs-card">
       <template #header>
@@ -17,47 +17,22 @@
         </div>
       </template>
 
-      <!-- 搜索和控制区域 -->
       <div class="logs-controls">
         <el-row :gutter="20">
           <el-col :xs="24" :sm="12" :md="6" :lg="4">
-            <el-input
-              v-model="searchKeyword"
-              placeholder="搜索操作内容"
-              clearable
-              class="search-input"
-            >
+            <el-input v-model="searchKeyword" placeholder="搜索操作内容" clearable class="search-input">
               <template #prefix>
                 <el-icon><Search /></el-icon>
               </template>
             </el-input>
           </el-col>
           <el-col :xs="12" :sm="6" :md="4" :lg="3">
-            <el-select
-              v-model="filters.userId"
-              placeholder="操作用户"
-              clearable
-              filterable
-              remote
-              :remote-method="searchUsers"
-              :loading="userLoading"
-              class="user-selector"
-            >
-              <el-option 
-                v-for="user in userOptions" 
-                :key="user.id"
-                :label="user.realName || user.username" 
-                :value="user.id" 
-              />
+            <el-select v-model="filters.userId" placeholder="操作用户" clearable filterable remote :remote-method="searchUsers" :loading="userLoading" class="user-selector">
+              <el-option v-for="user in userOptions" :key="user.id" :label="user.realName || user.username" :value="user.id" />
             </el-select>
           </el-col>
           <el-col :xs="12" :sm="6" :md="4" :lg="3">
-            <el-select
-              v-model="filters.module"
-              placeholder="操作模块"
-              clearable
-              class="module-selector"
-            >
+            <el-select v-model="filters.module" placeholder="操作模块" clearable class="module-selector">
               <el-option label="全部模块" value="" />
               <el-option label="用户管理" value="user" />
               <el-option label="角色权限" value="role" />
@@ -67,12 +42,7 @@
             </el-select>
           </el-col>
           <el-col :xs="12" :sm="6" :md="4" :lg="2">
-            <el-select
-              v-model="filters.action"
-              placeholder="操作类型"
-              clearable
-              class="action-selector"
-            >
+            <el-select v-model="filters.action" placeholder="操作类型" clearable class="action-selector">
               <el-option label="全部" value="" />
               <el-option label="创建" value="create" />
               <el-option label="更新" value="update" />
@@ -82,12 +52,7 @@
             </el-select>
           </el-col>
           <el-col :xs="12" :sm="6" :md="4" :lg="3">
-            <el-select
-              v-model="filters.result"
-              placeholder="操作结果"
-              clearable
-              class="result-selector"
-            >
+            <el-select v-model="filters.result" placeholder="操作结果" clearable class="result-selector">
               <el-option label="全部结果" value="" />
               <el-option label="成功" value="success" />
               <el-option label="失败" value="failed" />
@@ -108,118 +73,70 @@
         </el-row>
         <el-row :gutter="20" style="margin-top: 16px;">
           <el-col :xs="24" :sm="24" :md="20" :lg="18">
-            <el-button type="primary" @click="handleSearch" class="action-btn">
-              查询
-            </el-button>
-            <el-button @click="handleReset" class="action-btn">
-              重置
-            </el-button>
+            <el-button type="primary" @click="handleSearch" class="action-btn">查询</el-button>
+            <el-button @click="handleReset" class="action-btn">重置</el-button>
             <el-button type="info" @click="refreshData" class="action-btn">
               <el-icon><Refresh /></el-icon>
               刷新
             </el-button>
           </el-col>
           <el-col :xs="24" :sm="24" :md="4" :lg="6">
-            <el-checkbox v-model="autoRefresh" @change="handleAutoRefreshChange">
-              自动刷新 (30秒)
-            </el-checkbox>
+            <el-checkbox v-model="autoRefresh" @change="handleAutoRefreshChange">自动刷新 (30s)</el-checkbox>
           </el-col>
         </el-row>
       </div>
 
-      <!-- 表格区域 -->
       <div class="table-wrapper">
         <el-table
-          :data="tableData" 
-          stripe 
-          style="width: 100%" 
+          :data="tableData"
+          stripe
+          style="width: 100%"
           v-loading="loading"
           height="calc(100vh - 420px)"
-          :header-cell-style="{background: '#f5f7fa', color: '#606266'}"
+          :header-cell-style="{ background: '#f5f7fa', color: '#606266' }"
           class="modern-table"
         >
-          <el-table-column prop="createdAt" label="操作时间" width="160">
-            <template #default="scope">
-              {{ formatDate(scope.row.createdAt) }}
-            </template>
+          <el-table-column prop="createdAt" label="操作时间" width="180">
+            <template #default="scope">{{ formatDate(scope.row.createdAt) }}</template>
           </el-table-column>
-          <el-table-column prop="userRealName" label="操作用户" width="120">
+          <el-table-column prop="userRealName" label="操作用户" width="140">
             <template #default="scope">
               <div class="user-info">
-                <el-avatar :size="24" :src="scope.row.userAvatar">
-                  {{ (scope.row.userRealName || scope.row.username || 'U').charAt(0).toUpperCase() }}
-                </el-avatar>
+                <el-avatar :size="24">{{ (scope.row.userRealName || scope.row.username || 'U').charAt(0).toUpperCase() }}</el-avatar>
                 <span>{{ scope.row.userRealName || scope.row.username || '-' }}</span>
               </div>
             </template>
           </el-table-column>
-          <el-table-column prop="module" label="操作模块" width="100">
+          <el-table-column prop="module" label="操作模块" width="120" />
+          <el-table-column prop="action" label="操作类型" width="100" />
+          <el-table-column prop="resource" label="操作资源" width="160" />
+          <el-table-column prop="description" label="操作内容" min-width="220" show-overflow-tooltip />
+          <el-table-column prop="ipAddress" label="IP地址" width="140" />
+          <el-table-column prop="userAgent" label="浏览器" width="160">
             <template #default="scope">
-              <el-tag size="small" :type="getModuleTagType(scope.row.module)">
-                {{ getModuleText(scope.row.module) }}
-              </el-tag>
+              <span class="browser-text" :title="scope.row.userAgent">{{ getBrowserInfo(scope.row.userAgent) }}</span>
             </template>
           </el-table-column>
-          <el-table-column prop="action" label="操作类型" width="80">
-            <template #default="scope">
-              <el-tag size="small" :type="getActionTagType(scope.row.action)">
-                {{ getActionText(scope.row.action) }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column prop="resource" label="操作资源" width="150">
-            <template #default="scope">
-              <span class="resource-text" :title="scope.row.resource">
-                {{ scope.row.resource || '-' }}
-              </span>
-            </template>
-          </el-table-column>
-          <el-table-column prop="description" label="操作内容" min-width="200">
-            <template #default="scope">
-              <span class="description-text" :title="scope.row.description">
-                {{ scope.row.description || '-' }}
-              </span>
-            </template>
-          </el-table-column>
-          <el-table-column prop="ipAddress" label="IP地址" width="130" />
-          <el-table-column prop="userAgent" label="浏览器" width="150">
-            <template #default="scope">
-              <span class="browser-text" :title="scope.row.userAgent">
-                {{ getBrowserInfo(scope.row.userAgent) }}
-              </span>
-            </template>
-          </el-table-column>
-          <el-table-column prop="result" label="操作结果" width="80">
+          <el-table-column prop="result" label="结果" width="90">
             <template #default="{ row }">
-              <el-tag :type="row.result === 'success' ? 'success' : 'danger'" size="small">
-                {{ row.result === 'success' ? '成功' : '失败' }}
-              </el-tag>
+              <el-tag :type="row.result === 'success' ? 'success' : 'danger'" size="small">{{ row.result === 'success' ? '成功' : '失败' }}</el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="120" fixed="right">
+          <el-table-column label="操作" width="170" fixed="right">
             <template #default="scope">
-              <el-button type="primary" size="small" text @click="handleViewDetail(scope.row)">
-                详情
-              </el-button>
-              <el-button 
-                type="danger" 
-                size="small" 
-                text
-                @click="handleDeleteLog(scope.row.id)"
-                v-if="canDeleteLog(scope.row)"
-              >
-                删除
-              </el-button>
+              <div class="op-actions">
+                <el-button type="primary" size="small" plain class="op-btn" @click="handleViewDetail(scope.row)">详情</el-button>
+                <el-button type="danger" size="small" plain class="op-btn" @click="handleDeleteLog(scope.row.id)" v-if="canDeleteLog(scope.row)">删除</el-button>
+              </div>
             </template>
           </el-table-column>
         </el-table>
-        
+
         <div v-if="tableData.length === 0" class="empty-state">
           <el-empty description="暂无操作日志" />
         </div>
       </div>
 
-      <!-- 分页 -->
       <div class="pagination-wrapper">
         <el-pagination
           v-model:current-page="pagination.page"
@@ -233,52 +150,23 @@
       </div>
     </el-card>
 
-    <!-- 日志详情对话框 -->
-    <LogDetailDialog
-      v-model="showDetailDialog"
-      :log-data="currentLog"
-    />
+    <LogDetailDialog v-model="showDetailDialog" :log-data="currentLog" />
 
-    <!-- 清理日志确认对话框 -->
-    <el-dialog
-      v-model="showCleanupDialog"
-      title="清理操作日志"
-      width="500px"
-    >
+    <el-dialog v-model="showCleanupDialog" title="清理操作日志" width="500px">
       <el-form :model="cleanupForm" label-width="100px">
         <el-form-item label="清理条件">
           <el-radio-group v-model="cleanupForm.condition">
-            <el-radio value="days">保留最近</el-radio>
-            <el-radio value="count">保留最新</el-radio>
+            <el-radio value="days">保留最近天数</el-radio>
+            <el-radio value="count">保留最新数量</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item label="天数" v-if="cleanupForm.condition === 'days'">
-          <el-input-number
-            v-model="cleanupForm.days"
-            :min="7"
-            :max="365"
-            controls-position="right"
-            style="width: 100%"
-          />
-          <span style="margin-left: 8px; color: #909399;">天内的日志</span>
+          <el-input-number v-model="cleanupForm.days" :min="7" :max="365" controls-position="right" style="width: 100%" />
         </el-form-item>
         <el-form-item label="数量" v-if="cleanupForm.condition === 'count'">
-          <el-input-number
-            v-model="cleanupForm.count"
-            :min="100"
-            :max="10000"
-            :step="100"
-            controls-position="right"
-            style="width: 100%"
-          />
-          <span style="margin-left: 8px; color: #909399;">条最新日志</span>
+          <el-input-number v-model="cleanupForm.count" :min="100" :max="10000" :step="100" controls-position="right" style="width: 100%" />
         </el-form-item>
-        <el-alert
-          title="注意：清理后的日志无法恢复，请谨慎操作！"
-          type="warning"
-          :closable="false"
-          style="margin-top: 16px;"
-        />
+        <el-alert title="清理后不可恢复，请谨慎操作。" type="warning" :closable="false" style="margin-top: 16px;" />
       </el-form>
       <template #footer>
         <span class="dialog-footer">
@@ -330,27 +218,28 @@ const cleanupForm = reactive({
   count: 1000
 })
 
-// 加载操作日志
+const buildParams = () => {
+  const params = {
+    page: pagination.page,
+    size: pagination.size,
+    search: searchKeyword.value,
+    userId: filters.userId,
+    module: filters.module,
+    action: filters.action,
+    result: filters.result
+  }
+
+  if (dateRange.value && dateRange.value.length === 2) {
+    params.startTime = dateRange.value[0]
+    params.endTime = dateRange.value[1]
+  }
+  return params
+}
+
 const loadLogs = async () => {
   loading.value = true
   try {
-    const params = {
-      page: pagination.page,
-      size: pagination.size,
-      search: searchKeyword.value,
-      userId: filters.userId,
-      module: filters.module,
-      action: filters.action,
-      result: filters.result
-    }
-    
-    // 添加日期范围
-    if (dateRange.value && dateRange.value.length === 2) {
-      params.startTime = dateRange.value[0]
-      params.endTime = dateRange.value[1]
-    }
-    
-    const response = await getOperationLogs(params)
+    const response = await getOperationLogs(buildParams())
     if (response && response.data) {
       tableData.value = response.data.items || []
       pagination.total = response.data.total || 0
@@ -364,13 +253,11 @@ const loadLogs = async () => {
   }
 }
 
-// 搜索用户
 const searchUsers = async (query) => {
   if (!query) {
     userOptions.value = []
     return
   }
-  
   userLoading.value = true
   try {
     const response = await apiSearchUsers({ search: query, size: 10 })
@@ -384,13 +271,11 @@ const searchUsers = async (query) => {
   }
 }
 
-// 搜索
 const handleSearch = () => {
   pagination.page = 1
   loadLogs()
 }
 
-// 重置
 const handleReset = () => {
   searchKeyword.value = ''
   dateRange.value = []
@@ -403,57 +288,47 @@ const handleReset = () => {
   loadLogs()
 }
 
-// 刷新数据
-const refreshData = () => {
-  loadLogs()
-}
+const refreshData = () => loadLogs()
 
-// 分页大小改变
 const handleSizeChange = (size) => {
   pagination.size = size
   pagination.page = 1
   loadLogs()
 }
 
-// 分页
 const handlePageChange = (page) => {
   pagination.page = page
   loadLogs()
 }
 
-// 自动刷新切换
 const handleAutoRefreshChange = (enabled) => {
   if (enabled) {
-    autoRefreshTimer = setInterval(() => {
-      loadLogs()
-    }, 30000) // 30秒刷新一次
-  } else {
-    if (autoRefreshTimer) {
-      clearInterval(autoRefreshTimer)
-      autoRefreshTimer = null
-    }
+    autoRefreshTimer = setInterval(() => loadLogs(), 30000)
+  } else if (autoRefreshTimer) {
+    clearInterval(autoRefreshTimer)
+    autoRefreshTimer = null
   }
 }
 
-// 查看详情
 const handleViewDetail = (log) => {
-  currentLog.value = log
+  currentLog.value = {
+    ...log,
+    realName: log.userRealName,
+    requestUrl: log.raw?.request_path || '',
+    executionTime: log.raw?.duration_ms || 0,
+    affectedRows: 0,
+    details: log.raw?.extra_data || ''
+  }
   showDetailDialog.value = true
 }
 
-// 删除日志
 const handleDeleteLog = async (logId) => {
   try {
-    await ElMessageBox.confirm(
-      '确定要删除这条日志记录吗？',
-      '确认删除',
-      {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }
-    )
-    
+    await ElMessageBox.confirm('确认删除这条日志记录？', '确认删除', {
+      confirmButtonText: '确认',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
     await deleteOperationLog(logId)
     ElMessage.success('删除成功')
     loadLogs()
@@ -465,32 +340,16 @@ const handleDeleteLog = async (logId) => {
   }
 }
 
-// 导出日志
 const handleExportLogs = async () => {
   try {
-    const params = {
-      search: searchKeyword.value,
-      userId: filters.userId,
-      module: filters.module,
-      action: filters.action,
-      result: filters.result
-    }
-    
-    if (dateRange.value && dateRange.value.length === 2) {
-      params.startTime = dateRange.value[0]
-      params.endTime = dateRange.value[1]
-    }
-    
-    const blob = await exportOperationLogs(params)
-    
-    // 下载文件
-    const url = window.URL.createObjectURL(blob)
+    const response = await exportOperationLogs(buildParams())
+    const blobData = response?.data instanceof Blob ? response.data : new Blob([response?.data ?? ''])
+    const url = window.URL.createObjectURL(blobData)
     const link = document.createElement('a')
     link.href = url
     link.download = `operation_logs_${new Date().toISOString().slice(0, 10)}.csv`
     link.click()
     window.URL.revokeObjectURL(url)
-    
     ElMessage.success('导出成功')
   } catch (error) {
     console.error('导出失败:', error)
@@ -498,24 +357,18 @@ const handleExportLogs = async () => {
   }
 }
 
-// 清理日志
 const handleCleanupLogs = () => {
   showCleanupDialog.value = true
 }
 
-// 确认清理日志
 const confirmCleanupLogs = async () => {
   try {
-    const params = {
-      condition: cleanupForm.condition
-    }
-    
+    const params = { condition: cleanupForm.condition }
     if (cleanupForm.condition === 'days') {
       params.days = cleanupForm.days
     } else {
       params.count = cleanupForm.count
     }
-    
     await cleanupOperationLogs(params)
     ElMessage.success('清理成功')
     showCleanupDialog.value = false
@@ -526,77 +379,20 @@ const confirmCleanupLogs = async () => {
   }
 }
 
-// 是否可以删除日志
-const canDeleteLog = (log) => {
-  // 只有管理员可以删除日志，且不能删除自己的某些关键操作日志
-  return true // TODO: 根据实际权限控制逻辑调整
-}
+const canDeleteLog = () => true
 
-// 格式化日期
 const formatDate = (date) => {
   if (!date) return '-'
   return new Date(date).toLocaleString('zh-CN')
 }
 
-// 获取模块文本
-const getModuleText = (module) => {
-  const moduleMap = {
-    user: '用户管理',
-    role: '角色权限',
-    department: '部门管理',
-    system: '系统设置',
-    data: '数据管理'
-  }
-  return moduleMap[module] || module
-}
-
-// 获取模块标签类型
-const getModuleTagType = (module) => {
-  const typeMap = {
-    user: 'primary',
-    role: 'success',
-    department: 'warning',
-    system: 'info',
-    data: 'danger'
-  }
-  return typeMap[module] || 'info'
-}
-
-// 获取操作文本
-const getActionText = (action) => {
-  const actionMap = {
-    create: '创建',
-    update: '更新',
-    delete: '删除',
-    login: '登录',
-    logout: '登出'
-  }
-  return actionMap[action] || action
-}
-
-// 获取操作标签类型
-const getActionTagType = (action) => {
-  const typeMap = {
-    create: 'success',
-    update: 'warning',
-    delete: 'danger',
-    login: 'primary',
-    logout: 'info'
-  }
-  return typeMap[action] || 'info'
-}
-
-// 获取浏览器信息
 const getBrowserInfo = (userAgent) => {
   if (!userAgent) return '-'
-  
-  // 简单的浏览器识别
   if (userAgent.includes('Chrome')) return 'Chrome'
   if (userAgent.includes('Firefox')) return 'Firefox'
   if (userAgent.includes('Safari')) return 'Safari'
   if (userAgent.includes('Edge')) return 'Edge'
-  
-  return '未知浏览器'
+  return 'Unknown'
 }
 
 onMounted(() => {
@@ -604,9 +400,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  if (autoRefreshTimer) {
-    clearInterval(autoRefreshTimer)
-  }
+  if (autoRefreshTimer) clearInterval(autoRefreshTimer)
 })
 </script>
 
@@ -645,10 +439,7 @@ onUnmounted(() => {
 .user-selector,
 .module-selector,
 .action-selector,
-.result-selector {
-  width: 100%;
-}
-
+.result-selector,
 .date-range-picker {
   width: 100%;
 }
@@ -657,27 +448,38 @@ onUnmounted(() => {
   border-radius: 4px;
 }
 
-.table-wrapper {
-  padding: 0;
-}
-
-.modern-table {
-  border-radius: 0;
-}
-
 .user-info {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.resource-text,
-.description-text,
 .browser-text {
   display: block;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.op-actions {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.op-actions .el-button + .el-button {
+  margin-left: 0;
+}
+
+.op-actions :deep(.el-button) {
+  opacity: 1;
+  min-width: 56px;
+}
+
+.op-actions :deep(.el-button .el-button__text) {
+  opacity: 1 !important;
+  color: inherit !important;
 }
 
 .empty-state {
@@ -698,24 +500,5 @@ onUnmounted(() => {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
-}
-
-@media (max-width: 768px) {
-  .operation-log-container {
-    padding: 10px;
-  }
-  
-  .card-header {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .header-actions {
-    justify-content: center;
-  }
-  
-  .logs-controls .el-col {
-    margin-bottom: 10px;
-  }
 }
 </style>

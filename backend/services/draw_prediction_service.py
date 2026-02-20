@@ -6,18 +6,6 @@ from datetime import datetime
 from typing import List, Optional
 import json
 
-# 这里的 get_db 应当与你在项目中获取 Session 的方式保持一致
-# 例如 FastAPI 的依赖项：def get_db(): ...
-# 为了演示，我们假设可以这样导入
-from ..database import SessionLocal
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
 def get_features(db: Session, keyword: Optional[str] = None) -> List[DrawFeature]:
     query = db.query(DrawFeature)
     if keyword:
@@ -29,7 +17,7 @@ def create_feature(db: Session, data: dict) -> DrawFeature:
         name=data['name'],
         description=data.get('description'),
         source_type=data['source_type'],
-        is_active=True
+        is_active=bool(data.get('is_active', True))
     )
     db.add(obj)
     db.commit()
@@ -43,6 +31,9 @@ def update_feature(db: Session, feature_id: int, data: dict) -> Optional[DrawFea
     obj.name = data['name']
     obj.description = data.get('description')
     obj.source_type = data['source_type']
+    # Support toggle in UI
+    if 'is_active' in data:
+        obj.is_active = bool(data.get('is_active'))
     obj.updated_at = datetime.utcnow()
     db.commit()
     db.refresh(obj)
@@ -189,4 +180,3 @@ def get_predictions(db: Session, match_id: Optional[str] = None,
     if end_date:
         query = query.filter(DrawPredictionResult.predicted_at <= end_date)
     return query.order_by(DrawPredictionResult.predicted_at.desc()).all()
-

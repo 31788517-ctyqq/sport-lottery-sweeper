@@ -567,10 +567,25 @@ class BeidanDataService:
                     guest_win_pan = pick_attr("guestWinPan", "guest_win_pan", "away_win_pan", "away_wp")
                     home_feature = pick_attr("homeFeature", "home_feature")
                     guest_feature = pick_attr("guestFeature", "guest_feature", "away_feature")
+                    raw_match_time = pick_attr("matchTime", "match_time", "matchTimeStr", "match_time_str")
+
+                    def format_match_time(value):
+                        if value is None:
+                            return ""
+                        if isinstance(value, datetime):
+                            return value.strftime("%Y-%m-%d %H:%M:%S")
+                        text = str(value).strip()
+                        if not text:
+                            return ""
+                        return text
+
+                    match_time_display = format_match_time(raw_match_time)
+                    if not match_time_display and match.match_time:
+                        match_time_display = match.match_time.strftime("%Y-%m-%d %H:%M:%S")
 
                     converted_match = {
                         "id": match.id,
-                        "matchTime": match.match_time.isoformat() if match.match_time else "",
+                        "matchTime": match_time_display,
                         "league": match.league or "其他",
                         "homeTeam": match.home_team,
                         "guestTeam": match.away_team,

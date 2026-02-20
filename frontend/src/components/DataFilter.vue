@@ -109,9 +109,9 @@
 
         <el-col v-if="enableViewMode" :xs="24" :sm="12">
           <el-radio-group v-model="settings.viewMode" @change="handleViewModeChange">
-            <el-radio-button label="table">表格</el-radio-button>
-            <el-radio-button label="card">卡片</el-radio-button>
-            <el-radio-button label="list">列表</el-radio-button>
+            <el-radio-button value="table">表格</el-radio-button>
+            <el-radio-button value="card">卡片</el-radio-button>
+            <el-radio-button value="list">列表</el-radio-button>
           </el-radio-group>
         </el-col>
       </el-row>

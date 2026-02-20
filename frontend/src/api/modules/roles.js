@@ -7,27 +7,27 @@ import { API_ENDPOINTS } from '@/config/api'
 
 // 获取角色列表
 export const getRoleList = (params) => {
-  return http.get(API_ENDPOINTS.ROLES.LIST, { params })
+  return http.get('/api/v1/admin/roles/', { params })
 }
 
 // 获取角色详情
 export const getRoleDetail = (id) => {
-  return http.get(`${API_ENDPOINTS.ROLES.UPDATE(id)}`)
+  return http.get(`/api/v1/admin/roles/${id}`)
 }
 
 // 创建角色
 export const createRole = (data) => {
-  return http.post(API_ENDPOINTS.ROLES.CREATE, data)
+  return http.post('/api/v1/admin/roles/', data)
 }
 
 // 更新角色
 export const updateRole = (id, data) => {
-  return http.put(API_ENDPOINTS.ROLES.UPDATE(id), data)
+  return http.put(`/api/v1/admin/roles/${id}`, data)
 }
 
 // 删除角色
 export const deleteRole = (id) => {
-  return http.delete(API_ENDPOINTS.ROLES.DELETE(id))
+  return http.delete(`/api/v1/admin/roles/${id}`)
 }
 
 // 批量删除角色

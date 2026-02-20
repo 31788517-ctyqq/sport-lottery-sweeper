@@ -20,6 +20,7 @@
     "health": "python scripts/project_health_check.py",
     "compliance": "python scripts/check_ai_compliance.py",
     "smart-start": "python scripts/smart_start.py",
+    "test:e2e": "cd frontend && npx playwright test",
     "cleanup": "force_kill_port_8000.bat && npm run install",
     "reset": "npm run cleanup && npm run dev"
   },

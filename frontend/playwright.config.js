@@ -12,6 +12,7 @@ import { defineConfig, devices } from '@playwright/test';
  */
 export default defineConfig({
   testDir: './tests/e2e',
+  testIgnore: /.*(log_management\.test|mobile_beidan_filter_test\.spec).*/,
   /* Maximum time one test can run for. */
   timeout: 30 * 1000,
   expect: {

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="user-list-container">
     <el-card class="users-card">
       <template #header>
@@ -163,22 +163,24 @@
               {{ formatDate(scope.row.lastLoginTime) || '-' }}
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="200" fixed="right">
+          <el-table-column label="操作" width="260" fixed="right">
             <template #default="scope">
-              <el-button type="primary" size="small" @click="handleView(scope.row.id)">
-                查看
-              </el-button>
-              <el-button type="warning" size="small" @click="handleEdit(scope.row.id)">
-                编辑
-              </el-button>
-              <el-button 
-                type="danger" 
-                size="small" 
-                @click="handleToggleStatus(scope.row)"
-                :disabled="scope.row.username === 'admin'"
-              >
-                {{ scope.row.status === 'active' ? '禁用' : '启用' }}
-              </el-button>
+              <div class="op-actions">
+                <el-button type="primary" size="small" @click="handleView(scope.row.id)">
+                  查看
+                </el-button>
+                <el-button type="warning" size="small" @click="handleEdit(scope.row.id)">
+                  编辑
+                </el-button>
+                <el-button 
+                  type="danger" 
+                  size="small" 
+                  @click="handleToggleStatus(scope.row)"
+                  :disabled="scope.row.username === 'admin'"
+                >
+                  {{ scope.row.status === 'active' ? '禁用' : '启用' }}
+                </el-button>
+              </div>
             </template>
           </el-table-column>
         </el-table>
@@ -227,7 +229,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Upload, Download, Refresh } from '@element-plus/icons-vue'
 import UserDetailDialog from '@/components/admin/UserDetailDialog.vue'
 import BatchAssignRoleDialog from '@/components/admin/BatchAssignRoleDialog.vue'
-import { getUsers, disableUsers, enableUsers } from '@/api/modules/users'
+import { getUsers, disableUsers, enableUsers, exportUsers } from '@/api/modules/users'
 import { getDepartments } from '@/api/modules/departments'
 import { getRoles } from '@/api/modules/roles'
 
@@ -467,7 +469,15 @@ const handleImport = () => {
 
 // 导出用户
 const handleExport = () => {
-  ElMessage.info('导出功能开发中...')
+  exportUsers({
+    search: searchKeyword.value?.trim() || undefined,
+    status: filters.status || undefined,
+    department: filters.departmentId || undefined,
+    role: filters.roleId || undefined
+  }).catch((error) => {
+    console.error('导出失败:', error)
+    ElMessage.error('导出失败')
+  })
 }
 
 // 用户保存回调
@@ -580,6 +590,17 @@ onMounted(() => {
 
 .modern-table {
   border-radius: 0;
+}
+
+.op-actions {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.op-actions .el-button + .el-button {
+  margin-left: 0;
 }
 
 .empty-state {

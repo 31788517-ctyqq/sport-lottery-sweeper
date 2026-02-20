@@ -1,7 +1,6 @@
-<template>
+﻿<template>
   <div class="role-permission-container">
     <el-row :gutter="20">
-      <!-- 角色列表 -->
       <el-col :xs="24" :lg="8">
         <el-card class="roles-card">
           <template #header>
@@ -13,7 +12,7 @@
               </el-button>
             </div>
           </template>
-          
+
           <div class="roles-search">
             <el-input
               v-model="roleSearchKeyword"
@@ -26,10 +25,10 @@
               </template>
             </el-input>
           </div>
-          
+
           <div class="roles-list">
-            <div 
-              v-for="role in filteredRoles" 
+            <div
+              v-for="role in filteredRoles"
               :key="role.id"
               class="role-item"
               :class="{ active: selectedRole?.id === role.id }"
@@ -40,21 +39,13 @@
                   {{ role.name }}
                   <el-tag v-if="role.isSystem" size="small" type="info" style="margin-left: 8px;">系统</el-tag>
                 </div>
-                <div class="role-desc">{{ role.description }}</div>
+                <div class="role-desc">{{ role.description || '-' }}</div>
               </div>
               <div class="role-actions">
-                <el-button 
-                  type="primary" 
-                  size="small" 
-                  text
-                  @click.stop="handleEditRole(role)"
-                  :disabled="role.isSystem"
-                >
-                  编辑
-                </el-button>
-                <el-button 
-                  type="danger" 
-                  size="small" 
+                <el-button type="primary" size="small" text @click.stop="handleEditRole(role)">编辑</el-button>
+                <el-button
+                  type="danger"
+                  size="small"
                   text
                   @click.stop="handleDeleteRole(role)"
                   :disabled="role.isSystem || role.name === '超级管理员'"
@@ -66,20 +57,15 @@
           </div>
         </el-card>
       </el-col>
-      
-      <!-- 权限配置 -->
+
       <el-col :xs="24" :lg="16">
         <el-card class="permissions-card">
           <template #header>
             <div class="card-header" v-if="selectedRole">
               <h3>权限配置 - {{ selectedRole.name }}</h3>
               <div class="header-actions">
-                <el-button type="primary" @click="handleSavePermissions" :loading="saving">
-                  保存权限
-                </el-button>
-                <el-button @click="handleResetPermissions">
-                  重置
-                </el-button>
+                <el-button type="primary" @click="handleSavePermissions" :loading="saving">保存权限</el-button>
+                <el-button @click="handleResetPermissions">重置</el-button>
               </div>
             </div>
             <div v-else class="card-header">
@@ -87,9 +73,8 @@
               <span class="tip-text">请先选择一个角色</span>
             </div>
           </template>
-          
+
           <div v-if="selectedRole" class="permissions-content">
-            <!-- 权限树 -->
             <div class="permission-tree">
               <el-tree
                 ref="permissionTreeRef"
@@ -109,39 +94,36 @@
                 </template>
               </el-tree>
             </div>
-            
-            <!-- 权限说明 -->
+
             <div class="permission-help">
               <h4>权限说明</h4>
               <ul>
                 <li><strong>勾选权限</strong>：为该角色分配对应权限</li>
-                <li><strong>父子权限</strong>：勾选父权限会自动选中所有子权限</li>
+                <li><strong>父子权限</strong>：勾选父权限会自动选中子权限</li>
                 <li><strong>系统角色</strong>：系统内置角色不可删除</li>
-                <li><strong>权限生效</strong>：保存后立即生效，无需重启</li>
+                <li><strong>权限生效</strong>：保存后立即生效</li>
               </ul>
             </div>
           </div>
-          
+
           <div v-else class="no-selection">
             <el-empty description="请选择一个角色进行权限配置" />
           </div>
         </el-card>
       </el-col>
     </el-row>
-    
-    <!-- 角色编辑对话框 -->
+
     <RoleEditDialog
       v-model="showRoleDialog"
-      :mode="roleDialogMode"
       :role-data="currentRole"
-      @saved="handleRoleSaved"
-      @closed="handleRoleDialogClosed"
+      :permission-tree="permissionTree"
+      @submit="handleRoleSubmit"
     />
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Search } from '@element-plus/icons-vue'
 import RoleEditDialog from '@/components/admin/RoleEditDialog.vue'
@@ -149,41 +131,38 @@ import { getRoles, createRole, updateRole, deleteRole } from '@/api/modules/role
 import { getPermissions } from '@/api/modules/permissions'
 
 const roles = ref([])
-const permissions = ref([])
 const permissionTree = ref([])
 const selectedRole = ref(null)
 const roleSearchKeyword = ref('')
 const saving = ref(false)
 const showRoleDialog = ref(false)
-const roleDialogMode = ref('create') // 'create' | 'edit'
+const roleDialogMode = ref('create')
 const currentRole = ref({})
+const permissionTreeRef = ref(null)
 
 const treeProps = {
   children: 'children',
   label: 'name'
 }
 
-// 过滤角色列表
 const filteredRoles = computed(() => {
-  if (!roleSearchKeyword.value) {
-    return roles.value
-  }
-  return roles.value.filter(role => 
-    role.name.toLowerCase().includes(roleSearchKeyword.value.toLowerCase()) ||
-    role.description.toLowerCase().includes(roleSearchKeyword.value.toLowerCase())
+  if (!roleSearchKeyword.value) return roles.value
+  const key = roleSearchKeyword.value.toLowerCase()
+  return roles.value.filter((role) =>
+    (role.name || '').toLowerCase().includes(key) ||
+    (role.description || '').toLowerCase().includes(key)
   )
 })
 
-// 加载角色列表
+const normalizePermissions = (input) => (input || []).map((p) => (typeof p === 'object' ? p.id : p))
+
 const loadRoles = async () => {
   try {
     const response = await getRoles({ status: 'active' })
-    if (response && response.data) {
-      roles.value = Array.isArray(response.data) ? response.data : []
-      // 默认选中第一个角色
-      if (roles.value.length > 0 && !selectedRole.value) {
-        selectRole(roles.value[0])
-      }
+    const payload = response?.data ?? response
+    roles.value = Array.isArray(payload) ? payload : []
+    if (roles.value.length > 0 && !selectedRole.value) {
+      selectRole(roles.value[0])
     }
   } catch (error) {
     console.error('加载角色列表失败:', error)
@@ -191,13 +170,23 @@ const loadRoles = async () => {
   }
 }
 
-// 加载权限列表
 const loadPermissions = async () => {
   try {
     const response = await getPermissions({ tree: true })
-    if (response && response.data) {
-      permissions.value = Array.isArray(response.data) ? response.data : []
-      permissionTree.value = buildPermissionTree(permissions.value)
+    const payload = response?.data ?? response
+    const rows = Array.isArray(payload) ? payload : []
+    if (rows.length > 0 && rows[0]?.children) {
+      permissionTree.value = rows
+    } else {
+      const map = new Map()
+      const tree = []
+      rows.forEach((p) => map.set(p.id, { ...p, children: [] }))
+      rows.forEach((p) => {
+        const node = map.get(p.id)
+        if (p.parentId && map.has(p.parentId)) map.get(p.parentId).children.push(node)
+        else tree.push(node)
+      })
+      permissionTree.value = tree
     }
   } catch (error) {
     console.error('加载权限列表失败:', error)
@@ -205,92 +194,58 @@ const loadPermissions = async () => {
   }
 }
 
-// 构建权限树
-const buildPermissionTree = (permissions) => {
-  const tree = []
-  const map = new Map()
-  
-  // 创建映射
-  permissions.forEach(permission => {
-    map.set(permission.id, { ...permission, children: [] })
-  })
-  
-  // 构建树结构
-  permissions.forEach(permission => {
-    const node = map.get(permission.id)
-    if (permission.parentId && map.has(permission.parentId)) {
-      map.get(permission.parentId).children.push(node)
-    } else {
-      tree.push(node)
-    }
-  })
-  
-  return tree
-}
-
-// 选择角色
 const selectRole = (role) => {
-  selectedRole.value = { ...role, permissions: role.permissions || [] }
+  selectedRole.value = {
+    ...role,
+    permissions: normalizePermissions(role.permissions)
+  }
 }
 
-// 新建角色
 const handleCreateRole = () => {
   roleDialogMode.value = 'create'
   currentRole.value = {}
   showRoleDialog.value = true
 }
 
-// 编辑角色
 const handleEditRole = (role) => {
   roleDialogMode.value = 'edit'
-  currentRole.value = { ...role }
+  currentRole.value = { ...role, permissions: normalizePermissions(role.permissions) }
   showRoleDialog.value = true
 }
 
-// 删除角色
 const handleDeleteRole = async (role) => {
   try {
-    await ElMessageBox.confirm(
-      `确定要删除角色 "${role.name}" 吗？此操作不可恢复。`,
-      '确认删除',
-      {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }
-    )
-    
+    await ElMessageBox.confirm(`确定要删除角色 "${role.name}" 吗？此操作不可恢复。`, '确认删除', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
     await deleteRole(role.id)
     ElMessage.success('删除成功')
-    loadRoles()
-    if (selectedRole.value?.id === role.id) {
-      selectedRole.value = null
-    }
+    if (selectedRole.value?.id === role.id) selectedRole.value = null
+    await loadRoles()
   } catch (error) {
-    if (error !== 'cancel') {
+    if (error !== 'cancel' && error !== 'close') {
       console.error('删除失败:', error)
       ElMessage.error('删除失败')
     }
   }
 }
 
-// 保存权限
 const handleSavePermissions = async () => {
-  if (!selectedRole.value) return
-  
+  if (!selectedRole.value || !permissionTreeRef.value) return
   try {
     saving.value = true
     const checkedKeys = permissionTreeRef.value.getCheckedKeys()
     const halfCheckedKeys = permissionTreeRef.value.getHalfCheckedKeys()
     const allCheckedKeys = [...checkedKeys, ...halfCheckedKeys]
-    
     await updateRole(selectedRole.value.id, {
-      ...selectedRole.value,
+      name: selectedRole.value.name,
+      description: selectedRole.value.description,
       permissions: allCheckedKeys
     })
-    
     ElMessage.success('权限保存成功')
-    loadRoles() // 刷新角色列表
+    await loadRoles()
   } catch (error) {
     console.error('保存权限失败:', error)
     ElMessage.error('保存权限失败')
@@ -299,22 +254,34 @@ const handleSavePermissions = async () => {
   }
 }
 
-// 重置权限
 const handleResetPermissions = () => {
-  if (selectedRole.value) {
+  if (selectedRole.value && permissionTreeRef.value) {
     permissionTreeRef.value.setCheckedKeys(selectedRole.value.permissions || [])
     ElMessage.info('已重置为原始权限')
   }
 }
 
-// 角色保存回调
-const handleRoleSaved = () => {
-  loadRoles()
-}
-
-// 角色对话框关闭回调
-const handleRoleDialogClosed = () => {
-  currentRole.value = {}
+const handleRoleSubmit = async (formData) => {
+  try {
+    const payload = {
+      name: formData.name,
+      description: formData.description,
+      permissions: normalizePermissions(formData.permissions)
+    }
+    if (roleDialogMode.value === 'edit' && currentRole.value?.id) {
+      await updateRole(currentRole.value.id, payload)
+      ElMessage.success('角色更新成功')
+    } else {
+      await createRole(payload)
+      ElMessage.success('角色创建成功')
+    }
+    showRoleDialog.value = false
+    currentRole.value = {}
+    await loadRoles()
+  } catch (error) {
+    console.error('角色保存失败:', error)
+    ElMessage.error('角色保存失败')
+  }
 }
 
 onMounted(() => {
@@ -382,12 +349,12 @@ onMounted(() => {
 
 .role-item:hover {
   border-color: #409eff;
-  background: #f0f9ff;
+  background-color: #f0f9ff;
 }
 
 .role-item.active {
   border-color: #409eff;
-  background: #ecf5ff;
+  background-color: #ecf5ff;
 }
 
 .role-info {
@@ -395,9 +362,9 @@ onMounted(() => {
 }
 
 .role-name {
-  font-weight: 500;
-  color: #303133;
+  font-weight: 600;
   margin-bottom: 4px;
+  color: #303133;
 }
 
 .role-desc {
@@ -411,78 +378,59 @@ onMounted(() => {
 }
 
 .permissions-content {
-  min-height: 500px;
+  display: grid;
+  gap: 16px;
 }
 
 .permission-tree {
-  max-height: 500px;
-  overflow-y: auto;
   border: 1px solid #ebeef5;
   border-radius: 6px;
-  padding: 16px;
-}
-
-.modern-tree {
-  background: transparent;
+  padding: 12px;
+  max-height: 420px;
+  overflow: auto;
 }
 
 .tree-node {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  gap: 8px;
 }
 
 .node-label {
-  font-weight: 500;
+  font-size: 14px;
 }
 
 .node-desc {
-  font-size: 12px;
   color: #909399;
-  margin-top: 2px;
+  font-size: 12px;
 }
 
 .permission-help {
-  margin-top: 20px;
-  padding: 16px;
-  background: #f8f9fa;
+  border: 1px dashed #dcdfe6;
   border-radius: 6px;
+  padding: 12px;
+  background: #fafafa;
 }
 
 .permission-help h4 {
-  margin: 0 0 12px 0;
-  color: #303133;
+  margin: 0 0 8px;
 }
 
 .permission-help ul {
   margin: 0;
-  padding-left: 20px;
-}
-
-.permission-help li {
-  margin-bottom: 8px;
+  padding-left: 18px;
   color: #606266;
-  font-size: 14px;
 }
 
 .no-selection {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 400px;
+  min-height: 360px;
+  display: grid;
+  place-items: center;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1200px) {
   .role-permission-container {
     padding: 10px;
-  }
-  
-  .card-header {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .header-actions {
-    justify-content: center;
   }
 }
 </style>

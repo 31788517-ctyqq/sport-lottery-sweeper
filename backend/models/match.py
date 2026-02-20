@@ -95,7 +95,7 @@ class League(BaseFullModel):
     average_attendance = Column(Integer, default=0, nullable=False)
     
     # 配置信息
-    config = Column(MutableDict.as_mutable(Text), default=lambda: {}, nullable=False)  # 联赛配置
+    config = Column(MutableDict.as_mutable(JSON), default=lambda: {}, nullable=False)  # 联赛配置
     
     # 关系
     matches = relationship("Match", back_populates="league", cascade="all, delete-orphan")
@@ -172,7 +172,7 @@ class Team(BaseFullModel):
     external_source = Column(String(50), nullable=True, index=True)  # 外部数据来源
     
     # 配置信息
-    config = Column(MutableDict.as_mutable(Text), default=lambda: {}, nullable=False)  # 球队配置
+    config = Column(MutableDict.as_mutable(JSON), default=lambda: {}, nullable=False)  # 球队配置
     
     # 关系
     league = relationship("League", back_populates="teams")

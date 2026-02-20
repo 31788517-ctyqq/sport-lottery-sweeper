@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <el-container class="admin-layout">
     <!-- 侧边栏 -->
     <el-aside width="200px" class="sidebar">
@@ -12,10 +12,10 @@
         active-text-color="#409EFF"
         unique-opened
       >
-        <!-- 1. 仪表台 -->
+        <!-- 1. 仪表盘 -->
         <el-menu-item index="/admin/dashboard">
           <el-icon><House /></el-icon>
-          <span>仪表台</span>
+          <span>仪表盘</span>
         </el-menu-item>
 
         <!-- 2. 用户管理 -->
@@ -32,7 +32,7 @@
           <el-menu-item index="/admin/users/logs">操作日志</el-menu-item>
         </el-sub-menu>
 
-        <!-- 新增: 精算工具中心 -->
+        <!-- 精算工具中心 -->
         <el-sub-menu index="/admin/analytic-tools">
           <template #title>
             <el-icon><DataAnalysis /></el-icon>
@@ -47,7 +47,6 @@
             <el-icon><SetUp /></el-icon>
             <span>数据源管理</span>
           </template>
-          <!-- AI_WORKING: coder1 @2026-02-04 - 添加任务执行监控菜单项 -->
           <el-menu-item index="/admin/data-source/config">数据源配置</el-menu-item>
           <el-menu-item index="/admin/data-source/task-console">任务控制台</el-menu-item>
           <el-menu-item index="/admin/data-source/monitor">爬虫监控</el-menu-item>
@@ -55,7 +54,6 @@
           <el-menu-item index="/admin/data-source/ip-pool">IP池管理</el-menu-item>
           <el-menu-item index="/admin/data-source/headers">请求头管理</el-menu-item>
           <el-menu-item index="/admin/data-source/task-monitor">任务执行监控</el-menu-item>
-          <!-- AI_DONE: coder1 @2026-02-04 -->
         </el-sub-menu>
 
         <!-- 4. 比赛数据管理 -->
@@ -64,11 +62,8 @@
             <el-icon><Soccer /></el-icon>
             <span>比赛数据管理</span>
           </template>
-          <el-menu-item index="/admin/match-data/matches">比赛管理</el-menu-item>
-          <el-menu-item index="/admin/match-data/odds">赔率管理</el-menu-item>
           <el-menu-item index="/admin/match-data/schedule/jczq">竞彩赛程</el-menu-item>
           <el-menu-item index="/admin/match-data/schedule/bd">北单赛程</el-menu-item>
-          <el-menu-item index="/admin/match-data/leagues">联赛管理</el-menu-item>
         </el-sub-menu>
 
         <!-- 5. 平局预测管理 -->
@@ -119,6 +114,7 @@
           <el-menu-item index="/admin/intelligence/collection">采集管理</el-menu-item>
           <el-menu-item index="/admin/intelligence/model">模型管理</el-menu-item>
           <el-menu-item index="/admin/intelligence/weight">权重管理</el-menu-item>
+          <el-menu-item index="/admin/intelligence/graph">图谱管理</el-menu-item>
           <el-menu-item index="/admin/intelligence/sentiment">情感分析</el-menu-item>
           <el-menu-item index="/admin/intelligence/multimodal">多模态分析</el-menu-item>
         </el-sub-menu>
@@ -130,9 +126,6 @@
             <span>系统管理</span>
           </template>
           <el-menu-item index="/admin/system/config">系统配置</el-menu-item>
-          <el-menu-item index="/admin/system/monitoring">性能监控</el-menu-item>
-          <el-menu-item index="/admin/system/backup">数据备份</el-menu-item>
-          <el-menu-item index="/admin/system/api">API管理</el-menu-item>
         </el-sub-menu>
 
         <!-- 12. 日志管理 -->
@@ -185,7 +178,7 @@
 
 <script setup>
 import { computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { 
   House, 
@@ -203,24 +196,26 @@ import {
 } from '@element-plus/icons-vue'
 
 const route = useRoute()
+const router = useRouter()
 const authStore = useAuthStore()
 
 const activeMenu = computed(() => route.path)
 
 const logout = () => {
   authStore.logout()
+  router.push('/login')
 }
 </script>
 
 <style scoped>
 .admin-layout {
   height: 100vh;
-  background: #f9fafb; /* 更柔和的页面背景 */
+  background: #f9fafb; /* 鏇存煍鍜岀殑椤甸潰鑳屾櫙 */
 }
 
 .sidebar {
   background-color: #424242;
-  /* 去掉厚重阴影，仅保留细微层次 */
+  /* 鍘绘帀鍘氶噸闃村奖锛屼粎淇濈暀缁嗗井灞傛 */
   box-shadow: 1px 0 4px rgba(0, 0, 0, 0.08);
 }
 
@@ -277,15 +272,15 @@ const logout = () => {
   justify-content: center;
 }
 
-/* 顶部导航栏 - 干净现代 */
+/* 椤堕儴瀵艰埅鏍?- 骞插噣鐜颁唬 */
 .header {
   background: #ffffff;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 24px;
-  border-bottom: 1px solid #e5e7eb; /* 细灰线代替厚重阴影 */
-  /* 去掉 box-shadow，减少视觉压迫 */
+  border-bottom: 1px solid #e5e7eb; /* 缁嗙伆绾夸唬鏇垮帤閲嶉槾褰?*/
+  /* 鍘绘帀 box-shadow锛屽噺灏戣瑙夊帇杩?*/
   z-index: 10;
 }
 
@@ -304,10 +299,11 @@ const logout = () => {
   gap: 6px;
 }
 
-/* 主内容区 - 轻盈背景，适当留白 */
+/* 涓诲唴瀹瑰尯 - 杞荤泩鑳屾櫙锛岄€傚綋鐣欑櫧 */
 .main {
   background: #f9fafb;
   padding: 24px;
   min-height: calc(100vh - 60px);
 }
 </style>
+

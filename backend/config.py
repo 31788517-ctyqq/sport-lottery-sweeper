@@ -157,8 +157,13 @@ class Settings(BaseSettings):
     @field_validator("DATABASE_URL", mode='before')
     def validate_database_url(cls, v):
         """Validate and enhance database URL with pool settings"""
+        if v is None or str(v).strip() == "":
+            return DEFAULT_DATABASE_URL
+
+        v = str(v)
         if v.startswith("sqlite"):
-            return v
+            # 对 sqlite：统一使用项目根目录下的绝对路径，避免相对路径因工作目录不同导致“unable to open database file”
+            return DEFAULT_DATABASE_URL
         elif v.startswith("postgresql"):
             # Add pool settings for PostgreSQL
             if "?" not in v:
@@ -169,7 +174,18 @@ class Settings(BaseSettings):
             return v + pool_params
         return v
 
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+    @field_validator("ASYNC_DATABASE_URL", mode='before')
+    def validate_async_database_url(cls, v):
+        if v is None or str(v).strip() == "":
+            return DEFAULT_ASYNC_DATABASE_URL
+
+        v = str(v)
+        if v.startswith("sqlite"):
+            return DEFAULT_ASYNC_DATABASE_URL
+        return v
+
+    # 使用项目根目录下的 .env，避免因工作目录不同导致读取不到配置（尤其是 SECRET_KEY）
+    model_config = SettingsConfigDict(env_file=str(PROJECT_ROOT / ".env"), env_file_encoding="utf-8", extra="ignore")
 
 
 settings = Settings()

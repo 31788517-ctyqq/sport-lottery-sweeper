@@ -1,10 +1,13 @@
 <template>
   <div class="api-logs-container">
-    <el-page-header title="API日志" @back="$router.go(-1)" />
+    <el-page-header title="返回" content="API日志" @back="$router.go(-1)" />
     <LogTable
       :logs="logs"
       :loading="loading"
       :total-logs="totalLogs"
+      :show-actions="false"
+      :show-selection="false"
+      :enable-level-filter="false"
       @search="handleSearch"
       @reset="handleReset"
       @export="handleExport"
@@ -13,26 +16,8 @@
       @current-change="handleCurrentChange"
       @view-details="viewLogDetails"
     />
-    <!-- 日志详情弹窗 -->
-    <el-dialog title="日志详情" :visible.sync="showDetailDialog" width="60%">
-      <div v-if="selectedLog">
-        <p><strong>时间:</strong> {{ selectedLog.timestamp }}</p>
-        <p><strong>级别:</strong> <el-tag :type="getTagType(selectedLog.level)">{{ selectedLog.level }}</el-tag></p>
-        <p><strong>请求路径:</strong> {{ selectedLog.request_path }}</p>
-        <p><strong>响应状态:</strong> {{ selectedLog.response_status }}</p>
-        <p><strong>耗时:</strong> {{ selectedLog.duration_ms }}ms</p>
-        <p><strong>IP地址:</strong> {{ selectedLog.ip_address || '-' }}</p>
-        <p><strong>用户代理:</strong> {{ selectedLog.user_agent }}</p>
-        <p><strong>会话ID:</strong> {{ selectedLog.session_id }}</p>
-        <p><strong>消息:</strong> {{ selectedLog.message }}</p>
-        <p v-if="selectedLog.extra_data"><strong>额外数据:</strong></p>
-        <pre v-if="selectedLog.extra_data" style="margin-left: 20px;">{{ formatExtraData(selectedLog.extra_data) }}</pre>
-      </div>
-      <span slot="footer" class="dialog-footer">
-        <el-button @click="showDetailDialog = false">关闭</el-button>
-        <el-button type="primary" @click="showDetailDialog = false">确认</el-button>
-      </span>
-    </el-dialog>
+
+    <LogEntryDetailDialog v-model="detailVisible" :log="selectedLog" />
   </div>
 </template>
 
@@ -40,15 +25,17 @@
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import LogTable from '@/components/LogTable.vue'
+import LogEntryDetailDialog from '@/components/admin/LogEntryDetailDialog.vue'
 import http from '@/utils/http'
-import { processLogResponse, getLogLevelType } from '@/utils/logUtils.js'
+import { processLogResponse } from '@/utils/logUtils.js'
 
-const API_BASE = '/api/admin/system';
+const API_BASE = '/api/v1/admin/system'
 
 export default {
   name: 'APILogs',
   components: {
-    LogTable
+    LogTable,
+    LogEntryDetailDialog
   },
   setup() {
     const logs = ref([])
@@ -56,7 +43,7 @@ export default {
     const loading = ref(false)
     const currentPage = ref(1)
     const pageSize = ref(50)
-    const showDetailDialog = ref(false)
+    const detailVisible = ref(false)
     const selectedLog = ref(null)
 
     const loadLogs = async (params = {}) => {
@@ -91,43 +78,28 @@ export default {
       loadLogs()
     }
 
-    const handleExport = async (filters) => {
+    const handleExport = async () => {
       ElMessage.info('导出功能开发中...')
     }
 
-    const handleBulkDelete = async (ids) => {
+    const handleBulkDelete = async () => {
       ElMessage.info('批量删除功能开发中...')
     }
 
-    const handleSizeChange = (size) => {
+    const handleSizeChange = (size, filters) => {
       pageSize.value = size
-      loadLogs()
+      currentPage.value = 1
+      loadLogs(filters || {})
     }
 
-    const handleCurrentChange = (page) => {
+    const handleCurrentChange = (page, filters) => {
       currentPage.value = page
-      loadLogs()
+      loadLogs(filters || {})
     }
 
     const viewLogDetails = (log) => {
       selectedLog.value = log
-      showDetailDialog.value = true
-    }
-
-    const getTagType = (level) => {
-      return getLogLevelType(level)
-    }
-
-    const formatExtraData = (extraData) => {
-      try {
-        if (typeof extraData === 'string') {
-          const parsed = JSON.parse(extraData)
-          return JSON.stringify(parsed, null, 2)
-        }
-        return JSON.stringify(extraData, null, 2)
-      } catch (e) {
-        return String(extraData)
-      }
+      detailVisible.value = true
     }
 
     onMounted(() => {
@@ -138,9 +110,7 @@ export default {
       logs,
       totalLogs,
       loading,
-      currentPage,
-      pageSize,
-      showDetailDialog,
+      detailVisible,
       selectedLog,
       handleSearch,
       handleReset,
@@ -148,9 +118,7 @@ export default {
       handleBulkDelete,
       handleSizeChange,
       handleCurrentChange,
-      viewLogDetails,
-      getTagType,
-      formatExtraData
+      viewLogDetails
     }
   }
 }

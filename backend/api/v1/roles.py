@@ -12,10 +12,10 @@ from backend.schemas.role import (
 )
 from backend.crud.role import crud_role
 
-router = APIRouter()
+router = APIRouter(prefix="/roles", tags=["roles"])
 
 
-@router.get("", response_model=dict)
+@router.get("/", response_model=dict)
 async def get_roles(
     db: AsyncSession = Depends(get_async_db),
     skip: int = 0,
@@ -82,7 +82,7 @@ async def get_role(
     return role
 
 
-@router.post("", response_model=Role)
+@router.post("/", response_model=Role)
 async def create_role(
     *,
     role_in: RoleCreate,

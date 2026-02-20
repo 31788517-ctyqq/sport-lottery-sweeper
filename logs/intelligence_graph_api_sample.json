@@ -1,0 +1,2698 @@
+{
+  "request": {
+    "url": "http://127.0.0.1:8000/api/v1/admin/intelligence/collection/graph/overview?days=7&limit=300&include_prediction=true",
+    "method": "GET",
+    "status_code": 200
+  },
+  "response_stats": {
+    "days": 7,
+    "total_items": 300,
+    "total_nodes": 75,
+    "total_edges": 208,
+    "total_matches": 17,
+    "total_sources": 7,
+    "total_types": 9
+  },
+  "response_network_metrics": {
+    "avg_degree": 17.36,
+    "density": 0.075,
+    "node_count": 75,
+    "edge_count": 208
+  },
+  "response_top_nodes": [
+    {
+      "id": "match:167",
+      "name": "海伦芬 vs 乌德勒支",
+      "type": "match",
+      "degree": 93,
+      "value": 45
+    },
+    {
+      "id": "match:166",
+      "name": "贝蒂斯 vs 巴伦西亚",
+      "type": "match",
+      "degree": 93,
+      "value": 45
+    },
+    {
+      "id": "match:165",
+      "name": "斯图加特 vs 弗赖堡",
+      "type": "match",
+      "degree": 93,
+      "value": 45
+    },
+    {
+      "id": "match:164",
+      "name": "里昂 vs 里尔",
+      "type": "match",
+      "degree": 93,
+      "value": 45
+    },
+    {
+      "id": "match:163",
+      "name": "科莫 vs 亚特兰大",
+      "type": "match",
+      "degree": 93,
+      "value": 45
+    }
+  ],
+  "response_source_stats": [
+    {
+      "source": "sina",
+      "count": 56
+    },
+    {
+      "source": "tencent",
+      "count": 56
+    },
+    {
+      "source": "500w",
+      "count": 56
+    },
+    {
+      "source": "ttyingqiu",
+      "count": 56
+    },
+    {
+      "source": "weibo",
+      "count": 54
+    }
+  ],
+  "response_type_stats": [
+    {
+      "intel_type": "win_draw_lose",
+      "count": 92
+    },
+    {
+      "intel_type": "coach",
+      "count": 26
+    },
+    {
+      "intel_type": "referee",
+      "count": 26
+    },
+    {
+      "intel_type": "tactics",
+      "count": 26
+    },
+    {
+      "intel_type": "history",
+      "count": 26
+    }
+  ],
+  "raw_response": {
+    "success": true,
+    "data": {
+      "stats": {
+        "days": 7,
+        "total_items": 300,
+        "total_nodes": 75,
+        "total_edges": 208,
+        "total_matches": 17,
+        "total_sources": 7,
+        "total_types": 9
+      },
+      "categories": [
+        {
+          "key": "match",
+          "name": "比赛"
+        },
+        {
+          "key": "team",
+          "name": "球队"
+        },
+        {
+          "key": "league",
+          "name": "联赛"
+        },
+        {
+          "key": "source",
+          "name": "来源"
+        },
+        {
+          "key": "intel_type",
+          "name": "情报类型"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "match:217",
+          "name": "西汉姆联 vs 曼联",
+          "type": "match",
+          "category": "比赛",
+          "value": 6,
+          "symbol_size": 30,
+          "meta": {
+            "match_id": 217,
+            "kickoff": "2026-02-11T04:15:00",
+            "status": "scheduled",
+            "league": "英超"
+          }
+        },
+        {
+          "id": "source:sina",
+          "name": "sina",
+          "type": "source",
+          "category": "来源",
+          "value": 56,
+          "symbol_size": 34,
+          "meta": {
+            "source_code": "sina"
+          }
+        },
+        {
+          "id": "intel_type:win_draw_lose",
+          "name": "win_draw_lose",
+          "type": "intel_type",
+          "category": "情报类型",
+          "value": 92,
+          "symbol_size": 39,
+          "meta": {
+            "intel_type": "win_draw_lose",
+            "category": "prediction"
+          }
+        },
+        {
+          "id": "match:216",
+          "name": "那不勒斯 vs 科莫",
+          "type": "match",
+          "category": "比赛",
+          "value": 6,
+          "symbol_size": 30,
+          "meta": {
+            "match_id": 216,
+            "kickoff": "2026-02-11T04:00:00",
+            "status": "scheduled",
+            "league": "意大利杯"
+          }
+        },
+        {
+          "id": "source:wechat",
+          "name": "wechat",
+          "type": "source",
+          "category": "来源",
+          "value": 11,
+          "symbol_size": 26,
+          "meta": {
+            "source_code": "wechat"
+          }
+        },
+        {
+          "id": "source:sohu",
+          "name": "sohu",
+          "type": "source",
+          "category": "来源",
+          "value": 11,
+          "symbol_size": 26,
+          "meta": {
+            "source_code": "sohu"
+          }
+        },
+        {
+          "id": "source:tencent",
+          "name": "tencent",
+          "type": "source",
+          "category": "来源",
+          "value": 56,
+          "symbol_size": 34,
+          "meta": {
+            "source_code": "tencent"
+          }
+        },
+        {
+          "id": "match:215",
+          "name": "伯明翰 vs 西布罗姆",
+          "type": "match",
+          "category": "比赛",
+          "value": 6,
+          "symbol_size": 30,
+          "meta": {
+            "match_id": 215,
+            "kickoff": "2026-02-11T04:00:00",
+            "status": "scheduled",
+            "league": "英冠"
+          }
+        },
+        {
+          "id": "match:214",
+          "name": "柏林赫塔 vs 弗赖堡",
+          "type": "match",
+          "category": "比赛",
+          "value": 6,
+          "symbol_size": 30,
+          "meta": {
+            "match_id": 214,
+            "kickoff": "2026-02-11T03:45:00",
+            "status": "scheduled",
+            "league": "德国杯"
+          }
+        },
+        {
+          "id": "match:213",
+          "name": "莱切斯特 vs 南安普敦",
+          "type": "match",
+          "category": "比赛",
+          "value": 6,
+          "symbol_size": 30,
+          "meta": {
+            "match_id": 213,
+            "kickoff": "2026-02-11T03:45:00",
+            "status": "scheduled",
+            "league": "英冠"
+          }
+        },
+        {
+          "id": "match:212",
+          "name": "埃弗顿 vs 伯恩茅斯",
+          "type": "match",
+          "category": "比赛",
+          "value": 6,
+          "symbol_size": 30,
+          "meta": {
+            "match_id": 212,
+            "kickoff": "2026-02-11T03:30:00",
+            "status": "scheduled",
+            "league": "英超"
+          }
+        },
+        {
+          "id": "match:211",
+          "name": "热刺 vs 纽卡斯尔",
+          "type": "match",
+          "category": "比赛",
+          "value": 6,
+          "symbol_size": 30,
+          "meta": {
+            "match_id": 211,
+            "kickoff": "2026-02-11T03:30:00",
+            "status": "scheduled",
+            "league": "英超"
+          }
+        },
+        {
+          "id": "match:210",
+          "name": "切尔西 vs 利兹联",
+          "type": "match",
+          "category": "比赛",
+          "value": 6,
+          "symbol_size": 30,
+          "meta": {
+            "match_id": 210,
+            "kickoff": "2026-02-11T03:30:00",
+            "status": "scheduled",
+            "league": "英超"
+          }
+        },
+        {
+          "id": "match:209",
+          "name": "成都蓉城 vs 布里兰",
+          "type": "match",
+          "category": "比赛",
+          "value": 6,
+          "symbol_size": 30,
+          "meta": {
+            "match_id": 209,
+            "kickoff": "2026-02-10T20:15:00",
+            "status": "scheduled",
+            "league": "亚冠"
+          }
+        },
+        {
+          "id": "match:208",
+          "name": "神户胜利 vs 首尔FC",
+          "type": "match",
+          "category": "比赛",
+          "value": 6,
+          "symbol_size": 30,
+          "meta": {
+            "match_id": 208,
+            "kickoff": "2026-02-10T18:00:00",
+            "status": "scheduled",
+            "league": "亚冠"
+          }
+        },
+        {
+          "id": "match:207",
+          "name": "广岛三箭 vs 柔佛",
+          "type": "match",
+          "category": "比赛",
+          "value": 6,
+          "symbol_size": 30,
+          "meta": {
+            "match_id": 207,
+            "kickoff": "2026-02-10T18:00:00",
+            "status": "scheduled",
+            "league": "亚冠"
+          }
+        },
+        {
+          "id": "source:500w",
+          "name": "500w",
+          "type": "source",
+          "category": "来源",
+          "value": 56,
+          "symbol_size": 34,
+          "meta": {
+            "source_code": "500w"
+          }
+        },
+        {
+          "id": "source:ttyingqiu",
+          "name": "ttyingqiu",
+          "type": "source",
+          "category": "来源",
+          "value": 56,
+          "symbol_size": 34,
+          "meta": {
+            "source_code": "ttyingqiu"
+          }
+        },
+        {
+          "id": "match:167",
+          "name": "海伦芬 vs 乌德勒支",
+          "type": "match",
+          "category": "比赛",
+          "value": 45,
+          "symbol_size": 39,
+          "meta": {
+            "match_id": 167,
+            "kickoff": "2026-02-01T23:45:00",
+            "status": "scheduled",
+            "league": "荷甲"
+          }
+        },
+        {
+          "id": "source:weibo",
+          "name": "weibo",
+          "type": "source",
+          "category": "来源",
+          "value": 54,
+          "symbol_size": 34,
+          "meta": {
+            "source_code": "weibo"
+          }
+        },
+        {
+          "id": "intel_type:coach",
+          "name": "coach",
+          "type": "intel_type",
+          "category": "情报类型",
+          "value": 26,
+          "symbol_size": 30,
+          "meta": {
+            "intel_type": "coach",
+            "category": "off_field"
+          }
+        },
+        {
+          "id": "intel_type:referee",
+          "name": "referee",
+          "type": "intel_type",
+          "category": "情报类型",
+          "value": 26,
+          "symbol_size": 30,
+          "meta": {
+            "intel_type": "referee",
+            "category": "off_field"
+          }
+        },
+        {
+          "id": "intel_type:tactics",
+          "name": "tactics",
+          "type": "intel_type",
+          "category": "情报类型",
+          "value": 26,
+          "symbol_size": 30,
+          "meta": {
+            "intel_type": "tactics",
+            "category": "off_field"
+          }
+        },
+        {
+          "id": "intel_type:history",
+          "name": "history",
+          "type": "intel_type",
+          "category": "情报类型",
+          "value": 26,
+          "symbol_size": 30,
+          "meta": {
+            "intel_type": "history",
+            "category": "off_field"
+          }
+        },
+        {
+          "id": "intel_type:handicap_1x2",
+          "name": "handicap_1x2",
+          "type": "intel_type",
+          "category": "情报类型",
+          "value": 26,
+          "symbol_size": 30,
+          "meta": {
+            "intel_type": "handicap_1x2",
+            "category": "prediction"
+          }
+        },
+        {
+          "id": "intel_type:motivation",
+          "name": "motivation",
+          "type": "intel_type",
+          "category": "情报类型",
+          "value": 26,
+          "symbol_size": 30,
+          "meta": {
+            "intel_type": "motivation",
+            "category": "off_field"
+          }
+        },
+        {
+          "id": "intel_type:weather",
+          "name": "weather",
+          "type": "intel_type",
+          "category": "情报类型",
+          "value": 26,
+          "symbol_size": 30,
+          "meta": {
+            "intel_type": "weather",
+            "category": "off_field"
+          }
+        },
+        {
+          "id": "intel_type:injury",
+          "name": "injury",
+          "type": "intel_type",
+          "category": "情报类型",
+          "value": 26,
+          "symbol_size": 30,
+          "meta": {
+            "intel_type": "injury",
+            "category": "off_field"
+          }
+        },
+        {
+          "id": "match:166",
+          "name": "贝蒂斯 vs 巴伦西亚",
+          "type": "match",
+          "category": "比赛",
+          "value": 45,
+          "symbol_size": 39,
+          "meta": {
+            "match_id": 166,
+            "kickoff": "2026-02-01T23:15:00",
+            "status": "scheduled",
+            "league": "西甲"
+          }
+        },
+        {
+          "id": "match:165",
+          "name": "斯图加特 vs 弗赖堡",
+          "type": "match",
+          "category": "比赛",
+          "value": 45,
+          "symbol_size": 39,
+          "meta": {
+            "match_id": 165,
+            "kickoff": "2026-02-01T22:30:00",
+            "status": "scheduled",
+            "league": "德甲"
+          }
+        },
+        {
+          "id": "match:164",
+          "name": "里昂 vs 里尔",
+          "type": "match",
+          "category": "比赛",
+          "value": 45,
+          "symbol_size": 39,
+          "meta": {
+            "match_id": 164,
+            "kickoff": "2026-02-01T22:00:00",
+            "status": "scheduled",
+            "league": "法甲"
+          }
+        },
+        {
+          "id": "match:163",
+          "name": "科莫 vs 亚特兰大",
+          "type": "match",
+          "category": "比赛",
+          "value": 45,
+          "symbol_size": 39,
+          "meta": {
+            "match_id": 163,
+            "kickoff": "2026-02-01T22:00:00",
+            "status": "scheduled",
+            "league": "意甲"
+          }
+        },
+        {
+          "id": "match:162",
+          "name": "诺丁汉 vs 水晶宫",
+          "type": "match",
+          "category": "比赛",
+          "value": 9,
+          "symbol_size": 32,
+          "meta": {
+            "match_id": 162,
+            "kickoff": "2026-02-01T22:00:00",
+            "status": "scheduled",
+            "league": "英超"
+          }
+        },
+        {
+          "id": "league:2",
+          "name": "英超",
+          "type": "league",
+          "category": "联赛",
+          "value": 5,
+          "symbol_size": 22,
+          "meta": {
+            "league_id": 2
+          }
+        },
+        {
+          "id": "team:48",
+          "name": "诺丁汉",
+          "type": "team",
+          "category": "球队",
+          "value": 1,
+          "symbol_size": 20,
+          "meta": {
+            "team_id": 48,
+            "role": "home"
+          }
+        },
+        {
+          "id": "team:50",
+          "name": "水晶宫",
+          "type": "team",
+          "category": "球队",
+          "value": 1,
+          "symbol_size": 20,
+          "meta": {
+            "team_id": 50,
+            "role": "away"
+          }
+        },
+        {
+          "id": "league:10",
+          "name": "意甲",
+          "type": "league",
+          "category": "联赛",
+          "value": 1,
+          "symbol_size": 20,
+          "meta": {
+            "league_id": 10
+          }
+        },
+        {
+          "id": "team:35",
+          "name": "科莫",
+          "type": "team",
+          "category": "球队",
+          "value": 2,
+          "symbol_size": 20,
+          "meta": {
+            "team_id": 35,
+            "role": "home"
+          }
+        },
+        {
+          "id": "team:81",
+          "name": "亚特兰大",
+          "type": "team",
+          "category": "球队",
+          "value": 1,
+          "symbol_size": 20,
+          "meta": {
+            "team_id": 81,
+            "role": "away"
+          }
+        },
+        {
+          "id": "league:13",
+          "name": "法甲",
+          "type": "league",
+          "category": "联赛",
+          "value": 1,
+          "symbol_size": 20,
+          "meta": {
+            "league_id": 13
+          }
+        },
+        {
+          "id": "team:82",
+          "name": "里昂",
+          "type": "team",
+          "category": "球队",
+          "value": 1,
+          "symbol_size": 20,
+          "meta": {
+            "team_id": 82,
+            "role": "home"
+          }
+        },
+        {
+          "id": "team:83",
+          "name": "里尔",
+          "type": "team",
+          "category": "球队",
+          "value": 1,
+          "symbol_size": 20,
+          "meta": {
+            "team_id": 83,
+            "role": "away"
+          }
+        },
+        {
+          "id": "league:14",
+          "name": "德甲",
+          "type": "league",
+          "category": "联赛",
+          "value": 1,
+          "symbol_size": 20,
+          "meta": {
+            "league_id": 14
+          }
+        },
+        {
+          "id": "team:84",
+          "name": "斯图加特",
+          "type": "team",
+          "category": "球队",
+          "value": 1,
+          "symbol_size": 20,
+          "meta": {
+            "team_id": 84,
+            "role": "home"
+          }
+        },
+        {
+          "id": "team:31",
+          "name": "弗赖堡",
+          "type": "team",
+          "category": "球队",
+          "value": 2,
+          "symbol_size": 20,
+          "meta": {
+            "team_id": 31,
+            "role": "away"
+          }
+        },
+        {
+          "id": "league:12",
+          "name": "西甲",
+          "type": "league",
+          "category": "联赛",
+          "value": 1,
+          "symbol_size": 20,
+          "meta": {
+            "league_id": 12
+          }
+        },
+        {
+          "id": "team:85",
+          "name": "贝蒂斯",
+          "type": "team",
+          "category": "球队",
+          "value": 1,
+          "symbol_size": 20,
+          "meta": {
+            "team_id": 85,
+            "role": "home"
+          }
+        },
+        {
+          "id": "team:86",
+          "name": "巴伦西亚",
+          "type": "team",
+          "category": "球队",
+          "value": 1,
+          "symbol_size": 20,
+          "meta": {
+            "team_id": 86,
+            "role": "away"
+          }
+        },
+        {
+          "id": "league:8",
+          "name": "荷甲",
+          "type": "league",
+          "category": "联赛",
+          "value": 1,
+          "symbol_size": 20,
+          "meta": {
+            "league_id": 8
+          }
+        },
+        {
+          "id": "team:87",
+          "name": "海伦芬",
+          "type": "team",
+          "category": "球队",
+          "value": 1,
+          "symbol_size": 20,
+          "meta": {
+            "team_id": 87,
+            "role": "home"
+          }
+        },
+        {
+          "id": "team:61",
+          "name": "乌德勒支",
+          "type": "team",
+          "category": "球队",
+          "value": 1,
+          "symbol_size": 20,
+          "meta": {
+            "team_id": 61,
+            "role": "away"
+          }
+        },
+        {
+          "id": "league:1",
+          "name": "亚冠",
+          "type": "league",
+          "category": "联赛",
+          "value": 3,
+          "symbol_size": 21,
+          "meta": {
+            "league_id": 1
+          }
+        },
+        {
+          "id": "team:16",
+          "name": "广岛三箭",
+          "type": "team",
+          "category": "球队",
+          "value": 1,
+          "symbol_size": 20,
+          "meta": {
+            "team_id": 16,
+            "role": "home"
+          }
+        },
+        {
+          "id": "team:17",
+          "name": "柔佛",
+          "type": "team",
+          "category": "球队",
+          "value": 1,
+          "symbol_size": 20,
+          "meta": {
+            "team_id": 17,
+            "role": "away"
+          }
+        },
+        {
+          "id": "team:18",
+          "name": "神户胜利",
+          "type": "team",
+          "category": "球队",
+          "value": 1,
+          "symbol_size": 20,
+          "meta": {
+            "team_id": 18,
+            "role": "home"
+          }
+        },
+        {
+          "id": "team:19",
+          "name": "首尔FC",
+          "type": "team",
+          "category": "球队",
+          "value": 1,
+          "symbol_size": 20,
+          "meta": {
+            "team_id": 19,
+            "role": "away"
+          }
+        },
+        {
+          "id": "team:20",
+          "name": "成都蓉城",
+          "type": "team",
+          "category": "球队",
+          "value": 1,
+          "symbol_size": 20,
+          "meta": {
+            "team_id": 20,
+            "role": "home"
+          }
+        },
+        {
+          "id": "team:21",
+          "name": "布里兰",
+          "type": "team",
+          "category": "球队",
+          "value": 1,
+          "symbol_size": 20,
+          "meta": {
+            "team_id": 21,
+            "role": "away"
+          }
+        },
+        {
+          "id": "team:22",
+          "name": "切尔西",
+          "type": "team",
+          "category": "球队",
+          "value": 1,
+          "symbol_size": 20,
+          "meta": {
+            "team_id": 22,
+            "role": "home"
+          }
+        },
+        {
+          "id": "team:23",
+          "name": "利兹联",
+          "type": "team",
+          "category": "球队",
+          "value": 1,
+          "symbol_size": 20,
+          "meta": {
+            "team_id": 23,
+            "role": "away"
+          }
+        },
+        {
+          "id": "team:24",
+          "name": "热刺",
+          "type": "team",
+          "category": "球队",
+          "value": 1,
+          "symbol_size": 20,
+          "meta": {
+            "team_id": 24,
+            "role": "home"
+          }
+        },
+        {
+          "id": "team:25",
+          "name": "纽卡斯尔",
+          "type": "team",
+          "category": "球队",
+          "value": 1,
+          "symbol_size": 20,
+          "meta": {
+            "team_id": 25,
+            "role": "away"
+          }
+        },
+        {
+          "id": "team:26",
+          "name": "埃弗顿",
+          "type": "team",
+          "category": "球队",
+          "value": 1,
+          "symbol_size": 20,
+          "meta": {
+            "team_id": 26,
+            "role": "home"
+          }
+        },
+        {
+          "id": "team:27",
+          "name": "伯恩茅斯",
+          "type": "team",
+          "category": "球队",
+          "value": 1,
+          "symbol_size": 20,
+          "meta": {
+            "team_id": 27,
+            "role": "away"
+          }
+        },
+        {
+          "id": "league:3",
+          "name": "英冠",
+          "type": "league",
+          "category": "联赛",
+          "value": 2,
+          "symbol_size": 20,
+          "meta": {
+            "league_id": 3
+          }
+        },
+        {
+          "id": "team:28",
+          "name": "莱切斯特",
+          "type": "team",
+          "category": "球队",
+          "value": 1,
+          "symbol_size": 20,
+          "meta": {
+            "team_id": 28,
+            "role": "home"
+          }
+        },
+        {
+          "id": "team:29",
+          "name": "南安普敦",
+          "type": "team",
+          "category": "球队",
+          "value": 1,
+          "symbol_size": 20,
+          "meta": {
+            "team_id": 29,
+            "role": "away"
+          }
+        },
+        {
+          "id": "league:4",
+          "name": "德国杯",
+          "type": "league",
+          "category": "联赛",
+          "value": 1,
+          "symbol_size": 20,
+          "meta": {
+            "league_id": 4
+          }
+        },
+        {
+          "id": "team:30",
+          "name": "柏林赫塔",
+          "type": "team",
+          "category": "球队",
+          "value": 1,
+          "symbol_size": 20,
+          "meta": {
+            "team_id": 30,
+            "role": "home"
+          }
+        },
+        {
+          "id": "team:32",
+          "name": "伯明翰",
+          "type": "team",
+          "category": "球队",
+          "value": 1,
+          "symbol_size": 20,
+          "meta": {
+            "team_id": 32,
+            "role": "home"
+          }
+        },
+        {
+          "id": "team:33",
+          "name": "西布罗姆",
+          "type": "team",
+          "category": "球队",
+          "value": 1,
+          "symbol_size": 20,
+          "meta": {
+            "team_id": 33,
+            "role": "away"
+          }
+        },
+        {
+          "id": "league:5",
+          "name": "意大利杯",
+          "type": "league",
+          "category": "联赛",
+          "value": 1,
+          "symbol_size": 20,
+          "meta": {
+            "league_id": 5
+          }
+        },
+        {
+          "id": "team:34",
+          "name": "那不勒斯",
+          "type": "team",
+          "category": "球队",
+          "value": 1,
+          "symbol_size": 20,
+          "meta": {
+            "team_id": 34,
+            "role": "home"
+          }
+        },
+        {
+          "id": "team:36",
+          "name": "西汉姆联",
+          "type": "team",
+          "category": "球队",
+          "value": 1,
+          "symbol_size": 20,
+          "meta": {
+            "team_id": 36,
+            "role": "home"
+          }
+        },
+        {
+          "id": "team:37",
+          "name": "曼联",
+          "type": "team",
+          "category": "球队",
+          "value": 1,
+          "symbol_size": 20,
+          "meta": {
+            "team_id": 37,
+            "role": "away"
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "source:sina|source_evidence|match:217",
+          "source": "source:sina",
+          "target": "match:217",
+          "relation": "source_evidence",
+          "count": 1
+        },
+        {
+          "id": "intel_type:win_draw_lose|type_evidence|match:217",
+          "source": "intel_type:win_draw_lose",
+          "target": "match:217",
+          "relation": "type_evidence",
+          "count": 6
+        },
+        {
+          "id": "source:wechat|source_evidence|match:216",
+          "source": "source:wechat",
+          "target": "match:216",
+          "relation": "source_evidence",
+          "count": 1
+        },
+        {
+          "id": "intel_type:win_draw_lose|type_evidence|match:216",
+          "source": "intel_type:win_draw_lose",
+          "target": "match:216",
+          "relation": "type_evidence",
+          "count": 6
+        },
+        {
+          "id": "source:sohu|source_evidence|match:216",
+          "source": "source:sohu",
+          "target": "match:216",
+          "relation": "source_evidence",
+          "count": 1
+        },
+        {
+          "id": "source:sina|source_evidence|match:216",
+          "source": "source:sina",
+          "target": "match:216",
+          "relation": "source_evidence",
+          "count": 1
+        },
+        {
+          "id": "source:tencent|source_evidence|match:216",
+          "source": "source:tencent",
+          "target": "match:216",
+          "relation": "source_evidence",
+          "count": 1
+        },
+        {
+          "id": "source:wechat|source_evidence|match:215",
+          "source": "source:wechat",
+          "target": "match:215",
+          "relation": "source_evidence",
+          "count": 1
+        },
+        {
+          "id": "intel_type:win_draw_lose|type_evidence|match:215",
+          "source": "intel_type:win_draw_lose",
+          "target": "match:215",
+          "relation": "type_evidence",
+          "count": 6
+        },
+        {
+          "id": "source:sohu|source_evidence|match:215",
+          "source": "source:sohu",
+          "target": "match:215",
+          "relation": "source_evidence",
+          "count": 1
+        },
+        {
+          "id": "source:sina|source_evidence|match:215",
+          "source": "source:sina",
+          "target": "match:215",
+          "relation": "source_evidence",
+          "count": 1
+        },
+        {
+          "id": "source:tencent|source_evidence|match:215",
+          "source": "source:tencent",
+          "target": "match:215",
+          "relation": "source_evidence",
+          "count": 1
+        },
+        {
+          "id": "source:wechat|source_evidence|match:214",
+          "source": "source:wechat",
+          "target": "match:214",
+          "relation": "source_evidence",
+          "count": 1
+        },
+        {
+          "id": "intel_type:win_draw_lose|type_evidence|match:214",
+          "source": "intel_type:win_draw_lose",
+          "target": "match:214",
+          "relation": "type_evidence",
+          "count": 6
+        },
+        {
+          "id": "source:sohu|source_evidence|match:214",
+          "source": "source:sohu",
+          "target": "match:214",
+          "relation": "source_evidence",
+          "count": 1
+        },
+        {
+          "id": "source:sina|source_evidence|match:214",
+          "source": "source:sina",
+          "target": "match:214",
+          "relation": "source_evidence",
+          "count": 1
+        },
+        {
+          "id": "source:tencent|source_evidence|match:214",
+          "source": "source:tencent",
+          "target": "match:214",
+          "relation": "source_evidence",
+          "count": 1
+        },
+        {
+          "id": "source:wechat|source_evidence|match:213",
+          "source": "source:wechat",
+          "target": "match:213",
+          "relation": "source_evidence",
+          "count": 1
+        },
+        {
+          "id": "intel_type:win_draw_lose|type_evidence|match:213",
+          "source": "intel_type:win_draw_lose",
+          "target": "match:213",
+          "relation": "type_evidence",
+          "count": 6
+        },
+        {
+          "id": "source:sohu|source_evidence|match:213",
+          "source": "source:sohu",
+          "target": "match:213",
+          "relation": "source_evidence",
+          "count": 1
+        },
+        {
+          "id": "source:sina|source_evidence|match:213",
+          "source": "source:sina",
+          "target": "match:213",
+          "relation": "source_evidence",
+          "count": 1
+        },
+        {
+          "id": "source:tencent|source_evidence|match:213",
+          "source": "source:tencent",
+          "target": "match:213",
+          "relation": "source_evidence",
+          "count": 1
+        },
+        {
+          "id": "source:sina|source_evidence|match:212",
+          "source": "source:sina",
+          "target": "match:212",
+          "relation": "source_evidence",
+          "count": 1
+        },
+        {
+          "id": "intel_type:win_draw_lose|type_evidence|match:212",
+          "source": "intel_type:win_draw_lose",
+          "target": "match:212",
+          "relation": "type_evidence",
+          "count": 6
+        },
+        {
+          "id": "source:sina|source_evidence|match:211",
+          "source": "source:sina",
+          "target": "match:211",
+          "relation": "source_evidence",
+          "count": 1
+        },
+        {
+          "id": "intel_type:win_draw_lose|type_evidence|match:211",
+          "source": "intel_type:win_draw_lose",
+          "target": "match:211",
+          "relation": "type_evidence",
+          "count": 6
+        },
+        {
+          "id": "source:sina|source_evidence|match:210",
+          "source": "source:sina",
+          "target": "match:210",
+          "relation": "source_evidence",
+          "count": 1
+        },
+        {
+          "id": "intel_type:win_draw_lose|type_evidence|match:210",
+          "source": "intel_type:win_draw_lose",
+          "target": "match:210",
+          "relation": "type_evidence",
+          "count": 6
+        },
+        {
+          "id": "source:wechat|source_evidence|match:209",
+          "source": "source:wechat",
+          "target": "match:209",
+          "relation": "source_evidence",
+          "count": 1
+        },
+        {
+          "id": "intel_type:win_draw_lose|type_evidence|match:209",
+          "source": "intel_type:win_draw_lose",
+          "target": "match:209",
+          "relation": "type_evidence",
+          "count": 6
+        },
+        {
+          "id": "source:sohu|source_evidence|match:209",
+          "source": "source:sohu",
+          "target": "match:209",
+          "relation": "source_evidence",
+          "count": 1
+        },
+        {
+          "id": "source:sina|source_evidence|match:209",
+          "source": "source:sina",
+          "target": "match:209",
+          "relation": "source_evidence",
+          "count": 1
+        },
+        {
+          "id": "source:tencent|source_evidence|match:209",
+          "source": "source:tencent",
+          "target": "match:209",
+          "relation": "source_evidence",
+          "count": 1
+        },
+        {
+          "id": "source:wechat|source_evidence|match:208",
+          "source": "source:wechat",
+          "target": "match:208",
+          "relation": "source_evidence",
+          "count": 1
+        },
+        {
+          "id": "intel_type:win_draw_lose|type_evidence|match:208",
+          "source": "intel_type:win_draw_lose",
+          "target": "match:208",
+          "relation": "type_evidence",
+          "count": 6
+        },
+        {
+          "id": "source:sohu|source_evidence|match:208",
+          "source": "source:sohu",
+          "target": "match:208",
+          "relation": "source_evidence",
+          "count": 1
+        },
+        {
+          "id": "source:sina|source_evidence|match:208",
+          "source": "source:sina",
+          "target": "match:208",
+          "relation": "source_evidence",
+          "count": 1
+        },
+        {
+          "id": "source:tencent|source_evidence|match:208",
+          "source": "source:tencent",
+          "target": "match:208",
+          "relation": "source_evidence",
+          "count": 1
+        },
+        {
+          "id": "source:wechat|source_evidence|match:207",
+          "source": "source:wechat",
+          "target": "match:207",
+          "relation": "source_evidence",
+          "count": 1
+        },
+        {
+          "id": "intel_type:win_draw_lose|type_evidence|match:207",
+          "source": "intel_type:win_draw_lose",
+          "target": "match:207",
+          "relation": "type_evidence",
+          "count": 6
+        },
+        {
+          "id": "source:sohu|source_evidence|match:207",
+          "source": "source:sohu",
+          "target": "match:207",
+          "relation": "source_evidence",
+          "count": 1
+        },
+        {
+          "id": "source:sina|source_evidence|match:207",
+          "source": "source:sina",
+          "target": "match:207",
+          "relation": "source_evidence",
+          "count": 1
+        },
+        {
+          "id": "source:tencent|source_evidence|match:207",
+          "source": "source:tencent",
+          "target": "match:207",
+          "relation": "source_evidence",
+          "count": 1
+        },
+        {
+          "id": "source:sohu|source_evidence|match:217",
+          "source": "source:sohu",
+          "target": "match:217",
+          "relation": "source_evidence",
+          "count": 1
+        },
+        {
+          "id": "source:tencent|source_evidence|match:217",
+          "source": "source:tencent",
+          "target": "match:217",
+          "relation": "source_evidence",
+          "count": 1
+        },
+        {
+          "id": "source:sohu|source_evidence|match:210",
+          "source": "source:sohu",
+          "target": "match:210",
+          "relation": "source_evidence",
+          "count": 1
+        },
+        {
+          "id": "source:tencent|source_evidence|match:210",
+          "source": "source:tencent",
+          "target": "match:210",
+          "relation": "source_evidence",
+          "count": 1
+        },
+        {
+          "id": "source:sohu|source_evidence|match:212",
+          "source": "source:sohu",
+          "target": "match:212",
+          "relation": "source_evidence",
+          "count": 1
+        },
+        {
+          "id": "source:tencent|source_evidence|match:212",
+          "source": "source:tencent",
+          "target": "match:212",
+          "relation": "source_evidence",
+          "count": 1
+        },
+        {
+          "id": "source:sohu|source_evidence|match:211",
+          "source": "source:sohu",
+          "target": "match:211",
+          "relation": "source_evidence",
+          "count": 1
+        },
+        {
+          "id": "source:tencent|source_evidence|match:211",
+          "source": "source:tencent",
+          "target": "match:211",
+          "relation": "source_evidence",
+          "count": 1
+        },
+        {
+          "id": "source:wechat|source_evidence|match:217",
+          "source": "source:wechat",
+          "target": "match:217",
+          "relation": "source_evidence",
+          "count": 1
+        },
+        {
+          "id": "source:wechat|source_evidence|match:210",
+          "source": "source:wechat",
+          "target": "match:210",
+          "relation": "source_evidence",
+          "count": 1
+        },
+        {
+          "id": "source:wechat|source_evidence|match:212",
+          "source": "source:wechat",
+          "target": "match:212",
+          "relation": "source_evidence",
+          "count": 1
+        },
+        {
+          "id": "source:wechat|source_evidence|match:211",
+          "source": "source:wechat",
+          "target": "match:211",
+          "relation": "source_evidence",
+          "count": 1
+        },
+        {
+          "id": "source:500w|source_evidence|match:217",
+          "source": "source:500w",
+          "target": "match:217",
+          "relation": "source_evidence",
+          "count": 1
+        },
+        {
+          "id": "source:ttyingqiu|source_evidence|match:216",
+          "source": "source:ttyingqiu",
+          "target": "match:216",
+          "relation": "source_evidence",
+          "count": 1
+        },
+        {
+          "id": "source:500w|source_evidence|match:216",
+          "source": "source:500w",
+          "target": "match:216",
+          "relation": "source_evidence",
+          "count": 1
+        },
+        {
+          "id": "source:ttyingqiu|source_evidence|match:215",
+          "source": "source:ttyingqiu",
+          "target": "match:215",
+          "relation": "source_evidence",
+          "count": 1
+        },
+        {
+          "id": "source:500w|source_evidence|match:215",
+          "source": "source:500w",
+          "target": "match:215",
+          "relation": "source_evidence",
+          "count": 1
+        },
+        {
+          "id": "source:ttyingqiu|source_evidence|match:214",
+          "source": "source:ttyingqiu",
+          "target": "match:214",
+          "relation": "source_evidence",
+          "count": 1
+        },
+        {
+          "id": "source:500w|source_evidence|match:214",
+          "source": "source:500w",
+          "target": "match:214",
+          "relation": "source_evidence",
+          "count": 1
+        },
+        {
+          "id": "source:ttyingqiu|source_evidence|match:213",
+          "source": "source:ttyingqiu",
+          "target": "match:213",
+          "relation": "source_evidence",
+          "count": 1
+        },
+        {
+          "id": "source:500w|source_evidence|match:213",
+          "source": "source:500w",
+          "target": "match:213",
+          "relation": "source_evidence",
+          "count": 1
+        },
+        {
+          "id": "source:500w|source_evidence|match:212",
+          "source": "source:500w",
+          "target": "match:212",
+          "relation": "source_evidence",
+          "count": 1
+        },
+        {
+          "id": "source:500w|source_evidence|match:211",
+          "source": "source:500w",
+          "target": "match:211",
+          "relation": "source_evidence",
+          "count": 1
+        },
+        {
+          "id": "source:500w|source_evidence|match:210",
+          "source": "source:500w",
+          "target": "match:210",
+          "relation": "source_evidence",
+          "count": 1
+        },
+        {
+          "id": "source:ttyingqiu|source_evidence|match:209",
+          "source": "source:ttyingqiu",
+          "target": "match:209",
+          "relation": "source_evidence",
+          "count": 1
+        },
+        {
+          "id": "source:500w|source_evidence|match:209",
+          "source": "source:500w",
+          "target": "match:209",
+          "relation": "source_evidence",
+          "count": 1
+        },
+        {
+          "id": "source:ttyingqiu|source_evidence|match:208",
+          "source": "source:ttyingqiu",
+          "target": "match:208",
+          "relation": "source_evidence",
+          "count": 1
+        },
+        {
+          "id": "source:500w|source_evidence|match:208",
+          "source": "source:500w",
+          "target": "match:208",
+          "relation": "source_evidence",
+          "count": 1
+        },
+        {
+          "id": "source:ttyingqiu|source_evidence|match:207",
+          "source": "source:ttyingqiu",
+          "target": "match:207",
+          "relation": "source_evidence",
+          "count": 1
+        },
+        {
+          "id": "source:500w|source_evidence|match:207",
+          "source": "source:500w",
+          "target": "match:207",
+          "relation": "source_evidence",
+          "count": 1
+        },
+        {
+          "id": "source:ttyingqiu|source_evidence|match:217",
+          "source": "source:ttyingqiu",
+          "target": "match:217",
+          "relation": "source_evidence",
+          "count": 1
+        },
+        {
+          "id": "source:ttyingqiu|source_evidence|match:210",
+          "source": "source:ttyingqiu",
+          "target": "match:210",
+          "relation": "source_evidence",
+          "count": 1
+        },
+        {
+          "id": "source:ttyingqiu|source_evidence|match:212",
+          "source": "source:ttyingqiu",
+          "target": "match:212",
+          "relation": "source_evidence",
+          "count": 1
+        },
+        {
+          "id": "source:ttyingqiu|source_evidence|match:211",
+          "source": "source:ttyingqiu",
+          "target": "match:211",
+          "relation": "source_evidence",
+          "count": 1
+        },
+        {
+          "id": "source:weibo|source_evidence|match:167",
+          "source": "source:weibo",
+          "target": "match:167",
+          "relation": "source_evidence",
+          "count": 9
+        },
+        {
+          "id": "intel_type:coach|type_evidence|match:167",
+          "source": "intel_type:coach",
+          "target": "match:167",
+          "relation": "type_evidence",
+          "count": 5
+        },
+        {
+          "id": "intel_type:referee|type_evidence|match:167",
+          "source": "intel_type:referee",
+          "target": "match:167",
+          "relation": "type_evidence",
+          "count": 5
+        },
+        {
+          "id": "intel_type:tactics|type_evidence|match:167",
+          "source": "intel_type:tactics",
+          "target": "match:167",
+          "relation": "type_evidence",
+          "count": 5
+        },
+        {
+          "id": "intel_type:history|type_evidence|match:167",
+          "source": "intel_type:history",
+          "target": "match:167",
+          "relation": "type_evidence",
+          "count": 5
+        },
+        {
+          "id": "intel_type:handicap_1x2|type_evidence|match:167",
+          "source": "intel_type:handicap_1x2",
+          "target": "match:167",
+          "relation": "type_evidence",
+          "count": 5
+        },
+        {
+          "id": "intel_type:win_draw_lose|type_evidence|match:167",
+          "source": "intel_type:win_draw_lose",
+          "target": "match:167",
+          "relation": "type_evidence",
+          "count": 5
+        },
+        {
+          "id": "intel_type:motivation|type_evidence|match:167",
+          "source": "intel_type:motivation",
+          "target": "match:167",
+          "relation": "type_evidence",
+          "count": 5
+        },
+        {
+          "id": "intel_type:weather|type_evidence|match:167",
+          "source": "intel_type:weather",
+          "target": "match:167",
+          "relation": "type_evidence",
+          "count": 5
+        },
+        {
+          "id": "intel_type:injury|type_evidence|match:167",
+          "source": "intel_type:injury",
+          "target": "match:167",
+          "relation": "type_evidence",
+          "count": 5
+        },
+        {
+          "id": "source:sina|source_evidence|match:167",
+          "source": "source:sina",
+          "target": "match:167",
+          "relation": "source_evidence",
+          "count": 9
+        },
+        {
+          "id": "source:tencent|source_evidence|match:167",
+          "source": "source:tencent",
+          "target": "match:167",
+          "relation": "source_evidence",
+          "count": 9
+        },
+        {
+          "id": "source:ttyingqiu|source_evidence|match:167",
+          "source": "source:ttyingqiu",
+          "target": "match:167",
+          "relation": "source_evidence",
+          "count": 9
+        },
+        {
+          "id": "source:500w|source_evidence|match:167",
+          "source": "source:500w",
+          "target": "match:167",
+          "relation": "source_evidence",
+          "count": 9
+        },
+        {
+          "id": "source:weibo|source_evidence|match:166",
+          "source": "source:weibo",
+          "target": "match:166",
+          "relation": "source_evidence",
+          "count": 9
+        },
+        {
+          "id": "intel_type:coach|type_evidence|match:166",
+          "source": "intel_type:coach",
+          "target": "match:166",
+          "relation": "type_evidence",
+          "count": 5
+        },
+        {
+          "id": "intel_type:referee|type_evidence|match:166",
+          "source": "intel_type:referee",
+          "target": "match:166",
+          "relation": "type_evidence",
+          "count": 5
+        },
+        {
+          "id": "intel_type:tactics|type_evidence|match:166",
+          "source": "intel_type:tactics",
+          "target": "match:166",
+          "relation": "type_evidence",
+          "count": 5
+        },
+        {
+          "id": "intel_type:history|type_evidence|match:166",
+          "source": "intel_type:history",
+          "target": "match:166",
+          "relation": "type_evidence",
+          "count": 5
+        },
+        {
+          "id": "intel_type:handicap_1x2|type_evidence|match:166",
+          "source": "intel_type:handicap_1x2",
+          "target": "match:166",
+          "relation": "type_evidence",
+          "count": 5
+        },
+        {
+          "id": "intel_type:win_draw_lose|type_evidence|match:166",
+          "source": "intel_type:win_draw_lose",
+          "target": "match:166",
+          "relation": "type_evidence",
+          "count": 5
+        },
+        {
+          "id": "intel_type:motivation|type_evidence|match:166",
+          "source": "intel_type:motivation",
+          "target": "match:166",
+          "relation": "type_evidence",
+          "count": 5
+        },
+        {
+          "id": "intel_type:weather|type_evidence|match:166",
+          "source": "intel_type:weather",
+          "target": "match:166",
+          "relation": "type_evidence",
+          "count": 5
+        },
+        {
+          "id": "intel_type:injury|type_evidence|match:166",
+          "source": "intel_type:injury",
+          "target": "match:166",
+          "relation": "type_evidence",
+          "count": 5
+        },
+        {
+          "id": "source:sina|source_evidence|match:166",
+          "source": "source:sina",
+          "target": "match:166",
+          "relation": "source_evidence",
+          "count": 9
+        },
+        {
+          "id": "source:tencent|source_evidence|match:166",
+          "source": "source:tencent",
+          "target": "match:166",
+          "relation": "source_evidence",
+          "count": 9
+        },
+        {
+          "id": "source:ttyingqiu|source_evidence|match:166",
+          "source": "source:ttyingqiu",
+          "target": "match:166",
+          "relation": "source_evidence",
+          "count": 9
+        },
+        {
+          "id": "source:500w|source_evidence|match:166",
+          "source": "source:500w",
+          "target": "match:166",
+          "relation": "source_evidence",
+          "count": 9
+        },
+        {
+          "id": "source:weibo|source_evidence|match:165",
+          "source": "source:weibo",
+          "target": "match:165",
+          "relation": "source_evidence",
+          "count": 9
+        },
+        {
+          "id": "intel_type:coach|type_evidence|match:165",
+          "source": "intel_type:coach",
+          "target": "match:165",
+          "relation": "type_evidence",
+          "count": 5
+        },
+        {
+          "id": "intel_type:referee|type_evidence|match:165",
+          "source": "intel_type:referee",
+          "target": "match:165",
+          "relation": "type_evidence",
+          "count": 5
+        },
+        {
+          "id": "intel_type:tactics|type_evidence|match:165",
+          "source": "intel_type:tactics",
+          "target": "match:165",
+          "relation": "type_evidence",
+          "count": 5
+        },
+        {
+          "id": "intel_type:history|type_evidence|match:165",
+          "source": "intel_type:history",
+          "target": "match:165",
+          "relation": "type_evidence",
+          "count": 5
+        },
+        {
+          "id": "intel_type:handicap_1x2|type_evidence|match:165",
+          "source": "intel_type:handicap_1x2",
+          "target": "match:165",
+          "relation": "type_evidence",
+          "count": 5
+        },
+        {
+          "id": "intel_type:win_draw_lose|type_evidence|match:165",
+          "source": "intel_type:win_draw_lose",
+          "target": "match:165",
+          "relation": "type_evidence",
+          "count": 5
+        },
+        {
+          "id": "intel_type:motivation|type_evidence|match:165",
+          "source": "intel_type:motivation",
+          "target": "match:165",
+          "relation": "type_evidence",
+          "count": 5
+        },
+        {
+          "id": "intel_type:weather|type_evidence|match:165",
+          "source": "intel_type:weather",
+          "target": "match:165",
+          "relation": "type_evidence",
+          "count": 5
+        },
+        {
+          "id": "intel_type:injury|type_evidence|match:165",
+          "source": "intel_type:injury",
+          "target": "match:165",
+          "relation": "type_evidence",
+          "count": 5
+        },
+        {
+          "id": "source:sina|source_evidence|match:165",
+          "source": "source:sina",
+          "target": "match:165",
+          "relation": "source_evidence",
+          "count": 9
+        },
+        {
+          "id": "source:tencent|source_evidence|match:165",
+          "source": "source:tencent",
+          "target": "match:165",
+          "relation": "source_evidence",
+          "count": 9
+        },
+        {
+          "id": "source:ttyingqiu|source_evidence|match:165",
+          "source": "source:ttyingqiu",
+          "target": "match:165",
+          "relation": "source_evidence",
+          "count": 9
+        },
+        {
+          "id": "source:500w|source_evidence|match:165",
+          "source": "source:500w",
+          "target": "match:165",
+          "relation": "source_evidence",
+          "count": 9
+        },
+        {
+          "id": "source:weibo|source_evidence|match:164",
+          "source": "source:weibo",
+          "target": "match:164",
+          "relation": "source_evidence",
+          "count": 9
+        },
+        {
+          "id": "intel_type:coach|type_evidence|match:164",
+          "source": "intel_type:coach",
+          "target": "match:164",
+          "relation": "type_evidence",
+          "count": 5
+        },
+        {
+          "id": "intel_type:referee|type_evidence|match:164",
+          "source": "intel_type:referee",
+          "target": "match:164",
+          "relation": "type_evidence",
+          "count": 5
+        },
+        {
+          "id": "intel_type:tactics|type_evidence|match:164",
+          "source": "intel_type:tactics",
+          "target": "match:164",
+          "relation": "type_evidence",
+          "count": 5
+        },
+        {
+          "id": "intel_type:history|type_evidence|match:164",
+          "source": "intel_type:history",
+          "target": "match:164",
+          "relation": "type_evidence",
+          "count": 5
+        },
+        {
+          "id": "intel_type:handicap_1x2|type_evidence|match:164",
+          "source": "intel_type:handicap_1x2",
+          "target": "match:164",
+          "relation": "type_evidence",
+          "count": 5
+        },
+        {
+          "id": "intel_type:win_draw_lose|type_evidence|match:164",
+          "source": "intel_type:win_draw_lose",
+          "target": "match:164",
+          "relation": "type_evidence",
+          "count": 5
+        },
+        {
+          "id": "intel_type:motivation|type_evidence|match:164",
+          "source": "intel_type:motivation",
+          "target": "match:164",
+          "relation": "type_evidence",
+          "count": 5
+        },
+        {
+          "id": "intel_type:weather|type_evidence|match:164",
+          "source": "intel_type:weather",
+          "target": "match:164",
+          "relation": "type_evidence",
+          "count": 5
+        },
+        {
+          "id": "intel_type:injury|type_evidence|match:164",
+          "source": "intel_type:injury",
+          "target": "match:164",
+          "relation": "type_evidence",
+          "count": 5
+        },
+        {
+          "id": "source:sina|source_evidence|match:164",
+          "source": "source:sina",
+          "target": "match:164",
+          "relation": "source_evidence",
+          "count": 9
+        },
+        {
+          "id": "source:tencent|source_evidence|match:164",
+          "source": "source:tencent",
+          "target": "match:164",
+          "relation": "source_evidence",
+          "count": 9
+        },
+        {
+          "id": "source:ttyingqiu|source_evidence|match:164",
+          "source": "source:ttyingqiu",
+          "target": "match:164",
+          "relation": "source_evidence",
+          "count": 9
+        },
+        {
+          "id": "source:500w|source_evidence|match:164",
+          "source": "source:500w",
+          "target": "match:164",
+          "relation": "source_evidence",
+          "count": 9
+        },
+        {
+          "id": "source:weibo|source_evidence|match:163",
+          "source": "source:weibo",
+          "target": "match:163",
+          "relation": "source_evidence",
+          "count": 9
+        },
+        {
+          "id": "intel_type:coach|type_evidence|match:163",
+          "source": "intel_type:coach",
+          "target": "match:163",
+          "relation": "type_evidence",
+          "count": 5
+        },
+        {
+          "id": "intel_type:referee|type_evidence|match:163",
+          "source": "intel_type:referee",
+          "target": "match:163",
+          "relation": "type_evidence",
+          "count": 5
+        },
+        {
+          "id": "intel_type:tactics|type_evidence|match:163",
+          "source": "intel_type:tactics",
+          "target": "match:163",
+          "relation": "type_evidence",
+          "count": 5
+        },
+        {
+          "id": "intel_type:history|type_evidence|match:163",
+          "source": "intel_type:history",
+          "target": "match:163",
+          "relation": "type_evidence",
+          "count": 5
+        },
+        {
+          "id": "intel_type:handicap_1x2|type_evidence|match:163",
+          "source": "intel_type:handicap_1x2",
+          "target": "match:163",
+          "relation": "type_evidence",
+          "count": 5
+        },
+        {
+          "id": "intel_type:win_draw_lose|type_evidence|match:163",
+          "source": "intel_type:win_draw_lose",
+          "target": "match:163",
+          "relation": "type_evidence",
+          "count": 5
+        },
+        {
+          "id": "intel_type:motivation|type_evidence|match:163",
+          "source": "intel_type:motivation",
+          "target": "match:163",
+          "relation": "type_evidence",
+          "count": 5
+        },
+        {
+          "id": "intel_type:weather|type_evidence|match:163",
+          "source": "intel_type:weather",
+          "target": "match:163",
+          "relation": "type_evidence",
+          "count": 5
+        },
+        {
+          "id": "intel_type:injury|type_evidence|match:163",
+          "source": "intel_type:injury",
+          "target": "match:163",
+          "relation": "type_evidence",
+          "count": 5
+        },
+        {
+          "id": "source:sina|source_evidence|match:163",
+          "source": "source:sina",
+          "target": "match:163",
+          "relation": "source_evidence",
+          "count": 9
+        },
+        {
+          "id": "source:tencent|source_evidence|match:163",
+          "source": "source:tencent",
+          "target": "match:163",
+          "relation": "source_evidence",
+          "count": 9
+        },
+        {
+          "id": "source:ttyingqiu|source_evidence|match:163",
+          "source": "source:ttyingqiu",
+          "target": "match:163",
+          "relation": "source_evidence",
+          "count": 9
+        },
+        {
+          "id": "source:500w|source_evidence|match:163",
+          "source": "source:500w",
+          "target": "match:163",
+          "relation": "source_evidence",
+          "count": 9
+        },
+        {
+          "id": "source:weibo|source_evidence|match:162",
+          "source": "source:weibo",
+          "target": "match:162",
+          "relation": "source_evidence",
+          "count": 9
+        },
+        {
+          "id": "intel_type:coach|type_evidence|match:162",
+          "source": "intel_type:coach",
+          "target": "match:162",
+          "relation": "type_evidence",
+          "count": 1
+        },
+        {
+          "id": "intel_type:referee|type_evidence|match:162",
+          "source": "intel_type:referee",
+          "target": "match:162",
+          "relation": "type_evidence",
+          "count": 1
+        },
+        {
+          "id": "intel_type:tactics|type_evidence|match:162",
+          "source": "intel_type:tactics",
+          "target": "match:162",
+          "relation": "type_evidence",
+          "count": 1
+        },
+        {
+          "id": "intel_type:history|type_evidence|match:162",
+          "source": "intel_type:history",
+          "target": "match:162",
+          "relation": "type_evidence",
+          "count": 1
+        },
+        {
+          "id": "intel_type:handicap_1x2|type_evidence|match:162",
+          "source": "intel_type:handicap_1x2",
+          "target": "match:162",
+          "relation": "type_evidence",
+          "count": 1
+        },
+        {
+          "id": "intel_type:win_draw_lose|type_evidence|match:162",
+          "source": "intel_type:win_draw_lose",
+          "target": "match:162",
+          "relation": "type_evidence",
+          "count": 1
+        },
+        {
+          "id": "intel_type:motivation|type_evidence|match:162",
+          "source": "intel_type:motivation",
+          "target": "match:162",
+          "relation": "type_evidence",
+          "count": 1
+        },
+        {
+          "id": "intel_type:weather|type_evidence|match:162",
+          "source": "intel_type:weather",
+          "target": "match:162",
+          "relation": "type_evidence",
+          "count": 1
+        },
+        {
+          "id": "intel_type:injury|type_evidence|match:162",
+          "source": "intel_type:injury",
+          "target": "match:162",
+          "relation": "type_evidence",
+          "count": 1
+        },
+        {
+          "id": "league:2|league_of_match|match:162",
+          "source": "league:2",
+          "target": "match:162",
+          "relation": "league_of_match",
+          "count": 1
+        },
+        {
+          "id": "match:162|home_team|team:48",
+          "source": "match:162",
+          "target": "team:48",
+          "relation": "home_team",
+          "count": 1
+        },
+        {
+          "id": "match:162|away_team|team:50",
+          "source": "match:162",
+          "target": "team:50",
+          "relation": "away_team",
+          "count": 1
+        },
+        {
+          "id": "league:10|league_of_match|match:163",
+          "source": "league:10",
+          "target": "match:163",
+          "relation": "league_of_match",
+          "count": 1
+        },
+        {
+          "id": "match:163|home_team|team:35",
+          "source": "match:163",
+          "target": "team:35",
+          "relation": "home_team",
+          "count": 1
+        },
+        {
+          "id": "match:163|away_team|team:81",
+          "source": "match:163",
+          "target": "team:81",
+          "relation": "away_team",
+          "count": 1
+        },
+        {
+          "id": "league:13|league_of_match|match:164",
+          "source": "league:13",
+          "target": "match:164",
+          "relation": "league_of_match",
+          "count": 1
+        },
+        {
+          "id": "match:164|home_team|team:82",
+          "source": "match:164",
+          "target": "team:82",
+          "relation": "home_team",
+          "count": 1
+        },
+        {
+          "id": "match:164|away_team|team:83",
+          "source": "match:164",
+          "target": "team:83",
+          "relation": "away_team",
+          "count": 1
+        },
+        {
+          "id": "league:14|league_of_match|match:165",
+          "source": "league:14",
+          "target": "match:165",
+          "relation": "league_of_match",
+          "count": 1
+        },
+        {
+          "id": "match:165|home_team|team:84",
+          "source": "match:165",
+          "target": "team:84",
+          "relation": "home_team",
+          "count": 1
+        },
+        {
+          "id": "match:165|away_team|team:31",
+          "source": "match:165",
+          "target": "team:31",
+          "relation": "away_team",
+          "count": 1
+        },
+        {
+          "id": "league:12|league_of_match|match:166",
+          "source": "league:12",
+          "target": "match:166",
+          "relation": "league_of_match",
+          "count": 1
+        },
+        {
+          "id": "match:166|home_team|team:85",
+          "source": "match:166",
+          "target": "team:85",
+          "relation": "home_team",
+          "count": 1
+        },
+        {
+          "id": "match:166|away_team|team:86",
+          "source": "match:166",
+          "target": "team:86",
+          "relation": "away_team",
+          "count": 1
+        },
+        {
+          "id": "league:8|league_of_match|match:167",
+          "source": "league:8",
+          "target": "match:167",
+          "relation": "league_of_match",
+          "count": 1
+        },
+        {
+          "id": "match:167|home_team|team:87",
+          "source": "match:167",
+          "target": "team:87",
+          "relation": "home_team",
+          "count": 1
+        },
+        {
+          "id": "match:167|away_team|team:61",
+          "source": "match:167",
+          "target": "team:61",
+          "relation": "away_team",
+          "count": 1
+        },
+        {
+          "id": "league:1|league_of_match|match:207",
+          "source": "league:1",
+          "target": "match:207",
+          "relation": "league_of_match",
+          "count": 1
+        },
+        {
+          "id": "match:207|home_team|team:16",
+          "source": "match:207",
+          "target": "team:16",
+          "relation": "home_team",
+          "count": 1
+        },
+        {
+          "id": "match:207|away_team|team:17",
+          "source": "match:207",
+          "target": "team:17",
+          "relation": "away_team",
+          "count": 1
+        },
+        {
+          "id": "league:1|league_of_match|match:208",
+          "source": "league:1",
+          "target": "match:208",
+          "relation": "league_of_match",
+          "count": 1
+        },
+        {
+          "id": "match:208|home_team|team:18",
+          "source": "match:208",
+          "target": "team:18",
+          "relation": "home_team",
+          "count": 1
+        },
+        {
+          "id": "match:208|away_team|team:19",
+          "source": "match:208",
+          "target": "team:19",
+          "relation": "away_team",
+          "count": 1
+        },
+        {
+          "id": "league:1|league_of_match|match:209",
+          "source": "league:1",
+          "target": "match:209",
+          "relation": "league_of_match",
+          "count": 1
+        },
+        {
+          "id": "match:209|home_team|team:20",
+          "source": "match:209",
+          "target": "team:20",
+          "relation": "home_team",
+          "count": 1
+        },
+        {
+          "id": "match:209|away_team|team:21",
+          "source": "match:209",
+          "target": "team:21",
+          "relation": "away_team",
+          "count": 1
+        },
+        {
+          "id": "league:2|league_of_match|match:210",
+          "source": "league:2",
+          "target": "match:210",
+          "relation": "league_of_match",
+          "count": 1
+        },
+        {
+          "id": "match:210|home_team|team:22",
+          "source": "match:210",
+          "target": "team:22",
+          "relation": "home_team",
+          "count": 1
+        },
+        {
+          "id": "match:210|away_team|team:23",
+          "source": "match:210",
+          "target": "team:23",
+          "relation": "away_team",
+          "count": 1
+        },
+        {
+          "id": "league:2|league_of_match|match:211",
+          "source": "league:2",
+          "target": "match:211",
+          "relation": "league_of_match",
+          "count": 1
+        },
+        {
+          "id": "match:211|home_team|team:24",
+          "source": "match:211",
+          "target": "team:24",
+          "relation": "home_team",
+          "count": 1
+        },
+        {
+          "id": "match:211|away_team|team:25",
+          "source": "match:211",
+          "target": "team:25",
+          "relation": "away_team",
+          "count": 1
+        },
+        {
+          "id": "league:2|league_of_match|match:212",
+          "source": "league:2",
+          "target": "match:212",
+          "relation": "league_of_match",
+          "count": 1
+        },
+        {
+          "id": "match:212|home_team|team:26",
+          "source": "match:212",
+          "target": "team:26",
+          "relation": "home_team",
+          "count": 1
+        },
+        {
+          "id": "match:212|away_team|team:27",
+          "source": "match:212",
+          "target": "team:27",
+          "relation": "away_team",
+          "count": 1
+        },
+        {
+          "id": "league:3|league_of_match|match:213",
+          "source": "league:3",
+          "target": "match:213",
+          "relation": "league_of_match",
+          "count": 1
+        },
+        {
+          "id": "match:213|home_team|team:28",
+          "source": "match:213",
+          "target": "team:28",
+          "relation": "home_team",
+          "count": 1
+        },
+        {
+          "id": "match:213|away_team|team:29",
+          "source": "match:213",
+          "target": "team:29",
+          "relation": "away_team",
+          "count": 1
+        },
+        {
+          "id": "league:4|league_of_match|match:214",
+          "source": "league:4",
+          "target": "match:214",
+          "relation": "league_of_match",
+          "count": 1
+        },
+        {
+          "id": "match:214|home_team|team:30",
+          "source": "match:214",
+          "target": "team:30",
+          "relation": "home_team",
+          "count": 1
+        },
+        {
+          "id": "match:214|away_team|team:31",
+          "source": "match:214",
+          "target": "team:31",
+          "relation": "away_team",
+          "count": 1
+        },
+        {
+          "id": "league:3|league_of_match|match:215",
+          "source": "league:3",
+          "target": "match:215",
+          "relation": "league_of_match",
+          "count": 1
+        },
+        {
+          "id": "match:215|home_team|team:32",
+          "source": "match:215",
+          "target": "team:32",
+          "relation": "home_team",
+          "count": 1
+        },
+        {
+          "id": "match:215|away_team|team:33",
+          "source": "match:215",
+          "target": "team:33",
+          "relation": "away_team",
+          "count": 1
+        },
+        {
+          "id": "league:5|league_of_match|match:216",
+          "source": "league:5",
+          "target": "match:216",
+          "relation": "league_of_match",
+          "count": 1
+        },
+        {
+          "id": "match:216|home_team|team:34",
+          "source": "match:216",
+          "target": "team:34",
+          "relation": "home_team",
+          "count": 1
+        },
+        {
+          "id": "match:216|away_team|team:35",
+          "source": "match:216",
+          "target": "team:35",
+          "relation": "away_team",
+          "count": 1
+        },
+        {
+          "id": "league:2|league_of_match|match:217",
+          "source": "league:2",
+          "target": "match:217",
+          "relation": "league_of_match",
+          "count": 1
+        },
+        {
+          "id": "match:217|home_team|team:36",
+          "source": "match:217",
+          "target": "team:36",
+          "relation": "home_team",
+          "count": 1
+        },
+        {
+          "id": "match:217|away_team|team:37",
+          "source": "match:217",
+          "target": "team:37",
+          "relation": "away_team",
+          "count": 1
+        }
+      ],
+      "top_nodes": [
+        {
+          "id": "match:167",
+          "name": "海伦芬 vs 乌德勒支",
+          "type": "match",
+          "degree": 93,
+          "value": 45
+        },
+        {
+          "id": "match:166",
+          "name": "贝蒂斯 vs 巴伦西亚",
+          "type": "match",
+          "degree": 93,
+          "value": 45
+        },
+        {
+          "id": "match:165",
+          "name": "斯图加特 vs 弗赖堡",
+          "type": "match",
+          "degree": 93,
+          "value": 45
+        },
+        {
+          "id": "match:164",
+          "name": "里昂 vs 里尔",
+          "type": "match",
+          "degree": 93,
+          "value": 45
+        },
+        {
+          "id": "match:163",
+          "name": "科莫 vs 亚特兰大",
+          "type": "match",
+          "degree": 93,
+          "value": 45
+        },
+        {
+          "id": "intel_type:win_draw_lose",
+          "name": "win_draw_lose",
+          "type": "intel_type",
+          "degree": 92,
+          "value": 92
+        },
+        {
+          "id": "source:sina",
+          "name": "sina",
+          "type": "source",
+          "degree": 56,
+          "value": 56
+        },
+        {
+          "id": "source:tencent",
+          "name": "tencent",
+          "type": "source",
+          "degree": 56,
+          "value": 56
+        },
+        {
+          "id": "source:500w",
+          "name": "500w",
+          "type": "source",
+          "degree": 56,
+          "value": 56
+        },
+        {
+          "id": "source:ttyingqiu",
+          "name": "ttyingqiu",
+          "type": "source",
+          "degree": 56,
+          "value": 56
+        },
+        {
+          "id": "source:weibo",
+          "name": "weibo",
+          "type": "source",
+          "degree": 54,
+          "value": 54
+        },
+        {
+          "id": "intel_type:coach",
+          "name": "coach",
+          "type": "intel_type",
+          "degree": 26,
+          "value": 26
+        },
+        {
+          "id": "intel_type:referee",
+          "name": "referee",
+          "type": "intel_type",
+          "degree": 26,
+          "value": 26
+        },
+        {
+          "id": "intel_type:tactics",
+          "name": "tactics",
+          "type": "intel_type",
+          "degree": 26,
+          "value": 26
+        },
+        {
+          "id": "intel_type:history",
+          "name": "history",
+          "type": "intel_type",
+          "degree": 26,
+          "value": 26
+        }
+      ],
+      "network_metrics": {
+        "avg_degree": 17.36,
+        "density": 0.075,
+        "node_count": 75,
+        "edge_count": 208
+      },
+      "source_stats": [
+        {
+          "source": "sina",
+          "count": 56
+        },
+        {
+          "source": "tencent",
+          "count": 56
+        },
+        {
+          "source": "500w",
+          "count": 56
+        },
+        {
+          "source": "ttyingqiu",
+          "count": 56
+        },
+        {
+          "source": "weibo",
+          "count": 54
+        },
+        {
+          "source": "wechat",
+          "count": 11
+        },
+        {
+          "source": "sohu",
+          "count": 11
+        }
+      ],
+      "type_stats": [
+        {
+          "intel_type": "win_draw_lose",
+          "count": 92
+        },
+        {
+          "intel_type": "coach",
+          "count": 26
+        },
+        {
+          "intel_type": "referee",
+          "count": 26
+        },
+        {
+          "intel_type": "tactics",
+          "count": 26
+        },
+        {
+          "intel_type": "history",
+          "count": 26
+        },
+        {
+          "intel_type": "handicap_1x2",
+          "count": 26
+        },
+        {
+          "intel_type": "motivation",
+          "count": 26
+        },
+        {
+          "intel_type": "weather",
+          "count": 26
+        },
+        {
+          "intel_type": "injury",
+          "count": 26
+        }
+      ]
+    },
+    "message": "ok"
+  }
+}

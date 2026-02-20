@@ -37,6 +37,9 @@ export const useAdminStore = defineStore('admin', () => {
         // 保存token到本地存储
         token.value = access_token;
         localStorage.setItem('admin_token', access_token);
+        // 同步写入通用 token 键，兼容系统里其它请求封装
+        localStorage.setItem('access_token', access_token);
+        localStorage.setItem('token', access_token);
         
         // 保存用户信息到本地存储
         user.value = user_info;
@@ -101,6 +104,8 @@ export const useAdminStore = defineStore('admin', () => {
     // 清除本地存储
     localStorage.removeItem('admin_token');
     localStorage.removeItem('admin_user');
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('token');
     // 登出时不清除 remember 信息，以便下次登录时可以自动填充
 
     // 同时清除user store

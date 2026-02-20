@@ -84,6 +84,7 @@
         :loading="loadingRecent"
         :show-filters="false"
         :show-actions="false"
+        :show-selection="false"
         :show-pagination="false"
         @view-details="viewLogDetails"
       />
@@ -96,7 +97,7 @@ import http from '@/utils/http';  // 使用配置了拦截器的实例
 import LogTable from '@/components/LogTable.vue';
 import { processLogResponse } from '@/utils/logUtils.js';
 
-const API_BASE = '/api/admin/system';
+const API_BASE = '/api/v1/admin/system';
 
 export default {
   name: 'LogManagement',
@@ -154,8 +155,8 @@ export default {
         this.totalLogs = stats.total_logs || 0;
         this.errorLogs = stats.logs_by_level?.ERROR || 0;
         // 从模块统计中获取用户和安全相关日志数量
-        this.userActivities = stats.logs_by_module?.user || 0;
-        this.securityEvents = stats.logs_by_module?.security || 0;
+        this.userActivities = stats.logs_by_module?.user_operations || 0;
+        this.securityEvents = stats.logs_by_module?.security_events || 0;
       } catch (error) {
         if (error.response?.status === 401) {
           // 开发环境下只显示提示，不跳转避免循环

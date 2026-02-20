@@ -103,4 +103,8 @@ export default defineComponent({
   background: #fbfaf8;
   box-shadow: 0 14px 24px rgba(107, 103, 99, 0.12);
 }
+
+.filter-card :deep(.el-card__body) {
+  display: none;
+}
 </style>

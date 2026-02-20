@@ -1,171 +1,156 @@
-/**
- * LLM供应商管理API
+﻿/**
+ * LLM渚涘簲鍟嗙鐞咥PI
  */
 import request from '@/utils/request'
 
 /**
- * 获取LLM供应商列表
- * @param {Object} params - 查询参数
- * @returns {Promise} API响应
+ * 鑾峰彇LLM渚涘簲鍟嗗垪琛? * @param {Object} params - 鏌ヨ鍙傛暟
+ * @returns {Promise} API鍝嶅簲
  */
 export function getLLMProviders(params = {}) {
-  // 使用相对路径确保通过Vite代理，添加尾部斜杠避免重定向
+  // 浣跨敤鐩稿璺緞纭繚閫氳繃Vite浠ｇ悊锛屾坊鍔犲熬閮ㄦ枩鏉犻伩鍏嶉噸瀹氬悜
   return request({
-    url: '/api/llm-providers/',
+    url: '/api/v1/llm-providers/',
     method: 'get',
     params
   })
 }
 
 /**
- * 获取LLM供应商数量
- * @param {Object} params - 查询参数
- * @returns {Promise} API响应
+ * 鑾峰彇LLM渚涘簲鍟嗘暟閲? * @param {Object} params - 鏌ヨ鍙傛暟
+ * @returns {Promise} API鍝嶅簲
  */
 export function getLLMProvidersCount(params = {}) {
-  // 使用相对路径确保通过Vite代理  
+  // 浣跨敤鐩稿璺緞纭繚閫氳繃Vite浠ｇ悊  
   return request({
-    url: '/api/llm-providers/count',
+    url: '/api/v1/llm-providers/count',
     method: 'get',
     params
   })
 }
 
 /**
- * 获取LLM供应商详情
- * @param {number} providerId - 供应商ID
- * @returns {Promise} API响应
+ * 鑾峰彇LLM渚涘簲鍟嗚鎯? * @param {number} providerId - 渚涘簲鍟咺D
+ * @returns {Promise} API鍝嶅簲
  */
 export function getLLMProvider(providerId) {
   return request({
-    url: `/api/llm-providers/${providerId}`,
+    url: `/api/v1/llm-providers/${providerId}`,
     method: 'get'
   })
 }
 
 /**
- * 创建LLM供应商
- * @param {Object} data - 供应商数据
- * @returns {Promise} API响应
+ * 鍒涘缓LLM渚涘簲鍟? * @param {Object} data - 渚涘簲鍟嗘暟鎹? * @returns {Promise} API鍝嶅簲
  */
 export function createLLMProvider(data) {
   return request({
-    url: '/api/llm-providers/',
+    url: '/api/v1/llm-providers/',
     method: 'post',
     data
   })
 }
 
 /**
- * 更新LLM供应商
- * @param {number} providerId - 供应商ID
- * @param {Object} data - 更新数据
- * @returns {Promise} API响应
+ * 鏇存柊LLM渚涘簲鍟? * @param {number} providerId - 渚涘簲鍟咺D
+ * @param {Object} data - 鏇存柊鏁版嵁
+ * @returns {Promise} API鍝嶅簲
  */
 export function updateLLMProvider(providerId, data) {
   return request({
-    url: `/api/llm-providers/${providerId}`,
+    url: `/api/v1/llm-providers/${providerId}`,
     method: 'put',
     data
   })
 }
 
 /**
- * 删除LLM供应商
- * @param {number} providerId - 供应商ID
- * @returns {Promise} API响应
+ * 鍒犻櫎LLM渚涘簲鍟? * @param {number} providerId - 渚涘簲鍟咺D
+ * @returns {Promise} API鍝嶅簲
  */
 export function deleteLLMProvider(providerId) {
   return request({
-    url: `/api/llm-providers/${providerId}`,
+    url: `/api/v1/llm-providers/${providerId}`,
     method: 'delete'
   })
 }
 
 /**
- * 启用LLM供应商
- * @param {number} providerId - 供应商ID
- * @returns {Promise} API响应
+ * 鍚敤LLM渚涘簲鍟? * @param {number} providerId - 渚涘簲鍟咺D
+ * @returns {Promise} API鍝嶅簲
  */
 export function enableLLMProvider(providerId) {
   return request({
-    url: `/api/llm-providers/${providerId}/enable`,
+    url: `/api/v1/llm-providers/${providerId}/enable`,
     method: 'post'
   })
 }
 
 /**
- * 禁用LLM供应商
- * @param {number} providerId - 供应商ID
- * @returns {Promise} API响应
+ * 绂佺敤LLM渚涘簲鍟? * @param {number} providerId - 渚涘簲鍟咺D
+ * @returns {Promise} API鍝嶅簲
  */
 export function disableLLMProvider(providerId) {
   return request({
-    url: `/api/llm-providers/${providerId}/disable`,
+    url: `/api/v1/llm-providers/${providerId}/disable`,
     method: 'post'
   })
 }
 
 /**
- * 测试LLM供应商连接
- * @param {number} providerId - 供应商ID
- * @param {Object} testData - 测试数据
- * @returns {Promise} API响应
+ * 娴嬭瘯LLM渚涘簲鍟嗚繛鎺? * @param {number} providerId - 渚涘簲鍟咺D
+ * @param {Object} testData - 娴嬭瘯鏁版嵁
+ * @returns {Promise} API鍝嶅簲
  */
 export function testLLMProviderConnection(providerId, testData = {}) {
   return request({
-    url: `/api/llm-providers/${providerId}/test`,
+    url: `/api/v1/llm-providers/${providerId}/test`,
     method: 'post',
     data: testData
   })
 }
 
 /**
- * 获取LLM供应商统计概览
- * @returns {Promise} API响应
+ * 鑾峰彇LLM渚涘簲鍟嗙粺璁℃瑙? * @returns {Promise} API鍝嶅簲
  */
 export function getLLMProvidersStats() {
   return request({
-    url: '/api/llm-providers/stats/overview',
+    url: '/api/v1/llm-providers/stats/overview',
     method: 'get'
   })
 }
 
 /**
- * 获取可用的LLM供应商列表
- * @param {Object} params - 查询参数
- * @returns {Promise} API响应
+ * 鑾峰彇鍙敤鐨凩LM渚涘簲鍟嗗垪琛? * @param {Object} params - 鏌ヨ鍙傛暟
+ * @returns {Promise} API鍝嶅簲
  */
 export function getAvailableLLMProviders(params = {}) {
   return request({
-    url: '/api/llm-providers/available/list',
+    url: '/api/v1/llm-providers/available/list',
     method: 'get',
     params
   })
 }
 
 /**
- * 批量更新LLM供应商状态
- * @param {Object} data - 批量操作数据
- * @returns {Promise} API响应
+ * 鎵归噺鏇存柊LLM渚涘簲鍟嗙姸鎬? * @param {Object} data - 鎵归噺鎿嶄綔鏁版嵁
+ * @returns {Promise} API鍝嶅簲
  */
 export function batchUpdateLLMProvidersStatus(data) {
   return request({
-    url: '/api/llm-providers/batch/update-status',
+    url: '/api/v1/llm-providers/batch/update-status',
     method: 'post',
     data
   })
 }
 
 /**
- * 增加LLM供应商使用成本
- * @param {number} providerId - 供应商ID
- * @param {number} costCents - 成本（分）
- * @returns {Promise} API响应
+ * 澧炲姞LLM渚涘簲鍟嗕娇鐢ㄦ垚鏈? * @param {number} providerId - 渚涘簲鍟咺D
+ * @param {number} costCents - 鎴愭湰锛堝垎锛? * @returns {Promise} API鍝嶅簲
  */
 export function incrementLLMProviderCost(providerId, costCents) {
   return request({
-    url: `/api/llm-providers/${providerId}/increment-cost`,
+    url: `/api/v1/llm-providers/${providerId}/increment-cost`,
     method: 'post',
     data: { cost_cents: costCents }
   })

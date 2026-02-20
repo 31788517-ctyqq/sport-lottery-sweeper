@@ -1,0 +1,28 @@
+数据库路径配置: sqlite:///C:\Users\11581\Downloads\sport-lottery-sweeper\data\sport_lottery.db
+2026-02-19 14:19:43 - root - INFO - 日志系统初始化完成 - 级别:INFO, 大小轮转:10MB, 时间轮转:midnight, 备份数:30
+2026-02-19 14:19:43 - __main__ - INFO - Database URL: sqlite:///C:/Users/11581/Downloads/sport-lottery-sweeper/data/sport_lottery.db
+2026-02-19 14:19:43 - __main__ - INFO - Database PATH: C:\Users\11581\Downloads\sport-lottery-sweeper\data\sport_lottery.db
+2026-02-19 14:19:43 - __main__ - INFO - Database PATH absolute: C:\Users\11581\Downloads\sport-lottery-sweeper\data\sport_lottery.db
+2026-02-19 14:19:43 - __main__ - INFO - LLM key presence: openai=True, gemini=True, qwen=True
+2026-02-19 14:19:43 - backend.services.llm_service - INFO - OpenAI API key not configured, provider disabled
+2026-02-19 14:19:43 - backend.services.llm_service - INFO - LLM提供商 openai (规范化: openai) 已注册
+2026-02-19 14:19:43 - __main__ - INFO - OpenAI provider registered
+2026-02-19 14:19:43 - backend.services.llm_service - INFO - Gemini API key not configured, provider disabled
+2026-02-19 14:19:43 - backend.services.llm_service - INFO - LLM提供商 gemini (规范化: gemini) 已注册
+2026-02-19 14:19:43 - __main__ - INFO - Gemini provider registered
+2026-02-19 14:19:43 - backend.services.llm_service - INFO - Qwen provider initialized successfully
+2026-02-19 14:19:43 - backend.services.llm_service - INFO - LLM提供商 qwen (规范化: qwen) 已注册
+2026-02-19 14:19:43 - __main__ - INFO - Qwen provider registered
+2026-02-19 14:19:43 - __main__ - INFO - LLM提供商数据库加载已推迟到运行时（避免启动阻塞）
+2026-02-19 14:19:43 - backend.services.llm_service - INFO - 默认LLM提供商已设置为 openai (规范化: openai)
+2026-02-19 14:19:43 - __main__ - INFO - Default LLM provider: openai
+2026-02-19 14:19:43 - __main__ - INFO - LLM service initialized
+2026-02-19 14:19:57 - backend.core.cache_manager - INFO - Redis未运行(Error 22 connecting to localhost:6379. 22.)，回退到内存缓存 (开发环境中正常)
+2026-02-19 14:20:54 - backend.api.v1.auth - INFO - Login attempt: username=admin, password_length=8
+2026-02-19 14:20:54 - backend.api.v1.auth - INFO - Login successful for user: admin
+2026-02-19 14:20:54 - backend.api.v1.auth - INFO - User attributes: department=None, position=None
+2026-02-19 14:20:54 - __main__ - INFO - Login attempt for username: admin
+2026-02-19 14:20:54 - __main__ - INFO - User logged in successfully: admin (ID: 1)
+2026-02-19 14:21:26 - backend.api.v1.auth - INFO - Login attempt: username=admin, password_length=8
+2026-02-19 14:21:26 - backend.api.v1.auth - INFO - Login successful for user: admin
+2026-02-19 14:21:26 - backend.api.v1.auth - INFO - User attributes: department=None, position=None

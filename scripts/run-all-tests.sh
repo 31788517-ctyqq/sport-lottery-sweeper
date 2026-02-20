@@ -147,6 +147,15 @@ run_e2e_tests() {
     
     # 运行端到端测试
     log_info "运行端到端测试..."
+    log_info "Running intelligence pre-release regression (3 specs)..."
+    if npx playwright test tests/e2e/intelligence-collection-quality-fields.spec.js tests/e2e/intelligence-collection-p2-cache.spec.js tests/e2e/intelligence-collection-settings-and-replay.spec.js --project=chromium --reporter=line; then
+        log_info "Intelligence pre-release regression passed"
+    else
+        log_error "Intelligence pre-release regression failed"
+        return 1
+    fi
+
+    log_info "Running full end-to-end suite..."
     if npx playwright test tests/e2e/ --reporter=html; then
         log_info "端到端测试通过 ✅"
     else

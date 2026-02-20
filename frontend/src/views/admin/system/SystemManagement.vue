@@ -102,7 +102,7 @@
           </el-form>
         </el-tab-pane>
 
-        <el-tab-pane label="系统监控" name="monitoring">
+        <el-tab-pane label="系统监控" name="monitoring" v-if="false">
           <el-row :gutter="20" style="margin-top: 20px;">
             <el-col :span="12">
               <el-card header="CPU使用率">
@@ -130,7 +130,7 @@
           </el-row>
         </el-tab-pane>
 
-        <el-tab-pane label="系统日志" name="logs">
+        <el-tab-pane label="系统日志" name="logs" v-if="false">
           <div style="margin-top: 20px;">
             <el-row :gutter="20" style="margin-bottom: 20px;">
               <el-col :span="6">
@@ -172,7 +172,7 @@
           </div>
         </el-tab-pane>
 
-        <el-tab-pane label="维护工具" name="maintenance">
+        <el-tab-pane label="维护工具" name="maintenance" v-if="false">
           <div style="margin-top: 20px;">
             <el-card header="系统维护工具">
               <el-row :gutter="20">
@@ -227,7 +227,7 @@
             </el-card>
           </div>
         </el-tab-pane>
-        <el-tab-pane label="数据备份" name="backup">
+        <el-tab-pane label="数据备份" name="backup" v-if="false">
           <div style="margin-top: 20px;">
             <el-card header="数据备份管理">
               <el-row :gutter="20">
@@ -276,7 +276,7 @@
           </div>
         </el-tab-pane>
 
-        <el-tab-pane label="API管理" name="api">
+        <el-tab-pane label="API管理" name="api" v-if="false">
           <div style="margin-top: 20px;">
             <el-card header="API配置管理">
               <el-row :gutter="20">
@@ -368,8 +368,10 @@ console.log('route:', route)
 // 根据路由meta.tab设置activeTab
 watch(() => route.meta, (meta) => {
   const tab = meta?.tab
-  if (tab) {
+  if (tab === 'config') {
     activeTab.value = tab
+  } else {
+    activeTab.value = 'config'
   }
 }, { immediate: true, deep: true })
 
@@ -837,9 +839,7 @@ const initCharts = async () => {
 
 onMounted(() => {
   console.log('SystemManagement component mounted')
-  loadSystemStatus()
-  loadBackupHistory()
-  initCharts()
+  activeTab.value = 'config'
 })
 </script>
 

@@ -79,9 +79,7 @@
             <el-icon><Setting /></el-icon>
             <span>系统管理</span>
           </template>
-          <el-menu-item index="/admin/system-config">系统配置</el-menu-item>
-          <el-menu-item index="/admin/crawler-config">爬虫配置</el-menu-item>
-          <el-menu-item index="/admin/logs">系统日志</el-menu-item>
+          <el-menu-item index="/admin/system/config">系统配置</el-menu-item>
         </el-sub-menu>
       </el-menu>
     </el-aside>

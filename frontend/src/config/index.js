@@ -11,7 +11,7 @@ const isStaging = import.meta.env.MODE === 'staging'
 // =============================================================================
 export const API_CONFIG = {
   // Base URLs - 强制使用空字符串，通过 Vite proxy 转发到后端，避免重复/api路径
-  BASE_URL: '',
+  BASE_URL: import.meta.env.VITE_API_BASE_URL || '',
   
   // Version
   VERSION: 'v1',
@@ -461,7 +461,7 @@ export const validateConfig = () => {
   const errors = []
   
   // Validate required configurations
-  if (!API_CONFIG.BASE_URL) {
+  if (isProduction && !API_CONFIG.BASE_URL) {
     errors.push('API_BASE_URL is required')
   }
   
@@ -469,9 +469,9 @@ export const validateConfig = () => {
     errors.push('APP_NAME is required')
   }
   
-  // Validate URLs
-  if (API_CONFIG.BASE_URL && API_CONFIG.HEADERS && API_CONFIG.HEADERS.URL_REGEX && typeof API_CONFIG.HEADERS.URL_REGEX.test === 'function') {
-    if (!API_CONFIG.HEADERS.URL_REGEX.test(API_CONFIG.BASE_URL)) {
+  // Validate URL format only for absolute URLs
+  if (API_CONFIG.BASE_URL && /^https?:\/\//.test(API_CONFIG.BASE_URL)) {
+    if (!APP_CONSTANTS.VALIDATION.URL_REGEX.test(API_CONFIG.BASE_URL)) {
       errors.push('Invalid API_BASE_URL format')
     }
   }

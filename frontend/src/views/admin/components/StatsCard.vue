@@ -102,11 +102,11 @@ export default defineComponent({
 
 .stat-item {
   text-align: center;
-  padding: 20px;
-  border: 1px solid #d6d2cb;
-  border-radius: 10px;
-  background-color: #fdfcfb;
-  box-shadow: 0 10px 18px rgba(107, 103, 99, 0.08);
+  padding: 16px 10px;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .stat-number {
@@ -120,5 +120,9 @@ export default defineComponent({
   font-size: 14px;
   color: #8b8680;
   font-weight: 500;
+}
+
+.stats-card :deep(.el-col:not(:last-child) .stat-item) {
+  border-right: 1px dashed #d6d2cb;
 }
 </style>

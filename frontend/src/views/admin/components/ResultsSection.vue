@@ -156,6 +156,11 @@ export default defineComponent({
 
     const formatMatchTime = (value) => {
       if (value === null || value === undefined || value === '') return '-';
+      const raw = String(value).trim();
+      if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+      if (/^\d{4}-\d{2}-\d{2}[T\s]00:00:00(?:\.000)?(?:Z)?$/.test(raw)) {
+        return raw.slice(0, 10);
+      }
       const date = value instanceof Date ? value : new Date(value);
       if (Number.isNaN(date.getTime())) return String(value);
       const pad = (num) => String(num).padStart(2, '0');
@@ -227,9 +232,9 @@ export default defineComponent({
 }
 
 .result-card .el-table {
-  margin-bottom: 24px;
-  border-radius: 10px;
-  overflow: hidden;
+  margin-bottom: 12px;
+  border-radius: 0;
+  overflow: visible;
 }
 
 .pagination-total {

@@ -75,7 +75,7 @@
 | FE-10 | 页面组件: IntelligenceList - 情报列表页面 | P0 | 4h | 前端开发 | 待开始 | FE-03, FE-07 |
 | FE-11 | 页面组件: IntelligenceDetail - 情报详情页面 | P0 | 5h | 前端开发 | 待开始 | FE-01, FE-02 |
 | FE-12 | 页面组件: IntelligenceEdit - 情报编辑页面 | P0 | 6h | 前端开发 | 待开始 | FE-01, FE-02 |
-| FE-13 | 页面组件: IntelligenceGraph - 情报图谱页面 | P2 | 8h | 前端开发 | 待开始 | FE-01, FE-02 |
+| FE-13 | 页面组件: IntelligenceGraph - 情报图谱页面 | P2 | 8h | 前端开发 | 已完成 | FE-01, FE-02 |
 | FE-14 | 页面组件: IntelligenceAnalytics - 情报分析页面 | P2 | 6h | 前端开发 | 待开始 | FE-01, FE-02 |
 
 ### Epic-5: 任务调度与异步处理

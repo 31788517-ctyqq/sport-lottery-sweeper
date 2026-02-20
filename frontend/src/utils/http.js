@@ -44,9 +44,13 @@ const retryRequest = async (error, retryTimes = API_CONFIG.RETRY_TIMES) => {
 // 请求拦截器
 http.interceptors.request.use(
   (config) => {
-    // 获取token
+    // 获取 token：优先 admin_token，其次 access_token/token（兼容旧实现）
     const userStore = useUserStore()
-    const token = userStore.token || localStorage.getItem('token')
+    const token =
+      userStore.token ||
+      localStorage.getItem('admin_token') ||
+      localStorage.getItem('access_token') ||
+      localStorage.getItem('token')
     
     if (token) {
       config.headers.Authorization = `Bearer ${token}`

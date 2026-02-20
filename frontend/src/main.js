@@ -8,6 +8,9 @@ import App from './App.vue'
 import router from './router'
 import { useTheme } from './styles/theme.js'
 import config, { ENV_HELPERS } from './config'
+import { getErrorMessage, isBenignBrowserError } from '@/utils/benign-browser-errors'
+
+console.log('main.js is loading...')
 
 // Permission management
 import { createPermissionDirective } from '@/composables/usePermissions'
@@ -57,10 +60,13 @@ app.config.errorHandler = (err, instance, info) => {
 
 // ===== 新增：全局 JavaScript 错误捕获 =====
 window.addEventListener('error', event => {
-  console.error('Global JS error (window.onerror):', event.error || event.message)
+  const raw = event.error || event.message
+  if (isBenignBrowserError(raw)) return
+  console.error('Global JS error (window.onerror):', raw)
 })
 window.addEventListener('unhandledrejection', event => {
-  console.error('Unhandled promise rejection:', event.reason)
+  if (isBenignBrowserError(event.reason)) return
+  console.error('Unhandled promise rejection:', getErrorMessage(event.reason) || event.reason)
 })
 // ===========================================
 

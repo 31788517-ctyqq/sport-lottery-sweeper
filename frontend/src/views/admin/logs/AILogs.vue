@@ -85,7 +85,7 @@
     </el-card>
 
     <!-- 日志详情弹窗 -->
-    <el-dialog title="日志详情" :visible.sync="showDetailDialog" width="60%">
+    <el-dialog v-model="showDetailDialog" title="日志详情" width="60%">
       <div v-if="selectedLog">
         <p><strong>时间:</strong> {{ selectedLog.timestamp }}</p>
         <p><strong>级别:</strong> <el-tag :type="getTagType(selectedLog.level)">{{ selectedLog.level }}</el-tag></p>
@@ -95,10 +95,12 @@
         <p v-if="selectedLog.user_id"><strong>用户ID:</strong> {{ selectedLog.user_id }}</p>
         <p v-if="selectedLog.ip_address"><strong>IP地址:</strong> {{ selectedLog.ip_address }}</p>
       </div>
-      <span slot="footer" class="dialog-footer">
+      <template #footer>
+        <span class="dialog-footer">
         <el-button @click="showDetailDialog = false">关闭</el-button>
         <el-button type="primary" @click="showDetailDialog = false">确认</el-button>
-      </span>
+        </span>
+      </template>
     </el-dialog>
   </div>
 </template>
@@ -106,7 +108,7 @@
 <script>
 import http from '@/utils/http';  // 使用配置了拦截器的实例
 
-const API_BASE = '/api/admin/system';
+const API_BASE = '/api/v1/admin/system';
 
 export default {
   name: 'AILogs',

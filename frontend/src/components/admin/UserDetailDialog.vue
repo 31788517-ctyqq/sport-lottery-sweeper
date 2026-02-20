@@ -277,8 +277,9 @@ const loadUserData = async () => {
   
   try {
     const response = await getUserDetail(props.userId)
-    if (response && response.data) {
-      Object.assign(userData, response.data)
+    const payload = response?.data ?? response
+    if (payload) {
+      Object.assign(userData, payload)
     }
   } catch (error) {
     console.error('加载用户数据失败:', error)

@@ -1,1031 +1,447 @@
-<template>
-  <div class="intelligence-management-container">
-    <!-- Page Header -->
+﻿<template>
+  <div class="intelligence-graph-page">
     <div class="page-header">
-      <h2>图谱管理</h2>
-      <p class="page-description">管理知识图谱和关联关系网络</p>
+      <div>
+        <h2>图谱管理</h2>
+        <p>基于采集结果构建比赛-来源-情报类型的关联图谱</p>
+      </div>
+      <div class="header-actions">
+        <el-select v-model="query.days" style="width: 130px">
+          <el-option label="最近3天" :value="3" />
+          <el-option label="最近7天" :value="7" />
+          <el-option label="最近15天" :value="15" />
+          <el-option label="最近30天" :value="30" />
+        </el-select>
+        <el-input-number v-model="query.limit" :min="50" :max="5000" :step="50" />
+        <el-switch
+          v-model="query.includePrediction"
+          inline-prompt
+          active-text="含预测"
+          inactive-text="仅场外"
+        />
+        <el-button :icon="Refresh" :loading="loading.graph" type="primary" @click="loadGraphData">
+          刷新图谱
+        </el-button>
+      </div>
     </div>
 
-    <!-- Quick Actions -->
-    <div class="quick-actions">
-      <el-button type="primary" :icon="Plus" @click="showCreateGraphDialog = true">
-        新建图谱
-      </el-button>
-      <el-button type="success" :icon="VideoPlay" @click="startAnalysis">
-        开始分析
-      </el-button>
-      <el-button type="warning" :icon="RefreshLeft" @click="refreshGraph">
-        刷新图谱
-      </el-button>
-      <el-button type="info" :icon="Share" @click="exportGraph">
-        导出图谱
-      </el-button>
-    </div>
+    <el-row :gutter="12" class="stats-row">
+      <el-col :xs="12" :sm="8" :md="4">
+        <el-card class="stat-card">
+          <div class="stat-label">采集条数</div>
+          <div class="stat-value">{{ graph.stats.total_items }}</div>
+        </el-card>
+      </el-col>
+      <el-col :xs="12" :sm="8" :md="4">
+        <el-card class="stat-card">
+          <div class="stat-label">图谱节点</div>
+          <div class="stat-value">{{ graph.stats.total_nodes }}</div>
+        </el-card>
+      </el-col>
+      <el-col :xs="12" :sm="8" :md="4">
+        <el-card class="stat-card">
+          <div class="stat-label">关联边</div>
+          <div class="stat-value">{{ graph.stats.total_edges }}</div>
+        </el-card>
+      </el-col>
+      <el-col :xs="12" :sm="8" :md="4">
+        <el-card class="stat-card">
+          <div class="stat-label">比赛数</div>
+          <div class="stat-value">{{ graph.stats.total_matches }}</div>
+        </el-card>
+      </el-col>
+      <el-col :xs="12" :sm="8" :md="4">
+        <el-card class="stat-card">
+          <div class="stat-label">来源数</div>
+          <div class="stat-value">{{ graph.stats.total_sources }}</div>
+        </el-card>
+      </el-col>
+      <el-col :xs="12" :sm="8" :md="4">
+        <el-card class="stat-card">
+          <div class="stat-label">类型数</div>
+          <div class="stat-value">{{ graph.stats.total_types }}</div>
+        </el-card>
+      </el-col>
+    </el-row>
 
-    <!-- Statistics Cards -->
-    <div class="stats-section">
-      <el-row :gutter="20">
-        <el-col :span="6">
-          <el-card class="stats-card">
-            <div class="stats-content">
-              <div class="stats-number">{{ stats.totalNodes }}</div>
-              <div class="stats-label">图谱节点</div>
-            </div>
-            <el-icon class="stats-icon"><Share /></el-icon>
-          </el-card>
-        </el-col>
-        <el-col :span="6">
-          <el-card class="stats-card">
-            <div class="stats-content">
-              <div class="stats-number">{{ stats.totalEdges }}</div>
-              <div class="stats-label">关联关系</div>
-            </div>
-            <el-icon class="stats-icon"><Connection /></el-icon>
-          </el-card>
-        </el-col>
-        <el-col :span="6">
-          <el-card class="stats-card">
-            <div class="stats-content">
-              <div class="stats-number">{{ stats.graphTypes }}</div>
-              <div class="stats-label">图谱类型</div>
-            </div>
-            <el-icon class="stats-icon"><CollectionTag /></el-icon>
-          </el-card>
-        </el-col>
-        <el-col :span="6">
-          <el-card class="stats-card">
-            <div class="stats-content">
-              <div class="stats-number">{{ stats.insights }}</div>
-              <div class="stats-label">洞察发现</div>
-            </div>
-            <el-icon class="stats-icon"><View /></el-icon>
-          </el-card>
-        </el-col>
-      </el-row>
-    </div>
+    <el-row :gutter="12" class="main-row">
+      <el-col :xs="24" :lg="17">
+        <el-card shadow="never" class="graph-card" v-loading="loading.graph">
+          <template #header>
+            <div class="card-header">图谱可视化</div>
+          </template>
+          <div ref="graphRef" class="graph-canvas" />
+          <el-empty v-if="!loading.graph && !graph.nodes.length" description="暂无可用图谱数据" />
+        </el-card>
+      </el-col>
 
-    <!-- Main Content Tabs -->
-    <el-tabs v-model="activeTab" class="management-tabs">
-      <!-- Graph Visualization Tab -->
-      <el-tab-pane label="图谱可视化" name="visualization">
-        <div class="tab-content">
-          <!-- Graph Controls -->
-          <div class="graph-controls">
-            <el-row :gutter="16" align="middle">
-              <el-col :span="6">
-                <el-select v-model="selectedGraph" placeholder="选择图谱" @change="loadGraph">
-                  <el-option 
-                    v-for="graph in graphList" 
-                    :key="graph.id"
-                    :label="graph.name" 
-                    :value="graph.id"
-                  />
-                </el-select>
-              </el-col>
-              <el-col :span="12">
-                <el-button-group>
-                  <el-button 
-                    v-for="layout in layouts" 
-                    :key="layout.key"
-                    :type="selectedLayout === layout.key ? 'primary' : ''"
-                    @click="changeLayout(layout.key)"
-                  >
-                    {{ layout.label }}
-                  </el-button>
-                </el-button-group>
-              </el-col>
-              <el-col :span="6">
-                <div class="graph-actions">
-                  <el-button size="small" @click="zoomIn">放大</el-button>
-                  <el-button size="small" @click="zoomOut">缩小</el-button>
-                  <el-button size="small" @click="fitView">适应</el-button>
-                  <el-button size="small" type="primary" @click="centerView">居中</el-button>
-                </div>
-              </el-col>
-            </el-row>
+      <el-col :xs="24" :lg="7">
+        <el-card shadow="never" class="side-card">
+          <template #header>
+            <div class="card-header">网络指标</div>
+          </template>
+          <div class="metric-item">
+            <span>平均度</span>
+            <strong>{{ graph.networkMetrics.avg_degree }}</strong>
           </div>
-
-          <!-- Graph Canvas -->
-          <el-card class="graph-canvas-card">
-            <div class="graph-canvas-container">
-              <div ref="graphCanvas" class="graph-canvas" style="height: 600px;"></div>
-              
-              <!-- Node Details Panel -->
-              <div v-if="selectedNode" class="node-details-panel">
-                <div class="panel-header">
-                  <h4>{{ selectedNode.label }}</h4>
-                  <el-button size="small" icon="Close" @click="selectedNode = null" circle />
-                </div>
-                <div class="panel-content">
-                  <div class="node-property">
-                    <span class="property-label">类型:</span>
-                    <el-tag :type="getNodeTypeColor(selectedNode.type)" size="small">
-                      {{ selectedNode.type }}
-                    </el-tag>
-                  </div>
-                  <div class="node-property">
-                    <span class="property-label">属性:</span>
-                    <div class="node-attributes">
-                      <div v-for="(value, key) in selectedNode.attributes" :key="key" class="attribute-item">
-                        <span class="attr-key">{{ key }}:</span>
-                        <span class="attr-value">{{ value }}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="node-relations">
-                    <h5>关联关系</h5>
-                    <div class="relation-list">
-                      <div v-for="relation in selectedNode.relations" :key="relation.id" class="relation-item">
-                        <el-link type="primary" @click="focusOnNode(relation.target)">
-                          {{ relation.target }}
-                        </el-link>
-                        <el-tag size="small">{{ relation.type }}</el-tag>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </el-card>
-
-          <!-- Graph Filters -->
-          <el-card class="graph-filters-card">
-            <template #header>图谱过滤器</template>
-            <div class="filter-section">
-              <div class="filter-group">
-                <label>节点类型:</label>
-                <el-checkbox-group v-model="visibleNodeTypes">
-                  <el-checkbox v-for="type in nodeTypes" :key="type" :value="type">
-                    {{ type }}
-                  </el-checkbox>
-                </el-checkbox-group>
-              </div>
-              <div class="filter-group">
-                <label>关系类型:</label>
-                <el-checkbox-group v-model="visibleEdgeTypes">
-                  <el-checkbox v-for="type in edgeTypes" :key="type" :value="type">
-                    {{ type }}
-                  </el-checkbox>
-                </el-checkbox-group>
-              </div>
-              <div class="filter-group">
-                <label>搜索节点:</label>
-                <el-input 
-                  v-model="nodeSearchQuery" 
-                  placeholder="输入节点名称搜索"
-                  clearable
-                  @input="searchNodes"
-                >
-                  <template #append>
-                    <el-button :icon="Search" @click="searchNodes" />
-                  </template>
-                </el-input>
-              </div>
-            </div>
-          </el-card>
-        </div>
-      </el-tab-pane>
-
-      <!-- Graph Analytics Tab -->
-      <el-tab-pane label="图谱分析" name="analytics">
-        <div class="tab-content">
-          <!-- Analytics Overview -->
-          <el-row :gutter="20" class="analytics-overview">
-            <el-col :span="8">
-              <el-card class="analytics-card">
-                <template #header>中心性分析</template>
-                <div ref="centralityChart" style="height: 250px;"></div>
-              </el-card>
-            </el-col>
-            <el-col :span="8">
-              <el-card class="analytics-card">
-                <template #header>社区发现</template>
-                <div ref="communityChart" style="height: 250px;"></div>
-              </el-card>
-            </el-col>
-            <el-col :span="8">
-              <el-card class="analytics-card">
-                <template #header>路径分析</template>
-                <div ref="pathChart" style="height: 250px;"></div>
-              </el-card>
-            </el-col>
-          </el-row>
-
-          <!-- Network Metrics -->
-          <el-row :gutter="20" class="network-metrics">
-            <el-col :span="12">
-              <el-card>
-                <template #header>网络指标</template>
-                <div class="metrics-grid">
-                  <div class="metric-item">
-                    <span class="metric-label">平均度:</span>
-                    <span class="metric-value">{{ networkMetrics.avgDegree }}</span>
-                  </div>
-                  <div class="metric-item">
-                    <span class="metric-label">聚类系数:</span>
-                    <span class="metric-value">{{ networkMetrics.clusteringCoefficient }}</span>
-                  </div>
-                  <div class="metric-item">
-                    <span class="metric-label">直径:</span>
-                    <span class="metric-value">{{ networkMetrics.diameter }}</span>
-                  </div>
-                  <div class="metric-item">
-                    <span class="metric-label">密度:</span>
-                    <span class="metric-value">{{ networkMetrics.density }}</span>
-                  </div>
-                </div>
-              </el-card>
-            </el-col>
-            <el-col :span="12">
-              <el-card>
-                <template #header>重要节点</template>
-                <el-table :data="importantNodes" style="width: 100%">
-                  <el-table-column prop="rank" label="排名" width="60" />
-                  <el-table-column prop="node" label="节点" min-width="120" />
-                  <el-table-column prop="centrality" label="中心性" width="100">
-                    <template #default="scope">
-                      <el-progress :percentage="scope.row.centrality" :stroke-width="6" />
-                    </template>
-                  </el-table-column>
-                  <el-table-column prop="type" label="类型" width="100">
-                    <template #default="scope">
-                      <el-tag :type="getNodeTypeColor(scope.row.type)" size="small">
-                        {{ scope.row.type }}
-                      </el-tag>
-                    </template>
-                  </el-table-column>
-                </el-table>
-              </el-card>
-            </el-col>
-          </el-row>
-        </div>
-      </el-tab-pane>
-
-      <!-- Knowledge Base Tab -->
-      <el-tab-pane label="知识库" name="knowledge">
-        <div class="tab-content">
-          <!-- Knowledge Categories -->
-          <div class="knowledge-categories">
-            <el-collapse v-model="activeKnowledgeCategory">
-              <el-collapse-item 
-                v-for="category in knowledgeCategories" 
-                :key="category.key"
-                :title="category.label" 
-                :name="category.key"
-              >
-                <div class="knowledge-grid">
-                  <el-card 
-                    v-for="item in category.items" 
-                    :key="item.id"
-                    class="knowledge-card"
-                    @click="viewKnowledgeItem(item)"
-                  >
-                    <template #header>
-                      <div class="knowledge-header">
-                        <span class="knowledge-title">{{ item.title }}</span>
-                        <el-tag size="small" :type="getKnowledgeTypeColor(item.type)">
-                          {{ item.type }}
-                        </el-tag>
-                      </div>
-                    </template>
-                    <p class="knowledge-desc">{{ item.description }}</p>
-                    <div class="knowledge-meta">
-                      <span class="meta-item">节点数: {{ item.nodeCount }}</span>
-                      <span class="meta-item">更新: {{ item.updatedAt }}</span>
-                    </div>
-                  </el-card>
-                </div>
-              </el-collapse-item>
-            </el-collapse>
+          <div class="metric-item">
+            <span>密度</span>
+            <strong>{{ graph.networkMetrics.density }}</strong>
           </div>
-        </div>
-      </el-tab-pane>
+          <div class="metric-item">
+            <span>节点数</span>
+            <strong>{{ graph.networkMetrics.node_count }}</strong>
+          </div>
+          <div class="metric-item">
+            <span>边数</span>
+            <strong>{{ graph.networkMetrics.edge_count }}</strong>
+          </div>
+        </el-card>
 
-      <!-- Graph Builder Tab -->
-      <el-tab-pane label="图谱构建" name="builder">
-        <div class="tab-content">
-          <!-- Builder Tools -->
-          <el-row :gutter="20" class="builder-tools">
-            <el-col :span="6">
-              <el-card class="tools-card">
-                <template #header>构建工具</template>
-                <div class="tool-buttons">
-                  <el-button type="primary" :icon="Plus" @click="addNodeMode = true" :class="{ active: addNodeMode }">
-                    添加节点
-                  </el-button>
-                  <el-button type="success" :icon="Link" @click="addEdgeMode = true" :class="{ active: addEdgeMode }">
-                    添加关系
-                  </el-button>
-                  <el-button type="warning" :icon="Edit" @click="editMode = true" :class="{ active: editMode }">
-                    编辑模式
-                  </el-button>
-                  <el-button type="danger" :icon="Delete" @click="deleteMode = true" :class="{ active: deleteMode }">
-                    删除模式
-                  </el-button>
-                </div>
-              </el-card>
-            </el-col>
-            <el-col :span="18">
-              <el-card class="builder-canvas-card">
-                <template #header>图谱构建画布</template>
-                <div class="builder-canvas" style="height: 500px; background: #f8f9fa; border: 2px dashed #ddd; display: flex; align-items: center; justify-content: center;">
-                  <div class="canvas-placeholder">
-                    <el-icon size="48" color="#ccc"><Share /></el-icon>
-                    <p>图谱构建区域</p>
-                    <p style="font-size: 12px; color: #999;">选择左侧工具开始构建图谱</p>
-                  </div>
-                </div>
-              </el-card>
-            </el-col>
-          </el-row>
+        <el-card shadow="never" class="side-card">
+          <template #header>
+            <div class="card-header">节点详情</div>
+          </template>
+          <div v-if="selectedNode" class="node-detail">
+            <el-tag size="small" type="primary">{{ selectedNode.category }}</el-tag>
+            <h4>{{ selectedNode.name }}</h4>
+            <div class="detail-row">
+              <span>热度值</span>
+              <strong>{{ selectedNode.value }}</strong>
+            </div>
+            <div class="detail-row" v-for="entry in selectedMetaEntries" :key="entry.key">
+              <span>{{ entry.key }}</span>
+              <strong>{{ entry.value }}</strong>
+            </div>
+            <div class="detail-row">
+              <span>关联边</span>
+              <strong>{{ relatedEdges.length }}</strong>
+            </div>
+          </div>
+          <el-empty v-else description="点击图谱节点查看详情" :image-size="72" />
+        </el-card>
 
-          <!-- Entity Types -->
-          <el-card class="entity-types-card">
-            <template #header>实体类型定义</template>
-            <el-table :data="entityTypes" style="width: 100%">
-              <el-table-column prop="name" label="实体名称" width="150" />
-              <el-table-column prop="icon" label="图标" width="80">
-                <template #default="scope">
-                  <el-icon><component :is="scope.row.icon" /></el-icon>
-                </template>
-              </el-table-column>
-              <el-table-column prop="color" label="颜色" width="100">
-                <template #default="scope">
-                  <div class="color-preview" :style="{ backgroundColor: scope.row.color }"></div>
-                </template>
-              </el-table-column>
-              <el-table-column prop="description" label="描述" min-width="200" />
-              <el-table-column label="操作" width="150">
-                <template #default="scope">
-                  <el-button size="small" @click="editEntityType(scope.row)">编辑</el-button>
-                  <el-button size="small" type="danger" @click="deleteEntityType(scope.row)">删除</el-button>
-                </template>
-              </el-table-column>
-            </el-table>
-          </el-card>
-        </div>
-      </el-tab-pane>
-    </el-tabs>
-
-    <!-- Create/Edit Graph Dialog -->
-    <el-dialog 
-      v-model="showCreateGraphDialog" 
-      :title="isEditing ? '编辑图谱' : '新建图谱'"
-      width="600px"
-    >
-      <el-form :model="graphForm" :rules="graphFormRules" ref="graphFormRef" label-width="100px">
-        <el-form-item label="图谱名称" prop="name">
-          <el-input v-model="graphForm.name" placeholder="请输入图谱名称" />
-        </el-form-item>
-        <el-form-item label="图谱类型" prop="type">
-          <el-select v-model="graphForm.type" placeholder="请选择图谱类型">
-            <el-option label="比赛关系图" value="match-relation" />
-            <el-option label="球队关系图" value="team-relation" />
-            <el-option label="球员关系图" value="player-relation" />
-            <el-option label="赔率关联图" value="odds-correlation" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="描述" prop="description">
-          <el-input 
-            v-model="graphForm.description" 
-            type="textarea" 
-            :rows="3"
-            placeholder="请输入图谱描述"
-          />
-        </el-form-item>
-        <el-form-item label="数据源" prop="dataSource">
-          <el-select v-model="graphForm.dataSource" placeholder="请选择数据源">
-            <el-option label="MySQL数据库" value="mysql" />
-            <el-option label="MongoDB" value="mongodb" />
-            <el-option label="API接口" value="api" />
-            <el-option label="文件导入" value="file" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="配置信息" prop="config">
-          <el-input 
-            v-model="graphForm.config" 
-            type="textarea" 
-            :rows="4"
-            placeholder="请输入JSON格式的图谱配置"
-          />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <span class="dialog-footer">
-          <el-button @click="showCreateGraphDialog = false">取消</el-button>
-          <el-button type="primary" @click="saveGraphConfig">确定</el-button>
-        </span>
-      </template>
-    </el-dialog>
+        <el-card shadow="never" class="side-card">
+          <template #header>
+            <div class="card-header">Top 节点</div>
+          </template>
+          <el-table :data="graph.topNodes" size="small" max-height="260" empty-text="暂无数据">
+            <el-table-column type="index" label="#" width="50" />
+            <el-table-column prop="name" label="节点" min-width="120" show-overflow-tooltip />
+            <el-table-column prop="degree" label="度" width="70" />
+          </el-table>
+        </el-card>
+      </el-col>
+    </el-row>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { 
-  Plus, VideoPlay, RefreshLeft, Share, Connection, CollectionTag, View,
-  Search, Link, Edit, Delete, Close, ZoomIn, ZoomOut 
-} from '@element-plus/icons-vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
+import { ElMessage } from 'element-plus'
+import { Refresh } from '@element-plus/icons-vue'
+import * as echarts from 'echarts'
+import { getCollectionGraphOverview } from '@/api/intelligenceCollection'
 
-// Reactive data
-const activeTab = ref('visualization')
-const activeKnowledgeCategory = ref(['entities'])
-const selectedGraph = ref('')
-const selectedLayout = ref('force')
-const selectedNode = ref(null)
-const loading = ref(false)
-const showCreateGraphDialog = ref(false)
-const isEditing = ref(false)
-
-// Mode flags
-const addNodeMode = ref(false)
-const addEdgeMode = ref(false)
-const editMode = ref(false)
-const deleteMode = ref(false)
-
-// Stats data
-const stats = reactive({
-  totalNodes: 2540,
-  totalEdges: 5680,
-  graphTypes: 4,
-  insights: 127
+const graphRef = ref(null)
+const loading = reactive({ graph: false })
+const query = reactive({
+  days: 7,
+  limit: 800,
+  includePrediction: true
 })
 
-// Graph list
-const graphList = ref([
-  { id: 1, name: '比赛关系图谱', type: 'match-relation', nodes: 1200, edges: 2800 },
-  { id: 2, name: '球队关系图谱', type: 'team-relation', nodes: 850, edges: 2100 },
-  { id: 3, name: '球员关系图谱', type: 'player-relation', nodes: 490, edges: 780 }
-])
-
-// Layout options
-const layouts = ref([
-  { key: 'force', label: '力导向' },
-  { key: 'circular', label: '环形' },
-  { key: 'grid', label: '网格' },
-  { key: 'hierarchical', label: '层次' }
-])
-
-// Node types and filters
-const nodeTypes = ref(['球队', '球员', '比赛', '联赛', '教练', '场馆'])
-const edgeTypes = ref(['参赛', '执教', '隶属', '对阵', '主办', '转会'])
-const visibleNodeTypes = ref(nodeTypes.value)
-const visibleEdgeTypes = ref(edgeTypes.value)
-const nodeSearchQuery = ref('')
-
-// Graph form
-const graphForm = reactive({
-  name: '',
-  type: '',
-  description: '',
-  dataSource: '',
-  config: ''
-})
-
-const graphFormRules = {
-  name: [{ required: true, message: '请输入图谱名称', trigger: 'blur' }],
-  type: [{ required: true, message: '请选择图谱类型', trigger: 'change' }]
-}
-
-// Knowledge categories
-const knowledgeCategories = ref([
-  {
-    key: 'entities',
-    label: '实体知识',
-    items: [
-      { id: 1, title: '球队实体', type: '基础', description: '包含所有球队相关信息和属性', nodeCount: 320, updatedAt: '2024-01-20' },
-      { id: 2, title: '球员实体', type: '基础', description: '球员个人信息、技能评级等', nodeCount: 2150, updatedAt: '2024-01-22' }
-    ]
+const graph = reactive({
+  stats: {
+    total_items: 0,
+    total_nodes: 0,
+    total_edges: 0,
+    total_matches: 0,
+    total_sources: 0,
+    total_types: 0
   },
-  {
-    key: 'relations',
-    label: '关系知识',
-    items: [
-      { id: 3, title: '比赛关系', type: '关联', description: '比赛参与者和结果关系', nodeCount: 890, updatedAt: '2024-01-21' },
-      { id: 4, title: '转会关系', type: '动态', description: '球员转会历史和合同关系', nodeCount: 456, updatedAt: '2024-01-19' }
-    ]
+  nodes: [],
+  edges: [],
+  categories: [],
+  topNodes: [],
+  networkMetrics: {
+    avg_degree: 0,
+    density: 0,
+    node_count: 0,
+    edge_count: 0
   }
-])
-
-// Entity types
-const entityTypes = ref([
-  { name: '球队', icon: 'OfficeBuilding', color: '#409eff' },
-  { name: '球员', icon: 'User', color: '#67c23a' },
-  { name: '比赛', icon: 'Trophy', color: '#e6a23c' },
-  { name: '联赛', icon: 'Collection', color: '#f56c6c' },
-  { name: '教练', icon: 'Avatar', color: '#909399' },
-  { name: '场馆', icon: 'House', color: '#c069af' }
-])
-
-// Network metrics
-const networkMetrics = reactive({
-  avgDegree: 4.47,
-  clusteringCoefficient: 0.68,
-  diameter: 8,
-  density: 0.0021
 })
 
-// Important nodes
-const importantNodes = ref([
-  { rank: 1, node: '皇家马德里', centrality: 95, type: '球队' },
-  { rank: 2, node: '梅西', centrality: 92, type: '球员' },
-  { rank: 3, node: '欧冠联赛', centrality: 88, type: '联赛' },
-  { rank: 4, node: '巴塞罗那', centrality: 85, type: '球队' },
-  { rank: 5, node: '英超联赛', centrality: 82, type: '联赛' }
-])
+const selectedNodeId = ref('')
+let graphChart = null
 
-// Mock selected node data
-const mockSelectedNode = {
-  id: 1,
-  label: '皇家马德里',
-  type: '球队',
-  attributes: {
-    '成立年份': '1902',
-    '主场': '伯纳乌球场',
-    '联赛': '西甲',
-    '市值': '€3.2B'
-  },
-  relations: [
-    { id: 1, target: '巴塞罗那', type: '对阵' },
-    { id: 2, target: '本泽马', type: '拥有' },
-    { id: 3, target: '欧冠联赛', type: '参加' }
-  ]
+const categoryColorMap = {
+  match: '#5b8ff9',
+  team: '#5ad8a6',
+  league: '#f6bd16',
+  source: '#6f5ef9',
+  intel_type: '#ff8a45'
 }
 
-// Methods
-const getNodeTypeColor = (type) => {
-  const colors = { '球队': 'primary', '球员': 'success', '比赛': 'warning', '联赛': 'danger', '教练': 'info', '场馆': 'default' }
-  return colors[type] || 'info'
-}
+const selectedNode = computed(() => graph.nodes.find((x) => x.id === selectedNodeId.value) || null)
 
-const getKnowledgeTypeColor = (type) => {
-  const colors = { '基础': 'primary', '关联': 'success', '动态': 'warning' }
-  return colors[type] || 'info'
-}
+const selectedMetaEntries = computed(() => {
+  const meta = selectedNode.value?.meta || {}
+  return Object.entries(meta)
+    .filter(([, value]) => value !== null && value !== undefined && String(value).trim() !== '')
+    .map(([key, value]) => ({ key, value: String(value) }))
+})
 
-const loadGraph = () => {
-  console.log('Loading graph:', selectedGraph.value)
-  ElMessage.info('加载图谱数据')
-}
+const relatedEdges = computed(() => {
+  const id = selectedNodeId.value
+  if (!id) return []
+  return graph.edges.filter((x) => x.source === id || x.target === id)
+})
 
-const changeLayout = (layout) => {
-  selectedLayout.value = layout
-  console.log('Changing layout to:', layout)
-}
+const buildChartOption = () => {
+  const categoryIndexMap = new Map(
+    (graph.categories || []).map((c, idx) => [String(c.key || '').toLowerCase(), idx])
+  )
 
-const zoomIn = () => {
-  console.log('Zoom in')
-}
+  const chartNodes = (graph.nodes || []).map((node) => {
+    const key = String(node.type || '').toLowerCase()
+    const cidx = categoryIndexMap.has(key) ? categoryIndexMap.get(key) : 0
+    return {
+      ...node,
+      category: cidx,
+      symbolSize: node.symbol_size || 22,
+      itemStyle: {
+        color: categoryColorMap[key] || '#7f8c8d'
+      }
+    }
+  })
 
-const zoomOut = () => {
-  console.log('Zoom out')
-}
+  const chartLinks = (graph.edges || []).map((edge) => ({
+    ...edge,
+    value: edge.count || 1,
+    lineStyle: {
+      width: Math.min(6, 1 + Math.log2((edge.count || 1) + 1)),
+      opacity: 0.6
+    }
+  }))
 
-const fitView = () => {
-  console.log('Fit view')
-}
-
-const centerView = () => {
-  console.log('Center view')
-}
-
-const focusOnNode = (nodeId) => {
-  console.log('Focus on node:', nodeId)
-}
-
-const searchNodes = () => {
-  if (nodeSearchQuery.value) {
-    console.log('Searching nodes:', nodeSearchQuery.value)
+  return {
+    backgroundColor: 'transparent',
+    tooltip: {
+      trigger: 'item',
+      formatter: (params) => {
+        if (params.dataType === 'edge') {
+          const edge = params.data || {}
+          return `${edge.relation || 'relation'}<br/>权重: ${edge.count || 1}`
+        }
+        const node = params.data || {}
+        return `${node.name || '-'}<br/>类型: ${node.category ?? '-'}<br/>热度: ${node.value || 0}`
+      }
+    },
+    animationDuration: 300,
+    animationDurationUpdate: 300,
+    series: [
+      {
+        type: 'graph',
+        layout: 'force',
+        roam: true,
+        draggable: true,
+        data: chartNodes,
+        links: chartLinks,
+        categories: (graph.categories || []).map((c) => ({ name: c.name })),
+        focusNodeAdjacency: true,
+        edgeSymbol: ['none', 'arrow'],
+        edgeSymbolSize: 6,
+        label: {
+          show: chartNodes.length <= 120,
+          position: 'right',
+          formatter: '{b}',
+          fontSize: 11
+        },
+        force: {
+          repulsion: 180,
+          gravity: 0.08,
+          edgeLength: [70, 220]
+        },
+        lineStyle: {
+          color: '#8ea0b5',
+          opacity: 0.55,
+          curveness: 0.2
+        },
+        emphasis: {
+          focus: 'adjacency',
+          lineStyle: {
+            width: 2.5,
+            opacity: 0.95
+          }
+        }
+      }
+    ]
   }
 }
 
-const startAnalysis = () => {
-  ElMessage.info('启动图谱分析')
+const renderGraph = async () => {
+  await nextTick()
+  if (!graphRef.value) return
+  if (!graphChart) {
+    graphChart = echarts.init(graphRef.value)
+    graphChart.on('click', (params) => {
+      if (params?.dataType === 'node' && params.data?.id) {
+        selectedNodeId.value = params.data.id
+      }
+    })
+  }
+  graphChart.setOption(buildChartOption(), true)
 }
 
-const refreshGraph = () => {
-  ElMessage.success('图谱刷新完成')
-}
+const loadGraphData = async () => {
+  loading.graph = true
+  try {
+    const data = await getCollectionGraphOverview({
+      days: query.days,
+      limit: query.limit,
+      include_prediction: query.includePrediction
+    })
 
-const exportGraph = () => {
-  ElMessage.info('导出图谱数据')
-}
+    graph.stats = {
+      ...graph.stats,
+      ...(data?.stats || {})
+    }
+    graph.nodes = Array.isArray(data?.nodes) ? data.nodes : []
+    graph.edges = Array.isArray(data?.edges) ? data.edges : []
+    graph.categories = Array.isArray(data?.categories) ? data.categories : []
+    graph.topNodes = Array.isArray(data?.top_nodes) ? data.top_nodes : []
+    graph.networkMetrics = {
+      ...graph.networkMetrics,
+      ...(data?.network_metrics || {})
+    }
 
-const viewKnowledgeItem = (item) => {
-  ElMessage.info(`查看知识项: ${item.title}`)
-}
+    if (selectedNodeId.value && !graph.nodes.some((x) => x.id === selectedNodeId.value)) {
+      selectedNodeId.value = ''
+    }
 
-const editEntityType = (entity) => {
-  ElMessage.info(`编辑实体类型: ${entity.name}`)
-}
-
-const deleteEntityType = (entity) => {
-  ElMessageBox.confirm(`确定要删除实体类型"${entity.name}"吗？`, '警告', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
-    type: 'warning'
-  }).then(() => {
-    ElMessage.success('删除成功')
-  })
-}
-
-const saveGraphConfig = () => {
-  ElMessage.success(isEditing.value ? '图谱更新成功' : '图谱创建成功')
-  showCreateGraphDialog.value = false
-  resetGraphForm()
-}
-
-const resetGraphForm = () => {
-  Object.assign(graphForm, {
-    name: '',
-    type: '',
-    description: '',
-    dataSource: '',
-    config: ''
-  })
-  isEditing.value = false
-}
-
-// Event handlers for mode switching
-const handleModeChange = (mode) => {
-  addNodeMode.value = false
-  addEdgeMode.value = false
-  editMode.value = false
-  deleteMode.value = false
-  if (mode) {
-    mode.value = true
+    await renderGraph()
+  } catch (error) {
+    console.error('加载图谱失败', error)
+    ElMessage.error('加载图谱失败')
+  } finally {
+    loading.graph = false
   }
 }
 
-onMounted(() => {
-  console.log('Graph Management mounted')
-  // Set default selected graph
-  if (graphList.value.length > 0) {
-    selectedGraph.value = graphList.value[0].id
+const handleResize = () => {
+  if (graphChart) graphChart.resize()
+}
+
+onMounted(async () => {
+  await loadGraphData()
+  window.addEventListener('resize', handleResize)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', handleResize)
+  if (graphChart) {
+    graphChart.dispose()
+    graphChart = null
   }
 })
 </script>
 
 <style scoped>
-.intelligence-management-container {
-  padding: 20px;
+.intelligence-graph-page {
+  padding: 16px;
 }
 
 .page-header {
-  margin-bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 12px;
+  margin-bottom: 12px;
 }
 
 .page-header h2 {
-  margin: 0 0 8px 0;
-  color: #303133;
-  font-size: 24px;
-  font-weight: 600;
-}
-
-.page-description {
   margin: 0;
-  color: #606266;
-  font-size: 14px;
+  font-size: 22px;
+  color: #1f2d3d;
 }
 
-.quick-actions {
-  margin-bottom: 24px;
+.page-header p {
+  margin: 6px 0 0;
+  color: #6b7280;
 }
 
-.stats-section {
-  margin-bottom: 24px;
-}
-
-.stats-card {
-  position: relative;
-  overflow: hidden;
-}
-
-.stats-content {
-  position: relative;
-  z-index: 2;
-}
-
-.stats-number {
-  font-size: 28px;
-  font-weight: bold;
-  color: #409eff;
-  margin-bottom: 8px;
-}
-
-.stats-label {
-  font-size: 14px;
-  color: #909399;
-}
-
-.stats-icon {
-  position: absolute;
-  right: 16px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 48px;
-  color: #409eff;
-  opacity: 0.1;
-  z-index: 1;
-}
-
-.management-tabs {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-}
-
-.tab-content {
-  padding: 20px;
-}
-
-.graph-controls {
-  margin-bottom: 20px;
-}
-
-.graph-actions {
+.header-actions {
   display: flex;
+  align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
-.graph-canvas-card {
-  margin-bottom: 20px;
+.stats-row {
+  margin-bottom: 12px;
 }
 
-.graph-canvas-container {
-  position: relative;
+.stat-card {
+  border-radius: 10px;
+}
+
+.stat-label {
+  color: #8091a7;
+  font-size: 12px;
+}
+
+.stat-value {
+  margin-top: 6px;
+  font-size: 22px;
+  font-weight: 600;
+  color: #274862;
+}
+
+.main-row {
+  margin-bottom: 12px;
+}
+
+.graph-card,
+.side-card {
+  border-radius: 10px;
 }
 
 .graph-canvas {
-  border: 1px solid #dcdfe6;
-  border-radius: 4px;
+  height: 680px;
 }
 
-.node-details-panel {
-  position: absolute;
-  right: 20px;
-  top: 20px;
-  width: 300px;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  z-index: 1000;
+.card-header {
+  font-weight: 600;
+  color: #2a3f54;
 }
 
-.panel-header {
+.metric-item,
+.detail-row {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  padding: 16px;
-  border-bottom: 1px solid #eee;
-}
-
-.panel-header h4 {
-  margin: 0;
-  color: #303133;
-}
-
-.panel-content {
-  padding: 16px;
-}
-
-.node-property {
-  margin-bottom: 16px;
-}
-
-.property-label {
-  font-weight: bold;
-  color: #606266;
-  display: block;
   margin-bottom: 8px;
+  font-size: 13px;
+  color: #4b5b6a;
 }
 
-.node-attributes {
-  background: #f8f9fa;
-  padding: 12px;
-  border-radius: 4px;
+.metric-item strong,
+.detail-row strong {
+  color: #1f2937;
 }
 
-.attribute-item {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 4px;
-  font-size: 12px;
+.node-detail h4 {
+  margin: 10px 0;
+  color: #0f172a;
 }
 
-.attr-key {
-  color: #909399;
+.side-card {
+  margin-bottom: 12px;
 }
 
-.attr-value {
-  color: #303133;
-  font-weight: bold;
-}
-
-.node-relations h5 {
-  margin: 0 0 12px 0;
-  color: #303133;
-}
-
-.relation-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.relation-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.graph-filters-card {
-  margin-bottom: 20px;
-}
-
-.filter-section {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.filter-group {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.filter-group label {
-  font-weight: bold;
-  color: #606266;
-  min-width: 80px;
-}
-
-.analytics-overview {
-  margin-bottom: 20px;
-}
-
-.analytics-card {
-  height: 350px;
-}
-
-.network-metrics {
-  margin-bottom: 20px;
-}
-
-.metrics-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
-  padding: 16px 0;
-}
-
-.metric-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.metric-label {
-  color: #909399;
-}
-
-.metric-value {
-  font-weight: bold;
-  color: #303133;
-}
-
-.knowledge-categories {
-  margin-top: 16px;
-}
-
-.knowledge-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 16px;
-  margin-top: 16px;
-}
-
-.knowledge-card {
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.knowledge-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-}
-
-.knowledge-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.knowledge-title {
-  font-weight: bold;
-  color: #303133;
-}
-
-.knowledge-desc {
-  color: #606266;
-  font-size: 14px;
-  margin: 0 0 12px 0;
-}
-
-.knowledge-meta {
-  display: flex;
-  justify-content: space-between;
-  font-size: 12px;
-  color: #909399;
-}
-
-.builder-tools {
-  margin-bottom: 20px;
-}
-
-.tools-card {
-  height: fit-content;
-}
-
-.tool-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.tool-buttons .el-button.active {
-  background-color: #409eff;
-  border-color: #409eff;
-  color: white;
-}
-
-.builder-canvas-card {
-  margin-bottom: 20px;
-}
-
-.canvas-placeholder {
-  text-align: center;
-  color: #999;
-}
-
-.canvas-placeholder p {
-  margin: 8px 0;
-}
-
-.entity-types-card {
-  margin-top: 20px;
-}
-
-.color-preview {
-  width: 20px;
-  height: 20px;
-  border-radius: 4px;
-  border: 1px solid #ddd;
-}
-
-.builder-tools {
-  margin-bottom: 20px;
-}
-
-.tools-card {
-  height: fit-content;
-}
-
-.tool-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.tool-buttons .el-button.active {
-  background-color: #409eff;
-  border-color: #409eff;
-  color: white;
-}
-
-.builder-canvas-card {
-  margin-bottom: 20px;
-}
-
-.canvas-placeholder {
-  text-align: center;
-  color: #999;
-}
-
-.canvas-placeholder p {
-  margin: 8px 0;
-}
-
-.entity-types-card {
-  margin-top: 20px;
-}
-
-.color-preview {
-  width: 20px;
-  height: 20px;
-  border-radius: 4px;
-  border: 1px solid #ddd;
+@media (max-width: 1200px) {
+  .graph-canvas {
+    height: 560px;
+  }
 }
 </style>

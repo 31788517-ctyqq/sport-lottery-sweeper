@@ -1,36 +1,31 @@
-<template>
+﻿<template>
   <el-card class="strategy-card">
     <div class="strategy-bar">
       <div class="strategy-select">
         <span class="strategy-label">策略筛选</span>
         <el-select
-          v-model="selectedStrategyName"
+          :model-value="selectedStrategyName"
           placeholder="请选择策略"
           clearable
           filterable
           style="width: 260px"
-          @change="onHandleSelectStrategy"
+          @update:model-value="onHandleSelectStrategy"
         >
-          <el-option
-            v-for="name in strategyOptions"
-            :key="name"
-            :label="name"
-            :value="name"
-          />
+          <el-option v-for="name in strategyOptions" :key="name" :label="name" :value="name" />
         </el-select>
         <el-button size="small" @click="onLoadStrategyOptions">刷新</el-button>
       </div>
+
       <div class="strategy-detail" v-if="strategyDetailItems.length">
         <div class="detail-item" v-for="item in strategyDetailItems" :key="item.label">
           <span class="detail-label">{{ item.label }}:</span>
           <span class="detail-value">{{ item.value }}</span>
         </div>
       </div>
-      <div class="strategy-empty" v-else>
-        选择策略后将显示详情
-      </div>
+      <div class="strategy-empty" v-else>选择策略后显示条件摘要</div>
     </div>
-    <div class="strategy-list" v-if="strategyOptions.length">
+
+    <div class="strategy-list" v-if="strategyOptions.length > 1">
       <div class="strategy-list-title">策略列表</div>
       <div class="strategy-grid">
         <div
@@ -42,78 +37,40 @@
         >
           <div class="strategy-item-header">
             <span class="strategy-item-name">{{ name }}</span>
-            <span class="strategy-item-new" v-if="name === '当前策略'">NEW</span>
             <span class="strategy-item-tag" v-if="name === selectedStrategyName">已选</span>
           </div>
         </div>
       </div>
     </div>
-    <div class="strategy-list-empty" v-else>
-      暂无已保存策略
-    </div>
   </el-card>
 </template>
 
-<script>
-import { defineComponent } from 'vue';
-import { ElCard, ElSelect, ElOption, ElButton } from 'element-plus';
+<script setup>
+const props = defineProps({
+  selectedStrategyName: { type: String, required: true },
+  strategyOptions: { type: Array, required: true },
+  strategyDetailItems: { type: Array, required: true }
+})
 
-export default defineComponent({
-  name: 'StrategySection',
-  components: {
-    ElCard,
-    ElSelect,
-    ElOption,
-    ElButton
-  },
-  props: {
-    selectedStrategyName: {
-      type: String,
-      required: true
-    },
-    strategyOptions: {
-      type: Array,
-      required: true
-    },
-    strategyDetailItems: {
-      type: Array,
-      required: true
-    }
-  },
-  emits: ['handleSelectStrategy', 'loadStrategyOptions'],
-  setup(props, { emit }) {
-    const onHandleSelectStrategy = (name) => {
-      emit('handleSelectStrategy', name);
-    };
+const emit = defineEmits(['handleSelectStrategy', 'loadStrategyOptions'])
 
-    const onLoadStrategyOptions = () => {
-      emit('loadStrategyOptions');
-    };
-
-    return {
-      onHandleSelectStrategy,
-      onLoadStrategyOptions
-    };
-  }
-});
+const onHandleSelectStrategy = (name) => emit('handleSelectStrategy', name)
+const onLoadStrategyOptions = () => emit('loadStrategyOptions')
 </script>
 
 <style scoped>
 .strategy-card {
-  margin-bottom: 24px;
+  margin-bottom: 12px;
   border: 1px solid #d6d2cb;
   background: #fbfaf8;
-  box-shadow: 0 12px 20px rgba(107, 103, 99, 0.1);
+  box-shadow: 0 10px 16px rgba(107, 103, 99, 0.08);
   width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-  display: block;
 }
 
 .strategy-bar {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .strategy-select {
@@ -131,11 +88,11 @@ export default defineComponent({
 .strategy-detail {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px 16px;
-  padding: 12px;
-  background: #f6f5f4;
-  border: 1px solid #d6d2cb;
-  border-radius: 10px;
+  gap: 8px 14px;
+  padding: 8px 2px;
+  background: transparent;
+  border: none;
+  border-radius: 0;
 }
 
 .detail-item {
@@ -162,7 +119,7 @@ export default defineComponent({
 .strategy-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .strategy-list-title {
@@ -173,34 +130,33 @@ export default defineComponent({
 .strategy-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
+  gap: 10px;
 }
 
 .strategy-item {
-  border: 1px solid #d6d2cb;
+  border: 1px solid #e1ddd7;
   border-radius: 10px;
-  padding: 12px;
-  background: #fdfcfb;
+  padding: 10px 12px;
+  background: #f8f7f4;
   cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  transition: transform 0.15s ease, border-color 0.2s ease, background-color 0.2s ease;
 }
 
 .strategy-item:hover {
   transform: translateY(-1px);
-  box-shadow: 0 10px 16px rgba(107, 103, 99, 0.15);
   border-color: #c6bdb4;
+  background: #f3f1ed;
 }
 
 .strategy-item.active {
-  border-color: #d4b3a1;
-  box-shadow: 0 12px 20px rgba(212, 179, 161, 0.25);
+  border-color: #8ea3b0;
+  background: #e8eef2;
 }
 
 .strategy-item-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 6px;
 }
 
 .strategy-item-name {
@@ -209,24 +165,17 @@ export default defineComponent({
 }
 
 .strategy-item-tag {
-  background: #d4b3a1;
-  color: #4c4743;
+  background: #dfe7ec;
+  color: #4f5963;
   padding: 2px 8px;
   border-radius: 999px;
   font-size: 12px;
 }
 
-.strategy-item-new {
-  background: #67c23a;
-  color: white;
-  padding: 2px 8px;
-  border-radius: 999px;
-  font-size: 12px;
-  margin-right: 4px;
-}
-
-.strategy-list-empty {
-  font-size: 13px;
-  color: #8b8680;
+@media (max-width: 768px) {
+  .strategy-grid,
+  .strategy-detail {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

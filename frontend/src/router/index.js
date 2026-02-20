@@ -11,6 +11,7 @@ import decisionRoutes from './modules/decision-routes.js' // AI_WORKING: coder1 
 import authRoutes from './modules/auth-routes.js' // AI_WORKING: coder1 @1770224919 - 导入认证模块路由
 import reportRoutes from './modules/report-routes.js' // AI_WORKING: coder1 @1770224919 - 导入报告生成模块路由
 import frontendRoutes from './modules/frontend-routes.js' // AI_WORKING: coder1 @1770224919 - 导入前台用户页面模块路由
+import MobileBeidanFilter from '@/views/admin/MobileBeidanFilter.vue'
 
 const routes = [
   // 认证路由 (已移至 modules/auth-routes.js)
@@ -215,6 +216,39 @@ const routes = [
       title: '用户管理',
       icon: 'User',
       roles: ['admin']
+    }
+  },
+  // 移动端北单筛选器专属路由
+  {
+    path: '/m/beidan-filter',
+    name: 'MobileBeidanFilter',
+    component: MobileBeidanFilter,
+    meta: {
+      title: '北单三维筛选器（移动端）',
+      icon: 'filter',
+      roles: ['admin', 'manager']
+    }
+  },
+  {
+    path: '/m/beidan-filte',
+    redirect: '/m/beidan-filter'
+  },
+  // 测试路由
+  {
+    path: '/test-simple',
+    name: 'TestSimple',
+    component: () => import('@/views/TestSimple.vue'),
+    meta: {
+      title: '测试路由'
+    }
+  },
+  // 移动端测试路由
+  {
+    path: '/test-mobile',
+    name: 'TestMobile',
+    component: () => import('@/views/TestSimple.vue'),
+    meta: {
+      title: '移动端测试'
     }
   }
 ]

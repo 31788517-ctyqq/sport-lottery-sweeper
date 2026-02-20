@@ -103,6 +103,16 @@ except Exception as e:
     traceback.print_exc()
 
 try:
+    from backend.api.v1.admin.intelligence_collection import router as intelligence_collection_router
+    print("Admin module: Successfully imported intelligence_collection router")
+    router.include_router(intelligence_collection_router, tags=["intelligence-collection"])
+    print(f"Admin module: Added intelligence_collection router, now has {len(router.routes)} routes")
+except Exception as e:
+    print(f"Admin module: Failed to import/add intelligence_collection router: {e}")
+    import traceback
+    traceback.print_exc()
+
+try:
     from backend.api.v1.match_admin import router as match_admin_router
     print(f"Admin module: Successfully imported match_admin router")
     router.include_router(match_admin_router, prefix="/match", tags=["match-admin"])
