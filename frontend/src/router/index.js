@@ -86,6 +86,16 @@ const routes = [
           roles: ['admin', 'manager']
         }
       },
+      {
+        path: 'beidan-betting-sim',
+        name: 'BeidanBettingSimulator',
+        component: () => import('@/views/admin/BeidanBettingSimulator.vue'),
+        meta: {
+          title: '北单投注模拟',
+          icon: 'coin',
+          roles: ['admin', 'manager']
+        }
+      },
       // 14. 日志管理
       {
         path: 'logs',

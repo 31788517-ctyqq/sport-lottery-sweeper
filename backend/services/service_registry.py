@@ -4,7 +4,6 @@
 
 from .crawler_config_service import CrawlerService as CrawlerConfigService
 from .crawler_integration import CrawlerIntegration as CrawlerIntegrationService
-from .enhanced_crawler_service import EnhancedCrawlerService
 from .crawler_alert_service import CrawlerAlertService
 
 # 服务实例缓存
@@ -28,6 +27,9 @@ def get_intelligence_service(db):
     """获取情报服务"""
     key = f"intelligence_{id(db)}"
     if key not in _service_cache:
+        # Lazy import avoids module-level hard failure when optional
+        # enhanced crawler dependencies are unavailable at startup.
+        from .enhanced_crawler_service import EnhancedCrawlerService
         _service_cache[key] = EnhancedCrawlerService(db)
     return _service_cache[key]
 

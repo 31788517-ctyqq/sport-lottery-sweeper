@@ -55,6 +55,28 @@ const drawPredictionRoutes = [
           roles: ['admin', 'manager'],
           keepAlive: true
         }
+      },
+      {
+        path: 'ai-draw',
+        name: 'AiDrawScanner',
+        component: () => import('@/views/admin/draw_prediction/AiDrawScanner.vue'),
+        meta: {
+          title: 'AI平局预测',
+          icon: 'data-analysis',
+          roles: ['admin', 'manager'],
+          keepAlive: true
+        }
+      },
+      {
+        path: 'poisson-11',
+        name: 'Poisson11Scanner',
+        component: () => import('@/views/admin/draw_prediction/Poisson11Scanner.vue'),
+        meta: {
+          title: '专抓1-1',
+          icon: 'data-analysis',
+          roles: ['admin', 'manager'],
+          keepAlive: true
+        }
       }
     ]
   }

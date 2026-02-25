@@ -41,7 +41,7 @@ class LeagueUpdateRequest(BaseModel):
     description: Optional[str] = None
 
 
-router = APIRouter(prefix="/leagues", tags=["admin-leagues"])
+router = APIRouter(tags=["admin-leagues"])
 
 
 @router.get("/", response_model=UnifiedResponse)

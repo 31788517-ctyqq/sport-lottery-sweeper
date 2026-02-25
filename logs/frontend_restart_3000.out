@@ -1,13 +1,13 @@
 
 > sport-lottery-frontend@1.0.0 dev
-> vite --port 3000 --strictPort
+> vite --port 3000 --host 0.0.0.0 --port 3000
 
 
-  [32m[1mVITE[22m v5.4.21[39m  [2mready in [0m[1m410[22m[2m[0m ms[22m
+  [32m[1mVITE[22m v5.4.21[39m  [2mready in [0m[1m390[22m[2m[0m ms[22m
 
   [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m3000[22m/[39m
   [32m➜[39m  [1mNetwork[22m: [36mhttp://192.168.56.1:[1m3000[22m/[39m
-  [32m➜[39m  [1mNetwork[22m: [36mhttp://172.20.10.2:[1m3000[22m/[39m
+  [32m➜[39m  [1mNetwork[22m: [36mhttp://192.168.1.98:[1m3000[22m/[39m
   [32m➜[39m  [1mNetwork[22m: [36mhttp://172.24.144.1:[1m3000[22m/[39m
 
 PWA v1.2.0
@@ -16,6 +16,4 @@ precache  2 entries (0.12 KiB)
 files generated
   dev-dist/sw.js
   dev-dist/workbox-5a5d9309.js
-[2m00:24:24[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/admin/sp/ScheduleManagement.vue, /src/views/admin/sp/ScheduleManagement.vue?vue&type=style&index=0&scoped=25967c18&lang.css[22m
-[2m00:29:19[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/admin/sp/ScheduleManagement.vue[22m
-[2m00:35:17[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/admin/sp/ScheduleManagement.vue?vue&type=style&index=0&scoped=25967c18&lang.css, /src/views/admin/sp/ScheduleManagement.vue[22m
+[2m18:02:54[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/admin/draw_prediction/Poisson11Scanner.vue[22m

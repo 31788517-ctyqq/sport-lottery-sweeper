@@ -508,27 +508,32 @@ const refreshDateTimeOptions = async () => {
     const response = await request.get('/api/v1/beidan-filter/latest-date-times')
     console.log('API响应:', response)
     
-    if (response && response.dateTimes && Array.isArray(response.dateTimes) && response.dateTimes.length > 0) {
-      const latestFiveDateTimes = response.dateTimes.slice(0, 5)
-      // 鏇存柊鏃ユ湡鏃堕棿閫夐」涓烘渶鏂扮殑姣旇禌鍦烘值（如：['26024', '26023', '26022']锛?      dateTimeOptions.value = latestFiveDateTimes
-      console.log('鏃ユ湡鏃堕棿閫夐」宸蹭粠API更新:', latestFiveDateTimes)
-      
-      // 鑷姩閫夋嫨鏈€鏂版湡鍙凤紝闄ら潪宸茬粡閫夋嫨浜嗘湁鏁堢殑鏈熷彿
+    const dateTimePayload = response?.dateTimes || response?.data?.dateTimes || response?.data?.options || response?.options || []
+    if (Array.isArray(dateTimePayload) && dateTimePayload.length > 0) {
+      const latestFiveDateTimes = normalizeDateTimeOptions(dateTimePayload)
+      // 更新日期时间选项为最新的比赛场次值（如：['26025', '26024', '26023']）
+      dateTimeOptions.value = latestFiveDateTimes
+      console.log('日期时间选项已从API更新:', latestFiveDateTimes)
+
+      // 自动选择最新期号，除非已经选择了有效的期号
       if (!filterForm.dateTime || !latestFiveDateTimes.includes(filterForm.dateTime)) {
-        filterForm.dateTime = latestFiveDateTimes[0] // 鏈€鏂版湡鍙?        console.log('宸茶嚜鍔ㄩ€夋嫨鏈€鏂版湡鍙?', latestFiveDateTimes[0])
+        filterForm.dateTime = latestFiveDateTimes[0]
+        console.log('已自动选择最新期号:', latestFiveDateTimes[0])
       }
-      console.log('鍒锋柊鍚庨€夐」:', dateTimeOptions.value, '选中:', filterForm.dateTime)
+      console.log('刷新后选项:', dateTimeOptions.value, '选中:', filterForm.dateTime)
       return
     } else {
       console.warn('API鍝嶅簲鏍煎紡涓嶇鍚堥鏈熸垨杩斿洖绌烘暟缁?', response)
     }
+
   } catch (error) {
     console.warn('API鑾峰彇鏃ユ湡鏃堕棿閫夐」澶辫触:', error.message)
   }
   
-  // 澶囬€夋柟妗堬細API澶辫触鏃朵笉鍐嶇‖缂栫爜鏈熷彿锛岄伩鍏嶉€夊埌搴撻噷涓嶅瓨鍦ㄧ殑鍊?  dateTimeOptions.value = []
+  // 备选方案：API失败时不再硬编码期号，避免选到库里不存在的值
+  dateTimeOptions.value = []
   filterForm.dateTime = ''
-  console.log('API澶辫触锛屽凡娓呯┖鏃ユ湡鏃堕棿閫夐」锛岀瓑寰呯敤鎴峰埛鏂版暟鎹悗閲嶈瘯')
+  console.log('API失败，已清空日期时间选项，等待用户刷新数据后重试')
 }
 
 const fetchRealData = async (silent = false) => {
@@ -752,7 +757,26 @@ const formatDateValue = (value) => {
   return date.toISOString().slice(0, 10)
 }
 
+const normalizeDateTimeValue = (value) => {
+  if (value === null || value === undefined) return ''
+  if (typeof value === 'object') {
+    value = value.value ?? value.label ?? ''
+  }
+  const text = String(value).trim()
+  if (!text) return ''
+  const match = text.match(/(\d{5,})/)
+  return match ? match[1] : text
+}
+
+const normalizeDateTimeOptions = (values = []) => {
+  const normalized = values.map(normalizeDateTimeValue).filter(Boolean)
+  const unique = Array.from(new Set(normalized))
+  unique.sort((a, b) => Number(b) - Number(a))
+  return unique.slice(0, 5)
+}
+
 const buildDateRangePayload = () => {
+
   if (!Array.isArray(filterForm.dateRange) || filterForm.dateRange.length !== 2) {
     return {}
   }

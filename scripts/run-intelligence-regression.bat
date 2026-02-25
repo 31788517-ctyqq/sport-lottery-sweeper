@@ -7,6 +7,7 @@ echo [INFO] Specs:
 echo   - tests/e2e/intelligence-collection-quality-fields.spec.js
 echo   - tests/e2e/intelligence-collection-p2-cache.spec.js
 echo   - tests/e2e/intelligence-collection-settings-and-replay.spec.js
+echo   - tests/e2e/intelligence-collection-failure-summary.spec.js
 
 cd /d "%~dp0..\\frontend"
 
@@ -16,7 +17,7 @@ if not exist node_modules (
     if errorlevel 1 exit /b 1
 )
 
-call npx playwright test tests/e2e/intelligence-collection-quality-fields.spec.js tests/e2e/intelligence-collection-p2-cache.spec.js tests/e2e/intelligence-collection-settings-and-replay.spec.js --project=chromium --reporter=html
+call npx playwright test tests/e2e/intelligence-collection-quality-fields.spec.js tests/e2e/intelligence-collection-p2-cache.spec.js tests/e2e/intelligence-collection-settings-and-replay.spec.js tests/e2e/intelligence-collection-failure-summary.spec.js --project=chromium --reporter=html
 if errorlevel 1 (
     echo [ERROR] Intelligence collection pre-release regression failed
     exit /b 1

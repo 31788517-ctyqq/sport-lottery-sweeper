@@ -314,7 +314,7 @@ const fetchMatches = async () => {
       keyword: searchKeyword.value || undefined
     }
     
-    const response = await request.get('/api/admin/v1/beidan-schedules/', {
+    const response = await request.get('/api/v1/admin/beidan-schedules/', {
       params
     })
     schedules.value = response.data.items || []
@@ -368,7 +368,7 @@ const handleDelete = async (row) => {
       }
     )
     
-    await request.delete(`/api/admin/v1/beidan-schedules/${row.id}`)
+    await request.delete(`/api/v1/admin/beidan-schedules/${row.id}`)
     
     const index = matches.value.findIndex(item => item.id === row.id)
     if (index > -1) {
@@ -386,7 +386,7 @@ const handleDelete = async (row) => {
 
 const togglePublish = async (row) => {
   try {
-    const response = await request.put(`/api/admin/v1/beidan-schedules/${row.id}/publish`, {}, {
+    const response = await request.put(`/api/v1/admin/beidan-schedules/${row.id}/publish`, {}, {
       params: { publish: !row.is_published }
     })
     
@@ -412,7 +412,7 @@ const exportData = async () => {
       export: true
     }
     
-    const response = await axios.get('/api/admin/v1/beidan-schedules/', { 
+    const response = await axios.get('/api/v1/admin/beidan-schedules/', { 
       params,
       responseType: 'blob'  // 重要：接收二进制数据
     })
@@ -450,7 +450,7 @@ const handleImport = async () => {
       }
       
       ElMessage.info('正在从外部API获取数据...')
-      await request.post('/api/admin/v1/beidan-schedules/import/api', {
+      await request.post('/api/v1/admin/beidan-schedules/import/api', {
         api_url: importForm.apiUrl
       })
       

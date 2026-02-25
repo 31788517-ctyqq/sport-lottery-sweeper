@@ -782,7 +782,7 @@ const checkHealth = async (row) => {
       `, '健康检查结果', {
         dangerouslyUseHTMLString: true,
         confirmButtonText: '确定'
-      })
+      }).catch(() => {})
     } else {
       ElMessage.error(`健康检查失败: ${data.message}`)
     }
@@ -813,7 +813,7 @@ const handleFetch = async (row) => {
       `, '获取结果', {
         dangerouslyUseHTMLString: true,
         confirmButtonText: '确定'
-      })
+      }).catch(() => {})
     } else {
       throw new Error(result.message || '获取失败')
     }

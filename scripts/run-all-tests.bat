@@ -145,8 +145,8 @@ if not exist "node_modules\.cache\ms-playwright" (
 
 REM Run end-to-end tests
 echo [INFO] Running end-to-end tests...
-echo [INFO] Running intelligence pre-release regression (3 specs)...
-call npx playwright test tests/e2e/intelligence-collection-quality-fields.spec.js tests/e2e/intelligence-collection-p2-cache.spec.js tests/e2e/intelligence-collection-settings-and-replay.spec.js --project=chromium --reporter=line
+echo [INFO] Running intelligence pre-release regression (4 specs)...
+call npx playwright test tests/e2e/intelligence-collection-quality-fields.spec.js tests/e2e/intelligence-collection-p2-cache.spec.js tests/e2e/intelligence-collection-settings-and-replay.spec.js tests/e2e/intelligence-collection-failure-summary.spec.js --project=chromium --reporter=line
 if errorlevel 1 (
     echo [ERROR] Intelligence pre-release regression failed
     set E2E_PASSED=0

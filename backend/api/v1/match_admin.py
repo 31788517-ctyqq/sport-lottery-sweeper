@@ -16,7 +16,7 @@ from backend.models.match import League, Match
 from backend.schemas.response import UnifiedResponse, PageResponse, ErrorResponse
 from backend.services.service_registry import get_crawler_service
 
-router = APIRouter(prefix="/admin/matches", tags=["admin-matches"])
+router = APIRouter(tags=["admin-matches"])
 
 
 @router.get("/league/config", response_model=UnifiedResponse[Dict[str, Any]])

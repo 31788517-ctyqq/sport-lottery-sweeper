@@ -410,18 +410,23 @@ const exportData = () => {
 const refreshMonitoring = async () => {
   monitoringLoading.value = true
   try {
-    const response = await request.get('/api/admin/v1/odds/monitoring', {
+    const response = await request.get('/api/v1/admin/odds/monitoring', {
       params: {
         page: monitoringPagination.currentPage,
         size: monitoringPagination.pageSize
       }
     })
-    
-    if (response.data.success) {
-      monitoringData.value = response.data.data.items
-      monitoringPagination.total = response.data.data.total
+
+    const payload = response?.data ?? response
+    const success = payload?.success ?? true
+    const list = payload?.data?.items ?? payload?.items ?? payload?.data ?? []
+    const total = payload?.data?.total ?? payload?.total ?? list.length
+
+    if (success) {
+      monitoringData.value = Array.isArray(list) ? list : []
+      monitoringPagination.total = Number(total) || 0
     } else {
-      ElMessage.error(response.data.message || '获取监控数据失败')
+      ElMessage.error(payload?.message || '获取监控数据失败')
     }
   } catch (error) {
     console.error('获取监控数据失败:', error)
@@ -452,13 +457,18 @@ const applyMonitoringFilters = async () => {
       params.date_to = monitoringFilters.dateRange[1]
     }
     
-    const response = await request.get('/api/admin/v1/odds/monitoring', { params })
-    
-    if (response.data.success) {
-      monitoringData.value = response.data.data.items
-      monitoringPagination.total = response.data.data.total
+    const response = await request.get('/api/v1/admin/odds/monitoring', { params })
+
+    const payload = response?.data ?? response
+    const success = payload?.success ?? true
+    const list = payload?.data?.items ?? payload?.items ?? payload?.data ?? []
+    const total = payload?.data?.total ?? payload?.total ?? list.length
+
+    if (success) {
+      monitoringData.value = Array.isArray(list) ? list : []
+      monitoringPagination.total = Number(total) || 0
     } else {
-      ElMessage.error(response.data.message || '筛选监控数据失败')
+      ElMessage.error(payload?.message || '筛选监控数据失败')
     }
   } catch (error) {
     console.error('筛选监控数据失败:', error)
@@ -487,12 +497,16 @@ const loadHistoryData = async () => {
       params.time_to = historyFilters.timeRange[1]
     }
     
-    const response = await request.get('/api/admin/v1/odds/history', { params })
-    
-    if (response.data.success) {
-      historyData.value = response.data.data.items
+    const response = await request.get('/api/v1/admin/odds/history', { params })
+
+    const payload = response?.data ?? response
+    const success = payload?.success ?? true
+    const list = payload?.data?.items ?? payload?.items ?? payload?.data ?? []
+
+    if (success) {
+      historyData.value = Array.isArray(list) ? list : []
     } else {
-      ElMessage.error(response.data.message || '获取历史数据失败')
+      ElMessage.error(payload?.message || '获取历史数据失败')
     }
   } catch (error) {
     console.error('获取历史数据失败:', error)
@@ -512,19 +526,24 @@ const generateReport = () => {
 
 const runFullScan = async () => {
   try {
-    const response = await request.get('/api/admin/v1/odds/anomalies', {
+    const response = await request.get('/api/v1/admin/odds/anomalies', {
       params: {
         page: anomalyPagination.currentPage,
         size: anomalyPagination.pageSize
       }
     })
-    
-    if (response.data.success) {
-      anomalyData.value = response.data.data.items
-      anomalyPagination.total = response.data.data.total
+
+    const payload = response?.data ?? response
+    const success = payload?.success ?? true
+    const list = payload?.data?.items ?? payload?.items ?? payload?.data ?? []
+    const total = payload?.data?.total ?? payload?.total ?? list.length
+
+    if (success) {
+      anomalyData.value = Array.isArray(list) ? list : []
+      anomalyPagination.total = Number(total) || 0
       ElMessage.success('全量扫描完成')
     } else {
-      ElMessage.error(response.data.message || '全量扫描失败')
+      ElMessage.error(payload?.message || '全量扫描失败')
     }
   } catch (error) {
     console.error('全量扫描失败:', error)
@@ -552,13 +571,18 @@ const filterAnomalies = async () => {
       params.severity = anomalyFilters.severity
     }
     
-    const response = await request.get('/api/admin/v1/odds/anomalies', { params })
-    
-    if (response.data.success) {
-      anomalyData.value = response.data.data.items
-      anomalyPagination.total = response.data.data.total
+    const response = await request.get('/api/v1/admin/odds/anomalies', { params })
+
+    const payload = response?.data ?? response
+    const success = payload?.success ?? true
+    const list = payload?.data?.items ?? payload?.items ?? payload?.data ?? []
+    const total = payload?.data?.total ?? payload?.total ?? list.length
+
+    if (success) {
+      anomalyData.value = Array.isArray(list) ? list : []
+      anomalyPagination.total = Number(total) || 0
     } else {
-      ElMessage.error(response.data.message || '筛选异常数据失败')
+      ElMessage.error(payload?.message || '筛选异常数据失败')
     }
   } catch (error) {
     console.error('筛选异常数据失败:', error)
@@ -596,16 +620,20 @@ const viewOddsHistory = async (match) => {
   
   matchHistoryLoading.value = true
   try {
-    const response = await request.get('/api/admin/v1/odds/history', {
+    const response = await request.get('/api/v1/admin/odds/history', {
       params: {
         match_id: parseInt(match.matchId.replace('M', ''))
       }
     })
-    
-    if (response.data.success) {
-      matchHistoryData.value = response.data.data.items
+
+    const payload = response?.data ?? response
+    const success = payload?.success ?? true
+    const list = payload?.data?.items ?? payload?.items ?? payload?.data ?? []
+
+    if (success) {
+      matchHistoryData.value = Array.isArray(list) ? list : []
     } else {
-      ElMessage.error(response.data.message || '获取比赛历史数据失败')
+      ElMessage.error(payload?.message || '获取比赛历史数据失败')
     }
   } catch (error) {
     console.error('获取比赛历史数据失败:', error)
@@ -623,12 +651,16 @@ const closeHistoryDialog = () => {
 // 加载统计数据
 const loadStats = async () => {
   try {
-    const response = await request.get('/api/admin/v1/odds/stats')
-    
-    if (response.data.success) {
-      Object.assign(stats, response.data.data)
+    const response = await request.get('/api/v1/admin/odds/stats')
+
+    const payload = response?.data ?? response
+    const success = payload?.success ?? true
+    const data = payload?.data ?? payload ?? {}
+
+    if (success) {
+      Object.assign(stats, data)
     } else {
-      ElMessage.error(response.data.message || '获取统计数据失败')
+      ElMessage.error(payload?.message || '获取统计数据失败')
     }
   } catch (error) {
     console.error('获取统计数据失败:', error)

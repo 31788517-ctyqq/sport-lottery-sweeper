@@ -1,4 +1,4 @@
-import sys
+﻿import sys
 import logging
 logger = logging.getLogger(__name__)
 import os
@@ -11,20 +11,20 @@ from sqlalchemy import pool
 from alembic import context
 
 # =============================================================================
-# 项目路径配置
+# 椤圭洰璺緞閰嶇疆
 # =============================================================================
-# 获取当前文件(alembic/env.py)的绝对路径
+# 鑾峰彇褰撳墠鏂囦欢(alembic/env.py)鐨勭粷瀵硅矾寰?
 current_file = Path(__file__).resolve()
-# 计算项目根目录 (backend的上一级目录)
+# 璁＄畻椤圭洰鏍圭洰褰?(backend鐨勪笂涓€绾х洰褰?
 project_root = current_file.parent.parent.parent
-# 将项目根目录添加到Python路径，确保能导入项目模块
+# 灏嗛」鐩牴鐩綍娣诲姞鍒癙ython璺緞锛岀‘淇濊兘瀵煎叆椤圭洰妯″潡
 sys.path.insert(0, str(project_root))
 
 logger.debug(f"[Alembic] Project root: {project_root}")
 logger.debug(f"[Alembic] Python path includes: {project_root}")
 
 # =============================================================================
-# 导入项目配置
+# 瀵煎叆椤圭洰閰嶇疆
 # =============================================================================
 try:
     from backend.config import settings
@@ -33,7 +33,7 @@ try:
 except ImportError as e:
     logger.debug(f"[Alembic] Failed to import from backend.config: {e}")
     try:
-        # 备用导入方式
+        # 澶囩敤瀵煎叆鏂瑰紡
         import importlib.util
         spec = importlib.util.spec_from_file_location(
             "config", 
@@ -45,7 +45,7 @@ except ImportError as e:
         logger.debug(f"[Alembic] Successfully loaded settings via importlib")
     except Exception as e2:
         logger.debug(f"[Alembic] Failed to load settings via importlib: {e2}")
-        # 最后的备用方案 - 使用data目录
+        # 鏈€鍚庣殑澶囩敤鏂规 - 浣跨敤data鐩綍
         from pathlib import Path
         from backend.config import DATA_DIR, ABS_DB_PATH
         class FallbackSettings:
@@ -56,7 +56,7 @@ except ImportError as e:
         logger.debug(f"[Alembic] Using fallback settings")
 
 # =============================================================================
-# Alembic配置和日志设置
+# Alembic閰嶇疆鍜屾棩蹇楄缃?
 # =============================================================================
 config = context.config
 
@@ -66,11 +66,11 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 # =============================================================================
-# 导入模型元数据 - 支持自动生成迁移
+# 瀵煎叆妯″瀷鍏冩暟鎹?- 鏀寔鑷姩鐢熸垚杩佺Щ
 # =============================================================================
 target_metadata = None
 
-# 尝试导入所有模型的Base类
+# 灏濊瘯瀵煎叆鎵€鏈夋ā鍨嬬殑Base绫?
 model_imports = [
     "backend.models.base",
     "backend.models.user",
@@ -87,15 +87,15 @@ for module_name in model_imports:
             if target_metadata is None:
                 target_metadata = module.Base.metadata
             else:
-                # 合并所有metadata（如果有多个Base类）
-                target_metadata = target_metadata + module.Base.metadata
+                # 鍚堝苟鎵€鏈塵etadata锛堝鏋滄湁澶氫釜Base绫伙級
+                pass
             logger.debug(f"[Alembic] Successfully imported metadata from {module_name}")
     except ImportError as e:
         logger.debug(f"[Alembic] Warning: Could not import {module_name}: {e}")
     except AttributeError as e:
         logger.debug(f"[Alembic] Warning: No Base class found in {module_name}: {e}")
 
-# 如果没有找到任何metadata，使用fallback
+# 濡傛灉娌℃湁鎵惧埌浠讳綍metadata锛屼娇鐢╢allback
 if target_metadata is None:
     logger.debug("[Alembic] Warning: No model metadata found, using empty metadata")
     from sqlalchemy import MetaData
@@ -114,7 +114,7 @@ def run_migrations_offline() -> None:
 
     """
     try:
-        # 使用项目配置中的数据库URL
+        # 浣跨敤椤圭洰閰嶇疆涓殑鏁版嵁搴揢RL
         url = settings.DATABASE_URL
         logger.debug(f"[Alembic Offline] Using database URL: {url}")
         
@@ -123,9 +123,9 @@ def run_migrations_offline() -> None:
             target_metadata=target_metadata,
             literal_binds=True,
             dialect_opts={"paramstyle": "named"},
-            compare_type=True,      # 比较列类型变化
-            compare_server_default=True,  # 比较服务器默认值
-            render_as_batch=True,   # 支持批量操作（SQLite必需）
+            compare_type=True,      # 姣旇緝鍒楃被鍨嬪彉鍖?
+            compare_server_default=True,  # 姣旇緝鏈嶅姟鍣ㄩ粯璁ゅ€?
+            render_as_batch=True,   # 鏀寔鎵归噺鎿嶄綔锛圫QLite蹇呴渶锛?
         )
 
         with context.begin_transaction():
@@ -146,13 +146,13 @@ def run_migrations_online() -> None:
 
     """
     try:
-        # 使用项目配置中的数据库URL
+        # 浣跨敤椤圭洰閰嶇疆涓殑鏁版嵁搴揢RL
         DATABASE_URL = settings.DATABASE_URL
         logger.debug(f"[Alembic Online] Original database URL: {DATABASE_URL}")
         
-        # Alembic需要同步驱动，所以替换异步驱动名称
+        # Alembic闇€瑕佸悓姝ラ┍鍔紝鎵€浠ユ浛鎹㈠紓姝ラ┍鍔ㄥ悕绉?
         if DATABASE_URL.startswith("sqlite+aiosqlite"):
-            # SQLite的异步驱动替换为同步驱动
+            # SQLite鐨勫紓姝ラ┍鍔ㄦ浛鎹负鍚屾椹卞姩
             DATABASE_URL = DATABASE_URL.replace("sqlite+aiosqlite", "sqlite")
         elif DATABASE_URL.startswith("postgresql+asyncpg"):
             DATABASE_URL = DATABASE_URL.replace("postgresql+asyncpg", "postgresql+psycopg2")
@@ -171,16 +171,16 @@ def run_migrations_online() -> None:
             configuration,
             prefix="sqlalchemy.",
             poolclass=pool.NullPool,
-            echo=False,  # 设置为True可以看到SQL语句
+            echo=False,  # 璁剧疆涓篢rue鍙互鐪嬪埌SQL璇彞
         )
 
         with connectable.connect() as connection:
             context.configure(
                 connection=connection,
                 target_metadata=target_metadata,
-                compare_type=True,           # 比较列类型变化
-                compare_server_default=True, # 比较服务器默认值
-                render_as_batch=True,        # 支持批量操作（SQLite必需）
+                compare_type=True,           # 姣旇緝鍒楃被鍨嬪彉鍖?
+                compare_server_default=True, # 姣旇緝鏈嶅姟鍣ㄩ粯璁ゅ€?
+                render_as_batch=True,        # 鏀寔鎵归噺鎿嶄綔锛圫QLite蹇呴渶锛?
             )
 
             with context.begin_transaction():

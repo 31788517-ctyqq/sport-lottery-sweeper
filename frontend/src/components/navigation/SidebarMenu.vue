@@ -67,7 +67,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import menuConfig from '@/components/Sidebar/MenuConfig.js'
 
@@ -118,13 +118,33 @@ const toggleCollapse = () => {
 const checkMobile = () => {
   isMobile.value = window.innerWidth < 768
 }
+const setActiveSubmenu = () => {
+  visibleMenuItems.value.forEach(item => {
+    if (!item.children || item.children.length === 0 || !item.name) return
+    const childMatch = item.children.some(child => route.path.startsWith(child.path))
+    const parentMatch = item.path && route.path.startsWith(item.path)
+    if (childMatch || parentMatch) {
+      isSubmenuVisible.value[item.name] = true
+    }
+  })
+}
+
 onMounted(() => {
   checkMobile()
   window.addEventListener('resize', checkMobile)
+  setActiveSubmenu()
 })
 onUnmounted(() => {
   window.removeEventListener('resize', checkMobile)
 })
+
+watch(
+  () => route.path,
+  () => {
+    setActiveSubmenu()
+  },
+  { immediate: true }
+)
 
 // 手势处理
 const onTouchStart = (e) => {
@@ -147,11 +167,6 @@ defineExpose({ openMenu, closeMenu })
 // 缺失组件的路径黑名单（根据自动化扫描结果）
 const missingPaths = [
   '/admin/data-source',
-  '/admin/draw-prediction',
-  '/admin/draw-prediction/data-feature',
-  '/admin/draw-prediction/model-train-eval',
-  '/admin/draw-prediction/model-manage-deploy',
-  '/admin/draw-prediction/prediction-monitor',
   '/admin/ip-pool',
   '/admin/headers-management',
   '/admin/task-execution-monitor',

@@ -1,6 +1,8 @@
 const BENIGN_ERROR_PATTERNS = [
   /ResizeObserver loop completed with undelivered notifications/i,
-  /ResizeObserver loop limit exceeded/i
+  /ResizeObserver loop limit exceeded/i,
+  /^cancel$/i,
+  /canceled/i
 ]
 
 export const getErrorMessage = (payload) => {

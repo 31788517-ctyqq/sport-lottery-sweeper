@@ -8,6 +8,8 @@ import csv
 import json
 import io
 import copy
+import re
+
 
 from backend.core.security import oauth2_scheme
 from backend.dependencies import get_current_user as get_current_user_dependency
@@ -977,61 +979,69 @@ class LatestDateTimeResponse(BaseModel):
 async def get_latest_date_times(db: Session = Depends(get_db)):
     """获取最新的比赛日期时间选项（如：26024, 26023, 26022）"""
     try:
-        # 从数据库获取最近的比赛日期时间
-        from sqlalchemy import text
-        
+        from backend.models.matches import FootballMatch
+        from sqlalchemy import desc
+
         logger.info("开始获取最新日期时间选项")
-        
-        # 查询最近的比赛期号（date_time字段），按降序排列，取前5个
-        # 仅使用100qiu数据源
-        sql = text("""
-            SELECT DISTINCT date_time
-            FROM football_matches
-            WHERE date_time IS NOT NULL AND date_time > 0
-              AND data_source = '100qiu'
-            ORDER BY date_time DESC
-            LIMIT 5
-        """)
-        
-        logger.info(f"执行SQL查询: {sql}")
+
+        periods = set()
+
+        def add_period(value):
+            if value is None:
+                return
+            text = str(value).strip()
+            if not text:
+                return
+            match = re.search(r"(\d{5,})", text)
+            if not match:
+                return
+            num = int(match.group(1))
+            if 20000 <= num <= 99999:
+                periods.add(str(num))
+
         try:
-            result = db.execute(sql)
-            rows = result.fetchall()
-            
-            logger.info(f"查询返回 {len(rows)} 行数据")
-            date_times = []
-            
-            for i, row in enumerate(rows):
-                value = row[0]
-                logger.info(f"行 {i}: 原始值={value}, 类型={type(value)}")
-                # 确保转换为字符串
-                if value is not None:
-                    str_value = str(value)
-                    logger.info(f"  转换为字符串: {str_value}")
-                    date_times.append(str_value)
-            
-            if not date_times:
-                logger.warning("100qiu来源无有效date_time数据")
-        
+            rows = db.query(FootballMatch.date_time) \
+                .filter(FootballMatch.data_source == "100qiu") \
+                .filter(FootballMatch.date_time.isnot(None)) \
+                .order_by(desc(FootballMatch.date_time)) \
+                .limit(20) \
+                .all()
+            for (date_time,) in rows:
+                add_period(date_time)
         except Exception as db_error:
-            logger.error(f"数据库查询失败: {db_error}")
-            date_times = []
-        
-        # 如果没有数据，返回空列表，由前端自行处理空态
+            logger.error(f"数据库查询date_time失败: {db_error}")
+
+        if len(periods) < 5:
+            try:
+                rows = db.query(FootballMatch) \
+                    .filter(FootballMatch.data_source == "100qiu") \
+                    .order_by(desc(FootballMatch.match_time), desc(FootballMatch.id)) \
+                    .limit(300) \
+                    .all()
+                for match in rows:
+                    add_period(match.date_time)
+                    if isinstance(match.source_attributes, dict):
+                        add_period(match.source_attributes.get("dateTime"))
+                    if match.match_id:
+                        add_period(str(match.match_id).split("_")[0])
+                    if len(periods) >= 5:
+                        break
+            except Exception as fallback_error:
+                logger.error(f"回退读取最近场次失败: {fallback_error}")
+
+        date_times = sorted(periods, key=lambda x: int(x), reverse=True)[:5]
+
         if not date_times:
-            logger.warning("没有找到有效的100qiu date_time数据，返回空列表")
-            date_times = []
-        else:
-            logger.info(f"有效date_time值: {date_times}")
-        
+            logger.warning("没有找到有效的100qiu期号数据，返回空列表")
+
         response = LatestDateTimeResponse(
             dateTimes=date_times,
             total=len(date_times)
         )
-        
+
         logger.info(f"API响应: {response.model_dump()}")
         return response
-        
+
     except Exception as e:
         logger.error(f"获取最新日期时间选项失败: {str(e)}", exc_info=True)
         # 出错时返回空列表，避免前端误选不存在的期号
@@ -1039,3 +1049,4 @@ async def get_latest_date_times(db: Session = Depends(get_db)):
             dateTimes=[],
             total=0
         )
+

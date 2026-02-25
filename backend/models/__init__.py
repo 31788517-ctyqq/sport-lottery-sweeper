@@ -35,10 +35,12 @@ from .draw_feature import DrawFeature
 from .draw_training_job import DrawTrainingJob
 from .draw_model_version import DrawModelVersion
 from .draw_prediction_result import DrawPredictionResult
+from .poisson_11_result import Poisson11Result
 from .llm_provider import LLMProvider, LLMProviderTypeEnum, LLMProviderStatusEnum
 from .log_entry import LogEntry
 from .role import Role
 from .multi_strategy import MultiStrategyTask
+from .beidan_betting import BeidanBettingScheme, BeidanBettingSchemeItem
 from .intelligence_collection import (
     IntelligenceCollectionTask,
     IntelligenceCollectionMatchSubtask,
@@ -66,6 +68,8 @@ __all__ = [
     "IPPool",
     "LLMProvider",
     "MultiStrategyTask",
+    "BeidanBettingScheme",
+    "BeidanBettingSchemeItem",
     "IntelligenceCollectionTask",
     "IntelligenceCollectionMatchSubtask",
     "IntelligenceCollectionItem",

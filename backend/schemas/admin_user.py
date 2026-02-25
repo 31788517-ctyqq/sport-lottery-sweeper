@@ -5,6 +5,7 @@ from pydantic import BaseModel, EmailStr, Field, validator
 from typing import Optional, List, Dict, Any
 from datetime import datetime
 from enum import Enum
+import json
 
 
 class AdminRoleEnum(str, Enum):
@@ -129,6 +130,18 @@ class AdminUserResponse(AdminUserBase):
     created_at: datetime
     updated_at: datetime
     remarks: Optional[str] = None
+    preferences: Optional[Dict[str, Any]] = None
+
+    @validator('preferences', pre=True)
+    def parse_preferences(cls, v):
+        if v is None:
+            return None
+        if isinstance(v, str):
+            try:
+                return json.loads(v)
+            except Exception:
+                return {}
+        return v
     
     class Config:
         from_attributes = True

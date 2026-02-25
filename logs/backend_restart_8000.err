@@ -1,87 +1,89 @@
-2026-02-21 00:25:06,942 - INFO - Starting backend server on port 8000...
-2026-02-21 00:25:06,955 - INFO - Starting server on 0.0.0.0:8000
+INFO:     Will watch for changes in these directories: ['C:\\Users\\11581\\Downloads\\sport-lottery-sweeper']
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [34604] using WatchFiles
 C:\Users\11581\AppData\Local\Programs\Python\Python311\Lib\site-packages\pydantic\_internal\_fields.py:149: UserWarning: Field "model_used" has conflict with protected namespace "model_".
 
 You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
   warnings.warn(
-2026-02-21 00:25:08,430 - INFO - lottery module imported successfully
-2026-02-21 00:25:08,626 - ERROR - matches module import failed: No module named 'backend.schemas.crawler_enhanced'
-2026-02-21 00:25:08,628 - ERROR - public_matches module import failed: No module named 'backend.schemas.crawler_enhanced'
-2026-02-21 00:25:09,402 - WARNING - match_admin module not available: No module named 'backend.schemas.crawler_enhanced'
-2026-02-21 00:25:09,427 - INFO - admin module imported successfully
-2026-02-21 00:25:09,506 - INFO - SUCCESS auth æ¨¡å—å¯¼å…¥æˆåŠŸ
-2026-02-21 00:25:09,508 - INFO -   auth.router å¯¹è±¡: <fastapi.routing.APIRouter object at 0x00000286F2249490>
-2026-02-21 00:25:09,508 - INFO -   auth.router è·\ue21c”±æ•? 3
-2026-02-21 00:25:09,536 - INFO - SUCCESS intelligence æ¨¡å—å¯¼å…¥æˆåŠŸ
-2026-02-21 00:25:09,546 - INFO - SUCCESS data_submission æ¨¡å—å¯¼å…¥æˆåŠŸ
-2026-02-21 00:25:09,588 - INFO - SUCCESS caipiao_data æ¨¡å—å¯¼å…¥æˆåŠŸ
-2026-02-21 00:25:09,588 - INFO -   caipiao_data.router å¯¹è±¡: <fastapi.routing.APIRouter object at 0x0000028692A4CED0>
-2026-02-21 00:25:09,588 - INFO -   caipiao_data.router è·\ue21c”±æ•? 7
-2026-02-21 00:25:09,599 - INFO - SUCCESS draw_prediction æ¨¡å—å¯¼å…¥æˆåŠŸ
-2026-02-21 00:25:09,624 - INFO - SUCCESS hedging æ¨¡å—å¯¼å…¥æˆåŠŸ
-2026-02-21 00:25:09,631 - INFO - SUCCESS crawler æ¨¡å—å¯¼å…¥æˆåŠŸ
-2026-02-21 00:25:09,653 - INFO - SUCCESS crawler_alert æ¨¡å—å¯¼å…¥æˆåŠŸ
-2026-02-21 00:25:09,660 - INFO - SUCCESS crawler_monitor æ¨¡å—å¯¼å…¥æˆåŠŸ
-2026-02-21 00:25:09,675 - INFO - SUCCESS crawler_tasks_adapter æ¨¡å—å¯¼å…¥æˆåŠŸ
-2026-02-21 00:25:09,679 - INFO - SUCCESS data_center_adapter æ¨¡å—å¯¼å…¥æˆåŠŸ
-2026-02-21 00:25:09,692 - INFO - SUCCESS headers_adapter æ¨¡å—å¯¼å…¥æˆåŠŸ
-2026-02-21 00:25:09,718 - INFO - SUCCESS ip_pool_adapter æ¨¡å—å¯¼å…¥æˆåŠŸ
-2026-02-21 00:25:13,039 - INFO - SUCCESS llm æ¨¡å—å¯¼å…¥æˆåŠŸ
-2026-02-21 00:25:13,040 - INFO -   llm.router å¯¹è±¡: <fastapi.routing.APIRouter object at 0x0000028692DF2F10>
-2026-02-21 00:25:13,041 - INFO -   llm.router è·\ue21c”±æ•? 1
-2026-02-21 00:25:13,175 - INFO - SUCCESS llm_providers æ¨¡å—å¯¼å…¥æˆåŠŸ
-2026-02-21 00:25:13,177 - INFO -   llm_providers.router å¯¹è±¡: <fastapi.routing.APIRouter object at 0x000002869CBA7110>
-2026-02-21 00:25:13,178 - INFO -   llm_providers.router è·\ue21c”±æ•? 14
-2026-02-21 00:25:14,693 - INFO - SUCCESS log_analysis æ¨¡å—å¯¼å…¥æˆåŠŸ
-2026-02-21 00:25:14,712 - INFO - SUCCESS lottery_schedule æ¨¡å—å¯¼å…¥æˆåŠŸ
-2026-02-21 00:25:14,719 - INFO - SUCCESS lottery_simple æ¨¡å—å¯¼å…¥æˆåŠŸ
-2026-02-21 00:25:14,730 - INFO - SUCCESS lottery_test æ¨¡å—å¯¼å…¥æˆåŠŸ
-2026-02-21 00:25:14,748 - INFO - SUCCESS lottery_direct æ¨¡å—å¯¼å…¥æˆåŠŸ
-2026-02-21 00:25:14,753 - INFO - SUCCESS lottery_final æ¨¡å—å¯¼å…¥æˆåŠŸ
-2026-02-21 00:25:14,816 - INFO - SUCCESS data_source_100qiu æ¨¡å—å¯¼å…¥æˆåŠŸ
-2026-02-21 00:25:14,818 - INFO -   data_source_100qiu.router å¯¹è±¡: <fastapi.routing.APIRouter object at 0x000002869EBD2810>
-2026-02-21 00:25:14,818 - INFO -   data_source_100qiu.router è·\ue21c”±æ•? 10
-2026-02-21 00:25:14,830 - INFO - === æ³¨å†Œç»Ÿä¸€Matches API ===
-2026-02-21 00:25:14,831 - ERROR - FAILED unified_matches æ¨¡å—å¯¼å…¥å¤±è´¥: cannot import name 'unified_matches' from partially initialized module 'backend.api.v1' (most likely due to a circular import) (C:\Users\11581\Downloads\sport-lottery-sweeper\backend\api\v1\__init__.py)
+INFO:backend.api.v1:lottery module imported successfully
+INFO:backend.api.v1:matches module imported successfully
+INFO:backend.api.v1:public_matches module imported successfully
+WARNING:backend.tasks:[tasks] skip module import backend.tasks.intelligence_tasks: unterminated string literal (detected at line 43) (intelligence_tasks.py, line 43)
+INFO:backend.api.v1:admin module imported successfully
+INFO:backend.api.v1:SUCCESS auth æ¨¡å—å¯¼å…¥æˆåŠŸ
+INFO:backend.api.v1:  auth.router å¯¹è±¡: <fastapi.routing.APIRouter object at 0x000001C4FF45BA50>
+INFO:backend.api.v1:  auth.router è·\ue21c”±æ•? 3
+INFO:backend.api.v1:SUCCESS intelligence æ¨¡å—å¯¼å…¥æˆåŠŸ
+INFO:backend.api.v1:SUCCESS data_submission æ¨¡å—å¯¼å…¥æˆåŠŸ
+INFO:backend.api.v1:SUCCESS caipiao_data æ¨¡å—å¯¼å…¥æˆåŠŸ
+INFO:backend.api.v1:  caipiao_data.router å¯¹è±¡: <fastapi.routing.APIRouter object at 0x000001C4FF39F8D0>
+INFO:backend.api.v1:  caipiao_data.router è·\ue21c”±æ•? 7
+INFO:backend.api.v1:SUCCESS draw_prediction æ¨¡å—å¯¼å…¥æˆåŠŸ
+INFO:backend.api.v1:SUCCESS hedging æ¨¡å—å¯¼å…¥æˆåŠŸ
+INFO:backend.api.v1:SUCCESS crawler æ¨¡å—å¯¼å…¥æˆåŠŸ
+INFO:backend.api.v1:SUCCESS crawler_alert æ¨¡å—å¯¼å…¥æˆåŠŸ
+INFO:backend.api.v1:SUCCESS crawler_monitor æ¨¡å—å¯¼å…¥æˆåŠŸ
+INFO:backend.api.v1:SUCCESS crawler_tasks_adapter æ¨¡å—å¯¼å…¥æˆåŠŸ
+INFO:backend.api.v1:SUCCESS data_center_adapter Ä£¿éµ¼Èë³É¹¦
+INFO:backend.api.v1:SUCCESS data_center_adapter Â·ÓÉ×¢²á³É¹¦
+INFO:backend.api.v1:SUCCESS headers_adapter æ¨¡å—å¯¼å…¥æˆåŠŸ
+INFO:backend.api.v1:SUCCESS ip_pool_adapter æ¨¡å—å¯¼å…¥æˆåŠŸ
+INFO:backend.api.v1:SUCCESS llm æ¨¡å—å¯¼å…¥æˆåŠŸ
+INFO:backend.api.v1:  llm.router å¯¹è±¡: <fastapi.routing.APIRouter object at 0x000001C4FFAC0D90>
+INFO:backend.api.v1:  llm.router è·\ue21c”±æ•? 1
+INFO:backend.api.v1:SUCCESS llm_providers æ¨¡å—å¯¼å…¥æˆåŠŸ
+INFO:backend.api.v1:  llm_providers.router å¯¹è±¡: <fastapi.routing.APIRouter object at 0x000001C4A58D8B90>
+INFO:backend.api.v1:  llm_providers.router è·\ue21c”±æ•? 14
+INFO:backend.api.v1:SUCCESS log_analysis æ¨¡å—å¯¼å…¥æˆåŠŸ
+INFO:backend.api.v1:SUCCESS lottery_schedule æ¨¡å—å¯¼å…¥æˆåŠŸ
+INFO:backend.api.v1:SUCCESS lottery_simple æ¨¡å—å¯¼å…¥æˆåŠŸ
+INFO:backend.api.v1:SUCCESS lottery_test æ¨¡å—å¯¼å…¥æˆåŠŸ
+INFO:backend.api.v1:SUCCESS lottery_direct æ¨¡å—å¯¼å…¥æˆåŠŸ
+INFO:backend.api.v1:SUCCESS lottery_final æ¨¡å—å¯¼å…¥æˆåŠŸ
+INFO:backend.api.v1:SUCCESS data_source_100qiu æ¨¡å—å¯¼å…¥æˆåŠŸ
+INFO:backend.api.v1:  data_source_100qiu.router å¯¹è±¡: <fastapi.routing.APIRouter object at 0x000001C4A780B9D0>
+INFO:backend.api.v1:  data_source_100qiu.router è·\ue21c”±æ•? 10
+INFO:backend.api.v1:=== æ³¨å†Œç»Ÿä¸€Matches API ===
+ERROR:backend.api.v1:FAILED unified_matches æ¨¡å—å¯¼å…¥å¤±è´¥: cannot import name 'unified_matches' from partially initialized module 'backend.api.v1' (most likely due to a circular import) (C:\Users\11581\Downloads\sport-lottery-sweeper\backend\api\v1\__init__.py)
 Traceback (most recent call last):
-  File "C:\Users\11581\Downloads\sport-lottery-sweeper\backend\api\v1\__init__.py", line 207, in <module>
+  File "C:\Users\11581\Downloads\sport-lottery-sweeper\backend\api\v1\__init__.py", line 210, in <module>
     from . import unified_matches
 ImportError: cannot import name 'unified_matches' from partially initialized module 'backend.api.v1' (most likely due to a circular import) (C:\Users\11581\Downloads\sport-lottery-sweeper\backend\api\v1\__init__.py)
-2026-02-21 00:25:14,836 - INFO - API V1 ä¸»è·¯ç”±å™¨åˆå\ue750åŒ–å®Œæˆï¼Œè·\ue21c”±æ•? 132
-2026-02-21 00:25:15,148 - INFO - API v1 Â·ÓÉÒÑ¼ÓÔØ
-2026-02-21 00:25:15,156 - INFO - WebSocket Â·ÓÉÒÑ¼ÓÔØ
-2026-02-21 00:25:15,157 - INFO - APIÂ·ÓÉÆ÷³õÊ¼»¯Íê³É£¬ÒÑÒÆ³ıËùÓĞ·ÏÆúµÄÏòºó¼æÈİÂ·ÓÉ
-2026-02-21 00:25:15,157 - INFO - Êı¾İ¿âÁ¬½ÓURL: sqlite:///C:/Users/11581/Downloads/sport-lottery-sweeper/data/sport_lottery.db
-2026-02-21 00:25:15,184 - INFO - Òì³£´¦ÀíÆ÷ÅäÖÃÍê³É
-2026-02-21 00:25:15,185 - INFO - Application starting up...
-2026-02-21 00:25:15,185 - INFO - Registering API routes...
-2026-02-21 00:25:15,486 - INFO - API v1 routes registered successfully
-2026-02-21 00:25:15,502 - INFO - Crawler monitoring API routes registered (/api/v1/admin/crawler/monitor)
-2026-02-21 00:25:15,569 - INFO - Request header management API routes registered (/api/v1/admin/headers)
-2026-02-21 00:25:15,621 - INFO - IP pool management API routes registered (/api/v1/admin/ip-pools)
-2026-02-21 00:25:15,636 - INFO - Task management API routes registered (/api/v1/admin/tasks)
-2026-02-21 00:25:15,666 - INFO - User profile API routes registered (/api/v1/admin/user-profiles)
-2026-02-21 00:25:15,727 - INFO - Role management API routes registered (/api/v1/admin/roles)
-2026-02-21 00:25:15,739 - INFO - Permission management API routes registered (/api/v1/admin/permissions)
-2026-02-21 00:25:16,135 - INFO - Crawler task management API routes registered (/api/v1/admin/crawler/tasks)
-2026-02-21 00:25:16,177 - INFO - Task monitoring API routes registered (/api/v1/task-monitor)
-2026-02-21 00:25:16,227 - INFO - Log API routes registered (/api/v1/admin/system/logs)
-2026-02-21 00:25:16,244 - INFO - Crawler data source API routes registered (/api/v1/admin/crawler/sources)
-2026-02-21 00:25:16,259 - INFO - Crawler config API routes registered (/api/v1/admin/crawler/config)
-2026-02-21 00:25:16,273 - INFO - Crawler intelligence API routes registered (/api/v1/admin/crawler/intelligence)
-2026-02-21 00:25:16,461 - INFO - Admin user management API routes registered (/api/v1/admin/admin-users)
-2026-02-21 00:25:16,529 - INFO - Department management API routes registered (/api/v1/admin/departments)
-2026-02-21 00:25:16,569 - INFO - Regular user management API routes registered (/api/v1/admin/users)
-2026-02-21 00:25:16,645 - INFO - Frontend user management API routes registered (/api/v1/admin/frontend-users)
-2026-02-21 00:25:16,664 - INFO - Simple user API routes registered (/api/v1/admin/simple-users)
-2026-02-21 00:25:17,059 - INFO - Beidan filter API routes registered (/api/v1/beidan-filter)
-2026-02-21 00:25:17,389 - INFO - ²ßÂÔ high_probability_winning ÒÑ×¢²á
-2026-02-21 00:25:17,395 - INFO - ²ßÂÔ balanced_odds ÒÑ×¢²á
-2026-02-21 00:25:17,396 - INFO - ²ßÂÔ recent_form ÒÑ×¢²á
-2026-02-21 00:25:17,419 - INFO - Multi strategy API routes registered (/api/v1/multi-strategy)
-2026-02-21 00:25:17,419 - INFO - Òì³£´¦ÀíÆ÷ÅäÖÃÍê³É
-2026-02-21 00:25:17,420 - INFO - Exception handlers registered
-2026-02-21 00:25:17,481 - INFO - Server starting on 0.0.0.0:8000
-INFO:     Started server process [5316]
+INFO:backend.api.v1:API V1 ä¸»è·¯ç”±å™¨åˆå\ue750åŒ–å®Œæˆï¼Œè·\ue21c”±æ•? 172
+INFO:backend.api:API v1 Â·ÓÉÒÑ¼ÓÔØ
+INFO:backend.api:WebSocket Â·ÓÉÒÑ¼ÓÔØ
+INFO:backend.api:APIÂ·ÓÉÆ÷³õÊ¼»¯Íê³É£¬ÒÑÒÆ³ıËùÓĞ·ÏÆúµÄÏòºó¼æÈİÂ·ÓÉ
+INFO:backend.main:Êı¾İ¿âÁ¬½ÓURL: sqlite:///C:/Users/11581/Downloads/sport-lottery-sweeper/data/sport_lottery.db
+INFO:backend.exceptions:Òì³£´¦ÀíÆ÷ÅäÖÃÍê³É
+INFO:backend.main:Application starting up...
+INFO:backend.main:Registering API routes...
+INFO:backend.main:API v1 routes registered successfully
+INFO:backend.main:Crawler monitoring API routes registered (/api/v1/admin/crawler/monitor)
+INFO:backend.main:Request header management API routes registered (/api/v1/admin/headers)
+INFO:backend.main:IP pool management API routes registered (/api/v1/admin/ip-pools)
+INFO:backend.main:Task management API routes registered (/api/v1/admin/tasks)
+INFO:backend.main:User profile API routes registered (/api/v1/admin/user-profiles)
+INFO:backend.main:Role management API routes registered (/api/v1/admin/roles)
+INFO:backend.main:Permission management API routes registered (/api/v1/admin/permissions)
+INFO:backend.main:Crawler task management API routes registered (/api/v1/admin/crawler/tasks)
+INFO:backend.main:Task monitoring API routes registered (/api/v1/task-monitor)
+INFO:backend.main:Log API routes registered (/api/v1/admin/system/logs)
+INFO:backend.main:Crawler data source API routes registered (/api/v1/admin/crawler/sources)
+INFO:backend.main:Crawler config API routes registered (/api/v1/admin/crawler/config)
+INFO:backend.main:Crawler intelligence API routes registered (/api/v1/admin/crawler/intelligence)
+INFO:backend.main:Admin user management API routes registered (/api/v1/admin/admin-users)
+INFO:backend.main:Department management API routes registered (/api/v1/admin/departments)
+INFO:backend.main:Regular user management API routes registered (/api/v1/admin/users)
+INFO:backend.main:Frontend user management API routes registered (/api/v1/admin/frontend-users)
+INFO:backend.main:Simple user API routes registered (/api/v1/admin/simple-users)
+INFO:backend.main:Beidan filter API routes registered (/api/v1/beidan-filter)
+INFO:backend.main:Beidan betting simulator API routes registered (/api/v1/beidan-betting)
+INFO:backend.services.multi_strategy_service:²ßÂÔ high_probability_winning ÒÑ×¢²á
+INFO:backend.services.multi_strategy_service:²ßÂÔ balanced_odds ÒÑ×¢²á
+INFO:backend.services.multi_strategy_service:²ßÂÔ recent_form ÒÑ×¢²á
+INFO:backend.main:Multi strategy API routes registered (/api/v1/multi-strategy)
+INFO:backend.exceptions:Òì³£´¦ÀíÆ÷ÅäÖÃÍê³É
+INFO:backend.main:Exception handlers registered
+INFO:     Started server process [6176]
 INFO:     Waiting for application startup.
-2026-02-21 00:25:17,531 - INFO - Application starting up...
+INFO:backend.main:Application starting up...

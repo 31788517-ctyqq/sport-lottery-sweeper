@@ -7,8 +7,10 @@ logger = logging.getLogger(__name__)
 from backend.database import SessionLocal
 from backend.services.alert_service import check_and_trigger_alert
 from backend.services.draw_prediction_service import get_predictions
+from backend.services.poisson_11_service import scan_for_date
 from backend.models.draw_prediction_result import DrawPredictionResult
 from datetime import datetime, timedelta
+
 
 @celery_app.task
 def update_prediction_results():
@@ -83,8 +85,31 @@ def monitor_and_alert():
         db.close()
 
 
+@celery_app.task
+def scan_poisson_11_daily():
+    """
+    定时任务：对当日竞彩进行 1-1 Poisson 扫盘
+    """
+    db = SessionLocal()
+    try:
+        target_date = datetime.now().date()
+        results = scan_for_date(db, target_date, data_source="yingqiu_bd", overwrite=True)
+        return {
+            "status": "success",
+            "date": target_date.isoformat(),
+            "total": len(results),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except Exception as e:
+        logger.debug(f"[定时任务] 1-1 Poisson 扫盘失败: {str(e)}")
+        raise
+    finally:
+        db.close()
+
+
 # 配置定时任务执行周期
 @celery_app.on_after_configure.connect
+
 def setup_periodic_tasks(sender, **kwargs):
     """
     设置定时任务执行周期
@@ -102,7 +127,15 @@ def setup_periodic_tasks(sender, **kwargs):
         schedule=crontab(hour=9, minute=0),
         name='monitor_accuracy_daily'
     )
+
+    # 每天上午10点执行专抓1-1扫盘
+    sender.add_periodic_task(
+        scan_poisson_11_daily,
+        schedule=crontab(hour=10, minute=0),
+        name='poisson_11_daily_scan'
+    )
     logger.debug("[Celery] 定时任务已配置")
+
 
 
 from celery.schedules import crontab

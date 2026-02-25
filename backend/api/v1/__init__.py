@@ -111,9 +111,12 @@ except Exception as e:
 
 try:
     from . import data_center_adapter
-    logger.info("SUCCESS data_center_adapter 妯″潡瀵煎叆鎴愬姛")
+    logger.info("SUCCESS data_center_adapter 模块导入成功")
+    router.include_router(data_center_adapter.router, tags=["data-center-adapter"])
+    logger.info("SUCCESS data_center_adapter 路由注册成功")
 except Exception as e:
-    logger.error(f"FAILED data_center_adapter 妯″潡瀵煎叆澶辫触: {e}")
+    logger.error(f"FAILED data_center_adapter 模块导入失败: {e}")
+
 
 try:
     from . import headers_adapter

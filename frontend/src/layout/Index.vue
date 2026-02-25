@@ -39,6 +39,7 @@
             <span>精算工具中心</span>
           </template>
           <el-menu-item index="/admin/beidan-filter">北单三维筛选器</el-menu-item>
+          <el-menu-item index="/admin/beidan-betting-sim">北单投注模拟</el-menu-item>
         </el-sub-menu>
 
         <!-- 3. 数据源管理 -->
@@ -76,7 +77,11 @@
           <el-menu-item index="/admin/draw-prediction/training-evaluation">模型训练与评估</el-menu-item>
           <el-menu-item index="/admin/draw-prediction/model-deployment">模型管理与部署</el-menu-item>
           <el-menu-item index="/admin/draw-prediction/prediction-monitoring">预测服务与监控</el-menu-item>
+          <el-menu-item index="/admin/draw-prediction/ai-draw">AI平局预测</el-menu-item>
+          <el-menu-item index="/admin/draw-prediction/poisson-11">专抓1-1</el-menu-item>
         </el-sub-menu>
+
+
 
         <!-- 6. AI服务管理 -->
         <el-sub-menu index="/admin/ai-services">

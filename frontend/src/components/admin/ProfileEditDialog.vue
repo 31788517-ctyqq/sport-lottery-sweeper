@@ -143,16 +143,17 @@ watch(visible, (val) => {
 })
 
 const loadUserData = () => {
+  const prefs = props.userInfo?.preferences || {}
   Object.assign(formData, {
     id: props.userInfo?.id || null,
     username: props.userInfo?.username || '',
-    realName: props.userInfo?.realName || '',
+    realName: props.userInfo?.realName || props.userInfo?.real_name || '',
     email: props.userInfo?.email || '',
     phone: props.userInfo?.phone || '',
-    gender: props.userInfo?.gender ?? 0,
-    birthday: props.userInfo?.birthday || '',
-    avatar: props.userInfo?.avatar || '',
-    bio: props.userInfo?.bio || ''
+    gender: props.userInfo?.gender ?? prefs.gender ?? 0,
+    birthday: props.userInfo?.birthday || prefs.birthday || '',
+    avatar: props.userInfo?.avatar || prefs.avatar || '',
+    bio: props.userInfo?.bio || prefs.bio || ''
   })
 
   nextTick(() => {
@@ -187,9 +188,17 @@ const handleSubmit = async () => {
     await formRef.value.validate()
     submitting.value = true
 
-    const submitData = { ...formData }
-    delete submitData.username
-    delete submitData.id
+    const submitData = {
+      real_name: formData.realName,
+      email: formData.email,
+      phone: formData.phone,
+      preferences: {
+        avatar: formData.avatar,
+        bio: formData.bio,
+        gender: formData.gender,
+        birthday: formData.birthday
+      }
+    }
 
     await http.put('/api/v1/admin/admin-users/current-user', submitData)
 

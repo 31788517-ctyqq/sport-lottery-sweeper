@@ -1,12 +1,16 @@
 ﻿from __future__ import annotations
 
+import ast
 import asyncio
 import json
+
 import logging
 import os
 import re
+import time
 import uuid
 from datetime import datetime, timedelta
+
 from html import unescape
 from typing import Any, Dict, List, Optional
 from urllib.parse import urljoin, urlparse
@@ -262,7 +266,11 @@ def _default_alias_dictionary() -> Dict[str, Any]:
     return {
         "league": {},
         "team": {},
+        "meta": {
+            "kickoff_tolerance_hours": 2,
+        },
     }
+
 
 
 def _normalize_source_timeout_map(raw: Any, fallback: Dict[str, Any]) -> Dict[str, float]:
@@ -720,7 +728,10 @@ def _build_alias_dictionary_payload(config: Dict[str, Any], *, source: str) -> D
 
     merged["league"] = _normalize_alias_map(merged.get("league"))
     merged["team"] = _normalize_alias_map(merged.get("team"))
+    meta = merged.get("meta") if isinstance(merged.get("meta"), dict) else {}
+    merged["meta"] = meta
     return {"dictionary": merged, "source": source}
+
 
 
 async def _load_alias_dictionary(db: AsyncSession) -> Dict[str, Any]:
@@ -1625,6 +1636,15 @@ async def _build_task_failure_summary(db: AsyncSession, task: IntelligenceCollec
         for key, count in sorted(reason_counter.items(), key=lambda kv: kv[1], reverse=True)[:8]
     ]
 
+    bucket_counter: Dict[str, int] = {}
+    for reason, count in reason_counter.items():
+        bucket = _bucket_failure_reason(reason)
+        bucket_counter[bucket] = bucket_counter.get(bucket, 0) + int(count)
+    reason_buckets = [
+        {"bucket": key, "count": count}
+        for key, count in sorted(bucket_counter.items(), key=lambda kv: kv[1], reverse=True)
+    ]
+
     source_failures: List[Dict[str, Any]] = []
     for source, stats in source_runtime.items():
         blocked_count = int(source_block_counter.get(source, 0))
@@ -1649,10 +1669,211 @@ async def _build_task_failure_summary(db: AsyncSession, task: IntelligenceCollec
         "task_id": task.id,
         "task_status": task.status,
         "top_reasons": top_reasons,
+        "reason_buckets": reason_buckets,
         "source_failures": source_failures,
         "sample_logs": sample_logs,
         "generated_at": datetime.utcnow().isoformat(),
     }
+
+
+def _bucket_failure_reason(reason: str) -> str:
+    text = str(reason or "").strip().lower()
+    if not text:
+        return "其他"
+    if "timeout" in text or "超时" in text:
+        return "超时"
+    if "captcha" in text or "验证" in text or "人机" in text:
+        return "验证码/风控"
+    if "404" in text or "not found" in text or "redirect" in text or "302" in text:
+        return "404/重定向"
+    if "soft" in text and "200" in text:
+        return "软200/反爬"
+    if "js" in text or "render" in text or "empty" in text or "内容为空" in text or "no content" in text:
+        return "内容空/JS渲染"
+    if "alias" in text or "别名" in text or "language" in text or "关键词" in text or "team" in text:
+        return "别名/语言不匹配"
+    if "dom" in text or "selector" in text or "parse" in text or "解析" in text:
+        return "DOM变更/解析失败"
+    return "其他"
+
+
+def _extract_status_codes_from_logs(logs: List[Dict[str, Any]]) -> Dict[str, Any]:
+    status_counter: Dict[str, int] = {}
+    soft_filtered = 0
+    for entry in logs:
+        message = str(entry.get("message") or "")
+        if "status_codes=" not in message:
+            continue
+        match = re.search(r"status_codes=({.*?})", message)
+        if not match:
+            continue
+        raw = match.group(1)
+        try:
+            parsed = ast.literal_eval(raw)
+        except Exception:
+            parsed = None
+        if isinstance(parsed, dict):
+            for k, v in parsed.items():
+                key = str(k)
+                try:
+                    status_counter[key] = status_counter.get(key, 0) + int(v or 0)
+                except Exception:
+                    continue
+        soft_match = re.search(r"soft_filtered=(\d+)", message)
+        if soft_match:
+            try:
+                soft_filtered += int(soft_match.group(1))
+            except Exception:
+                pass
+    total = sum(status_counter.values())
+    ok_200 = int(status_counter.get("200", 0))
+    request_error = int(status_counter.get("request_error", 0) or 0) + int(status_counter.get("-1", 0) or 0)
+    return {
+        "status_codes": status_counter,
+        "total": total,
+        "ok_200": ok_200,
+        "rate_200": _calc_rate(ok_200, total),
+        "request_error": request_error,
+        "request_error_rate": _calc_rate(request_error, total),
+        "soft_filtered": soft_filtered,
+    }
+
+
+def _calc_rate(numerator: int, denominator: int) -> float:
+
+    return round(float(numerator) / float(denominator), 4) if denominator else 0.0
+
+
+async def _build_task_funnel_summary(db: AsyncSession, task: IntelligenceCollectionTask) -> Dict[str, Any]:
+    rows = (
+        await db.execute(
+            select(IntelligenceCollectionMatchSubtask).where(
+                IntelligenceCollectionMatchSubtask.task_id == task.id
+            )
+        )
+    ).scalars().all()
+
+    expected_total = sum(int(x.expected_count or 0) for x in rows)
+    if expected_total <= 0:
+        expected_total = int(task.total_count or 0)
+
+    total_candidates = sum(int(x.candidate_count or 0) for x in rows)
+    total_parsed = sum(int(x.parsed_count or 0) for x in rows)
+    total_matched = sum(int(x.matched_count or 0) for x in rows)
+    total_accepted = sum(int(x.accepted_count or 0) for x in rows)
+    total_blocked = sum(int(x.blocked_count or 0) for x in rows)
+    total_items = sum(int(x.item_count or 0) for x in rows)
+
+    matches_total = len(rows)
+    matches_with_candidates = sum(1 for x in rows if int(x.candidate_count or 0) > 0)
+    matches_with_items = sum(1 for x in rows if int(x.item_count or 0) > 0)
+    matches_with_matched = sum(1 for x in rows if int(x.matched_count or 0) > 0)
+    matches_with_accepted = sum(1 for x in rows if int(x.accepted_count or 0) > 0)
+
+    funnel = [
+        {
+            "key": "expected",
+            "label": "期望数",
+            "count": expected_total,
+            "rate_from_prev": 1.0 if expected_total > 0 else 0.0,
+            "rate_from_expected": 1.0 if expected_total > 0 else 0.0,
+        },
+        {
+            "key": "candidate",
+            "label": "候选数",
+            "count": total_candidates,
+            "rate_from_prev": _calc_rate(total_candidates, expected_total),
+            "rate_from_expected": _calc_rate(total_candidates, expected_total),
+        },
+        {
+            "key": "parsed",
+            "label": "解析数",
+            "count": total_parsed,
+            "rate_from_prev": _calc_rate(total_parsed, total_candidates),
+            "rate_from_expected": _calc_rate(total_parsed, expected_total),
+        },
+        {
+            "key": "matched",
+            "label": "命中数",
+            "count": total_matched,
+            "rate_from_prev": _calc_rate(total_matched, total_parsed),
+            "rate_from_expected": _calc_rate(total_matched, expected_total),
+        },
+        {
+            "key": "accepted",
+            "label": "采纳数",
+            "count": total_accepted,
+            "rate_from_prev": _calc_rate(total_accepted, total_matched),
+            "rate_from_expected": _calc_rate(total_accepted, expected_total),
+        },
+        {
+            "key": "blocked",
+            "label": "过滤数",
+            "count": total_blocked,
+            "rate_from_prev": _calc_rate(total_blocked, total_matched),
+            "rate_from_expected": _calc_rate(total_blocked, expected_total),
+        },
+    ]
+
+    logs = _json_loads(task.logs_json, [])
+    http_status = _extract_status_codes_from_logs(logs)
+
+    item_rows = (
+        await db.execute(
+            select(IntelligenceCollectionItem).where(IntelligenceCollectionItem.task_id == task.id)
+        )
+    ).scalars().all()
+    total_item_rows = len(item_rows)
+    title_count = sum(1 for x in item_rows if str(x.title or "").strip())
+    content_count = sum(1 for x in item_rows if str(x.content_raw or "").strip())
+    url_count = sum(1 for x in item_rows if (x.article_url or x.source_url))
+    dedup_set = set()
+    for x in item_rows:
+        url_key = str(x.article_url or x.source_url or "").strip()
+        if url_key:
+            dedup_set.add(url_key)
+        else:
+            title_key = str(x.title or "").strip().lower()
+            source_key = str(x.source_code or "").strip().lower()
+            if title_key or source_key:
+                dedup_set.add(f"{source_key}:{title_key}")
+    dedup_count = len(dedup_set)
+
+    field_completeness = {
+        "title_rate": _calc_rate(title_count, total_item_rows),
+        "content_rate": _calc_rate(content_count, total_item_rows),
+        "url_rate": _calc_rate(url_count, total_item_rows),
+    }
+
+    return {
+        "task_id": task.id,
+        "task_status": task.status,
+        "matches": {
+            "total": matches_total,
+            "with_candidates": matches_with_candidates,
+            "with_items": matches_with_items,
+            "with_matched": matches_with_matched,
+            "with_accepted": matches_with_accepted,
+        },
+        "totals": {
+            "expected": expected_total,
+            "candidates": total_candidates,
+            "parsed": total_parsed,
+            "matched": total_matched,
+            "accepted": total_accepted,
+            "blocked": total_blocked,
+            "items": total_items,
+        },
+        "http_status": http_status,
+        "quality": {
+            "total_items": total_item_rows,
+            "dedup_items": dedup_count,
+            "field_completeness": field_completeness,
+        },
+        "funnel": funnel,
+        "generated_at": datetime.utcnow().isoformat(),
+    }
+
 
 
 def _sanitize_meta_text(value: Any, default: str = "") -> str:
@@ -2414,7 +2635,12 @@ async def _simulate_collect_items(
     source_rules = source_rules_payload.get("rules", {})
     quality_thresholds = quality_thresholds_payload.get("thresholds", {})
     alias_dictionary = alias_dictionary_payload.get("dictionary", {})
+    alias_meta = alias_dictionary.get("meta") if isinstance(alias_dictionary, dict) else {}
+    kickoff_tolerance_hours = _normalize_int(
+        (alias_meta or {}).get("kickoff_tolerance_hours"), default=2, min_value=0, max_value=6
+    )
     source_timeout_seconds = _normalize_source_timeout_map(
+
         network_settings.get("source_timeout_seconds"),
         _default_network_settings().get("source_timeout_seconds", {}),
     )
@@ -3336,7 +3562,26 @@ async def _simulate_collect_items(
                 keys.append(k)
         return list(dict.fromkeys(keys))[:20]
 
+    current_entity_profile: Dict[str, Any] = {}
+
+    def _resolve_match_entity_profile(league_name: str, home_team: str, away_team: str) -> Dict[str, Any]:
+        league_aliases = _expand_league_alias(league_name)
+        home_aliases = _expand_team_alias_variants(home_team)
+        away_aliases = _expand_team_alias_variants(away_team)
+        strong_keywords = _build_strong_keywords(home_team, away_team)
+        kw_weights = _build_keyword_weights(league_name, home_team, away_team)
+        context_keywords = _build_context_keywords(kw_weights, strong_keywords)
+        return {
+            "league_aliases": league_aliases,
+            "home_aliases": home_aliases,
+            "away_aliases": away_aliases,
+            "strong_keywords": strong_keywords,
+            "kw_weights": kw_weights,
+            "context_keywords": context_keywords,
+        }
+
     def _context_hit_count(text: str, context_keywords: List[str]) -> int:
+
         low = _normalize_text(text)
         return len([k for k in context_keywords if k and k in low])
 
@@ -3434,9 +3679,11 @@ async def _simulate_collect_items(
 
     def _time_window_bounds(kickoff_time: datetime) -> tuple[datetime, datetime]:
         # Hard gate: article publish time must be in a finite pre/post window around kickoff.
-        lower = kickoff_time - timedelta(hours=time_window_before_hours)
-        upper = kickoff_time + timedelta(hours=time_window_after_hours)
+        tolerance = max(int(kickoff_tolerance_hours or 0), 0)
+        lower = kickoff_time - timedelta(hours=(time_window_before_hours + tolerance))
+        upper = kickoff_time + timedelta(hours=(time_window_after_hours + tolerance))
         return lower, upper
+
 
     def _apply_match_time_window_gate(
         source_code: str,
@@ -3556,6 +3803,22 @@ async def _simulate_collect_items(
         for kw, weight in kw_weights.items():
             if kw in low:
                 score += weight
+
+        # Disambiguation by entity hits (home/away/league).
+        entity = current_entity_profile or {}
+        home_aliases = entity.get("home_aliases") or []
+        away_aliases = entity.get("away_aliases") or []
+        league_aliases = entity.get("league_aliases") or []
+        home_hit = any(a in low for a in home_aliases)
+        away_hit = any(a in low for a in away_aliases)
+        league_hit = any(a in low for a in league_aliases)
+        if home_hit and away_hit:
+            score += 1.2
+        elif (home_hit or away_hit) and league_hit:
+            score += 0.4
+        elif (home_hit or away_hit) and not league_hit:
+            score -= 0.6
+
         # Reduce common false positives from lottery pages.
         if any(x in low for x in ("双色球", "福彩", "体彩", "开奖", "彩票", "3d", "排列三")):
             score -= 3.2
@@ -3566,6 +3829,7 @@ async def _simulate_collect_items(
             if any(x in low for x in ("injury", "weather", "referee", "lineup", "浼ょ梾", "澶╂皵", "瑁佸垽", "闃靛", "涓诲竻", "鎴樻湳", "鎴樻剰", "浜ら攱")):
                 score += 1.2
         return score
+
 
     def _build_article_candidate(
         source_code: str,
@@ -3606,7 +3870,111 @@ async def _simulate_collect_items(
             "is_article_page": False,
         }
 
+    def _guess_json_items(obj: Any) -> List[Dict[str, Any]]:
+        if isinstance(obj, list):
+            return [x for x in obj if isinstance(x, dict)]
+        if not isinstance(obj, dict):
+            return []
+        for key in ("items", "list", "data", "result", "results", "news", "articles"):
+            value = obj.get(key)
+            if isinstance(value, list):
+                return [x for x in value if isinstance(x, dict)]
+            if isinstance(value, dict):
+                nested = _guess_json_items(value)
+                if nested:
+                    return nested
+        return []
+
+    def _extract_field(item: Dict[str, Any], keys: List[str]) -> str:
+        for key in keys:
+            value = item.get(key)
+            if value is None:
+                continue
+            text = str(value).strip()
+            if text:
+                return text
+        return ""
+
+    def _build_query_text(league_name: str, home_team: str, away_team: str, kickoff_time: Optional[datetime]) -> str:
+        parts = [league_name or "", home_team or "", away_team or ""]
+        if kickoff_time:
+            parts.append(kickoff_time.strftime("%m-%d"))
+        return " ".join([p for p in parts if p]).strip()
+
+    def _fetch_api_candidate(
+        session: requests.Session,
+        source_code: str,
+        league_name: str,
+        home_team: str,
+        away_team: str,
+        intel_type: str,
+        kickoff_time: Optional[datetime],
+        *,
+        kind: str = "api",
+    ) -> Optional[Dict[str, Any]]:
+        rules = source_rules.get(source_code, {}) if isinstance(source_rules, dict) else {}
+        endpoints = rules.get("api_endpoints" if kind == "api" else "xhr_endpoints") or []
+        if isinstance(endpoints, dict):
+            endpoints = [endpoints]
+        if not isinstance(endpoints, list) or not endpoints:
+            return None
+
+        query_text = _build_query_text(league_name, home_team, away_team, kickoff_time)
+        best: Optional[Dict[str, Any]] = None
+        for endpoint in endpoints:
+            if isinstance(endpoint, str):
+                cfg = {"url": endpoint, "method": "GET", "params": {"q": "{query}"}}
+            elif isinstance(endpoint, dict):
+                cfg = endpoint
+            else:
+                continue
+            url = str(cfg.get("url") or "").strip()
+            if not url:
+                continue
+            params = cfg.get("params") if isinstance(cfg.get("params"), dict) else {}
+            formatted_params = {}
+            for k, v in params.items():
+                if isinstance(v, str):
+                    formatted_params[k] = v.format(
+                        league=league_name or "",
+                        home=home_team or "",
+                        away=away_team or "",
+                        query=query_text,
+                    )
+                else:
+                    formatted_params[k] = v
+            try:
+                resp = session.get(url, params=formatted_params, timeout=_debug_timeout(source_code))
+                raw = resp.text
+                payload = resp.json() if "json" in (resp.headers.get("content-type") or "") else _extract_first_json_object(raw)
+            except Exception:
+                continue
+            items = _guess_json_items(payload)
+            if not items:
+                continue
+            for item in items[:20]:
+                title = _extract_field(item, ["title", "headline", "name"])
+                url_text = _extract_field(item, ["url", "link", "article_url", "href"])
+                excerpt = _extract_field(item, ["summary", "excerpt", "description", "content"])
+                if not title and not excerpt:
+                    continue
+                score = _score_candidate_text(f"{title} {excerpt} {url_text}", _build_keyword_weights(league_name, home_team, away_team), intel_type) + 0.8
+                candidate = _build_article_candidate(
+                    source_code,
+                    url_text or (cfg.get("fallback_url") or ""),
+                    title or f"{source_code} api article",
+                    excerpt[:260],
+                    score,
+                    source_parser=f"{source_code}-{kind}",
+                    hit_terms=[k for k in (current_entity_profile.get("context_keywords") or []) if k in _normalize_text(f"{title} {excerpt}")][:6],
+                    pass_reason=f"{kind}-endpoint-hit",
+                )
+                if not best or candidate["match_score"] > best["match_score"]:
+                    best = candidate
+        return best
+
     def _fetch_500w_article(
+
         session: requests.Session,
         kw_weights: Dict[str, float],
         context_keywords: List[str],
@@ -4138,6 +4506,21 @@ async def _simulate_collect_items(
         ttyingqiu_seed_cache["last_debug"] = debug_pack
         return best
 
+    def _resolve_recall_sources(source_code: str) -> List[str]:
+        rules = source_rules.get(source_code, {}) if isinstance(source_rules, dict) else {}
+        recall_sources = rules.get("recall_sources") or []
+        if isinstance(recall_sources, str):
+            recall_sources = [recall_sources]
+        if not isinstance(recall_sources, list):
+            return []
+        out = []
+        for code in recall_sources:
+            val = str(code).strip()
+            if not val or val == source_code:
+                continue
+            out.append(val)
+        return out
+
     def _fetch_match_article_inner(
         source_code: str,
         source_snapshot: Dict[str, Any],
@@ -4147,20 +4530,51 @@ async def _simulate_collect_items(
         intel_type: str,
         kickoff_time: Optional[datetime] = None,
     ) -> Dict[str, Any]:
+
         err = source_snapshot.get("error")
         if err:
             return _build_unmatched_result(source_code, str(err), f"{source_code}-source-snapshot")
 
         source_url = source_snapshot.get("url", SOURCE_URL_MAP.get(source_code, ""))
         html = source_snapshot.get("html", "")
-        kw_weights = _build_keyword_weights(league_name, home_team, away_team)
-        strong_keywords = _build_strong_keywords(home_team, away_team)
-        context_keywords = _build_context_keywords(kw_weights, strong_keywords)
+        entity_profile = _resolve_match_entity_profile(league_name, home_team, away_team)
+        current_entity_profile.clear()
+        current_entity_profile.update(entity_profile)
+        kw_weights = entity_profile.get("kw_weights", {})
+        strong_keywords = entity_profile.get("strong_keywords", [])
+        context_keywords = entity_profile.get("context_keywords", [])
         if not kw_weights:
             return _build_unmatched_result(source_code, "match keywords empty", f"{source_code}-keyword-builder")
 
+
         session = _new_session()
+        api_pick = _fetch_api_candidate(
+            session,
+            source_code,
+            league_name,
+            home_team,
+            away_team,
+            intel_type,
+            kickoff_time,
+            kind="api",
+        )
+        if api_pick and float(api_pick.get("match_score", 0)) >= _source_min_match_score(source_code, 1.4):
+            return _apply_match_time_window_gate(source_code, api_pick, kickoff_time)
+        xhr_pick = _fetch_api_candidate(
+            session,
+            source_code,
+            league_name,
+            home_team,
+            away_team,
+            intel_type,
+            kickoff_time,
+            kind="xhr",
+        )
+        if xhr_pick and float(xhr_pick.get("match_score", 0)) >= _source_min_match_score(source_code, 1.4):
+            return _apply_match_time_window_gate(source_code, xhr_pick, kickoff_time)
+
         if source_code == "500w":
+
             picked = _fetch_500w_article(session, kw_weights, context_keywords, intel_type)
             if picked and float(picked.get("match_score", 0)) >= _source_min_match_score("500w", 1.6):
                 return _apply_match_time_window_gate(source_code, picked, kickoff_time)
@@ -4190,8 +4604,27 @@ async def _simulate_collect_items(
             return unmatched
 
         links = _extract_candidate_links(source_code, source_url, html, require_article_hint=False, max_links=18)
+        recall_sources = _resolve_recall_sources(source_code)
+        for recall_code in recall_sources:
+            recall_snapshot = _fetch_source_snapshot(recall_code)
+            if recall_snapshot.get("error"):
+                continue
+            recall_url = recall_snapshot.get("url", SOURCE_URL_MAP.get(recall_code, ""))
+            recall_html = recall_snapshot.get("html", "")
+            recall_links = _extract_candidate_links(
+                recall_code,
+                recall_url,
+                recall_html,
+                require_article_hint=False,
+                max_links=10,
+            )
+            for link in recall_links:
+                link["origin_source"] = recall_code
+            links.extend(recall_links)
+
         if not links:
             return _build_unmatched_result(source_code, "no candidate article links", f"{source_code}-generic-twohop")
+
 
         page_cache: Dict[str, str] = {}
         pool: List[Dict[str, Any]] = []
@@ -4199,18 +4632,35 @@ async def _simulate_collect_items(
             seed_text = f"{link.get('anchor', '')} {link.get('url', '')}"
             seed_score = _score_candidate_text(seed_text, kw_weights, intel_type)
             if link.get("is_article_hint") or seed_score > 0:
-                pool.append({"url": link["url"], "anchor": link.get("anchor", ""), "depth": 0, "seed_score": seed_score})
+                pool.append(
+                    {
+                        "url": link["url"],
+                        "anchor": link.get("anchor", ""),
+                        "depth": 0,
+                        "seed_score": seed_score,
+                        "origin_source": link.get("origin_source") or source_code,
+                    }
+                )
+
 
         nav_seeds = [x for x in links if x.get("is_nav_hint")]
         for nav in nav_seeds[:1]:
             nav_url = nav["url"]
+            nav_source_code = nav.get("origin_source") or source_code
             try:
                 nav_html = _safe_get(session, nav_url, timeout=1)
                 page_cache[nav_url] = nav_html
             except Exception:
                 continue
-            child_links = _extract_candidate_links(source_code, nav_url, nav_html, require_article_hint=False, max_links=10)
+            child_links = _extract_candidate_links(
+                nav_source_code,
+                nav_url,
+                nav_html,
+                require_article_hint=False,
+                max_links=10,
+            )
             for child in child_links[:3]:
+                child["origin_source"] = child.get("origin_source") or nav_source_code
                 child_seed = _score_candidate_text(
                     f"{child.get('anchor', '')} {child.get('url', '')}",
                     kw_weights,
@@ -4223,8 +4673,10 @@ async def _simulate_collect_items(
                             "anchor": child.get("anchor", ""),
                             "depth": 1,
                             "seed_score": child_seed + 0.5,
+                            "origin_source": child.get("origin_source") or nav_source_code,
                         }
                     )
+
 
         dedup_pool: Dict[str, Dict[str, Any]] = {}
         for x in pool:
@@ -4241,6 +4693,7 @@ async def _simulate_collect_items(
             anchor = cand.get("anchor", "")
             seed_score = float(cand.get("seed_score", 0))
             depth = int(cand.get("depth", 0))
+            origin_source = cand.get("origin_source") or source_code
             try:
                 article_html = page_cache.get(url) or _safe_get(session, url, timeout=1)
             except Exception:
@@ -4248,7 +4701,7 @@ async def _simulate_collect_items(
 
             title = _extract_title(article_html)
             excerpt = _clean_html_text(article_html)[:480]
-            if _is_low_quality_candidate(source_code, url, title or anchor, excerpt, context_keywords, intel_type):
+            if _is_low_quality_candidate(origin_source, url, title or anchor, excerpt, context_keywords, intel_type):
                 continue
             bag = f"{title} {anchor} {excerpt} {url}"
             final_score = _score_candidate_text(bag, kw_weights, intel_type) + min(seed_score, 2.2) + (0.2 if depth == 1 else 0.0)
@@ -4257,25 +4710,28 @@ async def _simulate_collect_items(
             candidate = _build_article_candidate(
                 source_code,
                 url,
-                title or anchor or f"{source_code} article",
+                title or anchor or f"{origin_source} article",
                 excerpt[:260],
                 final_score,
-                source_parser=f"{source_code}-generic-twohop",
+                source_parser=f"{origin_source}-generic-twohop",
                 hit_terms=hit_terms,
-                pass_reason="generic two-hop detail page matched context",
+                pass_reason=f"generic two-hop detail page matched context (origin={origin_source})",
             )
             if not best or candidate["match_score"] > best["match_score"]:
                 best = candidate
 
         if not best:
             return _build_unmatched_result(source_code, "no scored article page in candidates", f"{source_code}-generic-twohop")
-        if float(best.get("match_score", 0)) < _source_min_match_score(source_code, 1.8):
+        origin_best = best.get("source_parser", "")
+        min_score = _source_min_match_score(source_code, 1.8)
+        if float(best.get("match_score", 0)) < min_score:
             return _build_unmatched_result(
                 source_code,
                 f"best score too low: {best.get('match_score', 0)}",
-                f"{source_code}-generic-twohop",
+                f"{origin_best or source_code}-generic-twohop",
             )
         return _apply_match_time_window_gate(source_code, best, kickoff_time)
+
 
     def _fetch_match_article(
         source_code: str,
@@ -5629,6 +6085,21 @@ async def get_collection_task_failure_summary(
     return _ok(summary)
 
 
+@router.get("/tasks/{task_id}/funnel-summary")
+async def get_collection_task_funnel_summary(
+    task_id: int,
+    db: AsyncSession = Depends(get_async_db),
+    _: Dict[str, Any] = Depends(get_current_admin),
+):
+    task = await db.get(IntelligenceCollectionTask, task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="task not found")
+    await _recover_active_tasks_from_queue(db, focus_tasks=[task])
+    await db.refresh(task)
+    summary = await _build_task_funnel_summary(db, task)
+    return _ok(summary)
+
+
 @router.get("/tasks/{task_id}/events")
 async def get_collection_task_events(
     task_id: int,
@@ -6177,11 +6648,13 @@ async def _debug_generic_source_capture(
         text_bag = _norm(f"{title} {excerpt} {url}")
         hits = [k for k in keyword_bag if k in text_bag]
         detail_hint = 0.4 if any(x in url.lower() for x in ("/news/", "/article", "/a/", "/doc-", ".shtml", "/detail/")) else 0.0
-        score = round(0.58 * len(hits) + detail_hint + (0.15 if code == 200 else -0.2), 2)
+        hit_score = round(0.58 * len(hits), 2)
+        status_bonus = 0.15 if code == 200 else -0.2
+        base_score = round(hit_score + detail_hint + status_bonus, 2)
         publish_time = _best_publish_time(url, title, excerpt)
         time_pass, time_reason = _time_window_check(publish_time)
-        if not time_pass:
-            score = round(score - 1.4, 2)
+        time_penalty = -1.4 if not time_pass else 0.0
+        score = round(base_score + time_penalty, 2)
         evaluated.append(
             {
                 "url": url,
@@ -6193,6 +6666,14 @@ async def _debug_generic_source_capture(
                 "time_window_pass": time_pass,
                 "time_window_reason": time_reason,
                 "filter_reason": "" if (time_pass and len(hits) >= 1) else ("keyword-miss" if len(hits) < 1 else "time-window-block"),
+                "score_breakdown": {
+                    "hit_count": len(hits),
+                    "hit_score": hit_score,
+                    "detail_hint": detail_hint,
+                    "status_bonus": status_bonus,
+                    "time_penalty": time_penalty,
+                    "base_score": base_score,
+                },
             }
         )
     evaluated.sort(key=lambda x: ((1 if x.get("time_window_pass") else 0), x.get("score", 0)), reverse=True)
@@ -6235,6 +6716,191 @@ async def debug_match_candidates(
     return await _debug_generic_source_capture(payload, db)
 
 
+def _debug_api_xhr_replay(
+    source_code: str,
+    league_name: str,
+    home_team: str,
+    away_team: str,
+    kickoff_time: Optional[datetime],
+    intel_type: str,
+    source_rules: Dict[str, Any],
+    network_settings: Dict[str, Any],
+) -> Dict[str, Any]:
+    def _normalize_debug_text(text: str) -> str:
+        low = (text or "").strip().lower()
+        low = re.sub(r"[\u3000\r\n\t]+", " ", low)
+        return re.sub(r"\s+", " ", low).strip()
+
+    def _build_query_text() -> str:
+        parts = [league_name or "", home_team or "", away_team or ""]
+        if kickoff_time:
+            parts.append(kickoff_time.strftime("%m-%d"))
+        return " ".join([p for p in parts if p]).strip()
+
+    def _guess_items(obj: Any) -> List[Dict[str, Any]]:
+        if isinstance(obj, list):
+            return [x for x in obj if isinstance(x, dict)]
+        if isinstance(obj, dict):
+            for key in ("items", "data", "list", "rows", "results", "articles", "content", "news"):
+                value = obj.get(key)
+                if isinstance(value, list):
+                    return [x for x in value if isinstance(x, dict)]
+                if isinstance(value, dict):
+                    nested = _guess_items(value)
+                    if nested:
+                        return nested
+            return [obj]
+        return []
+
+    def _extract_field(item: Dict[str, Any], keys: List[str]) -> str:
+        for key in keys:
+            value = item.get(key)
+            if value is None:
+                continue
+            text = str(value).strip()
+            if text:
+                return text
+        return ""
+
+    def _format_params(params: Dict[str, Any], query_text: str) -> Dict[str, Any]:
+        formatted = {}
+        for k, v in params.items():
+            if isinstance(v, str):
+                formatted[k] = v.format(
+                    league=league_name or "",
+                    home=home_team or "",
+                    away=away_team or "",
+                    query=query_text,
+                )
+            else:
+                formatted[k] = v
+        return formatted
+
+    def _score_candidate(text: str, status_code: int) -> tuple[float, List[str]]:
+        norm = _normalize_debug_text(text)
+        keywords = [
+            _normalize_debug_text(league_name),
+            _normalize_debug_text(home_team),
+            _normalize_debug_text(away_team),
+        ]
+        keywords = [k for k in keywords if k]
+        hits = [k for k in keywords if k in norm]
+        score = round(0.55 * len(hits) + (0.15 if status_code == 200 else -0.2), 2)
+        return score, hits[:6]
+
+    rules = source_rules.get(source_code, {}) if isinstance(source_rules, dict) else {}
+    source_timeout_seconds = _normalize_source_timeout_map(
+        network_settings.get("source_timeout_seconds"),
+        _default_network_settings().get("source_timeout_seconds", {}),
+    )
+
+    def _debug_timeout(code: str) -> float:
+        return _normalize_float(
+            source_timeout_seconds.get(code, source_timeout_seconds.get("default", 2.0)),
+            default=2.0,
+            min_value=0.3,
+            max_value=30.0,
+        )
+
+    query_text = _build_query_text()
+    session = requests.Session()
+    session.trust_env = _normalize_bool(network_settings.get("trust_env"), False)
+    attempts: List[Dict[str, Any]] = []
+
+    def _replay_kind(kind: str) -> Optional[Dict[str, Any]]:
+        endpoints = rules.get("api_endpoints" if kind == "api" else "xhr_endpoints") or []
+        if isinstance(endpoints, dict):
+            endpoints = [endpoints]
+        if not isinstance(endpoints, list) or not endpoints:
+            return None
+        best: Optional[Dict[str, Any]] = None
+        for endpoint in endpoints:
+            if isinstance(endpoint, str):
+                cfg = {"url": endpoint, "method": "GET", "params": {"q": "{query}"}}
+            elif isinstance(endpoint, dict):
+                cfg = endpoint
+            else:
+                continue
+            url = str(cfg.get("url") or "").strip()
+            if not url:
+                continue
+            params = cfg.get("params") if isinstance(cfg.get("params"), dict) else {}
+            method = str(cfg.get("method") or "GET").upper()
+            formatted_params = _format_params(params, query_text)
+            start_ts = time.perf_counter()
+            try:
+                if method == "POST":
+                    resp = session.post(url, json=formatted_params, timeout=_debug_timeout(source_code))
+                else:
+                    resp = session.get(url, params=formatted_params, timeout=_debug_timeout(source_code))
+                elapsed_ms = int((time.perf_counter() - start_ts) * 1000)
+                status_code = int(resp.status_code or 0)
+                try:
+                    payload = resp.json() if "json" in (resp.headers.get("content-type") or "") else _extract_first_json_object(resp.text or "")
+                except Exception:
+                    payload = _extract_first_json_object(resp.text or "")
+                items = _guess_items(payload)
+                best_item = None
+                best_score = None
+                best_hits: List[str] = []
+                for item in items[:20]:
+                    title = _extract_field(item, ["title", "headline", "name"])
+                    url_text = _extract_field(item, ["url", "link", "article_url", "href"])
+                    excerpt = _extract_field(item, ["summary", "excerpt", "description", "content"])
+                    score, hits = _score_candidate(f"{title} {excerpt} {url_text}", status_code)
+                    if best_score is None or score > best_score:
+                        best_score = score
+                        best_hits = hits
+                        best_item = {
+                            "title": title,
+                            "url": url_text,
+                            "excerpt": excerpt[:260],
+                        }
+                attempt = {
+                    "kind": kind,
+                    "url": url,
+                    "method": method,
+                    "params": formatted_params,
+                    "status_code": status_code,
+                    "elapsed_ms": elapsed_ms,
+                    "items_count": len(items),
+                    "best_score": best_score,
+                    "best_hits": best_hits,
+                    "best_item": best_item,
+                }
+            except Exception as e:
+                elapsed_ms = int((time.perf_counter() - start_ts) * 1000)
+                attempt = {
+                    "kind": kind,
+                    "url": url,
+                    "method": method,
+                    "params": formatted_params,
+                    "status_code": None,
+                    "elapsed_ms": elapsed_ms,
+                    "items_count": 0,
+                    "error": str(e),
+                }
+            attempts.append(attempt)
+            if attempt.get("best_score") is not None:
+                if not best or (attempt.get("best_score") or 0) > (best.get("best_score") or 0):
+                    best = attempt
+        return best
+
+    api_best = _replay_kind("api")
+    xhr_best = _replay_kind("xhr")
+    picked = api_best if api_best and (api_best.get("best_score") or 0) >= (xhr_best.get("best_score") or 0) else xhr_best
+    return {
+        "attempts": attempts,
+        "summary": {
+            "api_attempts": len([x for x in attempts if x.get("kind") == "api"]),
+            "xhr_attempts": len([x for x in attempts if x.get("kind") == "xhr"]),
+            "picked_kind": picked.get("kind") if picked else None,
+            "picked_score": picked.get("best_score") if picked else None,
+            "picked_url": (picked.get("best_item") or {}).get("url") if picked else None,
+        },
+    }
+
+
 @router.post("/debug/replay")
 async def debug_replay(
     payload: DebugReplayRequest = Body(...),
@@ -6247,7 +6913,32 @@ async def debug_replay(
         intel_type=payload.intel_type,
         max_candidates=payload.max_candidates,
     )
-    result = await debug_match_candidates(req, db, current_admin)
+    raw_result = await debug_match_candidates(req, db, current_admin)
+    result = raw_result.get("data") if isinstance(raw_result, dict) else raw_result
+    match_info = result.get("match", {}) if isinstance(result, dict) else {}
+    league_name = str(match_info.get("league_name") or "")
+    home_team = str(match_info.get("home_team") or "")
+    away_team = str(match_info.get("away_team") or "")
+    kickoff_dt = None
+    kickoff_raw = match_info.get("kickoff_time") if isinstance(match_info, dict) else None
+    if isinstance(kickoff_raw, str) and kickoff_raw:
+        try:
+            kickoff_dt = datetime.fromisoformat(kickoff_raw)
+        except Exception:
+            kickoff_dt = None
+    source_rules_payload = await _load_source_rules(db)
+    source_rules = source_rules_payload.get("rules", {}) if isinstance(source_rules_payload, dict) else {}
+    network_settings = await _load_network_settings(db)
+    api_xhr_debug = _debug_api_xhr_replay(
+        (payload.source or "").strip().lower(),
+        league_name,
+        home_team,
+        away_team,
+        kickoff_dt,
+        payload.intel_type,
+        source_rules,
+        network_settings,
+    )
     return _ok(
         {
             "mode": "replay",
@@ -6257,7 +6948,8 @@ async def debug_replay(
                 "intel_type": payload.intel_type,
                 "max_candidates": payload.max_candidates,
             },
-            "result": result.get("data") if isinstance(result, dict) else result,
+            "result": result,
+            "api_xhr_debug": api_xhr_debug,
         }
     )
 

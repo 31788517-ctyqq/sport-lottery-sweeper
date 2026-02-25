@@ -499,6 +499,16 @@
             style="margin-bottom: 8px"
           />
           <el-table
+            v-if="taskFailureSummary.reason_buckets?.length"
+            :data="taskFailureSummary.reason_buckets"
+            stripe
+            max-height="200"
+            style="margin-bottom: 8px"
+          >
+            <el-table-column prop="bucket" label="失败分桶" min-width="180" />
+            <el-table-column prop="count" label="数量" width="100" />
+          </el-table>
+          <el-table
             v-if="taskFailureSummary.source_failures?.length"
             :data="taskFailureSummary.source_failures"
             stripe
@@ -511,6 +521,71 @@
             <el-table-column prop="retries" label="重试" width="80" />
             <el-table-column prop="circuit_skipped" label="熔断跳过" width="100" />
             <el-table-column prop="blocked_decisions" label="拦截数" width="90" />
+          </el-table>
+        </template>
+
+        <el-divider />
+        <div class="block-header-inline" style="margin-bottom: 8px">
+          <span>采集漏斗</span>
+          <el-button
+            v-if="taskDetail?.id"
+            size="small"
+            text
+            type="primary"
+            :loading="loading.taskFunnelSummary"
+            @click="loadTaskFunnelSummary(taskDetail.id)"
+          >
+            刷新
+          </el-button>
+        </div>
+        <el-empty
+          v-if="!taskFunnelSummary || !taskFunnelSummary.funnel?.length"
+          description="暂无漏斗数据"
+        />
+        <template v-else>
+          <div class="funnel-summary">
+            <el-tag size="small">场次数 {{ taskFunnelSummary.matches?.total || 0 }}</el-tag>
+            <el-tag size="small" type="success">
+              候选覆盖 {{ taskFunnelSummary.matches?.with_candidates || 0 }}/{{ taskFunnelSummary.matches?.total || 0 }}
+            </el-tag>
+            <el-tag size="small" type="primary">
+              命中覆盖 {{ taskFunnelSummary.matches?.with_matched || 0 }}/{{ taskFunnelSummary.matches?.total || 0 }}
+            </el-tag>
+            <el-tag size="small" type="warning">
+              采纳覆盖 {{ taskFunnelSummary.matches?.with_accepted || 0 }}/{{ taskFunnelSummary.matches?.total || 0 }}
+            </el-tag>
+            <el-tag size="small" type="info">
+              200占比 {{ formatPercent(taskFunnelSummary.http_status?.rate_200) }}
+            </el-tag>
+            <el-tag size="small" type="danger">
+              请求错误 {{ formatPercent(taskFunnelSummary.http_status?.request_error_rate) }}
+            </el-tag>
+            <el-tag size="small" type="success">
+              去重后有效 {{ taskFunnelSummary.quality?.dedup_items || 0 }}/{{ taskFunnelSummary.quality?.total_items || 0 }}
+            </el-tag>
+            <el-tag size="small" type="info">
+              标题完整率 {{ formatPercent(taskFunnelSummary.quality?.field_completeness?.title_rate) }}
+            </el-tag>
+            <el-tag size="small" type="info">
+              正文完整率 {{ formatPercent(taskFunnelSummary.quality?.field_completeness?.content_rate) }}
+            </el-tag>
+            <el-tag size="small" type="info">
+              链接完整率 {{ formatPercent(taskFunnelSummary.quality?.field_completeness?.url_rate) }}
+            </el-tag>
+          </div>
+          <el-table :data="taskFunnelSummary.funnel" stripe max-height="220" style="margin-bottom: 8px">
+            <el-table-column prop="label" label="阶段" width="120" />
+            <el-table-column prop="count" label="数量" width="140" />
+            <el-table-column label="阶段转化">
+              <template #default="{ row }">
+                {{ formatPercent(row.rate_from_prev) }}
+              </template>
+            </el-table-column>
+            <el-table-column label="相对期望">
+              <template #default="{ row }">
+                {{ formatPercent(row.rate_from_expected) }}
+              </template>
+            </el-table-column>
           </el-table>
         </template>
 
@@ -576,7 +651,7 @@
       </template>
     </el-dialog>
 
-    <el-dialog v-model="debugDialogVisible" title="候选抓取调试结果" width="980px">
+    <el-dialog v-model="debugDialogVisible" :title="debugDialogTitle" width="980px">
       <el-descriptions v-if="debugResult" :column="2" border size="small" style="margin-bottom: 10px">
         <el-descriptions-item label="比赛ID">{{ debugResult.match_id || activeMatchId || '-' }}</el-descriptions-item>
         <el-descriptions-item label="来源">{{ debugResult.source || debugForm.source }}</el-descriptions-item>
@@ -595,6 +670,18 @@
       <el-table :data="debugCandidates" stripe max-height="420">
         <el-table-column prop="__index" label="#" width="56" />
         <el-table-column prop="score" label="分数" width="80" />
+        <el-table-column label="得分构成" min-width="220">
+          <template #default="{ row }">
+            <el-progress :percentage="row.__scorePercent" :stroke-width="8" :show-text="false" />
+            <div class="score-breakdown">
+              <el-tag size="small">命中{{ row.__hitCount }}</el-tag>
+              <el-tag size="small" type="info">命中分{{ row.__hitScore }}</el-tag>
+              <el-tag size="small" type="success">细节+{{ row.__detailHint }}</el-tag>
+              <el-tag size="small" :type="row.__statusBonus >= 0 ? 'success' : 'danger'">{{ row.__statusBonus }}</el-tag>
+              <el-tag size="small" :type="row.__timePenalty < 0 ? 'danger' : 'info'">{{ row.__timePenalty }}</el-tag>
+            </div>
+          </template>
+        </el-table-column>
         <el-table-column prop="status_code" label="状态码" width="90" />
         <el-table-column prop="__timePassLabel" label="时间窗" width="90" />
         <el-table-column prop="publish_time" label="发布时间" width="170" />
@@ -613,6 +700,53 @@
           </template>
         </el-table-column>
       </el-table>
+      <el-divider v-if="debugReplayInfo" content-position="left">API/XHR 回放调试</el-divider>
+      <div v-if="debugReplayInfo" class="replay-debug">
+        <el-descriptions :column="2" border size="small" style="margin-bottom: 10px">
+          <el-descriptions-item label="API尝试次数">
+            {{ debugReplayInfo.summary?.api_attempts ?? 0 }}
+          </el-descriptions-item>
+          <el-descriptions-item label="XHR尝试次数">
+            {{ debugReplayInfo.summary?.xhr_attempts ?? 0 }}
+          </el-descriptions-item>
+          <el-descriptions-item label="命中类型">
+            {{ debugReplayInfo.summary?.picked_kind || '-' }}
+          </el-descriptions-item>
+          <el-descriptions-item label="命中得分">
+            {{ debugReplayInfo.summary?.picked_score ?? '-' }}
+          </el-descriptions-item>
+          <el-descriptions-item label="命中链接" :span="2">
+            <el-link
+              v-if="debugReplayInfo.summary?.picked_url"
+              :href="debugReplayInfo.summary?.picked_url"
+              target="_blank"
+              type="primary"
+            >
+              {{ debugReplayInfo.summary?.picked_url }}
+            </el-link>
+            <span v-else>-</span>
+          </el-descriptions-item>
+        </el-descriptions>
+        <el-table :data="debugReplayInfo.attempts || []" stripe max-height="260">
+          <el-table-column prop="kind" label="类型" width="80" />
+          <el-table-column prop="method" label="方法" width="90" />
+          <el-table-column prop="url" label="端点" min-width="220" show-overflow-tooltip />
+          <el-table-column prop="status_code" label="状态" width="80" />
+          <el-table-column prop="elapsed_ms" label="耗时(ms)" width="90" />
+          <el-table-column prop="items_count" label="条目数" width="80" />
+          <el-table-column prop="__bestScore" label="候选分" width="80" />
+          <el-table-column label="参数" min-width="180" show-overflow-tooltip>
+            <template #default="{ row }">
+              {{ row.__paramsText || '-' }}
+            </template>
+          </el-table-column>
+          <el-table-column label="错误" min-width="160" show-overflow-tooltip>
+            <template #default="{ row }">
+              {{ row.error || '-' }}
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
     </el-dialog>
 
     <el-dialog v-model="advancedSettingsVisible" title="采集参数设置" width="980px">
@@ -664,6 +798,29 @@
             <el-form-item label="仅允许数字详情页">
               <el-switch v-model="sourceRuleForm.ttyRequireNumericDetail" />
             </el-form-item>
+            <el-form-item label="扩展规则(JSON)">
+              <el-input
+                v-model="sourceRuleForm.extraRulesJson"
+                type="textarea"
+                :rows="8"
+                placeholder='{"500w":{"api_endpoints":["https://api.example.com/search"]},"tencent":{"xhr_endpoints":[{"url":"https://api.example.com/xhr","params":{"q":"{home} {away}"}}]}}'
+              />
+            </el-form-item>
+            <el-form-item label="召回策略模板">
+              <div class="preset-row">
+                <el-select v-model="selectedRecallPreset" placeholder="选择模板" style="width: 220px">
+                  <el-option
+                    v-for="option in recallPresetOptions"
+                    :key="option.key"
+                    :label="option.label"
+                    :value="option.key"
+                  />
+                </el-select>
+                <el-button :disabled="!selectedRecallPreset" @click="applyRecallPreset">应用</el-button>
+                <el-button :disabled="!selectedRecallPreset" @click="mergeRecallPreset">合并</el-button>
+                <span class="preset-hint">{{ recallPresetHint }}</span>
+              </div>
+            </el-form-item>
           </el-form>
         </el-tab-pane>
 
@@ -713,6 +870,14 @@
                 placeholder='{"曼联":["Man Utd","Manchester United"]}'
               />
             </el-form-item>
+            <el-form-item label="别名元信息(JSON)">
+              <el-input
+                v-model="aliasForm.metaJson"
+                type="textarea"
+                :rows="4"
+                placeholder='{"kickoff_tolerance_hours":2}'
+              />
+            </el-form-item>
           </el-form>
         </el-tab-pane>
 
@@ -756,6 +921,7 @@ import {
   getCollectionSources,
   getCollectionTask,
   getCollectionTaskFailureSummary,
+  getCollectionTaskFunnelSummary,
   getCollectionTaskSubtasks,
   getCollectionTaskLogs,
   getCollectionTasks,
@@ -791,7 +957,8 @@ const loading = reactive({
   saveBinding: false,
   testBinding: false,
   push: false,
-  taskFailureSummary: false
+  taskFailureSummary: false,
+  taskFunnelSummary: false
 })
 
 const query = reactive({
@@ -852,7 +1019,8 @@ const networkForm = reactive({
 const sourceRuleForm = reactive({
   ttyBlacklistText: '/news/-1, /news/75',
   ttySoftPenaltyJson: '{\n  "/news/3": 1.2,\n  "/news/6009": 1.2\n}',
-  ttyRequireNumericDetail: true
+  ttyRequireNumericDetail: true,
+  extraRulesJson: '{}'
 })
 const qualityForm = reactive({
   minTitleLen: 6,
@@ -864,7 +1032,8 @@ const qualityForm = reactive({
 })
 const aliasForm = reactive({
   leagueAliasJson: '{}',
-  teamAliasJson: '{}'
+  teamAliasJson: '{}',
+  metaJson: '{\n  "kickoff_tolerance_hours": 2\n}'
 })
 const sourceHealthRows = ref([])
 
@@ -883,6 +1052,7 @@ const taskDetail = ref(null)
 const taskSubtasks = ref([])
 const taskSubtasksLoading = ref(false)
 const taskFailureSummary = ref(null)
+const taskFunnelSummary = ref(null)
 const itemDialogVisible = ref(false)
 const itemDetail = ref(null)
 const activeItemRow = ref(null)
@@ -909,6 +1079,16 @@ const resultCache = ref(new Map())
 const debugDialogVisible = ref(false)
 const debugResult = ref(null)
 const debugCandidates = ref([])
+const debugMode = ref('candidate')
+const debugReplayInfo = ref(null)
+const debugDialogTitle = computed(() => (debugMode.value === 'replay' ? '回放调试结果' : '候选抓取调试结果'))
+const scoreRange = Object.freeze({ min: -2, max: 6 })
+const toScorePercent = (score) => {
+  const num = Number(score)
+  if (Number.isNaN(num)) return 0
+  const raw = ((num - scoreRange.min) / (scoreRange.max - scoreRange.min)) * 100
+  return Math.max(0, Math.min(100, Math.round(raw)))
+}
 const taskTracker = reactive({
   visible: false,
   taskId: null,
@@ -942,6 +1122,88 @@ const parseJsonSafe = (raw, fallback) => {
   } catch (_) {
     return fallback
   }
+}
+
+const selectedRecallPreset = ref('')
+const recallPresetOptions = [
+  {
+    key: 'recall_light',
+    label: '轻量召回模板',
+    desc: '仅配置 recall_sources，快速补充候选来源'
+  },
+  {
+    key: 'recall_plus_api',
+    label: '召回 + API 模板',
+    desc: '在召回基础上补充 API 端点，适合结构化源'
+  },
+  {
+    key: 'xhr_first',
+    label: 'XHR 优先模板',
+    desc: '优先配置 XHR 端点，适合前端渲染型源'
+  }
+]
+const recallPresetMap = {
+  recall_light: {
+    '500w': {
+      recall_sources: ['tencent', 'sina']
+    }
+  },
+  recall_plus_api: {
+    '500w': {
+      recall_sources: ['tencent', 'sina'],
+      api_endpoints: [
+        {
+          url: 'https://api.example.com/search',
+          method: 'GET',
+          params: { q: '{home} {away}' }
+        }
+      ]
+    }
+  },
+  xhr_first: {
+    tencent: {
+      xhr_endpoints: [
+        {
+          url: 'https://api.example.com/xhr',
+          method: 'GET',
+          params: { q: '{query}' }
+        }
+      ]
+    }
+  }
+}
+const recallPresetHint = computed(() => {
+  const hit = recallPresetOptions.find((x) => x.key === selectedRecallPreset.value)
+  return hit?.desc || '选择模板后可应用到扩展规则'
+})
+const mergeRuleMaps = (base, patch) => {
+  const output = { ...(base || {}) }
+  Object.entries(patch || {}).forEach(([source, patchRule]) => {
+    const current = output[source] && typeof output[source] === 'object' ? { ...output[source] } : {}
+    Object.entries(patchRule || {}).forEach(([key, value]) => {
+      if (Array.isArray(value)) {
+        const existing = Array.isArray(current[key]) ? current[key] : []
+        current[key] = Array.from(new Set([...existing, ...value]))
+      } else if (value && typeof value === 'object') {
+        current[key] = { ...(current[key] || {}), ...value }
+      } else {
+        current[key] = value
+      }
+    })
+    output[source] = current
+  })
+  return output
+}
+const applyRecallPreset = () => {
+  const preset = recallPresetMap[selectedRecallPreset.value]
+  if (!preset) return
+  sourceRuleForm.extraRulesJson = JSON.stringify(preset, null, 2)
+}
+const mergeRecallPreset = () => {
+  const preset = recallPresetMap[selectedRecallPreset.value]
+  if (!preset) return
+  const existing = parseJsonSafe(sourceRuleForm.extraRulesJson, {})
+  sourceRuleForm.extraRulesJson = JSON.stringify(mergeRuleMaps(existing, preset), null, 2)
 }
 
 const statusLabelMap = {
@@ -1061,10 +1323,14 @@ const loadAdvancedSettings = async () => {
     networkForm.circuitBreakerSeconds = Number(network?.circuit_breaker_seconds ?? 45)
     networkForm.sourceTimeoutJson = JSON.stringify(network?.source_timeout_seconds || {}, null, 2)
 
-    const ttyRules = sourceRules?.rules?.ttyingqiu || {}
+    const allRules = sourceRules?.rules || {}
+    const ttyRules = allRules?.ttyingqiu || {}
     sourceRuleForm.ttyBlacklistText = (ttyRules?.blacklist_exact_paths || []).join(', ')
     sourceRuleForm.ttySoftPenaltyJson = JSON.stringify(ttyRules?.soft_penalty_paths || {}, null, 2)
     sourceRuleForm.ttyRequireNumericDetail = ttyRules?.require_numeric_news_detail !== false
+    const extraRules = { ...allRules }
+    delete extraRules.ttyingqiu
+    sourceRuleForm.extraRulesJson = JSON.stringify(extraRules || {}, null, 2)
 
     const thresholds = qualityThresholds?.thresholds || {}
     qualityForm.minTitleLen = Number(thresholds?.min_title_len ?? 6)
@@ -1076,6 +1342,7 @@ const loadAdvancedSettings = async () => {
 
     aliasForm.leagueAliasJson = JSON.stringify(aliasDictionary?.dictionary?.league || {}, null, 2)
     aliasForm.teamAliasJson = JSON.stringify(aliasDictionary?.dictionary?.team || {}, null, 2)
+    aliasForm.metaJson = JSON.stringify(aliasDictionary?.dictionary?.meta || {}, null, 2)
 
     sourceHealthRows.value = Array.isArray(sourceHealth?.items) ? sourceHealth.items : []
   } catch (e) {
@@ -1094,6 +1361,8 @@ const saveAdvancedSettings = async () => {
     const minScoreMap = parseJsonSafe(qualityForm.minScoreJson, {})
     const leagueAliasMap = parseJsonSafe(aliasForm.leagueAliasJson, {})
     const teamAliasMap = parseJsonSafe(aliasForm.teamAliasJson, {})
+    const aliasMetaMap = parseJsonSafe(aliasForm.metaJson, {})
+    const extraRulesMap = parseJsonSafe(sourceRuleForm.extraRulesJson, {})
     const ttyBlacklist = sourceRuleForm.ttyBlacklistText
       .split(',')
       .map((x) => x.trim())
@@ -1110,6 +1379,7 @@ const saveAdvancedSettings = async () => {
       }),
       updateSourceRules({
         rules: {
+          ...(extraRulesMap || {}),
           ttyingqiu: {
             blacklist_exact_paths: ttyBlacklist,
             soft_penalty_paths: ttySoftPenalty,
@@ -1132,7 +1402,8 @@ const saveAdvancedSettings = async () => {
       updateAliasDictionary({
         dictionary: {
           league: leagueAliasMap,
-          team: teamAliasMap
+          team: teamAliasMap,
+          meta: aliasMetaMap
         }
       })
     ])
@@ -1374,27 +1645,33 @@ const openTaskDetail = async (row) => {
   taskDetailLoading.value = true
   taskSubtasksLoading.value = true
   loading.taskFailureSummary = true
+  loading.taskFunnelSummary = true
   taskDetail.value = { ...row }
   taskSubtasks.value = []
   taskFailureSummary.value = null
+  taskFunnelSummary.value = null
   try {
-    const [detail, subtasksResp, failureSummary] = await Promise.all([
+    const [detail, subtasksResp, failureSummary, funnelSummary] = await Promise.all([
       getCollectionTask(row.id, { timeout: 60000 }),
       getCollectionTaskSubtasks(row.id, {}, { timeout: 60000 }),
-      getCollectionTaskFailureSummary(row.id, { timeout: 60000 }).catch(() => null)
+      getCollectionTaskFailureSummary(row.id, { timeout: 60000 }).catch(() => null),
+      getCollectionTaskFunnelSummary(row.id, { timeout: 60000 }).catch(() => null)
     ])
     taskDetail.value = detail || { ...row }
     taskSubtasks.value = subtasksResp?.items || []
     taskFailureSummary.value = failureSummary || null
+    taskFunnelSummary.value = funnelSummary || null
   } catch (e) {
     ElMessage.warning('加载任务详情失败，已展示列表快照')
     taskDetail.value = { ...row }
     taskSubtasks.value = []
     taskFailureSummary.value = null
+    taskFunnelSummary.value = null
   } finally {
     taskDetailLoading.value = false
     taskSubtasksLoading.value = false
     loading.taskFailureSummary = false
+    loading.taskFunnelSummary = false
   }
 }
 
@@ -1408,6 +1685,19 @@ const loadTaskFailureSummary = async (taskId) => {
     ElMessage.warning('加载失败摘要失败')
   } finally {
     loading.taskFailureSummary = false
+  }
+}
+
+const loadTaskFunnelSummary = async (taskId) => {
+  if (!taskId) return
+  loading.taskFunnelSummary = true
+  try {
+    taskFunnelSummary.value = await getCollectionTaskFunnelSummary(taskId, { timeout: 60000 })
+  } catch (e) {
+    console.error(e)
+    ElMessage.warning('加载采集漏斗失败')
+  } finally {
+    loading.taskFunnelSummary = false
   }
 }
 
@@ -1818,13 +2108,29 @@ const openCandidateDebug = async () => {
     }
     const result = await debugMatchCandidates(payload, { timeout: 90000 })
     debugResult.value = result || {}
-    debugCandidates.value = (result?.top_candidates || []).map((x, idx) => ({
-      ...x,
-      __index: idx + 1,
-      __hitTermsText: Array.isArray(x?.hit_terms) ? x.hit_terms.join(' / ') : '',
-      __timePassLabel:
-        x?.time_window_pass === true ? '通过' : x?.time_window_pass === false ? '拦截' : '-'
-    }))
+    debugCandidates.value = (result?.top_candidates || []).map((x, idx) => {
+      const breakdown = x?.score_breakdown || {}
+      const hitCount = Number(breakdown.hit_count ?? (Array.isArray(x?.hit_terms) ? x.hit_terms.length : 0))
+      const hitScore = Number(breakdown.hit_score ?? 0)
+      const detailHint = Number(breakdown.detail_hint ?? 0)
+      const statusBonus = Number(breakdown.status_bonus ?? 0)
+      const timePenalty = Number(breakdown.time_penalty ?? (x?.time_window_pass === false ? -1.4 : 0))
+      return {
+        ...x,
+        __index: idx + 1,
+        __hitTermsText: Array.isArray(x?.hit_terms) ? x.hit_terms.join(' / ') : '',
+        __timePassLabel:
+          x?.time_window_pass === true ? '通过' : x?.time_window_pass === false ? '拦截' : '-',
+        __hitCount: hitCount,
+        __hitScore: hitScore,
+        __detailHint: detailHint,
+        __statusBonus: statusBonus,
+        __timePenalty: timePenalty,
+        __scorePercent: toScorePercent(x?.score)
+      }
+    })
+    debugMode.value = 'candidate'
+    debugReplayInfo.value = null
     debugDialogVisible.value = true
   } catch (e) {
     console.error(e)
@@ -1850,13 +2156,41 @@ const openReplayDebug = async () => {
     const replay = await debugReplay(payload, { timeout: 90000 })
     const result = replay?.result || replay || {}
     debugResult.value = result
-    debugCandidates.value = (result?.top_candidates || []).map((x, idx) => ({
-      ...x,
-      __index: idx + 1,
-      __hitTermsText: Array.isArray(x?.hit_terms) ? x.hit_terms.join(' / ') : '',
-      __timePassLabel:
-        x?.time_window_pass === true ? '通过' : x?.time_window_pass === false ? '拦截' : '-'
-    }))
+    debugCandidates.value = (result?.top_candidates || []).map((x, idx) => {
+      const breakdown = x?.score_breakdown || {}
+      const hitCount = Number(breakdown.hit_count ?? (Array.isArray(x?.hit_terms) ? x.hit_terms.length : 0))
+      const hitScore = Number(breakdown.hit_score ?? 0)
+      const detailHint = Number(breakdown.detail_hint ?? 0)
+      const statusBonus = Number(breakdown.status_bonus ?? 0)
+      const timePenalty = Number(breakdown.time_penalty ?? (x?.time_window_pass === false ? -1.4 : 0))
+      return {
+        ...x,
+        __index: idx + 1,
+        __hitTermsText: Array.isArray(x?.hit_terms) ? x.hit_terms.join(' / ') : '',
+        __timePassLabel:
+          x?.time_window_pass === true ? '通过' : x?.time_window_pass === false ? '拦截' : '-',
+        __hitCount: hitCount,
+        __hitScore: hitScore,
+        __detailHint: detailHint,
+        __statusBonus: statusBonus,
+        __timePenalty: timePenalty,
+        __scorePercent: toScorePercent(x?.score)
+      }
+    })
+    const apiDebug = replay?.api_xhr_debug || null
+    if (apiDebug) {
+      debugReplayInfo.value = {
+        ...apiDebug,
+        attempts: (apiDebug.attempts || []).map((x) => ({
+          ...x,
+          __paramsText: x?.params ? JSON.stringify(x.params) : '',
+          __bestScore: x?.best_score ?? '-'
+        }))
+      }
+    } else {
+      debugReplayInfo.value = null
+    }
+    debugMode.value = 'replay'
     debugDialogVisible.value = true
   } catch (e) {
     console.error(e)
@@ -2079,6 +2413,13 @@ onMounted(async () => {
   margin-top: 10px;
 }
 
+.funnel-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
 .item-inspector {
   margin-top: 10px;
   padding: 10px;
@@ -2116,5 +2457,28 @@ onMounted(async () => {
   color: #334155;
   max-height: 240px;
   overflow: auto;
+}
+
+.score-breakdown {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.preset-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.preset-hint {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.replay-debug {
+  margin-top: 8px;
 }
 </style>

@@ -3,7 +3,11 @@ from typing import List, Dict, Any, Optional
 from sqlalchemy.orm import Session
 from datetime import datetime
 import logging
+import re
+import json
 from backend.app.utils.data_processor import transform_real_beidan_match
+
+
 
 logger = logging.getLogger(__name__)
 
@@ -519,13 +523,86 @@ class BeidanDataService:
                 return []
             
             logger.info(f"从数据库获取 {len(db_matches)} 条比赛数据")
+
+            def normalize_attrs(value):
+                if isinstance(value, dict):
+                    return value
+                if isinstance(value, str):
+                    try:
+                        return json.loads(value)
+                    except json.JSONDecodeError:
+                        return {}
+                return {}
+
+            schedule_time_map = {}
+            schedule_time_map_by_number = {}
+
+            try:
+                from backend.models.match import Match, Team
+                from sqlalchemy.orm import aliased
+
+                match_dates = {m.match_time.date() for m in db_matches if m.match_time}
+                match_date_keys = {d.isoformat() for d in match_dates if d}
+                if match_dates:
+                    HomeTeam = aliased(Team)
+                    AwayTeam = aliased(Team)
+                    schedule_rows = (
+                        self.db.query(Match, HomeTeam, AwayTeam)
+                        .join(HomeTeam, Match.home_team_id == HomeTeam.id, isouter=True)
+                        .join(AwayTeam, Match.away_team_id == AwayTeam.id, isouter=True)
+                        .filter(Match.data_source == "yingqiu_bd")
+                        .filter(
+                            or_(
+                                Match.match_date.in_(match_dates),
+                                func.json_extract(Match.source_attributes, "$.source_schedule_date").in_(match_date_keys)
+                            )
+                        )
+                        .all()
+                    )
+
+                    for schedule, home_team, away_team in schedule_rows:
+                        kickoff = schedule.scheduled_kickoff
+                        if kickoff is None and schedule.match_date and schedule.match_time:
+                            kickoff = datetime.combine(schedule.match_date, schedule.match_time)
+                        if not kickoff:
+                            continue
+                        kickoff_str = kickoff.strftime("%Y-%m-%d %H:%M:%S")
+
+                        attrs = normalize_attrs(schedule.source_attributes)
+
+                        date_keys = set()
+                        if schedule.match_date:
+                            date_keys.add(schedule.match_date.isoformat())
+                        source_date = attrs.get("source_schedule_date")
+                        if source_date:
+                            date_keys.add(str(source_date).strip()[:10])
+
+                        number_raw = attrs.get("number") or attrs.get("lineId") or attrs.get("line_id")
+                        home_name = (home_team.name if home_team else "").strip()
+                        away_name = (away_team.name if away_team else "").strip()
+
+                        for date_key in date_keys:
+                            if not date_key:
+                                continue
+                            if number_raw:
+                                number_text = str(number_raw).strip()
+                                number_key = number_text.lstrip("0") or number_text
+                                schedule_time_map_by_number[(date_key, number_key)] = kickoff_str
+                            if home_name and away_name:
+                                schedule_time_map[(date_key, home_name, away_name)] = kickoff_str
+
+            except Exception as schedule_error:
+                logger.warning(f"读取北单赛程时间失败: {schedule_error}")
+
             
             # 转换为前端需要的格式
             converted_matches = []
+
             for match in db_matches:
                 try:
+                    source_attrs = normalize_attrs(match.source_attributes)
                     # 使用source_attributes（原始API数据）或从数据库字段构建
-                    raw_data = match.source_attributes if match.source_attributes else {
+                    raw_data = source_attrs if source_attrs else {
                         "homeTeam": match.home_team,
                         "guestTeam": match.away_team,
                         "homePower": None,
@@ -540,6 +617,7 @@ class BeidanDataService:
                     }
                     
                     # 使用标准转换器
+
                     transformed_data = transform_real_beidan_match(raw_data)
                     
                     # 计算P级（从稳定性等级映射）
@@ -550,7 +628,8 @@ class BeidanDataService:
                     p_level_value = stability_to_p_level.get(stability_value, 7)
                     
                     # 构建比赛格式
-                    attrs = match.source_attributes if isinstance(match.source_attributes, dict) else {}
+                    attrs = source_attrs
+
 
                     def pick_attr(*keys):
                         for key in keys:
@@ -569,6 +648,50 @@ class BeidanDataService:
                     guest_feature = pick_attr("guestFeature", "guest_feature", "away_feature")
                     raw_match_time = pick_attr("matchTime", "match_time", "matchTimeStr", "match_time_str")
 
+                    def normalize_text(value):
+                        if value is None:
+                            return ""
+                        if isinstance(value, dict):
+                            for key in ("text", "label", "name", "value", "statusDes", "status_des", "status"):
+                                if key in value and value.get(key) is not None:
+                                    return normalize_text(value.get(key))
+                            for nested in value.values():
+                                nested_text = normalize_text(nested)
+                                if nested_text:
+                                    return nested_text
+                            return ""
+                        if isinstance(value, (list, tuple)):
+                            parts = [normalize_text(v) for v in value]
+                            parts = [p for p in parts if p]
+                            return "/".join(parts)
+                        text = str(value).strip()
+                        return text
+
+                    def normalize_score(value):
+                        text = normalize_text(value)
+                        if not text:
+                            return ""
+                        text = text.replace("：", "-").replace(":", "-")
+                        m = re.search(r"(\d+)\s*-\s*(\d+)", text)
+                        if m:
+                            return f"{m.group(1)}-{m.group(2)}"
+                        return text
+
+                    def normalize_handicap(value):
+                        text = normalize_text(value)
+                        if not text:
+                            return ""
+                        m = re.search(r"[-+]?\d+(?:\.\d+)?", text)
+                        if not m:
+                            return text
+                        try:
+                            number = float(m.group(0))
+                        except ValueError:
+                            return text
+                        if number.is_integer():
+                            return str(int(number))
+                        return str(number).rstrip("0").rstrip(".")
+
                     def format_match_time(value):
                         if value is None:
                             return ""
@@ -583,7 +706,46 @@ class BeidanDataService:
                     if not match_time_display and match.match_time:
                         match_time_display = match.match_time.strftime("%Y-%m-%d %H:%M:%S")
 
+                    def needs_schedule_time(text):
+                        if not text:
+                            return True
+                        if re.match(r"^\d{4}-\d{2}-\d{2}$", text):
+                            return True
+                        return "00:00:00" in text
+
+                    if needs_schedule_time(match_time_display) and match.match_time:
+                        date_key = match.match_time.date().isoformat()
+                        home_name = (match.home_team or "").strip()
+                        away_name = (match.away_team or "").strip()
+                        schedule_time = schedule_time_map.get((date_key, home_name, away_name))
+                        if not schedule_time:
+                            line_text = str(match.line_id).strip() if match.line_id is not None else ""
+                            line_key = line_text.lstrip("0") or line_text
+                            schedule_time = schedule_time_map_by_number.get((date_key, line_key))
+                        if schedule_time:
+                            match_time_display = schedule_time
+
+                    handicap_text = normalize_handicap(
+                        pick_attr("rq", "handicap", "letGoal", "let_ball", "rqValue", "rq_val")
+                    ) or "0"
+                    status_text = normalize_text(
+                        pick_attr("statusDes", "status_des", "status", "matchStatus", "state")
+                    ) or normalize_text(match.status)
+
+                    if match.home_score is not None and match.away_score is not None:
+                        score_text = f"{match.home_score}-{match.away_score}"
+                    else:
+                        score_text = normalize_score(
+                            pick_attr("score", "full_score", "fullScore", "score_full")
+                        )
+
+                    halftime_score_text = normalize_score(
+                        pick_attr("halfScore", "half_score", "halftimeScore", "halfTimeScore", "mid_score")
+                    )
+
+
                     converted_match = {
+
                         "id": match.id,
                         "matchTime": match_time_display,
                         "league": match.league or "其他",
@@ -591,7 +753,12 @@ class BeidanDataService:
                         "guestTeam": match.away_team,
                         "dateTime": str(match.date_time) if match.date_time else "",  # 期号
                         "lineId": str(match.line_id) if match.line_id else "",        # 线路ID
-                        "handicap": "0",  # 默认让球数
+                        "handicap": handicap_text,
+                        "status": status_text,
+                        "score": score_text,
+                        "halfScore": halftime_score_text,
+                        "homeScore": match.home_score,
+                        "awayScore": match.away_score,
                         "odds": {
                             "homeWin": 0.0,
                             "draw": 0.0,
@@ -623,9 +790,10 @@ class BeidanDataService:
                     }
                     
                     # 如果source_attributes包含赔率信息，可以设置odds
-                    if match.source_attributes:
-                        attrs = match.source_attributes
+                    if source_attrs:
+                        attrs = source_attrs
                         if isinstance(attrs, dict):
+
                             # 尝试提取赔率
                             home_win_award = attrs.get("homeWinAward")
                             draw_award = attrs.get("drawAward")

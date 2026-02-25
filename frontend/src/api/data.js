@@ -3,7 +3,7 @@ import request from '@/utils/request'
 // 获取数据列表
 export function getDataList(params) {
   return request({
-    url: '/api/admin/data',
+    url: '/api/v1/admin/data',
     method: 'get',
     params
   })
@@ -12,7 +12,7 @@ export function getDataList(params) {
 // 新增数据
 export function createData(data) {
   return request({
-    url: '/api/admin/data',
+    url: '/api/v1/admin/data',
     method: 'post',
     data
   })
@@ -21,7 +21,7 @@ export function createData(data) {
 // 删除数据
 export function deleteData(id) {
   return request({
-    url: `/api/admin/data/${id}`,
+    url: `/api/v1/admin/data/${id}`,
     method: 'delete'
   })
 }
@@ -29,7 +29,7 @@ export function deleteData(id) {
 // 导出数据
 export function exportData(params) {
   return request({
-    url: '/api/admin/data/export',
+    url: '/api/v1/admin/data/export',
     method: 'post',
     data: params
   })

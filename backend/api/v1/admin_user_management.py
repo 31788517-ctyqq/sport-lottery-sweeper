@@ -67,7 +67,7 @@ async def create_admin_user(
     user = await crud.admin_user.create(db, obj_in=user_in, created_by=current_admin.id)
     
     # 记录操作日志
-    await crud.admin_operation_log.create(
+    await crud.admin_user.admin_operation_log.create(
         db,
         admin_id=current_admin.id,
         action="CREATE_USER",
@@ -103,11 +103,16 @@ async def update_current_user(
     """
     更新当前登录的管理员用户信息
     """
+    # 使用当前请求的DB会话重新加载用户，避免跨会话对象报错
+    db_user = await crud.admin_user.get(db, current_admin.id)
+    if not db_user:
+        raise HTTPException(status_code=404, detail="当前用户不存在")
+
     # 更新当前用户的信息
-    updated_user = await crud.admin_user.update(db, db_obj=current_admin, obj_in=user_update)
+    updated_user = await crud.admin_user.update(db, db_obj=db_user, obj_in=user_update)
     
     # 记录操作日志
-    await crud.admin_operation_log.create(
+    await crud.admin_user.admin_operation_log.create(
         db,
         admin_id=current_admin.id,
         action="UPDATE_CURRENT_USER",
@@ -201,7 +206,7 @@ async def get_current_user_personal_stats(
         # 这里可以根据需要计算更多的统计信息
         # 比如操作日志数量等
         # 获取操作日志统计
-        _, operation_logs = await crud.admin_operation_log.get_multi(
+        _, operation_logs = await crud.admin_user.admin_operation_log.get_multi(
             db,
             skip=0,
             limit=1000,
@@ -246,7 +251,7 @@ async def batch_delete_admin_users(
                 deleted_count += 1
         
         # 记录操作日志
-        await crud.admin_operation_log.create(
+        await crud.admin_user.admin_operation_log.create(
             db,
             admin_id=current_admin.id,
             action="BATCH_DELETE_USERS",
@@ -370,7 +375,7 @@ async def update_admin_user(
     updated_user = await crud.admin_user.update(db, db_obj=user, obj_in=user_update)
     
     # 记录操作日志
-    await crud.admin_operation_log.create(
+    await crud.admin_user.admin_operation_log.create(
         db,
         admin_id=current_admin.id,
         action="UPDATE_USER",
@@ -402,7 +407,7 @@ async def update_admin_user_status(
     updated_user = await crud.admin_user.update_status(db, db_obj=user, status=status)
     
     # 记录操作日志
-    await crud.admin_operation_log.create(
+    await crud.admin_user.admin_operation_log.create(
         db,
         admin_id=current_admin.id,
         action="UPDATE_USER_STATUS",
@@ -434,7 +439,7 @@ async def reset_admin_user_password(
     await crud.admin_user.reset_password(db, db_obj=user, obj_in=password_reset)
     
     # 记录操作日志
-    await crud.admin_operation_log.create(
+    await crud.admin_user.admin_operation_log.create(
         db,
         admin_id=current_admin.id,
         action="RESET_PASSWORD",
@@ -465,7 +470,7 @@ async def delete_admin_user(
     # 记录操作日志
     user = await crud.admin_user.get(db, id=user_id)
     if user:
-        await crud.admin_operation_log.create(
+        await crud.admin_user.admin_operation_log.create(
             db,
             admin_id=current_admin.id,
             action="SOFT_DELETE_USER",
@@ -497,7 +502,7 @@ async def unlock_admin_user(
     updated_user = await crud.admin_user.update(db, db_obj=user, obj_in=user_update)
     
     # 记录操作日志
-    await crud.admin_operation_log.create(
+    await crud.admin_user.admin_operation_log.create(
         db,
         admin_id=current_admin.id,
         action="UNLOCK_USER",
@@ -631,7 +636,7 @@ async def change_current_user_password(
         raise HTTPException(status_code=400, detail="密码修改失败")
     
     # 记录操作日志
-    await crud.admin_operation_log.create(
+    await crud.admin_user.admin_operation_log.create(
         db,
         admin_id=current_admin.id,
         action="CHANGE_PASSWORD",

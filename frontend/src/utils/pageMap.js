@@ -69,10 +69,8 @@ export const pageMap = {
 
   // 平局预测管理模块
   drawPrediction: {
-    // 预测管理主页面
-    
-    // 预测子页面
-
+    aiDrawScanner: () => import('@/views/admin/draw_prediction/AiDrawScanner.vue'),
+    poisson11Scanner: () => import('@/views/admin/draw_prediction/Poisson11Scanner.vue')
   },
 
   // 比赛视图模块

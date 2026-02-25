@@ -378,24 +378,27 @@ const loadTaskStats = async () => {
       page_size: 20,
       status: 'RUNNING'
     })
-    
-    if (res && res.data && res.data.items) {
-      recentTasks.value = res.data.items.slice(0, 5).map(item => ({
-        id: item.id,
-        name: item.task_name,
-        status: item.status,
-        progress: item.progress,
-        records_processed: item.records_processed
-      }))
-      
-      taskStats.runningTasks = res.data.items.filter(t => t.status === 'RUNNING').length
-      taskStats.todayExecutions = res.data.items.length
-    }
-    
+
+    const payload = res?.data ?? res
+    const items = payload?.data?.items ?? payload?.items ?? payload?.data ?? []
+    const list = Array.isArray(items) ? items : []
+
+    recentTasks.value = list.slice(0, 5).map(item => ({
+      id: item.id,
+      name: item.task_name,
+      status: item.status,
+      progress: item.progress,
+      records_processed: item.records_processed
+    }))
+
+    taskStats.totalTasks = Number(payload?.data?.total ?? payload?.total ?? list.length) || 0
+    taskStats.runningTasks = list.filter(t => t.status === 'RUNNING').length
+    taskStats.todayExecutions = list.length
+
     // 计算成功率
-    if (res.data.items && res.data.items.length > 0) {
-      const successful = res.data.items.filter(t => t.status === 'SUCCESS').length
-      taskStats.successRate = ((successful / res.data.items.length) * 100).toFixed(2)
+    if (list.length > 0) {
+      const successful = list.filter(t => t.status === 'SUCCESS').length
+      taskStats.successRate = Number(((successful / list.length) * 100).toFixed(2))
     } else {
       taskStats.successRate = 0
     }

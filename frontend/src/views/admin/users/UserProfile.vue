@@ -14,7 +14,7 @@
           </template>
 
           <div class="profile-content">
-            <div class="avatar-section">
+            <div class="avatar-section" v-if="privacySettings.showProfile">
               <el-avatar :size="100" :src="userProfile.avatar" class="user-avatar">
                 {{ (userProfile.realName || userProfile.username || 'U').charAt(0).toUpperCase() }}
               </el-avatar>
@@ -22,13 +22,20 @@
                 <el-button size="small" @click="handleChangeAvatar">更换头像</el-button>
               </div>
             </div>
+            <div v-else class="avatar-section">
+              <el-empty description="个人资料已隐藏" :image-size="80" />
+            </div>
 
             <div class="info-section">
               <el-descriptions :column="2" border>
                 <el-descriptions-item label="用户名">{{ userProfile.username || '-' }}</el-descriptions-item>
                 <el-descriptions-item label="姓名">{{ userProfile.realName || '-' }}</el-descriptions-item>
-                <el-descriptions-item label="邮箱">{{ userProfile.email || '-' }}</el-descriptions-item>
-                <el-descriptions-item label="手机号">{{ userProfile.phone || '-' }}</el-descriptions-item>
+                <el-descriptions-item label="邮箱">
+                  {{ privacySettings.showEmail ? (userProfile.email || '-') : '已隐藏' }}
+                </el-descriptions-item>
+                <el-descriptions-item label="手机号">
+                  {{ privacySettings.showPhone ? (userProfile.phone || '-') : '已隐藏' }}
+                </el-descriptions-item>
                 <el-descriptions-item label="部门">{{ userProfile.departmentName || '-' }}</el-descriptions-item>
                 <el-descriptions-item label="职位">{{ userProfile.position || '-' }}</el-descriptions-item>
                 <el-descriptions-item label="角色">
@@ -170,7 +177,10 @@
 
         <el-card class="login-history-card">
           <template #header>
-            <h4>最近登录</h4>
+            <div class="card-header">
+              <h4>最近登录</h4>
+              <el-button size="small" :icon="Refresh" @click="handleRefreshLoginHistory">刷新</el-button>
+            </div>
           </template>
 
           <div class="login-history">
@@ -199,7 +209,10 @@
 
         <el-card class="stats-card">
           <template #header>
-            <h4>数据统计</h4>
+            <div class="card-header">
+              <h4>数据统计</h4>
+              <el-button size="small" :icon="Refresh" @click="handleRefreshStats">刷新</el-button>
+            </div>
           </template>
 
           <div class="stats-content">
@@ -231,16 +244,43 @@
       :user-id="userProfile.id"
       @session-ended="handleSessionEnded"
     />
+
+    <el-dialog
+      v-model="showPrivacyDialog"
+      title="隐私设置"
+      width="480px"
+    >
+      <el-form label-width="120px">
+        <el-form-item label="公开个人资料">
+          <el-switch v-model="privacySettings.showProfile" active-text="显示" inactive-text="隐藏" />
+        </el-form-item>
+        <el-form-item label="显示邮箱">
+          <el-switch v-model="privacySettings.showEmail" active-text="显示" inactive-text="隐藏" />
+        </el-form-item>
+        <el-form-item label="显示手机号">
+          <el-switch v-model="privacySettings.showPhone" active-text="显示" inactive-text="隐藏" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="showPrivacyDialog = false">取消</el-button>
+          <el-button type="primary" @click="savePrivacySettings">保存</el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Edit, Document, Download, Lock } from '@element-plus/icons-vue'
+import { Edit, Document, Download, Lock, Refresh } from '@element-plus/icons-vue'
+import { useRouter } from 'vue-router'
 import ProfileEditDialog from '@/components/admin/ProfileEditDialog.vue'
 import SessionManagementDialog from '@/components/admin/SessionManagementDialog.vue'
 import http from '@/utils/http'
+
+const router = useRouter()
 
 const userProfile = ref({})
 const securitySettings = reactive({
@@ -250,11 +290,17 @@ const securitySettings = reactive({
   twoFactorEnabled: false,
   loginNotification: true
 })
+const privacySettings = reactive({
+  showEmail: true,
+  showPhone: true,
+  showProfile: true
+})
 const loginHistory = ref([])
 const userStats = ref({})
 const changingPassword = ref(false)
 const showProfileDialog = ref(false)
 const showSessionsDialog = ref(false)
+const showPrivacyDialog = ref(false)
 const securityFormRef = ref(null)
 
 const securityRules = {
@@ -281,11 +327,41 @@ const securityRules = {
   ]
 }
 
+const normalizeUserProfile = (raw) => {
+  const preferences = raw?.preferences && typeof raw.preferences === 'string'
+    ? (() => { try { return JSON.parse(raw.preferences) } catch { return {} } })()
+    : (raw?.preferences || {})
+
+  return {
+    ...raw,
+    preferences,
+    realName: raw?.realName || raw?.real_name || '',
+    avatar: raw?.avatar || preferences.avatar || '',
+    bio: raw?.bio || preferences.bio || '',
+    gender: raw?.gender ?? preferences.gender ?? 0,
+    birthday: raw?.birthday || preferences.birthday || '',
+    departmentName: raw?.departmentName || raw?.department_name || raw?.department || '',
+    roleNames: raw?.roleNames || raw?.role_names || (raw?.role ? [raw.role] : []),
+    createdAt: raw?.createdAt || raw?.created_at || raw?.created_at,
+    lastLoginTime: raw?.lastLoginTime || raw?.last_login_at || raw?.last_login_at,
+    twoFactorEnabled: raw?.two_factor_enabled ?? preferences.twoFactorEnabled ?? false,
+    loginNotification: preferences.loginNotification ?? true,
+    privacy: preferences.privacy || {}
+  }
+}
+
 const loadUserProfile = async () => {
   try {
     const response = await http.get('/api/v1/admin/admin-users/current-user')
     const payload = response?.data ?? response
-    if (payload) userProfile.value = payload
+    if (payload) {
+      userProfile.value = normalizeUserProfile(payload)
+      securitySettings.twoFactorEnabled = userProfile.value.twoFactorEnabled
+      securitySettings.loginNotification = userProfile.value.loginNotification
+      privacySettings.showEmail = userProfile.value.privacy?.showEmail ?? true
+      privacySettings.showPhone = userProfile.value.privacy?.showPhone ?? true
+      privacySettings.showProfile = userProfile.value.privacy?.showProfile ?? true
+    }
   } catch (error) {
     console.error('加载用户信息失败:', error)
     ElMessage.error('加载用户信息失败，请确认已登录')
@@ -319,7 +395,7 @@ const handleEditProfile = () => {
 }
 
 const handleChangeAvatar = () => {
-  ElMessage.info('更换头像功能开发中...')
+  showProfileDialog.value = true
 }
 
 const handleChangePassword = async () => {
@@ -351,8 +427,31 @@ const resetSecurityForm = () => {
   securityFormRef.value?.clearValidate()
 }
 
+const buildPreferences = () => ({
+  avatar: userProfile.value?.avatar || '',
+  bio: userProfile.value?.bio || '',
+  gender: userProfile.value?.gender ?? 0,
+  birthday: userProfile.value?.birthday || '',
+  twoFactorEnabled: securitySettings.twoFactorEnabled,
+  loginNotification: securitySettings.loginNotification,
+  privacy: {
+    showEmail: privacySettings.showEmail,
+    showPhone: privacySettings.showPhone,
+    showProfile: privacySettings.showProfile
+  }
+})
+
+const updateCurrentUser = async (payload) => {
+  await http.put('/api/v1/admin/admin-users/current-user', payload)
+  await loadUserProfile()
+}
+
 const handleTwoFactorChange = async (enabled) => {
   try {
+    await updateCurrentUser({
+      two_factor_enabled: enabled,
+      preferences: buildPreferences()
+    })
     ElMessage.success(enabled ? '已开启双重认证' : '已关闭双重认证')
   } catch (error) {
     console.error('设置双重认证失败:', error)
@@ -363,6 +462,9 @@ const handleTwoFactorChange = async (enabled) => {
 
 const handleLoginNotificationChange = async (enabled) => {
   try {
+    await updateCurrentUser({
+      preferences: buildPreferences()
+    })
     ElMessage.success(enabled ? '已开启登录通知' : '已关闭登录通知')
   } catch (error) {
     console.error('设置登录通知失败:', error)
@@ -372,19 +474,64 @@ const handleLoginNotificationChange = async (enabled) => {
 }
 
 const handleViewMyLogs = () => {
-  ElMessage.info('操作日志功能开发中...')
+  router.push('/admin/users/logs')
 }
 
-const handleExportMyData = () => {
-  ElMessage.info('数据导出功能开发中...')
+const handleExportMyData = async () => {
+  try {
+    if (!userProfile.value?.id) {
+      await loadUserProfile()
+    }
+
+    const exportPayload = {
+      profile: userProfile.value,
+      stats: userStats.value,
+      loginHistory: loginHistory.value
+    }
+
+    const blob = new Blob([JSON.stringify(exportPayload, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `my_profile_${new Date().toISOString().slice(0, 10)}.json`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+    ElMessage.success('已导出个人数据')
+  } catch (error) {
+    console.error('导出个人数据失败:', error)
+    ElMessage.error('导出失败')
+  }
 }
 
 const handlePrivacySettings = () => {
-  ElMessage.info('隐私设置功能开发中...')
+  showPrivacyDialog.value = true
+}
+
+const savePrivacySettings = async () => {
+  try {
+    await updateCurrentUser({
+      preferences: buildPreferences()
+    })
+    ElMessage.success('隐私设置已保存')
+    showPrivacyDialog.value = false
+  } catch (error) {
+    console.error('保存隐私设置失败:', error)
+    ElMessage.error('保存失败')
+  }
 }
 
 const handleProfileSaved = () => {
   loadUserProfile()
+}
+
+const handleRefreshStats = () => {
+  loadUserStats()
+}
+
+const handleRefreshLoginHistory = () => {
+  loadLoginHistory()
 }
 
 const handleSessionEnded = () => {

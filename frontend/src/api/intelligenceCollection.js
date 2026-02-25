@@ -114,6 +114,11 @@ export const getCollectionTaskFailureSummary = (taskId, options = {}) =>
     timeout: options.timeout || 60000
   })
 
+export const getCollectionTaskFunnelSummary = (taskId, options = {}) =>
+  request.get(`${BASE}/tasks/${taskId}/funnel-summary`, {
+    timeout: options.timeout || 60000
+  })
+
 export const openCollectionTaskEventsStream = (taskId, options = {}) => {
   const params = new URLSearchParams()
   if (options.intervalMs != null) {

@@ -52,7 +52,11 @@ class CRUDRole:
         return roles, total
 
     async def create(self, db: AsyncSession, *, obj_in: RoleCreate) -> Role:
-        db_obj = Role(**obj_in.dict())
+        data = obj_in.dict()
+        permissions = data.get("permissions")
+        if isinstance(permissions, (list, dict)):
+            data["permissions"] = json.dumps(permissions, ensure_ascii=False)
+        db_obj = Role(**data)
         db.add(db_obj)
         await db.commit()
         await db.refresh(db_obj)
@@ -62,6 +66,8 @@ class CRUDRole:
         self, db: AsyncSession, *, db_obj: Role, obj_in: RoleUpdate
     ) -> Role:
         update_data = obj_in.dict(exclude_unset=True)
+        if "permissions" in update_data and isinstance(update_data.get("permissions"), (list, dict)):
+            update_data["permissions"] = json.dumps(update_data["permissions"], ensure_ascii=False)
         for field, value in update_data.items():
             setattr(db_obj, field, value)
         db.add(db_obj)

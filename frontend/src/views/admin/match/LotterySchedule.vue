@@ -400,7 +400,7 @@ const fetchData = async () => {
       params.date_to = searchForm.date_range[1]
     }
     
-    const response = await request.get('/api/admin/v1/lottery-schedules/', { params });
+    const response = await request.get('/api/v1/admin/lottery-schedules/', { params });
     schedules.value = response.data.items || [];
     total.value = response.data.total || 0;
 
@@ -421,7 +421,7 @@ const fetchData = async () => {
 // 获取统计数据
 const fetchStats = async () => {
   try {
-    const response = await request.get('/api/admin/v1/lottery-schedules/stats');
+    const response = await request.get('/api/v1/admin/lottery-schedules/stats');
     stats.value = response.data;
 
     if (response.data.success) {
@@ -478,7 +478,7 @@ const batchDeleteMatches = async () => {
     )
     
     const promises = selectedMatches.value.map(async (selected) => {
-      await request.delete(`/api/admin/v1/lottery-schedules/${selected.id}`);
+      await request.delete(`/api/v1/admin/lottery-schedules/${selected.id}`);
     })
     
     await Promise.all(promises)
@@ -523,7 +523,7 @@ const handleDelete = async (row) => {
       }
     )
     
-    await request.delete(`/api/admin/v1/lottery-schedules/${row.id}`);
+    await request.delete(`/api/v1/admin/lottery-schedules/${row.id}`);
     await fetchData()
     ElMessage.success('删除成功')
   } catch (error) {
@@ -544,7 +544,7 @@ const handleSubmit = async () => {
     
     if (form.id) {
       // 编辑模式：更新现有数据
-      const response = await request.put(`/api/admin/v1/lottery-schedules/${form.id}`, {
+      const response = await request.put(`/api/v1/admin/lottery-schedules/${form.id}`, {
         league_name: form.league_name,
         home_team: form.home_team,
         away_team: form.away_team,
@@ -562,7 +562,7 @@ const handleSubmit = async () => {
       }
     } else {
       // 新增模式：添加新数据
-      const response = await request.post('/api/admin/v1/lottery-schedules/', {
+      const response = await request.post('/api/v1/admin/lottery-schedules/', {
         league_name: form.league_name,
         home_team: form.home_team,
         away_team: form.away_team,

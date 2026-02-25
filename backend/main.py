@@ -211,7 +211,15 @@ class APIMigrationMiddleware(BaseHTTPMiddleware):
         old_path = request.url.path
         
         # 识别需要重定向的旧路径
-        if old_path.startswith("/api/admin/crawler"):
+        if old_path.startswith("/api/admin/v1/"):
+            new_path = old_path.replace("/api/admin/v1/", "/api/v1/admin/", 1)
+            request.scope["path"] = new_path
+            logger.info(f"API路径重定向: {old_path} -> {new_path}")
+        elif old_path == "/api/admin/v1":
+            new_path = "/api/v1/admin"
+            request.scope["path"] = new_path
+            logger.info(f"API路径重定向: {old_path} -> {new_path}")
+        elif old_path.startswith("/api/admin/crawler"):
             new_path = old_path.replace("/admin/crawler", "/v1/admin")
             request.scope["path"] = new_path
             logger.info(f"API路径重定向: {old_path} -> {new_path}")
@@ -492,6 +500,16 @@ except Exception as e:
     import traceback
     logger.error(f"详细堆栈: {traceback.format_exc()}")
 
+# 注册北单投注模拟API路由
+try:
+    from backend.app.api_v1.endpoints.beidan_betting_simulator_api import router as beidan_betting_router
+    app.include_router(beidan_betting_router, prefix="/api/v1/beidan-betting", tags=["beidan-betting"])
+    logger.info("Beidan betting simulator API routes registered (/api/v1/beidan-betting)")
+except Exception as e:
+    logger.error(f"北单投注模拟API路由注册失败: {e}")
+    import traceback
+    logger.error(f"详细堆栈: {traceback.format_exc()}")
+
 # 注册多策略筛选API路由
 try:
     from backend.app.api_v1.endpoints.multi_strategy_api import router as multi_strategy_router
@@ -522,6 +540,7 @@ async def root():
     logger.info("Root endpoint accessed")
     return {"message": "体育彩票扫盘系统 API", "version": "1.0.0"}
 
+@app.get("/health")
 @app.get("/health/live")
 @app.get("/api/v1/health/live")
 async def health_live():

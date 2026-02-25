@@ -393,7 +393,7 @@ const filteredMatches = computed(() => {
 const loadMatches = async () => {
   loading.value = true
   try {
-    const response = await request.get('/api/admin/v1/matches', {
+    const response = await request.get('/api/v1/admin/matches', {
       params: {
         page: pagination.currentPage,
         size: pagination.pageSize
@@ -416,7 +416,7 @@ const loadMatches = async () => {
 
 const loadLeagues = async () => {
   try {
-    const response = await request.get('/api/admin/v1/matches/leagues')
+    const response = await request.get('/api/v1/admin/matches/leagues')
     
     if (response.data.success) {
       leagues.value = response.data.data
@@ -431,7 +431,7 @@ const loadLeagues = async () => {
 
 const loadStats = async () => {
   try {
-    const response = await request.get('/api/admin/v1/matches/stats')
+    const response = await request.get('/api/v1/admin/matches/stats')
     
     if (response.data.success) {
       Object.assign(matchStats, response.data.data)
@@ -454,7 +454,7 @@ const refreshData = async () => {
 
 const viewMatch = async (match) => {
   try {
-    const response = await axios.get(`/api/admin/v1/matches/${match.id}/details`)
+    const response = await axios.get(`/api/v1/admin/matches/${match.id}/details`)
     
     if (response.data.success) {
       ElMessage.info(`比赛详情: ${response.data.data.home_team.name} VS ${response.data.data.away_team.name}`)
@@ -469,7 +469,7 @@ const viewMatch = async (match) => {
 
 const editMatch = async (match) => {
   try {
-    const response = await axios.get(`/api/admin/v1/matches/${match.id}`)
+    const response = await axios.get(`/api/v1/admin/matches/${match.id}`)
     
     if (response.data.success) {
       Object.assign(currentMatch.value, response.data.data)
@@ -496,7 +496,7 @@ const deleteMatch = async (match) => {
       }
     )
     
-    const response = await axios.delete(`/api/admin/v1/matches/${match.id}`)
+    const response = await axios.delete(`/api/v1/admin/matches/${match.id}`)
     
     if (response.data.success) {
       ElMessage.success('删除成功')
@@ -518,7 +518,7 @@ const saveMatch = async () => {
     let response
     if (editingMatch.value) {
       // 更新现有比赛
-      response = await axios.put(`/api/admin/v1/matches/${currentMatch.value.id}`, {}, {
+      response = await axios.put(`/api/v1/admin/matches/${currentMatch.value.id}`, {}, {
         params: {
           league_id: currentMatch.value.league_id,
           home_team_id: currentMatch.value.home_team_id,
@@ -532,7 +532,7 @@ const saveMatch = async () => {
       })
     } else {
       // 添加新比赛
-      response = await axios.post('/api/admin/v1/matches', {}, {
+      response = await axios.post('/api/v1/admin/matches', {}, {
         params: {
           league_id: currentMatch.value.league_id,
           home_team_id: currentMatch.value.home_team_id,
@@ -575,7 +575,7 @@ const applyFilters = async () => {
   
   loading.value = true
   try {
-    const response = await axios.get('/api/admin/v1/matches', {
+    const response = await axios.get('/api/v1/admin/matches', {
       params: {
         page: pagination.currentPage,
         size: pagination.pageSize,

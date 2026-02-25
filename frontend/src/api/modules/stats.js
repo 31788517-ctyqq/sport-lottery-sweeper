@@ -9,8 +9,9 @@ export const statsAPI = {
    * @returns {Promise<Object>} - { totalUsers, totalMatches, totalIntelligence, ... }
    */
   getSummaryStats() {
-    return client.get('/stats/data-center');
+    return client.get('/api/v1/stats/data-center');
   },
+
 
   /**
    * 获取比赛相关的图表数据

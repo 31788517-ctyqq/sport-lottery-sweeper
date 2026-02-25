@@ -1,9 +1,10 @@
 """
 角色和权限相关的Pydantic模型
 """
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 from typing import Optional, List
 from datetime import datetime
+import json
 
 
 class RoleBase(BaseModel):
@@ -11,6 +12,18 @@ class RoleBase(BaseModel):
     name: str
     description: Optional[str] = None
     permissions: Optional[list] = []
+
+    @validator('permissions', pre=True)
+    def parse_permissions(cls, value):
+        if value is None:
+            return []
+        if isinstance(value, str):
+            try:
+                parsed = json.loads(value)
+                return parsed if isinstance(parsed, list) else []
+            except Exception:
+                return []
+        return value
 
 
 class RoleCreate(RoleBase):
@@ -25,6 +38,18 @@ class RoleUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
     permissions: Optional[list] = None
+
+    @validator('permissions', pre=True)
+    def parse_permissions(cls, value):
+        if value is None:
+            return value
+        if isinstance(value, str):
+            try:
+                parsed = json.loads(value)
+                return parsed if isinstance(parsed, list) else []
+            except Exception:
+                return []
+        return value
 
 
 class RoleResponse(RoleBase):

@@ -404,16 +404,18 @@ const loadLeagues = async () => {
       status: filters.status || undefined,
       search_keyword: filters.searchKeyword || undefined
     }
-    
-    const response = await request.get('/api/admin/v1/leagues/', { params });
-    leagues.value = response.data.items || [];
-    total.value = response.data.total || 0;
 
-    if (response.data.success) {
-      leagues.value = response.data.data.items
-      pagination.total = response.data.data.total
+    const response = await request.get('/api/v1/admin/leagues/', { params })
+    const payload = response?.data ?? response
+    const success = payload?.success ?? true
+    const list = payload?.data?.items ?? payload?.items ?? payload?.data ?? []
+    const total = payload?.data?.total ?? payload?.total ?? list.length
+
+    if (success) {
+      leagues.value = Array.isArray(list) ? list : []
+      pagination.total = Number(total) || 0
     } else {
-      ElMessage.error(response.data.message || '获取联赛数据失败')
+      ElMessage.error(payload?.message || '获取联赛数据失败')
     }
   } catch (error) {
     console.error('获取联赛数据失败:', error)
@@ -425,13 +427,15 @@ const loadLeagues = async () => {
 
 const loadCountries = async () => {
   try {
-    const response = await request.get('/api/admin/v1/leagues/countries');
-    countries.value = response.data.countries || [];
-    
-    if (response.data.success) {
-      countries.value = response.data.data.countries
+    const response = await request.get('/api/v1/admin/leagues/countries')
+    const payload = response?.data ?? response
+    const success = payload?.success ?? true
+    const list = payload?.data?.countries ?? payload?.countries ?? payload?.data ?? []
+
+    if (success) {
+      countries.value = Array.isArray(list) ? list : []
     } else {
-      console.error('获取国家列表失败:', response.data.message)
+      console.error('获取国家列表失败:', payload?.message)
     }
   } catch (error) {
     console.error('获取国家列表失败:', error)
@@ -440,13 +444,15 @@ const loadCountries = async () => {
 
 const loadStats = async () => {
   try {
-    const response = await request.get('/api/admin/v1/leagues/stats');
-    stats.value = response.data;
-    
-    if (response.data.success) {
-      Object.assign(leagueStats, response.data.data)
+    const response = await request.get('/api/v1/admin/leagues/stats')
+    const payload = response?.data ?? response
+    const success = payload?.success ?? true
+    const data = payload?.data ?? payload ?? {}
+
+    if (success) {
+      Object.assign(leagueStats, data)
     } else {
-      console.error('获取统计信息失败:', response.data.message)
+      console.error('获取统计信息失败:', payload?.message)
     }
   } catch (error) {
     console.error('获取统计信息失败:', error)
@@ -481,7 +487,7 @@ const deleteLeague = async (league) => {
       }
     )
     
-    await request.delete(`/api/admin/v1/leagues/${league.id}`);
+    await request.delete(`/api/v1/admin/leagues/${league.id}`);
     
     const index = leagues.value.findIndex(item => item.id === league.id)
     if (index > -1) {
@@ -501,7 +507,7 @@ const saveLeague = async () => {
   try {
     if (editingLeague.value) {
       // 更新现有联赛
-      const response = await request.put(`/api/admin/v1/leagues/${currentLeague.value.id}`, {
+      const response = await request.put(`/api/v1/admin/leagues/${currentLeague.value.id}`, {
         name: currentLeague.value.name,
         country: currentLeague.value.country,
         level: currentLeague.value.level,
@@ -518,7 +524,7 @@ const saveLeague = async () => {
       }
     } else {
       // 添加新联赛
-      const response = await request.post('/api/admin/v1/leagues/', {
+      const response = await request.post('/api/v1/admin/leagues/', {
         name: currentLeague.value.name,
         country: currentLeague.value.country,
         level: currentLeague.value.level,

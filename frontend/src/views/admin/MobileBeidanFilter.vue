@@ -788,7 +788,7 @@ const refreshDateTimeOptions = async () => {
   try {
     const response = await request.get('/api/v1/beidan-filter/latest-date-times')
     const next = response?.dateTimes || response?.date_times || []
-    dateTimeOptions.value = Array.isArray(next) ? next.slice(0, 8) : []
+    dateTimeOptions.value = Array.isArray(next) ? next.slice(0, 5) : []
     if (!filterForm.dateTime && dateTimeOptions.value.length > 0) {
       filterForm.dateTime = dateTimeOptions.value[0]
     }

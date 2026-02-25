@@ -7,7 +7,10 @@ import json
 from backend.models.draw_feature import DrawFeature
 from backend.models.draw_training_job import TrainingJobStatus
 from backend.models.draw_prediction_result import DrawPredictionResult
+from backend.models.match import Match
 from backend.services import draw_prediction_service as svc
+from backend.services import poisson_11_service
+from backend.services import ai_draw_prediction_service
 from backend.api.dependencies import get_db, get_current_active_admin_user
 from sqlalchemy.orm import Session
 
@@ -242,4 +245,273 @@ async def list_predictions(
                 "pending": pending,
             },
         },
+    }
+
+# ===== Poisson 1-1 扫盘接口 =====
+@router.post("/poisson-11/fetch", response_model=dict)
+async def fetch_poisson_11(
+    date_str: Optional[str] = Query(None, description="比赛日期 YYYY-MM-DD"),
+    data_source: str = Query("yingqiu_bd", description="数据源，默认yingqiu_bd"),
+    db: Session = Depends(get_db),
+):
+    target_date = datetime.strptime(date_str, "%Y-%m-%d").date() if date_str else datetime.now().date()
+    schedule_source = "yingqiu_bd" if data_source == "yingqiu_bd" else "500w"
+    results = poisson_11_service.scan_for_date(db, target_date, data_source=data_source, overwrite=True)
+    return {
+        "success": True,
+        "message": "ok",
+        "data": {
+            "date": target_date.isoformat(),
+            "data_source": data_source,
+            "schedule_source": schedule_source,
+            "total": len(results),
+        },
+    }
+
+
+@router.get("/poisson-11/list", response_model=dict)
+async def list_poisson_11(
+    date_str: Optional[str] = Query(None, description="比赛日期 YYYY-MM-DD"),
+    data_source: str = Query("yingqiu_bd", description="数据源，默认yingqiu_bd"),
+    db: Session = Depends(get_db),
+):
+    target_date = datetime.strptime(date_str, "%Y-%m-%d").date() if date_str else datetime.now().date()
+    schedule_source = "yingqiu_bd" if data_source == "yingqiu_bd" else "500w"
+    results = poisson_11_service.list_results(db, target_date, data_source=data_source)
+    match_ids = [r.match_id for r in results]
+    number_map = {}
+    if match_ids:
+        rows = (
+            db.query(Match.match_identifier, Match.source_attributes, Match.source_match_id)
+            .filter(Match.match_identifier.in_(match_ids))
+            .filter(Match.data_source == schedule_source)
+            .all()
+        )
+        for match_identifier, source_attrs, source_match_id in rows:
+            attrs = {}
+            if isinstance(source_attrs, dict):
+                attrs = source_attrs
+            elif isinstance(source_attrs, str) and source_attrs:
+                try:
+                    attrs = json.loads(source_attrs)
+                except json.JSONDecodeError:
+                    attrs = {}
+            number_map[match_identifier] = attrs.get("number") or source_match_id
+
+    items = [
+        {
+            "match_id": r.match_id,
+            "match_date": r.match_date,
+            "match_time": r.match_time,
+            "league": r.league,
+            "home_team": r.home_team,
+            "away_team": r.away_team,
+            "number": (r.input_payload or {}).get("number") or number_map.get(r.match_id),
+            "mu_total": r.mu_total,
+            "mu_diff": r.mu_diff,
+            "mu_home": r.mu_home,
+            "mu_away": r.mu_away,
+            "prob_11": r.prob_11,
+            "rank": r.rank,
+            "data_source": r.data_source,
+        }
+        for r in results
+    ]
+    return {
+        "success": True,
+        "message": "ok",
+        "data": {
+            "date": target_date.isoformat(),
+            "data_source": data_source,
+            "schedule_source": schedule_source,
+            "total": len(items),
+            "items": items,
+        },
+    }
+
+
+@router.get("/poisson-11/detail/{match_id}", response_model=dict)
+async def get_poisson_11_detail(
+    match_id: str,
+    data_source: str = Query("yingqiu_bd", description="数据源，默认yingqiu_bd"),
+    db: Session = Depends(get_db),
+):
+    result = poisson_11_service.get_detail(db, match_id, data_source=data_source)
+    if not result:
+        raise HTTPException(status_code=404, detail="模型数据不存在")
+    number = (result.input_payload or {}).get("number")
+    if not number:
+        schedule_source = "yingqiu_bd" if data_source == "yingqiu_bd" else "500w"
+        match = (
+            db.query(Match)
+            .filter(Match.match_identifier == match_id, Match.data_source == schedule_source)
+            .first()
+        )
+        if match:
+            attrs = match.source_attributes if isinstance(match.source_attributes, dict) else {}
+            if not attrs and isinstance(match.source_attributes, str):
+                try:
+                    attrs = json.loads(match.source_attributes)
+                except json.JSONDecodeError:
+                    attrs = {}
+            number = attrs.get("number") or match.source_match_id
+    return {
+        "success": True,
+        "message": "ok",
+        "data": {
+            "match_id": result.match_id,
+            "match_date": result.match_date,
+            "match_time": result.match_time,
+            "league": result.league,
+            "home_team": result.home_team,
+            "away_team": result.away_team,
+            "number": number,
+            "mu_total": result.mu_total,
+            "mu_diff": result.mu_diff,
+            "mu_home": result.mu_home,
+            "mu_away": result.mu_away,
+            "prob_11": result.prob_11,
+            "rank": result.rank,
+            "data_source": result.data_source,
+            "input_payload": result.input_payload,
+        },
+    }
+
+
+# ===== AI 平局预测扫盘接口（北单/盈球） =====
+@router.get("/ai-draw/rules", response_model=dict)
+async def get_ai_draw_rules(db: Session = Depends(get_db)):
+    rules = ai_draw_prediction_service.get_rules(db)
+    return {
+        "success": True,
+        "message": "ok",
+        "data": {"rules": rules},
+    }
+
+
+@router.put("/ai-draw/rules", response_model=dict)
+async def save_ai_draw_rules(
+    payload: dict = Body(...),
+    db: Session = Depends(get_db),
+):
+    rules = payload.get("rules") if isinstance(payload, dict) else None
+    if rules is None:
+        rules = payload
+    saved = ai_draw_prediction_service.save_rules(db, rules or {})
+    return {
+        "success": True,
+        "message": "ok",
+        "data": {"rules": saved},
+    }
+
+
+@router.get("/ai-draw/rules/{match_id}", response_model=dict)
+async def get_ai_draw_match_rules(
+    match_id: str,
+    db: Session = Depends(get_db),
+):
+    rules = ai_draw_prediction_service.get_match_rules(db, match_id)
+    return {
+        "success": True,
+        "message": "ok",
+        "data": {"rules": rules},
+    }
+
+
+@router.put("/ai-draw/rules/{match_id}", response_model=dict)
+async def save_ai_draw_match_rules(
+    match_id: str,
+    payload: dict = Body(...),
+    db: Session = Depends(get_db),
+):
+    rules = payload.get("rules") if isinstance(payload, dict) else None
+    if rules is None:
+        rules = payload
+    saved = ai_draw_prediction_service.save_match_rules(db, match_id, rules or {})
+    return {
+        "success": True,
+        "message": "ok",
+        "data": {"rules": saved},
+    }
+
+
+@router.get("/ai-draw/overrides/{match_id}", response_model=dict)
+async def get_ai_draw_match_overrides(
+    match_id: str,
+    db: Session = Depends(get_db),
+):
+    overrides = ai_draw_prediction_service.get_match_overrides(db, match_id)
+    return {
+        "success": True,
+        "message": "ok",
+        "data": {"overrides": overrides},
+    }
+
+
+@router.put("/ai-draw/overrides/{match_id}", response_model=dict)
+async def save_ai_draw_match_overrides(
+    match_id: str,
+    payload: dict = Body(...),
+    db: Session = Depends(get_db),
+):
+    overrides = payload.get("overrides") if isinstance(payload, dict) else None
+    if overrides is None:
+        overrides = payload
+    saved = ai_draw_prediction_service.save_match_overrides(db, match_id, overrides or {})
+    return {
+        "success": True,
+        "message": "ok",
+        "data": {"overrides": saved},
+    }
+
+
+@router.post("/ai-draw/fetch", response_model=dict)
+async def fetch_ai_draw(
+    date_str: Optional[str] = Query(None, description="比赛日期 YYYY-MM-DD"),
+    db: Session = Depends(get_db),
+):
+    target_date = datetime.strptime(date_str, "%Y-%m-%d").date() if date_str else datetime.now().date()
+    items = ai_draw_prediction_service.list_for_date(db, target_date, data_source="yingqiu_bd")
+    return {
+        "success": True,
+        "message": "ok",
+        "data": {
+            "date": target_date.isoformat(),
+            "data_source": "yingqiu_bd",
+            "total": len(items),
+        },
+    }
+
+
+@router.get("/ai-draw/list", response_model=dict)
+async def list_ai_draw(
+    date_str: Optional[str] = Query(None, description="比赛日期 YYYY-MM-DD"),
+    db: Session = Depends(get_db),
+):
+    target_date = datetime.strptime(date_str, "%Y-%m-%d").date() if date_str else datetime.now().date()
+    items = ai_draw_prediction_service.list_for_date(db, target_date, data_source="yingqiu_bd")
+    return {
+        "success": True,
+        "message": "ok",
+        "data": {
+            "date": target_date.isoformat(),
+            "data_source": "yingqiu_bd",
+            "total": len(items),
+            "items": items,
+        },
+    }
+
+
+@router.get("/ai-draw/detail/{match_id}", response_model=dict)
+async def get_ai_draw_detail(
+    match_id: str,
+    db: Session = Depends(get_db),
+):
+    result = ai_draw_prediction_service.get_detail(db, match_id)
+    if not result:
+        raise HTTPException(status_code=404, detail="模型数据不存在")
+    return {
+        "success": True,
+        "message": "ok",
+        "data": result,
     }

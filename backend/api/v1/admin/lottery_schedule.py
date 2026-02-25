@@ -1,21 +1,25 @@
 ﻿from __future__ import annotations
 
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
+import logging
 import hashlib
 import json
 import re
+import threading
+from pathlib import Path
 from typing import Any, Dict, List, Optional
+import asyncio
 
 import aiohttp
 from bs4 import BeautifulSoup
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
-from sqlalchemy import and_, case, delete, desc, func, or_, select
+from sqlalchemy import and_, case, delete, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 from sqlalchemy.orm.attributes import flag_modified
 
-from ....database_async import get_async_db
+from ....database_async import AsyncSessionLocal, get_async_db
 from ....models.match import League, Match, MatchStatusEnum, Team
 from ...deps import get_current_admin
 
@@ -23,6 +27,18 @@ try:
     from playwright.async_api import async_playwright
 except Exception:
     async_playwright = None
+
+
+logger = logging.getLogger(__name__)
+
+
+_BD_ISSUE_DATES_CACHE: Dict[str, List[str]] = {}
+_BD_ISSUE_BY_DATE_CACHE: Dict[str, tuple[str, List[str]]] = {}
+_BD_EXPECT_OPTIONS_CACHE: List[str] = []
+_BD_OTHER_ODDS_PREFETCH_RUNNING: set[str] = set()
+_BD_OTHER_ODDS_PREFETCH_LAST_AT: Dict[str, datetime] = {}
+_BD_OTHER_ODDS_PREFETCH_COOLDOWN_SECONDS = 90
+_BD_OTHER_ODDS_PREFETCH_GUARD = threading.Lock()
 
 
 class UnifiedResponse(BaseModel):
@@ -62,7 +78,7 @@ class MatchUpdateRequest(BaseModel):
     source_url: Optional[str] = None
 
 
-router = APIRouter(prefix="/lottery-schedules", tags=["admin-lottery-schedules"])
+router = APIRouter(tags=["admin-lottery-schedules"])
 
 
 STATUS_MAP_UI_TO_DB = {
@@ -82,6 +98,20 @@ STATUS_MAP_DB_TO_UI = {
     MatchStatusEnum.ABANDONED.value: "cancelled",
     MatchStatusEnum.SUSPENDED.value: "cancelled",
 }
+
+
+_WEEKDAY_CN_LABELS = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"]
+
+
+def _weekday_cn_from_date_str(date_text: Optional[str]) -> Optional[str]:
+    raw = str(date_text or "").strip()
+    if not raw:
+        return None
+    try:
+        d = datetime.strptime(raw, "%Y-%m-%d").date()
+        return _WEEKDAY_CN_LABELS[d.weekday()]
+    except Exception:
+        return None
 
 
 def _safe_slug(value: str, default_value: str) -> str:
@@ -179,6 +209,179 @@ def _match_source_attrs(match: Match) -> Dict[str, Any]:
     }
 
 
+async def _resolve_bd_issue_date(db: AsyncSession, issue_no: Optional[str]) -> Optional[str]:
+    raw = str(issue_no or "").strip()
+    if not raw:
+        return None
+    normalized = raw.replace("期", "").strip()
+    if not normalized:
+        return None
+
+    if re.fullmatch(r"\d{4}-\d{1,2}-\d{1,2}", normalized):
+        return _normalize_yingqiu_date(normalized)
+    if re.fullmatch(r"\d{8}", normalized):
+        return _normalize_yingqiu_date(f"{normalized[:4]}-{normalized[4:6]}-{normalized[6:8]}")
+
+    # 北单期号简码：yy + 3位期次序号，例如 26026
+    if re.fullmatch(r"\d{5}", normalized):
+        yy = int(normalized[:2])
+        seq = int(normalized[2:])
+        if seq <= 0:
+            return None
+        year = 2000 + yy
+        source_date_expr = func.json_extract(Match.source_attributes, "$.source_schedule_date")
+        q = (
+            select(source_date_expr.label("source_date"))
+            .where(
+                Match.data_source == "yingqiu_bd",
+                source_date_expr.like(f"{year}-%"),
+            )
+            .distinct()
+            .order_by(source_date_expr.asc())
+        )
+        rows = (await db.execute(q)).all()
+        dates = [str(r.source_date or "").strip() for r in rows if str(r.source_date or "").strip()]
+        if 1 <= seq <= len(dates):
+            return dates[seq - 1]
+        return None
+
+    return None
+
+
+async def _fetch_500_bd_expect_options(limit: int = 300) -> List[str]:
+    if _BD_EXPECT_OPTIONS_CACHE and len(_BD_EXPECT_OPTIONS_CACHE) >= limit:
+        return _BD_EXPECT_OPTIONS_CACHE[:limit]
+
+    url = "https://trade.500.com/bjdc/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                      "(KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+        "Referer": "https://trade.500.com/bjdc/",
+        "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+    }
+    timeout = aiohttp.ClientTimeout(total=20)
+    async with aiohttp.ClientSession(timeout=timeout) as session:
+        async with session.get(url, headers=headers) as resp:
+            if resp.status != 200:
+                return []
+            html = await resp.text()
+    soup = BeautifulSoup(html, "html.parser")
+    options = soup.select("#expect_select option")
+    result: List[str] = []
+    for opt in options:
+        value = str(opt.get("value") or "").strip()
+        if re.fullmatch(r"\d{5}", value):
+            result.append(value)
+        if len(result) >= limit:
+            break
+    # 去重保序
+    dedup: List[str] = []
+    seen = set()
+    for x in result:
+        if x in seen:
+            continue
+        seen.add(x)
+        dedup.append(x)
+    if dedup:
+        _BD_EXPECT_OPTIONS_CACHE.clear()
+        _BD_EXPECT_OPTIONS_CACHE.extend(dedup)
+    return dedup
+
+
+async def _fetch_500_bd_issue_dates(issue_no: str) -> List[str]:
+    key = str(issue_no or "").strip()
+    if not key:
+        return []
+    if key in _BD_ISSUE_DATES_CACHE:
+        return _BD_ISSUE_DATES_CACHE[key]
+
+    url = f"https://trade.500.com/bjdc/?expect={key}"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                      "(KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+        "Referer": "https://trade.500.com/bjdc/",
+        "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+    }
+    timeout = aiohttp.ClientTimeout(total=20)
+    async with aiohttp.ClientSession(timeout=timeout) as session:
+        async with session.get(url, headers=headers) as resp:
+            if resp.status != 200:
+                return []
+            html = await resp.text()
+
+    soup = BeautifulSoup(html, "html.parser")
+    served_expect = str((soup.select_one("input#expect") or {}).get("value") or "").strip()
+    if served_expect and served_expect != key:
+        # 服务端回退到其它期号时，避免误用
+        return []
+
+    vs_table = soup.select_one("#vs_table")
+    if not vs_table:
+        return []
+
+    dates: List[str] = []
+    seen = set()
+    for tr in vs_table.select("tr[id^='switch_for_']"):
+        tid = str(tr.get("id") or "")
+        m = re.match(r"switch_for_(\d{4}-\d{2}-\d{2})", tid)
+        if not m:
+            continue
+        d = m.group(1)
+        if d in seen:
+            continue
+        seen.add(d)
+        dates.append(d)
+    dates = sorted(dates)
+    _BD_ISSUE_DATES_CACHE[key] = dates
+    return dates
+
+
+async def _resolve_bd_issue_dates(db: AsyncSession, issue_no: Optional[str]) -> tuple[Optional[str], List[str]]:
+    raw = str(issue_no or "").strip()
+    if not raw:
+        return None, []
+    normalized = raw.replace("期", "").strip()
+    if not normalized:
+        return None, []
+
+    # 1) 5位北单期号：优先按500规则获取整期覆盖日期
+    if re.fullmatch(r"\d{5}", normalized):
+        dates = await _fetch_500_bd_issue_dates(normalized)
+        if dates:
+            return normalized, dates
+        # 500失败时回退旧规则（单日）
+        fallback = await _resolve_bd_issue_date(db, normalized)
+        return normalized, ([fallback] if fallback else [])
+
+    # 2) 日期输入：先尝试反查500期号，再回退单日
+    target_date = None
+    if re.fullmatch(r"\d{8}", normalized):
+        target_date = _normalize_yingqiu_date(f"{normalized[:4]}-{normalized[4:6]}-{normalized[6:8]}")
+    elif re.fullmatch(r"\d{4}-\d{1,2}-\d{1,2}", normalized):
+        target_date = _normalize_yingqiu_date(normalized)
+    if target_date:
+        if target_date in _BD_ISSUE_BY_DATE_CACHE:
+            issue_value, dates = _BD_ISSUE_BY_DATE_CACHE[target_date]
+            return issue_value, dates
+
+        yy = target_date[2:4]
+        candidates = await _fetch_500_bd_expect_options(limit=240)
+        probes = 0
+        for issue_value in candidates:
+            if not issue_value.startswith(yy):
+                continue
+            dates = await _fetch_500_bd_issue_dates(issue_value)
+            probes += 1
+            if target_date in dates:
+                _BD_ISSUE_BY_DATE_CACHE[target_date] = (issue_value, dates)
+                return issue_value, dates
+            if probes >= 120:
+                break
+        return target_date, [target_date]
+
+    return None, []
+
+
 async def _get_or_create_league(db: AsyncSession, league_name: str) -> League:
     q = await db.execute(select(League).where(League.name == league_name))
     league = q.scalar_one_or_none()
@@ -267,11 +470,16 @@ async def get_lottery_schedules(
     status: Optional[str] = Query(None),
     date_from: Optional[str] = Query(None),
     date_to: Optional[str] = Query(None),
+    issue_no: Optional[str] = Query(None, description="北单期号，如26026"),
     schedule_type: Optional[str] = Query(None, description="jczq|bd"),
     db: AsyncSession = Depends(get_async_db),
 ):
     try:
         conditions = []
+        resolved_issue_date: Optional[str] = None
+        resolved_issue_dates: List[str] = []
+        resolved_issue_no: Optional[str] = None
+        bd_prefetch_date: Optional[str] = None
         if schedule_type == "jczq":
             conditions.append(Match.data_source == "500w")
         elif schedule_type == "bd":
@@ -283,8 +491,37 @@ async def get_lottery_schedules(
         if schedule_type == "bd":
             # 北单按期次日期过滤，避免把前一期次的次日凌晨比赛并入当前日期
             source_date_expr = func.json_extract(Match.source_attributes, "$.source_schedule_date")
+            if issue_no:
+                resolved_issue_no, resolved_issue_dates = await _resolve_bd_issue_dates(db, issue_no)
+                if resolved_issue_dates:
+                    if len(resolved_issue_dates) == 1:
+                        conditions.append(source_date_expr == resolved_issue_dates[0])
+                        bd_prefetch_date = _normalize_yingqiu_date(resolved_issue_dates[0]) or resolved_issue_dates[0]
+                    else:
+                        conditions.append(source_date_expr.in_(resolved_issue_dates))
+                    resolved_issue_date = resolved_issue_dates[0]
+                else:
+                    # 期号无效或未导入该期数据时返回空结果
+                    conditions.append(Match.id == -1)
+            elif date_from and date_to and date_from == date_to:
+                conditions.append(source_date_expr == date_from)
+                bd_prefetch_date = _normalize_yingqiu_date(date_from) or date_from
+            else:
+                if date_from:
+                    conditions.append(source_date_expr >= date_from)
+                if date_to:
+                    conditions.append(source_date_expr <= date_to)
+                if not date_from and not date_to:
+                    bd_prefetch_date = datetime.now().strftime("%Y-%m-%d")
+        elif schedule_type == "jczq":
+            # 竞彩按源日期过滤；单日查询再叠加“编号周几”限制，避免把下一天分组混入
+            source_date_expr = func.json_extract(Match.source_attributes, "$.source_schedule_date")
+            number_expr = func.json_extract(Match.source_attributes, "$.number")
             if date_from and date_to and date_from == date_to:
                 conditions.append(source_date_expr == date_from)
+                weekday_cn = _weekday_cn_from_date_str(date_from)
+                if weekday_cn:
+                    conditions.append(number_expr.like(f"{weekday_cn}%"))
             else:
                 if date_from:
                     conditions.append(source_date_expr >= date_from)
@@ -293,7 +530,6 @@ async def get_lottery_schedules(
         else:
             if date_from and date_to and date_from == date_to:
                 target_date = datetime.strptime(date_from, "%Y-%m-%d").date()
-                # 竞彩按开赛日期 + 源日期并集，覆盖跨日凌晨场
                 conditions.append(
                     or_(
                         Match.match_date == target_date,
@@ -308,27 +544,36 @@ async def get_lottery_schedules(
 
         HomeTeam = aliased(Team)
         AwayTeam = aliased(Team)
-
-        query = (
+        base_query = (
             select(Match, League, HomeTeam, AwayTeam)
             .join(League, Match.league_id == League.id, isouter=True)
             .join(HomeTeam, Match.home_team_id == HomeTeam.id, isouter=True)
             .join(AwayTeam, Match.away_team_id == AwayTeam.id, isouter=True)
             .where(and_(*conditions))
-            .order_by(desc(Match.scheduled_kickoff))
-            .offset((page - 1) * size)
-            .limit(size)
         )
 
-        rows = (await db.execute(query)).all()
-        items = await _format_match_rows(db, rows)
+        if schedule_type in {"jczq", "bd"}:
+            # 强制使用 Python 统一排序，避免不同数据库方言/表达式导致顺序不一致
+            all_rows = (await db.execute(base_query)).all()
+            sorted_rows = sorted(all_rows, key=lambda r: _match_row_sort_key_by_number(r, schedule_type))
+            total = len(sorted_rows)
+            start = max(0, (page - 1) * size)
+            end = start + size
+            page_rows = sorted_rows[start:end]
+            items = await _format_match_rows(db, page_rows)
+        else:
+            query = base_query.order_by(Match.scheduled_kickoff.desc(), Match.id.desc()).offset((page - 1) * size).limit(size)
+            rows = (await db.execute(query)).all()
+            items = await _format_match_rows(db, rows)
+            total_query = (
+                select(func.count(Match.id))
+                .join(League, Match.league_id == League.id, isouter=True)
+                .where(and_(*conditions))
+            )
+            total = (await db.execute(total_query)).scalar() or 0
 
-        total_query = (
-            select(func.count(Match.id))
-            .join(League, Match.league_id == League.id, isouter=True)
-            .where(and_(*conditions))
-        )
-        total = (await db.execute(total_query)).scalar() or 0
+        if schedule_type == "bd":
+            _trigger_bd_other_odds_prefetch(bd_prefetch_date)
 
         return UnifiedResponse(
             success=True,
@@ -338,8 +583,116 @@ async def get_lottery_schedules(
                 "page": page,
                 "size": size,
                 "pages": (total + size - 1) // size,
+                "resolved_issue_date": resolved_issue_date,
+                "resolved_issue_dates": resolved_issue_dates,
+                "resolved_issue_no": resolved_issue_no,
             },
             message="获取竞彩赛程列表成功",
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/issue-options", response_model=UnifiedResponse)
+async def get_bd_issue_options(
+    count: int = Query(3, ge=1, le=20, description="返回最近多少期号"),
+):
+    try:
+        items = await _fetch_500_bd_expect_options(limit=max(3, count))
+        return UnifiedResponse(
+            success=True,
+            data={"items": items[:count]},
+            message="获取北单期号选项成功",
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/league-options", response_model=UnifiedResponse)
+async def get_lottery_league_options(
+    schedule_type: Optional[str] = Query(None, description="jczq|bd"),
+    date_from: Optional[str] = Query(None),
+    date_to: Optional[str] = Query(None),
+    issue_no: Optional[str] = Query(None, description="北单期号，如26026"),
+    db: AsyncSession = Depends(get_async_db),
+):
+    try:
+        conditions = []
+        resolved_issue_date: Optional[str] = None
+        resolved_issue_dates: List[str] = []
+        resolved_issue_no: Optional[str] = None
+        if schedule_type == "jczq":
+            conditions.append(Match.data_source == "500w")
+        elif schedule_type == "bd":
+            conditions.append(Match.data_source == "yingqiu_bd")
+
+        if schedule_type == "bd":
+            source_date_expr = func.json_extract(Match.source_attributes, "$.source_schedule_date")
+            if issue_no:
+                resolved_issue_no, resolved_issue_dates = await _resolve_bd_issue_dates(db, issue_no)
+                if resolved_issue_dates:
+                    if len(resolved_issue_dates) == 1:
+                        conditions.append(source_date_expr == resolved_issue_dates[0])
+                    else:
+                        conditions.append(source_date_expr.in_(resolved_issue_dates))
+                    resolved_issue_date = resolved_issue_dates[0]
+                else:
+                    conditions.append(Match.id == -1)
+            elif date_from and date_to and date_from == date_to:
+                conditions.append(source_date_expr == date_from)
+            else:
+                if date_from:
+                    conditions.append(source_date_expr >= date_from)
+                if date_to:
+                    conditions.append(source_date_expr <= date_to)
+        elif schedule_type == "jczq":
+            source_date_expr = func.json_extract(Match.source_attributes, "$.source_schedule_date")
+            number_expr = func.json_extract(Match.source_attributes, "$.number")
+            if date_from and date_to and date_from == date_to:
+                conditions.append(source_date_expr == date_from)
+                weekday_cn = _weekday_cn_from_date_str(date_from)
+                if weekday_cn:
+                    conditions.append(number_expr.like(f"{weekday_cn}%"))
+            else:
+                if date_from:
+                    conditions.append(source_date_expr >= date_from)
+                if date_to:
+                    conditions.append(source_date_expr <= date_to)
+        else:
+            if date_from and date_to and date_from == date_to:
+                target_date = datetime.strptime(date_from, "%Y-%m-%d").date()
+                conditions.append(
+                    or_(
+                        Match.match_date == target_date,
+                        func.json_extract(Match.source_attributes, "$.source_schedule_date") == date_from,
+                    )
+                )
+            else:
+                if date_from:
+                    conditions.append(Match.match_date >= datetime.strptime(date_from, "%Y-%m-%d").date())
+                if date_to:
+                    conditions.append(Match.match_date <= datetime.strptime(date_to, "%Y-%m-%d").date())
+
+        q = (
+            select(League.name)
+            .select_from(Match)
+            .join(League, Match.league_id == League.id, isouter=True)
+            .where(and_(*conditions), League.name.isnot(None))
+            .distinct()
+            .order_by(League.name.asc())
+        )
+        rows = (await db.execute(q)).all()
+        items = [str(r[0]) for r in rows if r and r[0]]
+
+        return UnifiedResponse(
+            success=True,
+            data={
+                "items": items,
+                "resolved_issue_date": resolved_issue_date,
+                "resolved_issue_dates": resolved_issue_dates,
+                "resolved_issue_no": resolved_issue_no,
+            },
+            message="获取赛事选项成功",
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -728,6 +1081,7 @@ async def _fetch_500w_matches(schedule_date: date) -> List[Dict[str, Any]]:
         if not (home_team and away_team):
             continue
 
+        row_source_schedule_date = _infer_jczq_source_schedule_date(schedule_date, number)
         result.append(
             {
                 "number": number,
@@ -740,7 +1094,7 @@ async def _fetch_500w_matches(schedule_date: date) -> List[Dict[str, Any]]:
                 "home_score": home_score,
                 "away_score": away_score,
                 "halftime_score": halftime_score,
-                "source_schedule_date": schedule_date.strftime("%Y-%m-%d"),
+                "source_schedule_date": row_source_schedule_date.strftime("%Y-%m-%d"),
                 "handicap_0": handicap_0,
                 "handicap": handicap,
                 "odds_nspf_win": odds_nspf_win,
@@ -820,97 +1174,398 @@ async def _fetch_500w_other_odds(fixture_id: str) -> List[Dict[str, Any]]:
     return result
 
 
-async def _fetch_yingqiu_other_odds(match_id: str) -> List[Dict[str, Any]]:
-    def _map_payload(payload: Dict[str, Any]) -> List[Dict[str, Any]]:
-        rows = ((payload or {}).get("model") or {}).get("list") or []
-        result: List[Dict[str, Any]] = []
-        for row in rows:
-            if not isinstance(row, dict):
-                continue
-            updated_at = "-"
-            ts = row.get("createTime")
-            try:
-                if ts is not None:
-                    tsv = int(ts)
-                    if tsv > 10**12:
-                        tsv = tsv // 1000
-                    updated_at = datetime.fromtimestamp(tsv).strftime("%Y-%m-%d %H:%M")
-            except Exception:
-                pass
-            result.append(
-                {
-                    "company": str(row.get("providerName") or "-"),
-                    "updated_at": updated_at,
-                    "init_win": _to_float(row.get("firstWinOdds")),
-                    "init_draw": _to_float(row.get("firstDrawOdds")),
-                    "init_lose": _to_float(row.get("firstLoseOdds")),
-                    "instant_win": _to_float(row.get("winOdds")),
-                    "instant_draw": _to_float(row.get("drawOdds")),
-                    "instant_lose": _to_float(row.get("loseOdds")),
-                }
-            )
-        return result
+_WEEKDAY_ORDER = {
+    "周一": 1,
+    "周二": 2,
+    "周三": 3,
+    "周四": 4,
+    "周五": 5,
+    "周六": 6,
+    "周日": 7,
+    "周天": 7,
+}
 
-    # 先按 match_id 直连接口，适用于已是 leagueMatchId 的场景
+
+def _resolve_match_kickoff(match: Match) -> datetime:
+    kickoff = getattr(match, "scheduled_kickoff", None)
+    if isinstance(kickoff, datetime):
+        return kickoff
+    md = getattr(match, "match_date", None)
+    mt = getattr(match, "match_time", None)
+    if md is not None and mt is not None:
+        return datetime.combine(md, mt)
+    # 未知时间统一排在最后，避免干扰编号主排序
+    return datetime.max
+
+
+def _extract_match_number_text(match: Match) -> str:
+    attrs = match.source_attributes if isinstance(match.source_attributes, dict) else {}
+    raw = attrs.get("number")
+    if raw in [None, ""]:
+        raw = getattr(match, "external_id", None)
+    if raw in [None, ""]:
+        raw = getattr(match, "source_match_id", None)
+    return str(raw or "").strip()
+
+
+def _number_sort_key(number_text: str, schedule_type: Optional[str]) -> tuple:
+    text = str(number_text or "").strip()
+    if not text or text == "-":
+        return 9, 999999, 999999, text
+
+    # 竞彩常见格式：周X001
+    m_week = re.match(r"^(周[一二三四五六日天])\s*0*(\d+)$", text)
+    if m_week:
+        weekday_rank = _WEEKDAY_ORDER.get(m_week.group(1), 99)
+        seq = int(m_week.group(2))
+        return 0, weekday_rank, seq, text
+
+    # 纯数字（北单常见）
+    if text.isdigit():
+        return 1, 0, int(text), text
+
+    # 兜底：提取尾部数字
+    m_tail = re.search(r"(\d+)$", text)
+    if m_tail:
+        return 2, 0, int(m_tail.group(1)), text
+
+    # 最后按文本自然顺序
+    return 8, 0, 999999, text
+
+
+def _match_row_sort_key_by_number(row: Any, schedule_type: Optional[str]) -> tuple:
+    match = row[0]
+    number_text = _extract_match_number_text(match)
+    kickoff = _resolve_match_kickoff(match)
+    return (*_number_sort_key(number_text, schedule_type), kickoff, int(getattr(match, "id", 0) or 0))
+
+
+def _infer_jczq_source_schedule_date(base_date: date, number_text: Optional[str]) -> date:
+    text = str(number_text or "").strip()
+    m = re.match(r"^(周[一二三四五六日天])", text)
+    if not m:
+        return base_date
+    target_weekday = _WEEKDAY_ORDER.get(m.group(1))
+    if not target_weekday:
+        return base_date
+    base_weekday = base_date.weekday() + 1  # Monday=1 ... Sunday=7
+    delta = (target_weekday - base_weekday) % 7
+    return base_date + timedelta(days=delta)
+
+
+def _format_odds_timestamp(ts: Any) -> str:
+    tsv = _to_int(ts)
+    if tsv is None or tsv <= 0:
+        return "-"
+    if tsv > 10**12:
+        tsv = tsv // 1000
+    try:
+        return datetime.fromtimestamp(tsv).strftime("%Y-%m-%d %H:%M")
+    except Exception:
+        return "-"
+
+
+def _pick_latest_yingqiu_odd(odds_rows: Any) -> Dict[str, Any]:
+    if not isinstance(odds_rows, list) or not odds_rows:
+        return {}
+    best_row: Dict[str, Any] = {}
+    best_score = -1
+    for row in odds_rows:
+        if not isinstance(row, dict):
+            continue
+        score = _to_int(row.get("updateTime")) or _to_int(row.get("createTime")) or _to_int(row.get("number")) or 0
+        if score >= best_score:
+            best_score = score
+            best_row = row
+    return best_row
+
+
+def _map_yingqiu_europe_odds_payload(payload: Dict[str, Any]) -> List[Dict[str, Any]]:
+    rows = ((payload or {}).get("model") or {}).get("list") or []
+    result: List[Dict[str, Any]] = []
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        result.append(
+            {
+                "company": str(row.get("providerName") or "-"),
+                "provider_id": row.get("providerId"),
+                "updated_at": _format_odds_timestamp(row.get("createTime")),
+                "init_win": _to_float(row.get("firstWinOdds")),
+                "init_draw": _to_float(row.get("firstDrawOdds")),
+                "init_lose": _to_float(row.get("firstLoseOdds")),
+                "instant_win": _to_float(row.get("winOdds")),
+                "instant_draw": _to_float(row.get("drawOdds")),
+                "instant_lose": _to_float(row.get("loseOdds")),
+            }
+        )
+    return result
+
+
+def _map_yingqiu_asia_odds_payload(payload: Dict[str, Any]) -> List[Dict[str, Any]]:
+    rows = (payload or {}).get("list") or []
+    result: List[Dict[str, Any]] = []
+    for provider in rows:
+        if not isinstance(provider, dict):
+            continue
+        odd = _pick_latest_yingqiu_odd(provider.get("odds"))
+        result.append(
+            {
+                "company": str(provider.get("providerName") or "-"),
+                "provider_id": provider.get("providerId"),
+                "updated_at": _format_odds_timestamp(odd.get("updateTime") or odd.get("createTime")),
+                "init_home": _to_float(odd.get("firstHomeWinOdds")),
+                "init_handicap": str(odd.get("firstHandicap") or odd.get("firstHandicapNum") or "-"),
+                "init_away": _to_float(odd.get("firstAwayWinOdds")),
+                "instant_home": _to_float(odd.get("homeWinOdds")),
+                "instant_handicap": str(odd.get("handicap") or odd.get("handicapNum") or "-"),
+                "instant_away": _to_float(odd.get("awayWinOdds")),
+                "trend": str(odd.get("updown") or "-"),
+            }
+        )
+    return result
+
+
+def _map_yingqiu_goals_odds_payload(payload: Dict[str, Any]) -> List[Dict[str, Any]]:
+    rows = (payload or {}).get("list") or []
+    result: List[Dict[str, Any]] = []
+    for provider in rows:
+        if not isinstance(provider, dict):
+            continue
+        odd = _pick_latest_yingqiu_odd(provider.get("odds"))
+        result.append(
+            {
+                "company": str(provider.get("providerName") or "-"),
+                "provider_id": provider.get("providerId"),
+                "updated_at": _format_odds_timestamp(odd.get("updateTime") or odd.get("createTime")),
+                "init_big": _to_float(odd.get("firstBigOdds")),
+                "init_line": str(odd.get("firstHandicap") or odd.get("firstHandicapNum") or "-"),
+                "init_small": _to_float(odd.get("firstSmallOdds")),
+                "instant_big": _to_float(odd.get("bigOdds")),
+                "instant_line": str(odd.get("handicap") or odd.get("handicapNum") or "-"),
+                "instant_small": _to_float(odd.get("smallOdds")),
+                "trend": str(odd.get("updown") or "-"),
+            }
+        )
+    return result
+
+
+async def _fetch_yingqiu_europe_odds_direct(match_id: str) -> List[Dict[str, Any]]:
     url = f"https://www.ttyingqiu.com/live/matchDetail/ftAicaiAllEuropeOdds?matchId={match_id}&isPrimary=0"
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-                      "(KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+        "(KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
         "Referer": f"https://www.ttyingqiu.com/live/zq/matchDetail/oz/{match_id}",
         "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
     }
     timeout = aiohttp.ClientTimeout(total=25)
     async with aiohttp.ClientSession(timeout=timeout) as session:
         async with session.get(url, headers=headers) as resp:
-            if resp.status == 200:
-                raw = await resp.read()
-                text = ""
-                for enc in ("utf-8", "gb18030", "gbk"):
-                    try:
-                        text = raw.decode(enc)
-                        if text:
-                            break
-                    except Exception:
-                        continue
-                if not text:
-                    text = raw.decode("utf-8", errors="ignore")
+            if resp.status != 200:
+                return []
+            raw = await resp.read()
+            text = ""
+            for enc in ("utf-8", "gb18030", "gbk"):
                 try:
-                    payload = json.loads(text)
-                    mapped = _map_payload(payload)
-                    if mapped:
-                        return mapped
+                    text = raw.decode(enc)
+                    if text:
+                        break
                 except Exception:
-                    pass
+                    continue
+            if not text:
+                text = raw.decode("utf-8", errors="ignore")
+            try:
+                payload = json.loads(text)
+                return _map_yingqiu_europe_odds_payload(payload)
+            except Exception:
+                return []
 
-    # 兜底：source_match_id 若是 qtMatchId，则用浏览器打开详情页并拦截真实赔率接口
-    if async_playwright is None:
-        raise HTTPException(status_code=502, detail="抓取盈球其它赔率失败：直连失败且未安装Playwright")
+
+async def _fetch_yingqiu_other_odds_settled_via_node(match_id: str) -> Any:
+    """
+    Fallback: run Playwright via Node.js when python playwright is unavailable.
+    """
+    repo_root = Path(__file__).resolve().parents[4]
+    frontend_dir = repo_root / "frontend"
+    if not frontend_dir.exists():
+        return None
+
+    node_script = r"""
+const mid = process.argv[1];
+(async () => {
+  let browser = null;
+  try {
+    const { chromium } = require('playwright');
+    browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+    const page = await browser.newPage({ viewport: { width: 1366, height: 900 } });
+    const detailUrl = `https://www.ttyingqiu.com/live/zq/matchDetail/oz/${mid}`;
+    await page.goto(detailUrl, { waitUntil: 'domcontentloaded', timeout: 120000 });
+    await page.waitForTimeout(7000);
+    const settled = await page.evaluate((m) => new Promise((resolve) => {
+      try {
+        if (typeof requirejs === 'undefined') {
+          resolve({ error: 'requirejs_unavailable' });
+          return;
+        }
+        requirejs(['service/match.service'], function(ms) {
+          Promise.allSettled([
+            Promise.resolve(ms.getFtAicaiAllEuropeOdds(m, 0)),
+            Promise.resolve(ms.getFtRangqiuOdds(m)),
+            Promise.resolve(ms.getFtBigsmallAllAicaiOdds(m)),
+          ]).then((items) => {
+            const normalized = items.map((x) => (
+              x.status === 'fulfilled'
+                ? { status: 'fulfilled', value: x.value }
+                : { status: 'rejected', reason: String(x.reason || '') }
+            ));
+            resolve(normalized);
+          }).catch((e) => resolve({ error: String(e || '') }));
+        }, function(err) {
+          resolve({ error: String(err || '') });
+        });
+      } catch (e) {
+        resolve({ error: String(e || '') });
+      }
+    }), String(mid));
+    process.stdout.write(JSON.stringify(settled ?? null));
+  } catch (e) {
+    process.stdout.write(JSON.stringify({ error: String(e || '') }));
+    process.exitCode = 1;
+  } finally {
+    if (browser) {
+      try { await browser.close(); } catch (_) {}
+    }
+  }
+})();
+"""
+    try:
+        proc = await asyncio.create_subprocess_exec(
+            "node",
+            "-e",
+            node_script,
+            str(match_id),
+            cwd=str(frontend_dir),
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=150)
+        out_text = (stdout or b"").decode("utf-8", errors="ignore").strip()
+        if not out_text:
+            err_text = (stderr or b"").decode("utf-8", errors="ignore").strip()
+            if err_text:
+                logger.warning("node兜底抓取输出为空(match_id=%s): %s", match_id, err_text[:300])
+            return None
+        try:
+            return json.loads(out_text)
+        except Exception:
+            logger.warning("node兜底抓取JSON解析失败(match_id=%s): %s", match_id, out_text[:300])
+            return None
+    except Exception as e:
+        logger.warning("node兜底抓取异常(match_id=%s): %s", match_id, e)
+        return None
+
+
+def _apply_yingqiu_other_odds_settled(
+    settled: Any,
+    tabs: Dict[str, List[Dict[str, Any]]],
+) -> None:
+    if not (isinstance(settled, list) and len(settled) >= 3):
+        return
+
+    eu_res = settled[0] if isinstance(settled[0], dict) else {}
+    asia_res = settled[1] if isinstance(settled[1], dict) else {}
+    goals_res = settled[2] if isinstance(settled[2], dict) else {}
+
+    if eu_res.get("status") == "fulfilled" and isinstance(eu_res.get("value"), dict):
+        eu_rows = _map_yingqiu_europe_odds_payload(eu_res.get("value") or {})
+        if eu_rows:
+            tabs["eu"] = eu_rows
+
+    if asia_res.get("status") == "fulfilled" and isinstance(asia_res.get("value"), dict):
+        tabs["asia"] = _map_yingqiu_asia_odds_payload(asia_res.get("value") or {})
+
+    if goals_res.get("status") == "fulfilled" and isinstance(goals_res.get("value"), dict):
+        tabs["goals"] = _map_yingqiu_goals_odds_payload(goals_res.get("value") or {})
+
+
+async def _fetch_yingqiu_other_odds_tabs(match_id: str) -> Dict[str, List[Dict[str, Any]]]:
+    tabs: Dict[str, List[Dict[str, Any]]] = {
+        "eu": [],
+        "asia": [],
+        "goals": [],
+    }
+
+    try:
+        # 优先用直接接口抓欧指，兼容性最佳
+        tabs["eu"] = await _fetch_yingqiu_europe_odds_direct(match_id)
+    except Exception:
+        tabs["eu"] = []
 
     detail_url = f"https://www.ttyingqiu.com/live/zq/matchDetail/oz/{match_id}"
-    try:
-        async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=True, args=["--no-sandbox"])
-            page = await browser.new_page(viewport={"width": 1366, "height": 900})
-            async with page.expect_response(
-                lambda r: "ftAicaiAllEuropeOdds?matchId=" in r.url and r.request.method == "GET",
-                timeout=40000,
-            ) as response_info:
-                await page.goto(detail_url, wait_until="networkidle", timeout=120000)
-            resp = await response_info.value
-            if resp.status != 200:
-                await browser.close()
-                raise HTTPException(status_code=502, detail=f"抓取盈球其它赔率失败，HTTP {resp.status}")
-            payload = await resp.json()
-            await browser.close()
-            mapped = _map_payload(payload)
-            if mapped:
-                return mapped
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=502, detail=f"抓取盈球其它赔率失败: {str(e)}")
+    settled: Any = None
 
-    raise HTTPException(status_code=502, detail="抓取盈球其它赔率失败：未返回有效赔率数据")
+    # 1) Python Playwright path
+    if async_playwright is not None:
+        try:
+            async with async_playwright() as p:
+                browser = await p.chromium.launch(headless=True, args=["--no-sandbox"])
+                try:
+                    page = await browser.new_page(viewport={"width": 1366, "height": 900})
+                    await page.goto(detail_url, wait_until="domcontentloaded", timeout=120000)
+                    await page.wait_for_timeout(7000)
+                    settled = await page.evaluate(
+                        """(mid) => new Promise((resolve) => {
+                            try {
+                                if (typeof requirejs === 'undefined') {
+                                    resolve({ error: 'requirejs_unavailable' });
+                                    return;
+                                }
+                                requirejs(['service/match.service'], function(ms) {
+                                    Promise.allSettled([
+                                        Promise.resolve(ms.getFtAicaiAllEuropeOdds(mid, 0)),
+                                        Promise.resolve(ms.getFtRangqiuOdds(mid)),
+                                        Promise.resolve(ms.getFtBigsmallAllAicaiOdds(mid)),
+                                    ]).then((items) => {
+                                        const normalized = items.map((x) => (
+                                            x.status === 'fulfilled'
+                                                ? { status: 'fulfilled', value: x.value }
+                                                : { status: 'rejected', reason: String(x.reason || '') }
+                                        ));
+                                        resolve(normalized);
+                                    }).catch((e) => resolve({ error: String(e || '') }));
+                                }, function(err) {
+                                    resolve({ error: String(err || '') });
+                                });
+                            } catch (e) {
+                                resolve({ error: String(e || '') });
+                            }
+                        })""",
+                        str(match_id),
+                    )
+                finally:
+                    await browser.close()
+        except Exception as e:
+            logger.warning("盈球其它赔率抓取(Python Playwright)失败(match_id=%s): %s", match_id, e)
+
+    # 2) Node Playwright fallback path
+    if not (isinstance(settled, list) and len(settled) >= 3):
+        node_settled = await _fetch_yingqiu_other_odds_settled_via_node(match_id)
+        if isinstance(node_settled, list) and len(node_settled) >= 3:
+            settled = node_settled
+
+    try:
+        _apply_yingqiu_other_odds_settled(settled, tabs)
+    except Exception as e:
+        logger.warning("盈球其它赔率扩展抓取失败(match_id=%s): %s", match_id, e)
+
+    if not tabs["eu"] and not tabs["asia"] and not tabs["goals"]:
+        raise HTTPException(status_code=502, detail="抓取盈球其它赔率失败：未返回有效赔率数据")
+    return tabs
+
+
+async def _fetch_yingqiu_other_odds(match_id: str) -> List[Dict[str, Any]]:
+    tabs = await _fetch_yingqiu_other_odds_tabs(match_id)
+    return tabs.get("eu", [])
 
 
 def _extract_json_object_after(source: str, marker: str) -> Optional[Dict[str, Any]]:
@@ -958,10 +1613,32 @@ def _map_yingqiu_status(raw_status: Any, status_des: str) -> str:
     return MatchStatusEnum.LIVE.value
 
 
+def _normalize_yingqiu_date(text: Optional[str]) -> Optional[str]:
+    raw = str(text or "").strip()
+    if not raw:
+        return None
+    raw = raw.replace("/", "-").replace(".", "-")
+    m = re.search(r"(\d{4})-(\d{1,2})-(\d{1,2})", raw)
+    if not m:
+        return None
+    return f"{int(m.group(1)):04d}-{int(m.group(2)):02d}-{int(m.group(3)):02d}"
+
+
+def _parse_yingqiu_match_datetime(match_date: Optional[str], match_time: Optional[str], schedule_date: str) -> datetime:
+    date_text = _normalize_yingqiu_date(match_date) or schedule_date
+    time_text = str(match_time or "00:00").strip().replace("：", ":")
+    for fmt in ["%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M"]:
+        try:
+            return datetime.strptime(f"{date_text} {time_text}", fmt)
+        except Exception:
+            continue
+    return datetime.strptime(f"{schedule_date} 00:00", "%Y-%m-%d %H:%M")
+
+
 def _map_yingqiu_match(item: Dict[str, Any], source_url: str, schedule_date: str) -> Dict[str, Any]:
     match_date = str(item.get("matchDate") or schedule_date)
     match_time = str(item.get("matchTime") or "00:00")
-    kickoff = datetime.strptime(f"{match_date} {match_time}", "%Y-%m-%d %H:%M")
+    kickoff = _parse_yingqiu_match_datetime(match_date, match_time, schedule_date)
 
     odds_europe = str(item.get("oddsEurope") or "")
     eu_parts = [p.strip() for p in odds_europe.split(";")]
@@ -977,10 +1654,34 @@ def _map_yingqiu_match(item: Dict[str, Any], source_url: str, schedule_date: str
     number = str(item.get("matchNoCn") or "")
     source_match_id = str(item.get("qtMatchId") or item.get("matchId") or number)
 
+    home_score_hint = _to_int(item.get("homeScore"))
+    away_score_hint = _to_int(item.get("awayScore"))
+
     raw_score = item.get("score")
     if isinstance(raw_score, list):
-        full_score_raw = raw_score[0] if len(raw_score) > 0 else ""
-        half_score_raw_from_list = raw_score[1] if len(raw_score) > 1 else ""
+        # 盈球score数组常见格式为 [半场, 全场, ...]
+        score_list = [str(x or "").strip() for x in raw_score if str(x or "").strip()]
+        full_score_raw = ""
+        half_score_raw_from_list = ""
+        if len(score_list) == 1:
+            full_score_raw = score_list[0]
+        elif len(score_list) >= 2:
+            first_pair = _extract_score_pair(score_list[0])
+            second_pair = _extract_score_pair(score_list[1])
+            hint_pair = (
+                (home_score_hint, away_score_hint)
+                if home_score_hint is not None and away_score_hint is not None
+                else None
+            )
+            if hint_pair and second_pair == hint_pair:
+                full_score_raw = score_list[1]
+                half_score_raw_from_list = score_list[0]
+            elif hint_pair and first_pair == hint_pair:
+                full_score_raw = score_list[0]
+                half_score_raw_from_list = score_list[1]
+            else:
+                full_score_raw = score_list[1]
+                half_score_raw_from_list = score_list[0]
     else:
         full_score_raw = raw_score
         half_score_raw_from_list = ""
@@ -999,8 +1700,8 @@ def _map_yingqiu_match(item: Dict[str, Any], source_url: str, schedule_date: str
         or half_score_raw_from_list
         or ""
     ).strip()
-    hs = _to_int(item.get("homeScore"))
-    as_ = _to_int(item.get("awayScore"))
+    hs = home_score_hint
+    as_ = away_score_hint
     if hs is None or as_ is None:
         hs, as_ = _extract_score_pair(full_score_text)
     if hs is None or as_ is None:
@@ -1034,9 +1735,10 @@ def _map_yingqiu_match(item: Dict[str, Any], source_url: str, schedule_date: str
         "odds_win": odds_win,
         "odds_draw": odds_draw,
         "odds_lose": odds_lose,
-        "odds_nspf_win": odds_win,
-        "odds_nspf_draw": odds_draw,
-        "odds_nspf_lose": odds_lose,
+        # 静态JSON/源码兜底通常仅提供欧赔，避免误当作北单SP主赔率
+        "odds_nspf_win": None,
+        "odds_nspf_draw": None,
+        "odds_nspf_lose": None,
         "odds_spf_win": None,
         "odds_spf_draw": None,
         "odds_spf_lose": None,
@@ -1060,6 +1762,57 @@ def _parse_yingqiu_kickoff(kickoff_text: str, schedule_date: str) -> datetime:
     return kickoff
 
 
+def _map_yingqiu_dom_row(row: Dict[str, Any], schedule_date: str, source_url: str) -> Dict[str, Any]:
+    source_match_id = str(row.get("source_match_id") or row.get("number") or "").strip()
+    home_team = str(row.get("home_team") or "").strip()
+    away_team = str(row.get("away_team") or "").strip()
+    if not source_match_id:
+        source_match_id = f"{schedule_date}-{home_team}-{away_team}"
+
+    kickoff = _parse_yingqiu_kickoff(str(row.get("kickoff_text") or ""), schedule_date)
+    odds_win = _to_float(str(row.get("odds_win") or ""))
+    odds_draw = _to_float(str(row.get("odds_draw") or ""))
+    odds_lose = _to_float(str(row.get("odds_lose") or ""))
+    handicap = _normalize_handicap_text(str(row.get("handicap") or ""), "0")
+    status_des = str(row.get("status_des") or "")
+    score_text = str(row.get("score_text") or "").strip()
+    hs, as_ = _extract_score_pair(score_text)
+
+    half_score_text = str(row.get("half_score_text") or "").strip()
+    if half_score_text:
+        hhs, has_ = _extract_score_pair(half_score_text)
+        halftime_score = f"{hhs}-{has_}" if hhs is not None and has_ is not None else None
+    else:
+        halftime_score = _extract_halftime_text(score_text)
+
+    return {
+        "number": str(row.get("number") or source_match_id),
+        "source_match_id": source_match_id,
+        "league_name": str(row.get("league_name") or "未知赛事"),
+        "home_team": home_team or "未知主队",
+        "away_team": away_team or "未知客队",
+        "kickoff": kickoff,
+        "status": _map_yingqiu_status(None, status_des),
+        "status_des": status_des,
+        "home_score": hs,
+        "away_score": as_,
+        "halftime_score": halftime_score,
+        "handicap_0": "0",
+        "handicap": handicap,
+        "odds_win": odds_win,
+        "odds_draw": odds_draw,
+        "odds_lose": odds_lose,
+        "odds_nspf_win": odds_win,
+        "odds_nspf_draw": odds_draw,
+        "odds_nspf_lose": odds_lose,
+        "odds_spf_win": None,
+        "odds_spf_draw": None,
+        "odds_spf_lose": None,
+        "source_schedule_date": schedule_date,
+        "source_url": source_url,
+    }
+
+
 async def _fetch_yingqiu_bd_matches(schedule_date: date) -> List[Dict[str, Any]]:
     date_str = schedule_date.strftime("%Y-%m-%d")
     source_url = "https://www.ttyingqiu.com/bjdc"
@@ -1070,7 +1823,17 @@ async def _fetch_yingqiu_bd_matches(schedule_date: date) -> List[Dict[str, Any]]
         "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
     }
 
-    # 首选：按日期直连静态JSON，不依赖页面切换
+    ap = async_playwright
+    if ap is None:
+        try:
+            from playwright.async_api import async_playwright as ap
+        except Exception:
+            ap = None
+
+    static_result: List[Dict[str, Any]] = []
+    expected_source_match_ids: set[str] = set()
+
+    # 次选：按日期直连静态JSON，不依赖页面切换（赔率可能为欧赔）
     static_json_url = f"https://www.ttyingqiu.com/static/no_cache/league/zc/jsbf/ttyq2020/bd/jsbf_{date_str}.json"
     try:
         timeout = aiohttp.ClientTimeout(total=30)
@@ -1079,26 +1842,30 @@ async def _fetch_yingqiu_bd_matches(schedule_date: date) -> List[Dict[str, Any]]
                 if resp.status == 200:
                     payload = await resp.json(content_type=None)
                     if isinstance(payload, dict):
-                        actual_date = str(payload.get("date") or "").strip()
+                        actual_date_raw = str(payload.get("date") or "").strip()
+                        actual_date = _normalize_yingqiu_date(actual_date_raw)
                         if actual_date == date_str:
                             raw_list = payload.get("matchList") or []
                             result: List[Dict[str, Any]] = []
                             for item in raw_list:
                                 if not isinstance(item, dict):
                                     continue
+                                match_id = str(item.get("matchId") or "").strip()
+                                if match_id:
+                                    expected_source_match_ids.add(match_id)
                                 try:
                                     result.append(_map_yingqiu_match(item, static_json_url, date_str))
                                 except Exception:
                                     continue
-                            return result
+                            static_result = result
     except Exception:
-        # 静态JSON失败时再走页面抓取兜底
+        # 静态JSON失败时继续尝试页面抓取
         pass
 
-    # 优先使用真实页面日期切换并解析完整表格
-    if async_playwright is not None:
+    # 优先使用真实页面日期切换并解析完整表格（北单SP）
+    if ap is not None:
         try:
-            async with async_playwright() as p:
+            async with ap() as p:
                 browser = await p.chromium.launch(headless=True, args=["--no-sandbox"])
                 page = await browser.new_page(viewport={"width": 1366, "height": 900})
                 await page.goto(source_url, wait_until="networkidle", timeout=120000)
@@ -1117,6 +1884,58 @@ async def _fetch_yingqiu_bd_matches(schedule_date: date) -> List[Dict[str, Any]]
                     const m = txt.match(/(20\\d{2}-\\d{2}-\\d{2})/);
                     return m ? m[1] : '';
                 }"""
+                get_table_signature_js = """() => {
+                    const toText = (el) => (el ? (el.textContent || '').replace(/\\s+/g, ' ').trim() : '');
+                    const trList = Array.from(document.querySelectorAll('tbody[id^="match"] tr.liveMacthLi, tbody[id^="match"] > tr'));
+                    for (const tr of trList) {
+                        const tds = Array.from(tr.querySelectorAll('td'));
+                        if (tds.length < 10) continue;
+                        const tbody = tr.closest('tbody[id^="match"]');
+                        const tbodyId = tbody ? (tbody.getAttribute('id') || '') : '';
+                        const matchIdM = tbodyId.match(/match(\\d+)/);
+                        return [
+                            matchIdM ? matchIdM[1] : '',
+                            toText(tds[0]),
+                            toText(tds[2]),
+                            toText(tds[4]),
+                        ].join('|');
+                    }
+                    return '';
+                }"""
+                extract_dom_rows_js = """() => {
+                    const toText = (el) => (el ? (el.textContent || '').replace(/\\s+/g, ' ').trim() : '');
+                    const rows = [];
+                    const trList = Array.from(document.querySelectorAll('tbody[id^="match"] tr.liveMacthLi, tbody[id^="match"] > tr'));
+                    for (const tr of trList) {
+                        const tds = Array.from(tr.querySelectorAll('td'));
+                        if (tds.length < 10) continue;
+                        const tbody = tr.closest('tbody[id^="match"]');
+                        const tbodyId = tbody ? (tbody.getAttribute('id') || '') : '';
+                        const matchIdM = tbodyId.match(/match(\\d+)/);
+                        const teamCell = tds[4];
+                        const teamNames = teamCell ? Array.from(teamCell.querySelectorAll('.name a')).map((a) => toText(a)) : [];
+                        const fullScoreText = toText(teamCell ? teamCell.querySelector('.vs') : null);
+                        const halfScoreText = toText(teamCell ? teamCell.querySelector('.nubFont') : null);
+                        const oddsCell = tds[9];
+                        const odds = oddsCell ? Array.from(oddsCell.querySelectorAll('em')).map((em) => toText(em)) : [];
+                        rows.push({
+                            source_match_id: matchIdM ? matchIdM[1] : '',
+                            number: toText(tds[0]),
+                            league_name: toText(tds[1]),
+                            kickoff_text: toText(tds[2]),
+                            status_des: toText(tds[3]),
+                            home_team: teamNames[0] || '',
+                            score_text: fullScoreText,
+                            half_score_text: halfScoreText,
+                            away_team: teamNames[1] || '',
+                            handicap: toText(tds[8]),
+                            odds_win: odds[0] || '',
+                            odds_draw: odds[1] || '',
+                            odds_lose: odds[2] || '',
+                        });
+                    }
+                    return rows;
+                }"""
                 current_date_str = await page.evaluate(get_date_js)
                 if not current_date_str:
                     await browser.close()
@@ -1124,12 +1943,14 @@ async def _fetch_yingqiu_bd_matches(schedule_date: date) -> List[Dict[str, Any]]
 
                 target_date = datetime.strptime(date_str, "%Y-%m-%d").date()
                 current_date = datetime.strptime(current_date_str, "%Y-%m-%d").date()
+                table_signature = await page.evaluate(get_table_signature_js)
                 if current_date != target_date:
                     step = 1 if target_date > current_date else -1
                     selector = ".calendar .after" if step > 0 else ".calendar .before"
                     for _ in range(45):
                         if current_date == target_date:
                             break
+                        prev_signature = table_signature
                         await page.evaluate(
                             """(sel) => {
                                 const isVisible = (el) => {
@@ -1144,7 +1965,12 @@ async def _fetch_yingqiu_bd_matches(schedule_date: date) -> List[Dict[str, Any]]
                             }""",
                             selector,
                         )
-                        await page.wait_for_timeout(900)
+                        # 日期按钮会先更新，表格数据异步更新可能滞后；等待表格出现变化
+                        for _ in range(12):
+                            await page.wait_for_timeout(300)
+                            table_signature = await page.evaluate(get_table_signature_js)
+                            if table_signature and table_signature != prev_signature:
+                                break
                         new_date_str = await page.evaluate(get_date_js)
                         if new_date_str:
                             current_date = datetime.strptime(new_date_str, "%Y-%m-%d").date()
@@ -1153,94 +1979,55 @@ async def _fetch_yingqiu_bd_matches(schedule_date: date) -> List[Dict[str, Any]]
                         # 避免误导入非目标日期数据
                         return []
 
-                await page.wait_for_timeout(900)
-                dom_rows = await page.evaluate(
-                    """() => {
-                        const toText = (el) => (el ? (el.textContent || '').replace(/\\s+/g, ' ').trim() : '');
-                        const rows = [];
-                        const trList = Array.from(document.querySelectorAll('tbody[id^="match"] tr.liveMacthLi, tbody[id^="match"] > tr'));
-                        for (const tr of trList) {
-                            const tds = Array.from(tr.querySelectorAll('td'));
-                            if (tds.length < 10) continue;
-                            const tbody = tr.closest('tbody[id^="match"]');
-                            const tbodyId = tbody ? (tbody.getAttribute('id') || '') : '';
-                            const matchIdM = tbodyId.match(/match(\\d+)/);
-                            const teamCell = tds[4];
-                            const teamNames = teamCell ? Array.from(teamCell.querySelectorAll('.name a')).map(a => toText(a)) : [];
-                            const oddsCell = tds[9];
-                            const odds = oddsCell ? Array.from(oddsCell.querySelectorAll('em')).map(em => toText(em)).filter(Boolean) : [];
-                            rows.push({
-                                source_match_id: matchIdM ? matchIdM[1] : '',
-                                number: toText(tds[0]),
-                                league_name: toText(tds[1]),
-                                kickoff_text: toText(tds[2]),
-                                status_des: toText(tds[3]),
-                                home_team: teamNames[0] || '',
-                                score_text: toText(tds[5]),
-                                away_team: teamNames[1] || '',
-                                handicap: toText(tds[8]),
-                                odds_win: odds[0] || '',
-                                odds_draw: odds[1] || '',
-                                odds_lose: odds[2] || '',
-                            });
-                        }
-                        return rows;
-                    }"""
-                )
+                # 再次等待表格稳定，避免抓到“按钮日期已切换但表格仍是上一期”的数据
+                last_signature = await page.evaluate(get_table_signature_js)
+                stable_ticks = 0
+                for _ in range(20):
+                    await page.wait_for_timeout(400)
+                    sig = await page.evaluate(get_table_signature_js)
+                    if sig and sig == last_signature:
+                        stable_ticks += 1
+                    else:
+                        stable_ticks = 0
+                        if sig:
+                            last_signature = sig
+                    if stable_ticks >= 3:
+                        break
+
+                await page.wait_for_selector("tbody[id^='match'] tr", timeout=15000)
+                dom_rows = await page.evaluate(extract_dom_rows_js)
                 await browser.close()
 
                 result: List[Dict[str, Any]] = []
                 for row in dom_rows or []:
                     try:
-                        source_match_id = str(row.get("source_match_id") or row.get("number") or "").strip()
-                        home_team = str(row.get("home_team") or "").strip()
-                        away_team = str(row.get("away_team") or "").strip()
-                        if not source_match_id:
-                            source_match_id = f"{date_str}-{home_team}-{away_team}"
-                        kickoff = _parse_yingqiu_kickoff(str(row.get("kickoff_text") or ""), date_str)
-                        odds_win = _to_float(str(row.get("odds_win") or ""))
-                        odds_draw = _to_float(str(row.get("odds_draw") or ""))
-                        odds_lose = _to_float(str(row.get("odds_lose") or ""))
-                        handicap = _normalize_handicap_text(str(row.get("handicap") or ""), "0")
-                        status_des = str(row.get("status_des") or "")
-                        score_text = str(row.get("score_text") or "")
-                        hs, as_ = _extract_score_pair(score_text)
-                        halftime_score = _extract_halftime_text(score_text)
-                        result.append(
-                            {
-                                "number": str(row.get("number") or source_match_id),
-                                "source_match_id": source_match_id,
-                                "league_name": str(row.get("league_name") or "未知赛事"),
-                                "home_team": home_team or "未知主队",
-                                "away_team": away_team or "未知客队",
-                                "kickoff": kickoff,
-                                "status": _map_yingqiu_status(None, status_des),
-                                "status_des": status_des,
-                                "home_score": hs,
-                                "away_score": as_,
-                                "halftime_score": halftime_score,
-                                "handicap_0": "0",
-                                "handicap": handicap,
-                                "odds_win": odds_win,
-                                "odds_draw": odds_draw,
-                                "odds_lose": odds_lose,
-                                "odds_nspf_win": odds_win,
-                                "odds_nspf_draw": odds_draw,
-                                "odds_nspf_lose": odds_lose,
-                                "odds_spf_win": None,
-                                "odds_spf_draw": None,
-                                "odds_spf_lose": None,
-                                "source_schedule_date": date_str,
-                                "source_url": source_url,
-                            }
-                        )
+                        result.append(_map_yingqiu_dom_row(row, date_str, source_url))
                     except Exception:
                         continue
+                if expected_source_match_ids and result:
+                    parsed_ids = {
+                        str(x.get("source_match_id") or "").strip()
+                        for x in result
+                        if str(x.get("source_match_id") or "").strip()
+                    }
+                    overlap = len(parsed_ids & expected_source_match_ids)
+                    min_overlap = max(1, int(len(expected_source_match_ids) * 0.6))
+                    if overlap < min_overlap:
+                        logger.warning(
+                            "盈球北单表格与目标日期疑似未对齐: date=%s expected=%s parsed=%s overlap=%s",
+                            date_str,
+                            len(expected_source_match_ids),
+                            len(parsed_ids),
+                            overlap,
+                        )
+                        # 对齐失败时宁可返回空，避免误导入上一期次数据
+                        return []
                 return result
-        except HTTPException:
-            raise
         except Exception as e:
-            raise HTTPException(status_code=502, detail=f"盈球页面抓取失败: {str(e)}")
+            logger.warning(f"盈球页面抓取失败，改用静态数据或兜底解析: {e}")
+
+    if static_result:
+        return static_result
 
     # 回退逻辑：直接抓取页面源码（部分日期可能不准确）
     source_url = f"https://www.ttyingqiu.com/bjdc?date={date_str}"
@@ -1254,7 +2041,8 @@ async def _fetch_yingqiu_bd_matches(schedule_date: date) -> List[Dict[str, Any]]
     payload = _extract_json_object_after(html, "var file =")
     if not payload:
         raise HTTPException(status_code=502, detail="盈球页面解析失败：未找到比赛数据")
-    actual_date = str(payload.get("date") or "").strip()
+    actual_date_raw = str(payload.get("date") or "").strip()
+    actual_date = _normalize_yingqiu_date(actual_date_raw)
     if actual_date and actual_date != date_str:
         # 兜底页返回了非请求日期时，不抛错，避免前端400
         return []
@@ -1385,6 +2173,226 @@ async def import_500w_by_date(
         raise HTTPException(status_code=500, detail=f"500W抓取入库失败: {str(e)}")
 
 
+def _normalize_other_odds_tabs(raw_tabs: Any, fallback_eu: Any = None) -> Dict[str, List[Dict[str, Any]]]:
+    tabs: Dict[str, List[Dict[str, Any]]] = {"eu": [], "asia": [], "goals": []}
+    if isinstance(raw_tabs, dict):
+        for key in tabs.keys():
+            rows = raw_tabs.get(key)
+            if isinstance(rows, list):
+                tabs[key] = rows
+    if not tabs["eu"] and isinstance(fallback_eu, list):
+        tabs["eu"] = fallback_eu
+    return tabs
+
+
+def _is_bd_other_odds_tabs_complete(tabs: Dict[str, List[Dict[str, Any]]]) -> bool:
+    return bool(tabs.get("eu")) and bool(tabs.get("asia")) and bool(tabs.get("goals"))
+
+
+def _resolve_match_fixture_id(match: Match, attrs: Dict[str, Any]) -> str:
+    fixture_id = (match.source_match_id or "").strip()
+    if not fixture_id:
+        fixture_id = str(attrs.get("source_match_id") or "").strip()
+    return fixture_id
+
+
+def _should_use_other_odds_cache(
+    match: Match,
+    tabs: Dict[str, List[Dict[str, Any]]],
+    force_refresh: bool,
+) -> bool:
+    if force_refresh:
+        return False
+    if not any(tabs.values()):
+        return False
+    if match.data_source != "yingqiu_bd":
+        return True
+    return _is_bd_other_odds_tabs_complete(tabs)
+
+
+async def _fetch_and_cache_other_odds_for_match(
+    db: AsyncSession,
+    match: Match,
+    *,
+    force_refresh: bool = False,
+) -> Dict[str, Any]:
+    attrs = dict(match.source_attributes or {}) if isinstance(match.source_attributes, dict) else {}
+    cached_items = attrs.get("other_odds")
+    cached_tabs = _normalize_other_odds_tabs(attrs.get("other_odds_tabs"), cached_items)
+    fixture_id = _resolve_match_fixture_id(match, attrs)
+
+    if _should_use_other_odds_cache(match, cached_tabs, force_refresh):
+        eu_rows = cached_tabs.get("eu") or []
+        return {
+            "match_id": int(match.id),
+            "fixture_id": fixture_id,
+            "data_source": match.data_source,
+            "total": len(eu_rows),
+            "items": eu_rows,
+            "tabs": cached_tabs,
+            "from_cache": True,
+            "cache_reason": "cache",
+        }
+
+    if not fixture_id:
+        raise HTTPException(status_code=400, detail="该场次缺少源ID，无法抓取其它赔率")
+
+    try:
+        if match.data_source == "yingqiu_bd":
+            tabs = await _fetch_yingqiu_other_odds_tabs(fixture_id)
+        else:
+            eu_rows = await _fetch_500w_other_odds(fixture_id)
+            tabs = {"eu": eu_rows, "asia": [], "goals": []}
+    except Exception:
+        # 远程抓取失败时，回退已有缓存，提升可用性
+        if any(cached_tabs.values()):
+            eu_rows = cached_tabs.get("eu") or []
+            return {
+                "match_id": int(match.id),
+                "fixture_id": fixture_id,
+                "data_source": match.data_source,
+                "total": len(eu_rows),
+                "items": eu_rows,
+                "tabs": cached_tabs,
+                "from_cache": True,
+                "cache_reason": "fallback",
+            }
+        raise
+
+    items = tabs.get("eu") or []
+
+    # 缓存到source_attributes，减少重复解析
+    # NOTE: source_attributes is JSON (non-mutable column), so assign a NEW dict
+    # and explicitly mark modified to ensure persistence.
+    new_attrs = dict(attrs)
+    new_attrs["other_odds"] = items
+    new_attrs["other_odds_tabs"] = tabs
+    new_attrs["other_odds_cached_at"] = datetime.utcnow().isoformat()
+    match.source_attributes = new_attrs
+    flag_modified(match, "source_attributes")
+    await db.commit()
+
+    return {
+        "match_id": int(match.id),
+        "fixture_id": fixture_id,
+        "data_source": match.data_source,
+        "total": len(items),
+        "items": items,
+        "tabs": tabs,
+        "from_cache": False,
+        "cache_reason": None,
+    }
+
+
+async def _run_bd_other_odds_prefetch_for_date(schedule_date: str) -> None:
+    target_date = _normalize_yingqiu_date(schedule_date)
+    if not target_date:
+        return
+
+    source_date_expr = func.json_extract(Match.source_attributes, "$.source_schedule_date")
+
+    async with AsyncSessionLocal() as session:
+        rows = await session.execute(
+            select(Match)
+            .where(
+                and_(
+                    Match.data_source == "yingqiu_bd",
+                    source_date_expr == target_date,
+                )
+            )
+            .order_by(Match.id.asc())
+        )
+        matches = rows.scalars().all()
+        if not matches:
+            logger.info("BD其它赔率预抓取：%s 无比赛，跳过。", target_date)
+            return
+
+        refreshed = 0
+        skipped = 0
+        failed = 0
+        for match in matches:
+            last_error: Optional[str] = None
+            for attempt in range(2):
+                try:
+                    result = await _fetch_and_cache_other_odds_for_match(session, match, force_refresh=False)
+                    if result.get("from_cache"):
+                        skipped += 1
+                    else:
+                        refreshed += 1
+                    last_error = None
+                    break
+                except HTTPException as exc:
+                    await session.rollback()
+                    if int(exc.status_code) == 400:
+                        skipped += 1
+                        logger.warning(
+                            "BD其它赔率预抓取跳过 match_id=%s：%s",
+                            getattr(match, "id", None),
+                            exc.detail,
+                        )
+                        last_error = None
+                        break
+                    last_error = str(exc.detail)
+                    if attempt == 0:
+                        await asyncio.sleep(0.8)
+                except Exception as exc:
+                    await session.rollback()
+                    last_error = str(exc)
+                    if attempt == 0:
+                        await asyncio.sleep(0.8)
+
+            if last_error:
+                failed += 1
+                logger.warning(
+                    "BD其它赔率预抓取失败 match_id=%s：%s",
+                    getattr(match, "id", None),
+                    last_error,
+                )
+
+        logger.info(
+            "BD其它赔率预抓取完成：date=%s, total=%s, refreshed=%s, skipped=%s, failed=%s",
+            target_date,
+            len(matches),
+            refreshed,
+            skipped,
+            failed,
+        )
+
+
+def _trigger_bd_other_odds_prefetch(schedule_date: Optional[str]) -> None:
+    target_date = _normalize_yingqiu_date(schedule_date)
+    if not target_date:
+        return
+
+    now = datetime.utcnow()
+    with _BD_OTHER_ODDS_PREFETCH_GUARD:
+        for key, ts in list(_BD_OTHER_ODDS_PREFETCH_LAST_AT.items()):
+            if (now - ts).total_seconds() >= 24 * 3600:
+                _BD_OTHER_ODDS_PREFETCH_LAST_AT.pop(key, None)
+
+        if target_date in _BD_OTHER_ODDS_PREFETCH_RUNNING:
+            return
+
+        last_at = _BD_OTHER_ODDS_PREFETCH_LAST_AT.get(target_date)
+        if last_at and (now - last_at).total_seconds() < _BD_OTHER_ODDS_PREFETCH_COOLDOWN_SECONDS:
+            return
+
+        _BD_OTHER_ODDS_PREFETCH_RUNNING.add(target_date)
+        _BD_OTHER_ODDS_PREFETCH_LAST_AT[target_date] = now
+
+    async def _runner() -> None:
+        try:
+            await _run_bd_other_odds_prefetch_for_date(target_date)
+        except Exception:
+            logger.exception("BD其它赔率预抓取任务失败: date=%s", target_date)
+        finally:
+            with _BD_OTHER_ODDS_PREFETCH_GUARD:
+                _BD_OTHER_ODDS_PREFETCH_RUNNING.discard(target_date)
+                _BD_OTHER_ODDS_PREFETCH_LAST_AT[target_date] = datetime.utcnow()
+
+    asyncio.create_task(_runner())
+
+
 @router.get("/{match_id}/other-odds", response_model=UnifiedResponse)
 async def get_other_odds(
     match_id: int,
@@ -1398,81 +2406,195 @@ async def get_other_odds(
         if not match:
             raise HTTPException(status_code=404, detail="比赛不存在")
 
-        attrs = dict(match.source_attributes or {}) if isinstance(match.source_attributes, dict) else {}
-        cached_items = attrs.get("other_odds")
-        if (
-            not force_refresh
-            and isinstance(cached_items, list)
-            and len(cached_items) > 0
-        ):
-            return UnifiedResponse(
-                success=True,
-                data={
-                    "match_id": match_id,
-                    "fixture_id": str(match.source_match_id or ""),
-                    "data_source": match.data_source,
-                    "total": len(cached_items),
-                    "items": cached_items,
-                    "from_cache": True,
-                },
-                message="获取其它赔率成功（缓存）",
-            )
-
-        fixture_id = (match.source_match_id or "").strip()
-        if not fixture_id:
-            fixture_id = str(attrs.get("source_match_id") or "").strip()
-        if not fixture_id:
-            raise HTTPException(status_code=400, detail="该场次缺少源ID，无法抓取其它赔率")
-
-        try:
-            if match.data_source == "yingqiu_bd":
-                items = await _fetch_yingqiu_other_odds(fixture_id)
-            else:
-                items = await _fetch_500w_other_odds(fixture_id)
-        except Exception:
-            # 远程抓取失败时，回退已有缓存，提升可用性
-            if isinstance(cached_items, list) and len(cached_items) > 0:
-                return UnifiedResponse(
-                    success=True,
-                    data={
-                        "match_id": match_id,
-                        "fixture_id": fixture_id,
-                        "data_source": match.data_source,
-                        "total": len(cached_items),
-                        "items": cached_items,
-                        "from_cache": True,
-                    },
-                    message="远程获取失败，已返回缓存赔率",
-                )
-            raise
-
-        # 缓存到source_attributes，减少重复解析
-        # NOTE: source_attributes is JSON (non-mutable column), so assign a NEW dict
-        # and explicitly mark modified to ensure persistence.
-        new_attrs = dict(attrs)
-        new_attrs["other_odds"] = items
-        new_attrs["other_odds_cached_at"] = datetime.utcnow().isoformat()
-        match.source_attributes = new_attrs
-        flag_modified(match, "source_attributes")
-        await db.commit()
+        payload = await _fetch_and_cache_other_odds_for_match(db, match, force_refresh=force_refresh)
+        cache_reason = str(payload.get("cache_reason") or "")
+        message = "获取其它赔率成功"
+        if payload.get("from_cache"):
+            message = "远程获取失败，已返回缓存赔率" if cache_reason == "fallback" else "获取其它赔率成功（缓存）"
 
         return UnifiedResponse(
             success=True,
-            data={
-                "match_id": match_id,
-                "fixture_id": fixture_id,
-                "data_source": match.data_source,
-                "total": len(items),
-                "items": items,
-                "from_cache": False,
-            },
-            message="获取其它赔率成功",
+            data=payload,
+            message=message,
         )
     except HTTPException:
         raise
     except Exception as e:
         await db.rollback()
         raise HTTPException(status_code=500, detail=f"获取其它赔率失败: {str(e)}")
+
+
+@router.post("/import/yingqiu-bd-batch", response_model=UnifiedResponse)
+async def import_yingqiu_bd_batch_by_year(
+    year: int = Query(..., description="年份，例如 2026"),
+    db: AsyncSession = Depends(get_async_db),
+    current_admin: dict = Depends(get_current_admin),
+):
+    """
+    批量从盈球获取指定年份所有日期的北单赛程
+    """
+    if year < 2020 or year > 2030:
+        raise HTTPException(status_code=400, detail="年份必须在 2020-2030 之间")
+    
+    try:
+        import asyncio
+        from datetime import date as date_class
+        
+        # 生成该年份所有日期
+        start_date = date_class(year, 1, 1)
+        end_date = date_class(year, 12, 31)
+        
+        total_dates = (end_date - start_date).days + 1
+        current_date = start_date
+        
+        total_imported = 0
+        total_updated = 0
+        total_failed = 0
+        failed_dates = []
+        
+        logger.info(f"开始批量抓取 {year} 年北单赛程，共 {total_dates} 天")
+        
+        # 遍历每一天
+        while current_date <= end_date:
+            date_str = current_date.strftime("%Y-%m-%d")
+            
+            try:
+                # 抓取该日期的比赛
+                parsed = await _fetch_yingqiu_bd_matches(current_date)
+                
+                if parsed:
+                    # 清理该日期的旧数据（使用 source_attributes 记录的源日期）
+                    await db.execute(
+                        delete(Match).where(
+                            Match.data_source == "yingqiu_bd",
+                            func.json_extract(Match.source_attributes, "$.source_schedule_date") == date_str,
+                        )
+                    )
+                    
+                    # 插入新数据
+                    imported_count = 0
+                    updated_count = 0
+                    
+                    for item in parsed:
+                        source_match_id = str(item.get("source_match_id") or "")
+                        if not source_match_id:
+                            continue
+                        
+                        league = await _get_or_create_league(db, item["league_name"])
+                        home_team = await _get_or_create_team(db, item["home_team"])
+                        away_team = await _get_or_create_team(db, item["away_team"])
+                        
+                        number = str(item["number"])
+                        source_attrs = {
+                            "number": number,
+                            "source_schedule_date": item.get("source_schedule_date"),
+                            "status_des": item.get("status_des"),
+                            "full_score": (
+                                f"{item.get('home_score')}-{item.get('away_score')}"
+                                if item.get("home_score") is not None and item.get("away_score") is not None
+                                else None
+                            ),
+                            "halftime_score": item.get("halftime_score"),
+                            "handicap_0": item.get("handicap_0"),
+                            "handicap": item.get("handicap"),
+                            "odds_nspf_win": item.get("odds_nspf_win"),
+                            "odds_nspf_draw": item.get("odds_nspf_draw"),
+                            "odds_nspf_lose": item.get("odds_nspf_lose"),
+                            "odds_spf_win": item.get("odds_spf_win"),
+                            "odds_spf_draw": item.get("odds_spf_draw"),
+                            "odds_spf_lose": item.get("odds_spf_lose"),
+                            "odds_win": item.get("odds_win"),
+                            "odds_draw": item.get("odds_draw"),
+                            "odds_lose": item.get("odds_lose"),
+                            "source_url": item.get("source_url"),
+                        }
+                        
+                        match_identifier = f"YQBD-{date_str}-{number}-{hashlib.md5(source_match_id.encode('utf-8')).hexdigest()[:6]}"
+                        
+                        existing = await db.execute(
+                            select(Match).where(Match.match_identifier == match_identifier).limit(1)
+                        )
+                        existing_match = existing.scalar_one_or_none()
+                        
+                        if existing_match:
+                            existing_match.league_id = league.id
+                            existing_match.home_team_id = home_team.id
+                            existing_match.away_team_id = away_team.id
+                            existing_match.match_date = item["kickoff"].date()
+                            existing_match.match_time = item["kickoff"].time()
+                            existing_match.scheduled_kickoff = item["kickoff"]
+                            existing_match.status = item["status"]
+                            existing_match.home_score = item.get("home_score")
+                            existing_match.away_score = item.get("away_score")
+                            existing_match.halftime_score = item.get("halftime_score")
+                            existing_match.is_published = True
+                            existing_match.data_source = "yingqiu_bd"
+                            existing_match.source_match_id = source_match_id
+                            existing_match.source_attributes = source_attrs
+                            existing_match.external_source = "yingqiu_bd"
+                            existing_match.external_id = number
+                            existing_match.updated_at = datetime.utcnow()
+                            updated_count += 1
+                        else:
+                            db.add(
+                                Match(
+                                    match_identifier=match_identifier,
+                                    league_id=league.id,
+                                    home_team_id=home_team.id,
+                                    away_team_id=away_team.id,
+                                    match_date=item["kickoff"].date(),
+                                    match_time=item["kickoff"].time(),
+                                    scheduled_kickoff=item["kickoff"],
+                                    status=item["status"],
+                                    home_score=item.get("home_score"),
+                                    away_score=item.get("away_score"),
+                                    halftime_score=item.get("halftime_score"),
+                                    is_published=True,
+                                    data_source="yingqiu_bd",
+                                    source_match_id=source_match_id,
+                                    source_attributes=source_attrs,
+                                    external_source="yingqiu_bd",
+                                    external_id=number,
+                                )
+                            )
+                            imported_count += 1
+                    
+                    await db.commit()
+                    total_imported += imported_count
+                    total_updated += updated_count
+                    logger.info(f"日期 {date_str}: 新增 {imported_count} 条，更新 {updated_count} 条")
+                else:
+                    logger.info(f"日期 {date_str}: 无比赛数据")
+                
+                # 避免请求过快，休眠1秒
+                await asyncio.sleep(1)
+                
+            except Exception as e:
+                logger.error(f"抓取日期 {date_str} 失败: {str(e)}")
+                total_failed += 1
+                failed_dates.append(date_str)
+                # 继续下一天
+            
+            current_date += timedelta(days=1)
+        
+        message = f"批量抓取完成：共 {total_dates} 天，新增 {total_imported} 条，更新 {total_updated} 条，失败 {total_failed} 天"
+        
+        return UnifiedResponse(
+            success=True,
+            data={
+                "year": year,
+                "total_dates": total_dates,
+                "imported_count": total_imported,
+                "updated_count": total_updated,
+                "failed_count": total_failed,
+                "failed_dates": failed_dates[:10]  # 只返回前10个失败日期
+            },
+            message=message,
+        )
+    
+    except Exception as e:
+        logger.error(f"批量抓取失败: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"批量抓取失败: {str(e)}")
 
 
 @router.post("/import/yingqiu-bd", response_model=UnifiedResponse)
@@ -1488,6 +2610,12 @@ async def import_yingqiu_bd_by_date(
 
     try:
         parsed = await _fetch_yingqiu_bd_matches(target_date)
+        if not parsed:
+            return UnifiedResponse(
+                success=True,
+                data={"schedule_date": schedule_date, "total_parsed": 0, "imported_count": 0},
+                message="未抓取到比赛数据",
+            )
         imported_count = 0
 
         # 按源日期清理后重建，保证幂等

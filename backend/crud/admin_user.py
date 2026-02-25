@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import func, and_, or_, desc
 from datetime import datetime, timedelta
+import json
 from passlib.context import CryptContext
 
 from ..models.admin_user import AdminUser, AdminOperationLog, AdminLoginLog, AdminRoleEnum, AdminStatusEnum
@@ -129,6 +130,11 @@ class CRUDAdminUser:
         update_data = obj_in.model_dump(exclude_unset=True)
         
         for field, value in update_data.items():
+            if field == "preferences":
+                if value is None:
+                    continue
+                if isinstance(value, (dict, list)):
+                    value = json.dumps(value, ensure_ascii=False)
             setattr(db_obj, field, value)
         
         db_obj.updated_at = datetime.utcnow()

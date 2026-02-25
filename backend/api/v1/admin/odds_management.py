@@ -24,7 +24,7 @@ class UnifiedResponse(BaseModel):
     message: Optional[str] = None
     error: Optional[Dict[str, Any]] = None
 
-router = APIRouter(prefix="/odds", tags=["admin-odds"])
+router = APIRouter(tags=["admin-odds"])
 
 
 @router.get("/monitoring", response_model=UnifiedResponse)

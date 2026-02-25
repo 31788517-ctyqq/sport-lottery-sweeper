@@ -42,6 +42,11 @@ const menuConfig = [
         path: '/admin/beidan-filter',
         text: '北单三维筛选器',
         icon: 'fas fa-filter'
+      },
+      {
+        path: '/admin/beidan-betting-sim',
+        text: '北单投注模拟',
+        icon: 'fas fa-coins'
       }
     ]
   },
@@ -56,9 +61,20 @@ const menuConfig = [
     icon: 'fas fa-link'
   },
   {
+    name: 'DrawPrediction',
     path: '/admin/draw-prediction',
-    text: '平局预测',
-    icon: 'fas fa-balance-scale'
+    text: '平局预测管理',
+    icon: 'fas fa-balance-scale',
+    children: [
+      {
+        path: '/admin/draw-prediction/ai-draw',
+        text: 'AI平局预测'
+      },
+      {
+        path: '/admin/draw-prediction/poisson-11',
+        text: '专抓1-1'
+      }
+    ]
   },
   {
     path: '/admin/system',
