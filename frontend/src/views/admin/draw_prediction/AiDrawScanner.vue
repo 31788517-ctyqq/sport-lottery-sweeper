@@ -3,7 +3,7 @@
     <el-card class="box-card">
       <template #header>
         <div class="card-header">
-          <span>AI平局预测扫盘（北单 / 盈球）</span>
+          <span>北单平局预测扫盘（北单 / 盈球）</span>
           <div class="header-actions">
             <el-button type="primary" @click="handleFetch" :loading="fetching">手动抓取并计算</el-button>
             <el-button @click="openRules">计算规则</el-button>
@@ -57,6 +57,15 @@
           </el-select>
           <el-button type="primary" @click="handleQuery" :loading="loading">查询</el-button>
           <el-button @click="resetFilter">重置</el-button>
+        </div>
+
+        <div v-if="fetching" class="fetch-progress">
+          <el-progress
+            :percentage="Math.round(fetchTaskProgress)"
+            :stroke-width="12"
+            :status="fetchTaskStatus === 'failed' ? 'exception' : (fetchTaskStatus === 'success' ? 'success' : '')"
+          />
+          <div class="fetch-progress-text">{{ fetchTaskMessage || '处理中...' }}</div>
         </div>
 
         <el-table :key="tableKey" :data="tableData" border style="width: 100%; margin-top: 20px" :loading="loading">
@@ -324,10 +333,11 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import {
-  fetchAiDraw,
+  startAiDrawFetchTask,
+  getDrawPredictionTask,
   getAiDrawList,
   getAiDrawDetail,
   getAiDrawRules,
@@ -352,6 +362,14 @@ const leagueOptionsLoading = ref(false)
 const resolvedIssueDates = ref([])
 const loading = ref(false)
 const fetching = ref(false)
+const fetchTaskId = ref('')
+const fetchTaskStatus = ref('')
+const fetchTaskProgress = ref(0)
+const fetchTaskMessage = ref('')
+let fetchTaskPollTimer = null
+let fetchTaskStartedAt = 0
+const FETCH_TASK_POLL_INTERVAL_MS = 1200
+const FETCH_TASK_TIMEOUT_MS = 10 * 60 * 1000
 const tableData = ref([])
 const allItems = ref([])
 const total = ref(0)
@@ -631,6 +649,68 @@ const loadLeagueOptions = async ({ silent = false } = {}) => {
   }
 }
 
+const clearFetchTaskPollTimer = () => {
+  if (fetchTaskPollTimer) {
+    clearTimeout(fetchTaskPollTimer)
+    fetchTaskPollTimer = null
+  }
+}
+
+const scheduleFetchTaskPoll = (taskId) => {
+  clearFetchTaskPollTimer()
+  fetchTaskPollTimer = setTimeout(() => {
+    pollFetchTask(taskId)
+  }, FETCH_TASK_POLL_INTERVAL_MS)
+}
+
+const finishFetchTaskWithError = (message) => {
+  clearFetchTaskPollTimer()
+  fetching.value = false
+  fetchTaskStatus.value = 'failed'
+  fetchTaskMessage.value = message || '抓取任务失败'
+  ElMessage.error(fetchTaskMessage.value)
+}
+
+const pollFetchTask = async (taskId) => {
+  try {
+    const task = await getDrawPredictionTask(taskId)
+    fetchTaskId.value = task?.task_id || taskId
+    fetchTaskStatus.value = String(task?.status || '')
+    fetchTaskProgress.value = Math.max(0, Math.min(100, Number(task?.progress || 0)))
+    fetchTaskMessage.value = String(task?.message || '处理中')
+
+    if (fetchTaskStatus.value === 'success') {
+      clearFetchTaskPollTimer()
+      fetching.value = false
+      fetchTaskProgress.value = 100
+      ElMessage.success(fetchTaskMessage.value || '抓取完成')
+      currentPage.value = 1
+      await fetchList()
+      return
+    }
+
+    if (fetchTaskStatus.value === 'failed') {
+      const errText = String(task?.error || '')
+      finishFetchTaskWithError(errText ? `抓取失败：${errText}` : '抓取失败')
+      return
+    }
+
+    if (Date.now() - fetchTaskStartedAt > FETCH_TASK_TIMEOUT_MS) {
+      finishFetchTaskWithError('抓取任务轮询超时，请稍后手动查询列表')
+      return
+    }
+
+    scheduleFetchTaskPoll(taskId)
+  } catch (err) {
+    console.error('轮询抓取任务失败:', err)
+    if (Date.now() - fetchTaskStartedAt > FETCH_TASK_TIMEOUT_MS) {
+      finishFetchTaskWithError('抓取任务轮询超时，请稍后手动查询列表')
+      return
+    }
+    scheduleFetchTaskPoll(taskId)
+  }
+}
+
 const fetchList = async () => {
   const issueNo = normalizeIssueNo(queryIssueNo.value)
   if (issueNo && !isValidIssueNo(issueNo)) {
@@ -697,21 +777,33 @@ const handleFetch = async () => {
     ElMessage.warning('请先选择日期')
     return
   }
+  clearFetchTaskPollTimer()
+  fetchTaskId.value = ''
+  fetchTaskStatus.value = 'pending'
+  fetchTaskProgress.value = 0
+  fetchTaskMessage.value = '任务提交中...'
+  fetchTaskStartedAt = Date.now()
   fetching.value = true
   try {
     await importYingqiuBdSchedule({ schedule_date: queryDate.value })
-    await fetchAiDraw({
+    const taskResp = await startAiDrawFetchTask({
       date_str: queryDate.value,
       _ts: Date.now()
     })
-    ElMessage.success('抓取完成')
-    currentPage.value = 1
-    await fetchList()
+    const taskId = String(taskResp?.task_id || '').trim()
+    if (!taskId) {
+      throw new Error('未返回任务ID')
+    }
+    fetchTaskId.value = taskId
+    fetchTaskMessage.value = '任务已提交，等待处理...'
+    await pollFetchTask(taskId)
   } catch (err) {
     console.error('抓取失败:', err)
-    ElMessage.error('抓取失败')
+    finishFetchTaskWithError('抓取任务提交失败')
   } finally {
-    fetching.value = false
+    if (fetchTaskStatus.value === 'success' || fetchTaskStatus.value === 'failed') {
+      fetching.value = false
+    }
   }
 }
 
@@ -828,6 +920,10 @@ onMounted(async () => {
   fetchList()
 })
 
+onBeforeUnmount(() => {
+  clearFetchTaskPollTimer()
+})
+
 watch(
   () => [queryDate.value, queryIssueNo.value],
   () => {
@@ -860,6 +956,20 @@ watch(
   display: flex;
   gap: 12px;
   align-items: center;
+}
+
+.fetch-progress {
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: #f8fafc;
+  border: 1px solid #e5eaf3;
+  border-radius: 8px;
+}
+
+.fetch-progress-text {
+  margin-top: 8px;
+  color: #606266;
+  font-size: 13px;
 }
 
 .json-box {

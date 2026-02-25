@@ -4,7 +4,10 @@
       <template #header>
         <div class="card-header">
           <span>平局预测特征管理</span>
-          <el-button type="primary" @click="handleAddFeature">新增特征</el-button>
+          <div class="header-actions">
+            <el-button @click="goTrainingPage">去训练评估</el-button>
+            <el-button type="primary" @click="handleAddFeature">新增特征</el-button>
+          </div>
         </div>
       </template>
       <div class="card-content">
@@ -31,17 +34,19 @@
             </template>
           </el-table-column>
           <el-table-column prop="created_at" label="创建时间" width="180" :formatter="formatDate" />
-          <el-table-column label="操作" width="200">
+          <el-table-column label="操作" width="300">
             <template #default="scope">
-              <el-button size="small" @click="handleEdit(scope.row)">编辑</el-button>
-              <el-button size="small" type="danger" @click="handleDelete(scope.row.id)">删除</el-button>
-              <el-button 
-                size="small" 
-                :type="scope.row.is_active ? 'warning' : 'success'"
-                @click="toggleStatus(scope.row)"
-              >
-                {{ scope.row.is_active ? '禁用' : '启用' }}
-              </el-button>
+              <div class="feature-actions">
+                <el-button size="small" @click="handleEdit(scope.row)">编辑</el-button>
+                <el-button size="small" type="danger" @click="handleDelete(scope.row.id)">删除</el-button>
+                <el-button
+                  size="small"
+                  :type="scope.row.is_active ? 'warning' : 'success'"
+                  @click="toggleStatus(scope.row)"
+                >
+                  {{ scope.row.is_active ? '禁用' : '启用' }}
+                </el-button>
+              </div>
             </template>
           </el-table-column>
         </el-table>
@@ -95,9 +100,11 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { getDrawFeatures, createDrawFeature, updateDrawFeature, deleteDrawFeature } from '@/api/drawPrediction'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
+const router = useRouter()
 const keyword = ref('')
 const currentPage = ref(1)
 const pageSize = ref(10)
@@ -246,6 +253,10 @@ const formatDate = (row, column, cellValue) => {
   return d.toLocaleString()
 }
 
+const goTrainingPage = () => {
+  router.push('/admin/draw-prediction/training-evaluation')
+}
+
 onMounted(() => {
   fetchFeatures()
 })
@@ -258,9 +269,27 @@ onMounted(() => {
   align-items: center;
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .toolbar {
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+.feature-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 8px;
+}
+
+.feature-actions :deep(.el-button) {
+  margin-left: 0;
+  white-space: nowrap;
 }
 </style>

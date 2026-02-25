@@ -1,4 +1,4 @@
-·<template>
+<template>
   <div class="remote-ai-service">
     <el-card class="card-container">
       <template #header>
@@ -27,6 +27,7 @@
             <el-option label="Google" value="google" />
             <el-option label="Azure OpenAI" value="azure" />
             <el-option label="阿里云" value="alibaba" />
+            <el-option label="智谱AI" value="zhipuai" />
             <el-option label="Ollama" value="ollama" />
             <el-option label="vLLM" value="vllm" />
             <el-option label="自定义" value="custom" />
@@ -171,6 +172,7 @@
               <el-option label="Google" value="google" />
               <el-option label="Azure OpenAI" value="azure" />
               <el-option label="阿里云" value="alibaba" />
+              <el-option label="智谱AI" value="zhipuai" />
               <el-option label="Ollama" value="ollama" />
               <el-option label="vLLM" value="vllm" />
               <el-option label="自定义" value="custom" />
@@ -340,6 +342,7 @@ const getProviderTagType = (providerType) => {
     GOOGLE: 'warning',
     AZURE: 'info',
     ALIBABA: 'danger',
+    ZHIPUAI: 'success',
     OLLAMA: 'success',
     VLLM: 'warning',
     CUSTOM: 'info'

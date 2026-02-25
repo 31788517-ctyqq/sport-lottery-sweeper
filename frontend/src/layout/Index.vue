@@ -73,12 +73,12 @@
             <el-icon><Histogram /></el-icon>
             <span>平局预测管理</span>
           </template>
+          <el-menu-item index="/admin/draw-prediction/ai-draw">北单平局预测扫盘</el-menu-item>
+          <el-menu-item index="/admin/draw-prediction/poisson-11">1-1比分预测扫盘</el-menu-item>
           <el-menu-item index="/admin/draw-prediction/data-features">数据与特征管理</el-menu-item>
           <el-menu-item index="/admin/draw-prediction/training-evaluation">模型训练与评估</el-menu-item>
           <el-menu-item index="/admin/draw-prediction/model-deployment">模型管理与部署</el-menu-item>
           <el-menu-item index="/admin/draw-prediction/prediction-monitoring">预测服务与监控</el-menu-item>
-          <el-menu-item index="/admin/draw-prediction/ai-draw">AI平局预测</el-menu-item>
-          <el-menu-item index="/admin/draw-prediction/poisson-11">专抓1-1</el-menu-item>
         </el-sub-menu>
 
 

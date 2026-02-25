@@ -4,7 +4,10 @@
       <template #header>
         <div class="card-header">
           <span>预测监控</span>
-          <el-button type="primary" @click="fetchPredictions" :loading="loading">刷新</el-button>
+          <div class="header-actions">
+            <el-button @click="goTrainingPage">去训练评估</el-button>
+            <el-button type="primary" @click="fetchPredictions" :loading="loading">刷新</el-button>
+          </div>
         </div>
       </template>
 
@@ -39,8 +42,20 @@
             end-placeholder="结束日期"
             style="width: 320px;"
           />
+          <el-input
+            v-model="modelVersionId"
+            placeholder="模型版本ID"
+            style="width: 150px;"
+          />
           <el-button type="primary" @click="handleSearch" :loading="loading">查询</el-button>
           <el-button @click="resetFilter" :disabled="loading">重置</el-button>
+          <el-button
+            type="success"
+            :disabled="!selectedRowForDraft || loading"
+            @click="handleCreateRetrainDraft(selectedRowForDraft)"
+          >
+            生成再训练建议
+          </el-button>
         </div>
 
         <!-- 命中率趋势图（当前页） -->
@@ -50,6 +65,7 @@
         <el-table :data="predictionList" border style="width: 100%; margin-top: 20px;" v-loading="loading">
           <el-table-column prop="id" label="ID" width="80" />
           <el-table-column prop="match_id" label="比赛ID" min-width="220" />
+          <el-table-column prop="model_version_id" label="模型版本ID" width="120" />
           <el-table-column label="平局概率" width="120">
             <template #default="scope">
               <span v-if="typeof scope.row.predicted_draw_prob === 'number'">
@@ -75,6 +91,19 @@
           </el-table-column>
           <el-table-column prop="match_time" label="比赛时间" width="180" :formatter="formatDate" />
           <el-table-column prop="predicted_at" label="预测时间" width="180" :formatter="formatDate" />
+          <el-table-column label="操作" width="170">
+            <template #default="scope">
+              <el-button size="small" @click="selectDraftRow(scope.row)">设为建议对象</el-button>
+              <el-button
+                size="small"
+                type="success"
+                :disabled="!scope.row.model_version_id"
+                @click="handleCreateRetrainDraft(scope.row)"
+              >
+                建议
+              </el-button>
+            </template>
+          </el-table-column>
         </el-table>
 
         <el-pagination
@@ -94,13 +123,23 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
-import { getPredictions } from '@/api/drawPrediction'
+import { useRoute, useRouter } from 'vue-router'
+import {
+  getPredictions,
+  getPredictionSummary,
+  createRetrainDraft,
+  bootstrapDrawPredictionMockData
+} from '@/api/drawPrediction'
 import { ElMessage } from 'element-plus'
 import * as echarts from 'echarts'
 
+const route = useRoute()
+const router = useRouter()
 const dateRange = ref([])
+const modelVersionId = ref('')
 const predictionList = ref([])
 const loading = ref(false)
+const selectedRowForDraft = ref(null)
 
 const currentPage = ref(1)
 const pageSize = ref(50)
@@ -129,9 +168,11 @@ const toIsoStartEnd = (range) => {
 const fetchPredictions = async () => {
   loading.value = true
   try {
+    const parsedModelVersionId = Number(modelVersionId.value)
     const params = {
       page: currentPage.value,
       size: pageSize.value,
+      ...(Number.isInteger(parsedModelVersionId) && parsedModelVersionId > 0 ? { model_version_id: parsedModelVersionId } : {}),
       ...toIsoStartEnd(dateRange.value)
     }
 
@@ -143,7 +184,10 @@ const fetchPredictions = async () => {
     predictionList.value = list
     total.value = typeof res?.total === 'number' ? res.total : list.length
 
-    const s = res?.stats || {}
+    const s = await getPredictionSummary({
+      ...(Number.isInteger(parsedModelVersionId) && parsedModelVersionId > 0 ? { model_version_id: parsedModelVersionId } : {}),
+      ...toIsoStartEnd(dateRange.value)
+    })
     summaryStats.value = {
       total: typeof s.total === 'number' ? s.total : total.value,
       hits: typeof s.hits === 'number' ? s.hits : 0,
@@ -171,6 +215,8 @@ const handleSearch = () => {
 
 const resetFilter = () => {
   dateRange.value = []
+  modelVersionId.value = ''
+  selectedRowForDraft.value = null
   currentPage.value = 1
   fetchPredictions()
 }
@@ -184,6 +230,35 @@ const handleSizeChange = (size) => {
 const handleCurrentChange = (page) => {
   currentPage.value = page
   fetchPredictions()
+}
+
+const selectDraftRow = (row) => {
+  selectedRowForDraft.value = row
+}
+
+const handleCreateRetrainDraft = async (row) => {
+  if (!row?.model_version_id) {
+    ElMessage.warning('当前记录缺少模型版本ID，无法生成建议')
+    return
+  }
+  try {
+    const draft = await createRetrainDraft({
+      model_version_id: row.model_version_id,
+      reason: `监控页触发（match_id=${row.match_id}）`
+    })
+    ElMessage.success('再训练建议已生成，已跳转训练页')
+    router.push({
+      path: '/admin/draw-prediction/training-evaluation',
+      query: { draft_id: draft.draft_id }
+    })
+  } catch (err) {
+    console.error('生成再训练建议失败:', err)
+    ElMessage.error('生成再训练建议失败')
+  }
+}
+
+const goTrainingPage = () => {
+  router.push('/admin/draw-prediction/training-evaluation')
 }
 
 const formatDate = (_row, _column, cellValue) => {
@@ -248,6 +323,14 @@ const handleResize = () => {
 }
 
 onMounted(async () => {
+  try {
+    await bootstrapDrawPredictionMockData()
+  } catch (err) {
+    console.error('初始化模拟数据失败:', err)
+  }
+  if (route.query?.model_version_id) {
+    modelVersionId.value = String(route.query.model_version_id)
+  }
   await fetchPredictions()
   window.addEventListener('resize', handleResize)
 })
@@ -263,6 +346,12 @@ onUnmounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .stats-row {
@@ -304,4 +393,3 @@ onUnmounted(() => {
   margin-top: 20px;
 }
 </style>
-

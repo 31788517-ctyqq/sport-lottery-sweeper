@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import date, datetime
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Callable
 import math
 import json
 import re
@@ -21,6 +21,7 @@ DEFAULT_TOTAL_GOALS_LINE = 2.5
 DEFAULT_HANDICAP = 0.0
 MIN_MU = 0.05
 BJDC_ASIAN_CACHE_TTL_SECONDS = 1800
+BJDC_BF_CACHE_TTL_SECONDS = 1800
 
 ODDSPORTAL_BASE_URL = "https://www.oddsportal.com"
 UNDERSTAT_BASE_URL = "https://understat.com"
@@ -149,6 +150,7 @@ TEAM_NAME_ALIASES = {
 }
 
 _BJDC_ASIAN_CACHE: Dict[str, Dict[str, Any]] = {}
+_BJDC_BF_11_CACHE: Dict[str, Dict[str, Any]] = {}
 
 def _to_float(value: Any) -> Optional[float]:
     if value is None:
@@ -253,6 +255,225 @@ def _parse_line_value(value: Any) -> Optional[float]:
             sign = -1.0 if "受" in text else 1.0
             return sign * num
     return None
+
+
+def _decode_500_response(resp: requests.Response) -> str:
+    encoding = (resp.encoding or "").lower()
+    if not encoding or encoding == "iso-8859-1":
+        encoding = (resp.apparent_encoding or "gb2312").lower()
+    for enc in (encoding, "gb18030", "gbk", "utf-8"):
+        if not enc:
+            continue
+        try:
+            return resp.content.decode(enc, errors="ignore")
+        except Exception:
+            continue
+    return resp.text
+
+
+def _extract_500_issue_no(value: Any) -> str:
+    text = str(value or "").strip()
+    if not text:
+        return ""
+    if "|" in text:
+        text = text.split("|", 1)[0].strip()
+    m = re.search(r"\d{5}", text)
+    return m.group(0) if m else ""
+
+
+def _parse_500_bjdc_bf_numbers_for_date(
+    soup: BeautifulSoup,
+    schedule_date: str,
+) -> Dict[str, Dict[str, Any]]:
+    result: Dict[str, Dict[str, Any]] = {}
+    date_key = str(schedule_date or "").strip()
+    if not date_key:
+        return result
+    for tbody in soup.select("table#vs_table > tbody"):
+        tbody_id = str(tbody.get("id") or "").strip()
+        if not tbody_id.startswith(f"{date_key}_"):
+            continue
+        for row in tbody.select("tr.vs_lines"):
+            number_el = row.select_one("span.chnum")
+            if not number_el:
+                continue
+            number_key = _normalize_number_key(number_el.get_text(" ", strip=True))
+            if not number_key:
+                continue
+            result[number_key] = {
+                "fid": str(row.get("fid") or "").strip(),
+            }
+    return result
+
+
+def _fetch_500_bjdc_bf_page(
+    schedule_date: str,
+    *,
+    expect: Optional[str] = None,
+) -> Dict[str, Any]:
+    query_expect = _extract_500_issue_no(expect)
+    url = "https://trade.500.com/bjdc/project_fq_bf.php"
+    if query_expect:
+        url = f"{url}?expect={query_expect}"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+        "Referer": "https://trade.500.com/bjdc/",
+        "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+    }
+
+    resp = requests.get(url, headers=headers, timeout=20)
+    if resp.status_code != 200:
+        return {}
+    html = _decode_500_response(resp)
+    soup = BeautifulSoup(html, "html.parser")
+    served_expect = _extract_500_issue_no((soup.select_one("input#expect") or {}).get("value"))
+    play_id = _normalize_number_key((soup.select_one("input#playid") or {}).get("value") or "42") or "42"
+    rows_by_number = _parse_500_bjdc_bf_numbers_for_date(soup, schedule_date)
+
+    options: List[Dict[str, str]] = []
+    for option in soup.select("#expect_select option"):
+        label = option.get_text(" ", strip=True)
+        issue = _extract_500_issue_no(option.get("value") or label)
+        if not issue:
+            continue
+        options.append({"issue": issue, "label": label})
+
+    return {
+        "url": url,
+        "served_expect": served_expect,
+        "play_id": play_id,
+        "rows_by_number": rows_by_number,
+        "options": options,
+    }
+
+
+def _fetch_500_bjdc_bf_xml_map(expect: str, play_id: str) -> Dict[str, Dict[str, Any]]:
+    issue_no = _extract_500_issue_no(expect)
+    playid = _normalize_number_key(play_id) or "42"
+    if not issue_no:
+        return {}
+
+    url = f"https://www.500.com/static/public/bjdc/xml/sp/just_{issue_no}_{playid}.xml"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+        "Referer": f"https://trade.500.com/bjdc/project_fq_bf.php?expect={issue_no}",
+        "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+    }
+    try:
+        resp = requests.get(url, headers=headers, timeout=20)
+        if resp.status_code != 200:
+            return {}
+        xml_text = _decode_500_response(resp)
+        updated_match = re.search(r'updatetime="([^"]+)"', xml_text)
+        updated_at = str(updated_match.group(1) if updated_match else "").strip()
+        mapping: Dict[str, Dict[str, Any]] = {}
+        for item in re.finditer(r"<w(\d+)\s+([^>]*)/>", xml_text):
+            number_key = _normalize_number_key(item.group(1))
+            if not number_key:
+                continue
+            # playid=42（比分）中，1:1 对应 c13
+            attrs_text = item.group(2) or ""
+            odds_match = re.search(r'\bc13="([^"]*)"', attrs_text)
+            odds_11 = _to_float(odds_match.group(1) if odds_match else None)
+            if odds_11 is None or odds_11 <= 0:
+                continue
+            mapping[number_key] = {
+                "odds_11": odds_11,
+                "source": "500_bjdc_project_fq_bf.xml.c13",
+                "expect": issue_no,
+                "play_id": playid,
+                "updated_at": updated_at,
+            }
+        return mapping
+    except Exception:
+        return {}
+
+
+def _fetch_500_bjdc_bf_11_map(schedule_date: str) -> Dict[str, Dict[str, Any]]:
+    date_key = str(schedule_date or "").strip()
+    if not date_key:
+        return {}
+
+    cached = _BJDC_BF_11_CACHE.get(date_key)
+    if cached:
+        cached_items = cached.get("items") or {}
+        ttl = 120 if not cached_items else BJDC_BF_CACHE_TTL_SECONDS
+        if (time.time() - float(cached.get("ts") or 0)) < ttl:
+            return cached_items
+
+    tried_issues: set[str] = set()
+    page_payloads: List[Dict[str, Any]] = []
+
+    def _load_page(expect: Optional[str]) -> Dict[str, Any]:
+        issue_key = _extract_500_issue_no(expect)
+        if issue_key in tried_issues:
+            return {}
+        tried_issues.add(issue_key)
+        payload = _fetch_500_bjdc_bf_page(date_key, expect=issue_key or None)
+        if payload:
+            page_payloads.append(payload)
+        return payload
+
+    selected_page = _load_page(None)
+    if not (selected_page and selected_page.get("rows_by_number")):
+        first_page = page_payloads[0] if page_payloads else {}
+        options = first_page.get("options") or []
+        mmdd = date_key[5:] if len(date_key) >= 10 else date_key
+        candidates: List[str] = []
+        served = _extract_500_issue_no(first_page.get("served_expect"))
+        if served:
+            candidates.append(served)
+        for option in options:
+            issue = _extract_500_issue_no(option.get("issue"))
+            label = str(option.get("label") or "")
+            if not issue:
+                continue
+            if date_key in label or mmdd in label:
+                candidates.append(issue)
+        for option in options[:10]:
+            issue = _extract_500_issue_no(option.get("issue"))
+            if issue:
+                candidates.append(issue)
+
+        dedup_candidates: List[str] = []
+        seen: set[str] = set()
+        for issue in candidates:
+            if issue and issue not in seen:
+                seen.add(issue)
+                dedup_candidates.append(issue)
+
+        for issue in dedup_candidates:
+            payload = _load_page(issue)
+            if payload and payload.get("rows_by_number"):
+                selected_page = payload
+                break
+
+    if not (selected_page and selected_page.get("rows_by_number")):
+        _BJDC_BF_11_CACHE[date_key] = {"ts": time.time(), "items": {}}
+        return {}
+
+    issue_no = _extract_500_issue_no(selected_page.get("served_expect"))
+    if not issue_no:
+        _BJDC_BF_11_CACHE[date_key] = {"ts": time.time(), "items": {}}
+        return {}
+
+    play_id = _normalize_number_key(selected_page.get("play_id")) or "42"
+    xml_map = _fetch_500_bjdc_bf_xml_map(issue_no, play_id)
+    rows_by_number = selected_page.get("rows_by_number") or {}
+    result: Dict[str, Dict[str, Any]] = {}
+    for number_key in rows_by_number.keys():
+        payload = xml_map.get(number_key)
+        if not isinstance(payload, dict):
+            continue
+        odds_11 = _to_float(payload.get("odds_11"))
+        if odds_11 is None or odds_11 <= 0:
+            continue
+        result[number_key] = payload
+
+    _BJDC_BF_11_CACHE[date_key] = {"ts": time.time(), "items": result}
+    return result
 
 
 def _fetch_500_bjdc_asian_map(schedule_date: str) -> Dict[str, Dict[str, Any]]:
@@ -743,6 +964,28 @@ def _extract_handicap_from_500_bjdc(
     return line, str(payload.get("source") or "500_bjdc_index.asianhand")
 
 
+def _extract_odds_11_from_500_bjdc(
+    attrs: Dict[str, Any],
+    *,
+    bjdc_bf_11_map: Dict[str, Dict[str, Any]],
+) -> tuple[Optional[float], Optional[str]]:
+    if not bjdc_bf_11_map:
+        return None, None
+    number_key = _normalize_number_key(attrs.get("number"))
+    if not number_key:
+        number_key = _normalize_number_key(attrs.get("lineId") or attrs.get("line_id"))
+    if not number_key:
+        return None, None
+
+    payload = bjdc_bf_11_map.get(number_key)
+    if not isinstance(payload, dict):
+        return None, None
+    odds_11 = _to_float(payload.get("odds_11"))
+    if odds_11 is None or odds_11 <= 1:
+        return None, None
+    return odds_11, str(payload.get("source") or "500_bjdc_project_fq_bf.xml.c13")
+
+
 def _poisson_prob(mu: float, k: int) -> float:
     return math.exp(-mu) * (mu ** k) / math.factorial(k)
 
@@ -772,6 +1015,8 @@ def _build_input_payload(
     *,
     total_goals_line_source: Optional[str] = None,
     handicap_source: Optional[str] = None,
+    odds_score_11: Optional[float] = None,
+    odds_score_11_source: Optional[str] = None,
 ) -> Dict[str, Any]:
     return {
         "match_id": match.match_identifier,
@@ -785,7 +1030,10 @@ def _build_input_payload(
             "win": attrs.get("odds_win") or attrs.get("odds_nspf_win"),
             "draw": _extract_draw_odds(attrs),
             "lose": attrs.get("odds_lose") or attrs.get("odds_nspf_lose"),
+            "score_11": odds_score_11,
         },
+        "odds_score_11": odds_score_11,
+        "odds_score_11_source": odds_score_11_source,
         "mu": {
             "total": mu_values["mu_total"],
             "diff": mu_values["mu_diff"],
@@ -797,7 +1045,13 @@ def _build_input_payload(
     }
 
 
-def scan_for_date(db: Session, target_date: date, data_source: str = "yingqiu_bd", overwrite: bool = True) -> List[Poisson11Result]:
+def scan_for_date(
+    db: Session,
+    target_date: date,
+    data_source: str = "yingqiu_bd",
+    overwrite: bool = True,
+    progress_callback: Optional[Callable[[Dict[str, Any]], None]] = None,
+) -> List[Poisson11Result]:
     schedule_source = "yingqiu_bd" if data_source == "yingqiu_bd" else "500w"
     date_key = target_date.isoformat()
     query = db.query(Match).options(joinedload(Match.league), joinedload(Match.home_team), joinedload(Match.away_team)).filter(Match.data_source == schedule_source)
@@ -811,6 +1065,25 @@ def scan_for_date(db: Session, target_date: date, data_source: str = "yingqiu_bd
             )
         )
     matches = query.all()
+    total_matches = len(matches)
+
+    def _emit_progress(phase: str, current: int, total: int, progress: float, message: str) -> None:
+        if not progress_callback:
+            return
+        payload = {
+            "phase": phase,
+            "current": max(0, int(current)),
+            "total": max(0, int(total)),
+            "progress": max(0.0, min(100.0, float(progress))),
+            "message": str(message or ""),
+        }
+        try:
+            progress_callback(payload)
+        except Exception:
+            # 进度上报失败不应影响主流程
+            pass
+
+    _emit_progress("prepare", 0, total_matches, 5.0 if total_matches > 0 else 100.0, "已加载比赛列表")
 
     if overwrite:
         db.execute(
@@ -820,15 +1093,19 @@ def scan_for_date(db: Session, target_date: date, data_source: str = "yingqiu_bd
             )
         )
         db.commit()
+        _emit_progress("prepare", 0, total_matches, 10.0 if total_matches > 0 else 100.0, "已清理历史结果")
 
     results: List[Poisson11Result] = []
     computed_items: List[Dict[str, Any]] = []
     fetcher = ExternalDataFetcher() if data_source in {"oddsportal", "understat", "fbref"} else None
     bjdc_asian_map: Dict[str, Dict[str, Any]] = {}
+    bjdc_bf_11_map: Dict[str, Dict[str, Any]] = {}
     if schedule_source == "yingqiu_bd":
         bjdc_asian_map = _fetch_500_bjdc_asian_map(date_key)
+        bjdc_bf_11_map = _fetch_500_bjdc_bf_11_map(date_key)
+    _emit_progress("prefetch", 0, total_matches, 20.0 if total_matches > 0 else 100.0, "已完成赔率预抓取")
 
-    for match in matches:
+    for compute_idx, match in enumerate(matches, start=1):
         attrs = _normalize_attrs(match.source_attributes)
         flags: List[str] = []
 
@@ -883,6 +1160,8 @@ def scan_for_date(db: Session, target_date: date, data_source: str = "yingqiu_bd
         total_goals_line_source: Optional[str] = None
         handicap = None
         handicap_source: Optional[str] = None
+        odds_score_11 = None
+        odds_score_11_source: Optional[str] = None
 
         if schedule_source == "yingqiu_bd":
             handicap, handicap_source = _extract_handicap_from_500_bjdc(
@@ -895,6 +1174,14 @@ def scan_for_date(db: Session, target_date: date, data_source: str = "yingqiu_bd
             total_goals_line, total_goals_line_source = _extract_total_goals_line_from_bd_detail(attrs)
             if handicap is None:
                 handicap, handicap_source = _extract_handicap_from_bd_detail(attrs)
+            odds_score_11, odds_score_11_source = _extract_odds_11_from_500_bjdc(
+                attrs,
+                bjdc_bf_11_map=bjdc_bf_11_map,
+            )
+            if odds_score_11 is not None:
+                flags.append("odds_score_11_from_500_bjdc_bf")
+                attrs["odds_score_11"] = odds_score_11
+                attrs["odds_score_11_source"] = odds_score_11_source
 
         if total_goals_line is None:
             total_goals_line = _extract_total_goals_line(attrs)
@@ -930,6 +1217,8 @@ def scan_for_date(db: Session, target_date: date, data_source: str = "yingqiu_bd
             flags,
             total_goals_line_source=total_goals_line_source,
             handicap_source=handicap_source,
+            odds_score_11=odds_score_11,
+            odds_score_11_source=odds_score_11_source,
         )
 
         computed_items.append({
@@ -938,6 +1227,9 @@ def scan_for_date(db: Session, target_date: date, data_source: str = "yingqiu_bd
             "mu_values": mu_values,
             "input_payload": input_payload,
         })
+        if total_matches > 0:
+            compute_progress = 20.0 + (compute_idx / total_matches) * 55.0
+            _emit_progress("compute", compute_idx, total_matches, compute_progress, f"正在计算第 {compute_idx}/{total_matches} 场")
 
     computed_items.sort(key=lambda item: item["mu_values"]["prob_11"], reverse=True)
 
@@ -964,8 +1256,12 @@ def scan_for_date(db: Session, target_date: date, data_source: str = "yingqiu_bd
         )
         results.append(result)
         db.add(result)
+        if total_matches > 0:
+            persist_progress = 75.0 + (idx / total_matches) * 20.0
+            _emit_progress("persist", idx, total_matches, persist_progress, f"正在写入第 {idx}/{total_matches} 场")
 
     db.commit()
+    _emit_progress("finished", total_matches, total_matches, 100.0, "处理完成")
     return results
 
 

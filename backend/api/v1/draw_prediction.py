@@ -1,17 +1,26 @@
 from fastapi import APIRouter, Depends, HTTPException, Body, Query
-from typing import List, Optional
-from datetime import datetime
+from typing import List, Optional, Dict, Any
+from datetime import datetime, timedelta, date
 import json
+import threading
+import socket
+import os
+from concurrent.futures import ThreadPoolExecutor
+from uuid import uuid4
+from urllib.parse import urlparse
 
 # 引入模型和Service
 from backend.models.draw_feature import DrawFeature
-from backend.models.draw_training_job import TrainingJobStatus
+from backend.models.draw_training_job import TrainingJobStatus, DrawTrainingJob
+from backend.models.draw_model_version import DrawModelVersion
 from backend.models.draw_prediction_result import DrawPredictionResult
 from backend.models.match import Match
+from backend.models.admin_user import AdminUser
 from backend.services import draw_prediction_service as svc
 from backend.services import poisson_11_service
 from backend.services import ai_draw_prediction_service
 from backend.api.dependencies import get_db, get_current_active_admin_user
+from backend.database import SessionLocal
 from sqlalchemy.orm import Session
 
 router = APIRouter(
@@ -19,6 +28,395 @@ router = APIRouter(
     tags=["draw-prediction"],
     dependencies=[Depends(get_current_active_admin_user)],
 )
+
+
+_FETCH_TASK_TTL_MINUTES = 30
+_FETCH_TASKS: Dict[str, Dict[str, Any]] = {}
+_FETCH_TASKS_LOCK = threading.Lock()
+_FETCH_TASK_EXECUTOR = ThreadPoolExecutor(max_workers=3, thread_name_prefix="draw_prediction_fetch")
+_TRAINING_TASK_EXECUTOR = ThreadPoolExecutor(max_workers=2, thread_name_prefix="draw_prediction_train")
+_RETRAIN_DRAFTS: Dict[str, Dict[str, Any]] = {}
+_RETRAIN_DRAFTS_LOCK = threading.Lock()
+_ENABLE_CELERY_DISPATCH = os.getenv("DRAW_PREDICTION_ENABLE_CELERY", "0").strip().lower() in {
+    "1",
+    "true",
+    "yes",
+    "on",
+}
+
+
+def _utcnow() -> datetime:
+    return datetime.utcnow()
+
+
+def _is_broker_endpoint_reachable(broker_url: str, timeout_seconds: float = 1.0) -> bool:
+    """Fast TCP probe to avoid blocking Celery send_task when broker is unavailable."""
+    try:
+        parsed = urlparse(str(broker_url or ""))
+        host = parsed.hostname
+        port = parsed.port
+        if not host:
+            return False
+        if port is None:
+            if parsed.scheme.startswith("redis"):
+                port = 6379
+            elif parsed.scheme.startswith("amqp"):
+                port = 5672
+            else:
+                return False
+        with socket.create_connection((host, int(port)), timeout=timeout_seconds):
+            return True
+    except Exception:
+        return False
+
+
+def _serialize_task(task: Dict[str, Any]) -> Dict[str, Any]:
+    payload: Dict[str, Any] = {}
+    for key, value in task.items():
+        if isinstance(value, datetime):
+            payload[key] = value.isoformat()
+        else:
+            payload[key] = value
+    return payload
+
+
+def _cleanup_fetch_tasks_locked(now: datetime) -> None:
+    expired_ids: List[str] = []
+    for task_id, task in _FETCH_TASKS.items():
+        if task.get("status") in {"success", "failed", "cancelled"}:
+            updated_at = task.get("updated_at")
+            if isinstance(updated_at, datetime) and now - updated_at >= timedelta(minutes=_FETCH_TASK_TTL_MINUTES):
+                expired_ids.append(task_id)
+    for task_id in expired_ids:
+        _FETCH_TASKS.pop(task_id, None)
+
+
+def _create_fetch_task(task_type: str, params: Optional[Dict[str, Any]] = None) -> str:
+    now = _utcnow()
+    task_id = f"{task_type}_{now.strftime('%Y%m%d%H%M%S')}_{uuid4().hex[:8]}"
+    task = {
+        "task_id": task_id,
+        "type": task_type,
+        "status": "pending",
+        "phase": "pending",
+        "progress": 0.0,
+        "current": 0,
+        "total": 0,
+        "message": "任务已创建，等待执行",
+        "error": None,
+        "result": None,
+        "params": params or {},
+        "created_at": now,
+        "started_at": None,
+        "completed_at": None,
+        "updated_at": now,
+    }
+    with _FETCH_TASKS_LOCK:
+        _cleanup_fetch_tasks_locked(now)
+        _FETCH_TASKS[task_id] = task
+    return task_id
+
+
+def _update_fetch_task(task_id: str, **kwargs: Any) -> None:
+    with _FETCH_TASKS_LOCK:
+        task = _FETCH_TASKS.get(task_id)
+        if not task:
+            return
+        for key, value in kwargs.items():
+            task[key] = value
+        task["updated_at"] = _utcnow()
+
+
+def _get_fetch_task(task_id: str) -> Optional[Dict[str, Any]]:
+    now = _utcnow()
+    with _FETCH_TASKS_LOCK:
+        _cleanup_fetch_tasks_locked(now)
+        task = _FETCH_TASKS.get(task_id)
+        if not task:
+            return None
+        return _serialize_task(dict(task))
+
+
+def _run_poisson_fetch_task(task_id: str, target_date: date, data_source: str) -> None:
+    db = SessionLocal()
+    started_at = _utcnow()
+    _update_fetch_task(
+        task_id,
+        status="running",
+        phase="prepare",
+        started_at=started_at,
+        message="开始抓取并计算",
+        progress=1.0,
+    )
+    try:
+        def _on_progress(progress_payload: Dict[str, Any]) -> None:
+            _update_fetch_task(
+                task_id,
+                phase=str(progress_payload.get("phase") or "running"),
+                progress=float(progress_payload.get("progress") or 0.0),
+                current=int(progress_payload.get("current") or 0),
+                total=int(progress_payload.get("total") or 0),
+                message=str(progress_payload.get("message") or "处理中"),
+            )
+
+        results = poisson_11_service.scan_for_date(
+            db,
+            target_date,
+            data_source=data_source,
+            overwrite=True,
+            progress_callback=_on_progress,
+        )
+        _update_fetch_task(
+            task_id,
+            status="success",
+            phase="finished",
+            progress=100.0,
+            current=len(results),
+            total=len(results),
+            message=f"处理完成，共 {len(results)} 场",
+            result={
+                "date": target_date.isoformat(),
+                "data_source": data_source,
+                "total": len(results),
+            },
+            completed_at=_utcnow(),
+            error=None,
+        )
+    except Exception as exc:
+        try:
+            db.rollback()
+        except Exception:
+            pass
+        _update_fetch_task(
+            task_id,
+            status="failed",
+            phase="failed",
+            message="抓取任务失败",
+            error=str(exc),
+            completed_at=_utcnow(),
+        )
+    finally:
+        db.close()
+
+
+def _run_ai_draw_fetch_task(task_id: str, target_date: date) -> None:
+    db = SessionLocal()
+    started_at = _utcnow()
+    _update_fetch_task(
+        task_id,
+        status="running",
+        phase="compute",
+        started_at=started_at,
+        message="开始计算 AI 平局预测",
+        progress=5.0,
+    )
+    try:
+        items = ai_draw_prediction_service.list_for_date(db, target_date, data_source="yingqiu_bd")
+        _update_fetch_task(
+            task_id,
+            status="success",
+            phase="finished",
+            progress=100.0,
+            current=len(items),
+            total=len(items),
+            message=f"处理完成，共 {len(items)} 场",
+            result={
+                "date": target_date.isoformat(),
+                "data_source": "yingqiu_bd",
+                "total": len(items),
+            },
+            completed_at=_utcnow(),
+            error=None,
+        )
+    except Exception as exc:
+        try:
+            db.rollback()
+        except Exception:
+            pass
+        _update_fetch_task(
+            task_id,
+            status="failed",
+            phase="failed",
+            message="抓取任务失败",
+            error=str(exc),
+            completed_at=_utcnow(),
+        )
+    finally:
+        db.close()
+
+
+def _normalize_meta(raw_meta: Any) -> Dict[str, Any]:
+    if isinstance(raw_meta, dict):
+        return raw_meta
+    if isinstance(raw_meta, str) and raw_meta:
+        try:
+            parsed = json.loads(raw_meta)
+            return parsed if isinstance(parsed, dict) else {}
+        except Exception:
+            return {}
+    return {}
+
+
+def _extract_model_version_id(meta: Dict[str, Any]) -> Optional[int]:
+    value = meta.get("model_version_id")
+    try:
+        if value is None:
+            return None
+        return int(value)
+    except Exception:
+        return None
+
+
+def _calc_prediction_stats(items: List[DrawPredictionResult]) -> Dict[str, Any]:
+    total = len(items)
+    finished = [p for p in items if p.actual_result is not None]
+    hits = [p for p in finished if p.actual_result == "draw"]
+    pending = total - len(finished)
+    accuracy = round((len(hits) / len(finished)) * 100, 1) if finished else 0.0
+    return {
+        "total": total,
+        "finished": len(finished),
+        "hits": len(hits),
+        "pending": pending,
+        "accuracy": accuracy,
+    }
+
+
+def _serialize_retrain_draft(draft: Dict[str, Any]) -> Dict[str, Any]:
+    payload: Dict[str, Any] = {}
+    for key, value in draft.items():
+        if isinstance(value, datetime):
+            payload[key] = value.isoformat()
+        else:
+            payload[key] = value
+    return payload
+
+
+def _resolve_created_by_id(db: Session) -> int:
+    first_admin = db.query(AdminUser.id).order_by(AdminUser.id.asc()).first()
+    if first_admin and first_admin[0]:
+        return int(first_admin[0])
+    return 1
+
+
+def _bootstrap_draw_prediction_mock_data(db: Session) -> Dict[str, Any]:
+    now = _utcnow()
+    created: Dict[str, Optional[Dict[str, Any]]] = {
+        "training_job": None,
+        "model_version": None,
+        "prediction": None,
+    }
+
+    feature_count = db.query(DrawFeature).count()
+    feature_ids = [row[0] for row in db.query(DrawFeature.id).order_by(DrawFeature.id.asc()).limit(5).all()]
+    created_by = _resolve_created_by_id(db)
+
+    training_count = db.query(DrawTrainingJob).count()
+    if training_count == 0:
+        job = DrawTrainingJob(
+            job_name=f"Mock平局训练_{now.strftime('%Y%m%d')}",
+            feature_set_ids=feature_ids,
+            algorithm="xgboost",
+            hyperparameters={
+                "epochs": 120,
+                "batch_size": 32,
+                "learning_rate": 0.001,
+                "validation_split": 0.2,
+            },
+            status="success",
+            started_at=now - timedelta(hours=2),
+            finished_at=now - timedelta(hours=1, minutes=30),
+            metrics={
+                "accuracy": 0.62,
+                "precision": 0.58,
+                "recall": 0.55,
+                "f1_score": 0.56,
+                "auc": 0.67,
+            },
+            created_by=created_by,
+            created_at=now - timedelta(hours=2),
+        )
+        db.add(job)
+        db.flush()
+        created["training_job"] = {
+            "id": job.id,
+            "job_name": job.job_name,
+            "status": job.status,
+        }
+
+    seed_job = (
+        db.query(DrawTrainingJob)
+        .order_by(DrawTrainingJob.created_at.desc(), DrawTrainingJob.id.desc())
+        .first()
+    )
+
+    model_count = db.query(DrawModelVersion).count()
+    if model_count == 0 and seed_job:
+        metrics = seed_job.metrics if isinstance(seed_job.metrics, dict) else {
+            "accuracy": 0.60,
+            "precision": 0.56,
+            "recall": 0.53,
+            "f1_score": 0.54,
+            "auc": 0.65,
+        }
+        model = DrawModelVersion(
+            version_tag=f"v{now.strftime('%Y.%m.%d')}-mock",
+            training_job_id=seed_job.id,
+            model_path=f"/models/mock/job_{seed_job.id}/model.pkl",
+            performance_metrics=metrics,
+            status="active",
+            deployed_at=now - timedelta(minutes=20),
+            created_at=now - timedelta(minutes=25),
+        )
+        db.add(model)
+        db.flush()
+        created["model_version"] = {
+            "id": model.id,
+            "version_tag": model.version_tag,
+            "status": model.status,
+        }
+
+    seed_model = (
+        db.query(DrawModelVersion)
+        .order_by(DrawModelVersion.created_at.desc(), DrawModelVersion.id.desc())
+        .first()
+    )
+
+    prediction_count = db.query(DrawPredictionResult).count()
+    if prediction_count == 0:
+        pred = DrawPredictionResult(
+            match_id=f"MOCK-{now.strftime('%Y%m%d')}-001",
+            predicted_draw_prob=0.41,
+            actual_result="draw",
+            prediction_meta={
+                "model_version_id": seed_model.id if seed_model else None,
+                "model_version_tag": seed_model.version_tag if seed_model else None,
+                "source": "mock_bootstrap",
+            },
+            predicted_at=now - timedelta(minutes=10),
+            match_time=now + timedelta(hours=2),
+        )
+        db.add(pred)
+        db.flush()
+        created["prediction"] = {
+            "id": pred.id,
+            "match_id": pred.match_id,
+        }
+
+    db.commit()
+
+    after_counts = {
+        "features": db.query(DrawFeature).count(),
+        "training_jobs": db.query(DrawTrainingJob).count(),
+        "model_versions": db.query(DrawModelVersion).count(),
+        "predictions": db.query(DrawPredictionResult).count(),
+    }
+    return {
+        "created": created,
+        "counts": after_counts,
+        "feature_count_before": feature_count,
+        "feature_count_keep": feature_count == after_counts["features"],
+    }
 
 # ===== Feature 相关接口 =====
 @router.get("/features", response_model=dict)
@@ -87,27 +485,73 @@ async def delete_feature(feature_id: int, db: Session = Depends(get_db)):
 # ===== TrainingJob 相关接口 =====
 @router.post("/training-jobs", response_model=dict)
 async def create_training_job(data: dict = Body(...), db: Session = Depends(get_db)):
-    """创建训练任务并提交到 Celery 异步执行"""
-    from ..celery_app import celery_app
-    # 假设从请求中获取当前用户 ID（实际应从 JWT / 依赖注入中取）
-    created_by = 1  # TODO: 替换为真实用户 ID
+    """Create training job and dispatch to async executor."""
+    from ...celery_app import celery_app, run_training_job_local
 
-    # 1. 在数据库中创建任务记录（状态为 PENDING）
-    obj = svc.create_training_job(db, data, created_by)
-    svc.append_training_log(obj.id, "训练任务已创建，等待调度")
+    created_by = _resolve_created_by_id(db)
+    try:
+        obj = svc.create_training_job(db, data, created_by)
+    except svc.TrainingValidationError as exc:
+        raise HTTPException(status_code=422, detail=exc.to_detail())
 
-    # 2. 提交 Celery 异步任务
-    task = celery_app.send_task('train_model_task', args=[obj.id])
+    svc.append_training_log(obj.id, "Training job created and waiting for dispatch.")
 
-    # 3. 关联 Celery task_id（可选，可用于查询任务状态）
-    obj.celery_task_id = task.id
+    task_id = None
+    queue_warning = None
+    dispatch_mode = "celery"
+    broker_url = str(getattr(celery_app.conf, "broker_url", "") or "")
+    queue_available = _ENABLE_CELERY_DISPATCH and _is_broker_endpoint_reachable(
+        broker_url, timeout_seconds=1.0
+    )
+    if not _ENABLE_CELERY_DISPATCH:
+        queue_warning = "Queue dispatch disabled by runtime config, switched to local async training."
+        dispatch_mode = "local_async_fallback"
+        svc.append_training_log(obj.id, queue_warning)
+        try:
+            _TRAINING_TASK_EXECUTOR.submit(run_training_job_local, obj.id)
+            svc.append_training_log(obj.id, "Local async training has started.")
+        except Exception as local_exc:
+            queue_warning = f"{queue_warning}; local fallback start failed: {local_exc}"
+            dispatch_mode = "dispatch_failed"
+            svc.append_training_log(obj.id, queue_warning)
+    elif not queue_available:
+        queue_warning = "Queue broker unreachable, switched to local async training."
+        dispatch_mode = "local_async_fallback"
+        svc.append_training_log(obj.id, queue_warning)
+        try:
+            _TRAINING_TASK_EXECUTOR.submit(run_training_job_local, obj.id)
+            svc.append_training_log(obj.id, "Local async training has started.")
+        except Exception as local_exc:
+            queue_warning = f"{queue_warning}; local fallback start failed: {local_exc}"
+            dispatch_mode = "dispatch_failed"
+            svc.append_training_log(obj.id, queue_warning)
+    else:
+        try:
+            task = celery_app.send_task("train_model_task", args=[obj.id])
+            task_id = task.id
+            obj.celery_task_id = task_id
+            svc.append_training_log(obj.id, f"Task dispatched to queue, task_id={task_id}")
+        except Exception as exc:
+            queue_warning = f"Queue dispatch failed, switched to local async training: {exc}"
+            dispatch_mode = "local_async_fallback"
+            svc.append_training_log(obj.id, queue_warning)
+            try:
+                _TRAINING_TASK_EXECUTOR.submit(run_training_job_local, obj.id)
+                svc.append_training_log(obj.id, "Local async training has started.")
+            except Exception as local_exc:
+                queue_warning = f"{queue_warning}; local fallback start failed: {local_exc}"
+                dispatch_mode = "dispatch_failed"
+                svc.append_training_log(obj.id, queue_warning)
+
     db.commit()
 
     return {
         "id": obj.id,
         "job_name": obj.job_name,
         "status": obj.status,
-        "celery_task_id": task.id
+        "celery_task_id": task_id,
+        "queue_warning": queue_warning,
+        "dispatch_mode": dispatch_mode,
     }
 
 @router.get("/training-jobs", response_model=List[dict])
@@ -125,6 +569,32 @@ async def list_training_jobs(keyword: Optional[str] = None, db: Session = Depend
         for j in jobs
     ]
 
+@router.get("/training-jobs/summary", response_model=dict)
+async def get_training_jobs_summary(db: Session = Depends(get_db)):
+    jobs = svc.get_training_jobs(db)
+    summary = {
+        "pending": 0,
+        "running": 0,
+        "success": 0,
+        "failed": 0,
+        "total": len(jobs),
+    }
+    for job in jobs:
+        status = str(job.status or "").lower()
+        if status == "pending":
+            summary["pending"] += 1
+        elif status in {"running", "training"}:
+            summary["running"] += 1
+        elif status in {"success", "trained", "evaluated"}:
+            summary["success"] += 1
+        elif status == "failed":
+            summary["failed"] += 1
+    return {
+        "success": True,
+        "message": "ok",
+        "data": summary,
+    }
+
 @router.get("/training-jobs/{job_id}/logs", response_model=dict)
 async def get_job_logs(job_id: int):
     logs = svc.get_training_logs(job_id)
@@ -134,13 +604,11 @@ async def get_job_logs(job_id: int):
 @router.put("/training-jobs/{job_id}/status", response_model=dict)
 async def set_job_status(job_id: int, data: dict = Body(...), db: Session = Depends(get_db)):
     """更新训练任务状态，可选传入模型路径和性能指标"""
-    status = data.get('status')
+    status = str(data.get('status') or '').lower()
     metrics = data.get('metrics')
     model_path = data.get('model_path')
-    
-    # 确保 status 是 TrainingJobStatus 枚举类型
-    if isinstance(status, str):
-        status = TrainingJobStatus(status)
+    if status not in {"pending", "running", "training", "success", "failed", "trained", "evaluated"}:
+        raise HTTPException(status_code=422, detail="invalid status")
     
     metrics_dict = metrics if isinstance(metrics, dict) else (json.loads(metrics) if metrics else None)
     
@@ -148,7 +616,7 @@ async def set_job_status(job_id: int, data: dict = Body(...), db: Session = Depe
     if not obj:
         raise HTTPException(status_code=404, detail="Training job not found")
     svc.append_training_log(job_id, f"状态变更为 {status}")
-    if status == TrainingJobStatus.SUCCESS:
+    if status == "success":
         svc.append_training_log(job_id, "自动创建模型版本")
     return {"id": obj.id, "status": obj.status}
 
@@ -168,6 +636,56 @@ async def list_models(keyword: Optional[str] = None, db: Session = Depends(get_d
         for m in models
     ]
 
+@router.get("/models/{model_id}/trace", response_model=dict)
+async def get_model_trace(model_id: int, db: Session = Depends(get_db)):
+    model = db.query(DrawModelVersion).filter(DrawModelVersion.id == model_id).first()
+    if not model:
+        raise HTTPException(status_code=404, detail="Model version not found")
+
+    job = db.query(DrawTrainingJob).filter(DrawTrainingJob.id == model.training_job_id).first()
+    feature_ids = []
+    feature_items: List[Dict[str, Any]] = []
+    if job and isinstance(job.feature_set_ids, list):
+        feature_ids = job.feature_set_ids
+    if feature_ids:
+        features = (
+            db.query(DrawFeature)
+            .filter(DrawFeature.id.in_(feature_ids))
+            .order_by(DrawFeature.id.asc())
+            .all()
+        )
+        feature_items = [
+            {
+                "id": f.id,
+                "name": f.name,
+                "source_type": f.source_type,
+                "is_active": f.is_active,
+            }
+            for f in features
+        ]
+
+    return {
+        "success": True,
+        "message": "ok",
+        "data": {
+            "model_id": model.id,
+            "version_tag": model.version_tag,
+            "model_status": model.status,
+            "deployed_at": model.deployed_at,
+            "training_job": {
+                "id": job.id if job else model.training_job_id,
+                "job_name": job.job_name if job else None,
+                "status": job.status if job else None,
+                "algorithm": job.algorithm if job else None,
+                "metrics": job.metrics if job else None,
+            },
+            "feature_set": {
+                "ids": feature_ids,
+                "items": feature_items,
+            },
+        },
+    }
+
 @router.post("/models/{model_id}/deploy", response_model=dict)
 async def deploy_model(model_id: int, db: Session = Depends(get_db)):
     obj = svc.deploy_model_version(db, model_id)
@@ -186,6 +704,7 @@ async def rollback_model(model_id: int, db: Session = Depends(get_db)):
 @router.get("/predictions", response_model=dict)
 async def list_predictions(
     match_id: Optional[str] = Query(None),
+    model_version_id: Optional[int] = Query(None),
     start_date: Optional[datetime] = Query(None),
     end_date: Optional[datetime] = Query(None),
     page: int = Query(1, ge=1),
@@ -203,31 +722,52 @@ async def list_predictions(
     if end_date:
         q = q.filter(DrawPredictionResult.predicted_at <= end_date)
 
-    total = q.count()
-    finished_q = q.filter(DrawPredictionResult.actual_result.isnot(None))
-    finished = finished_q.count()
-    hits = finished_q.filter(DrawPredictionResult.actual_result == "draw").count()
-    pending = total - finished
-    accuracy = round((hits / finished) * 100, 1) if finished > 0 else 0.0
-
-    preds = (
-        q.order_by(DrawPredictionResult.predicted_at.desc(), DrawPredictionResult.id.desc())
-        .offset((page - 1) * size)
-        .limit(size)
-        .all()
-    )
-
-    items = [
-        {
-            "id": p.id,
-            "match_id": p.match_id,
-            "predicted_draw_prob": p.predicted_draw_prob,
-            "actual_result": p.actual_result,
-            "predicted_at": p.predicted_at,
-            "match_time": p.match_time,
+    if model_version_id is not None:
+        all_candidates = q.order_by(DrawPredictionResult.predicted_at.desc(), DrawPredictionResult.id.desc()).all()
+        filtered_candidates = []
+        for row in all_candidates:
+            meta = _normalize_meta(row.prediction_meta)
+            if _extract_model_version_id(meta) == model_version_id:
+                filtered_candidates.append(row)
+        total = len(filtered_candidates)
+        stats = _calc_prediction_stats(filtered_candidates)
+        preds = filtered_candidates[(page - 1) * size : page * size]
+    else:
+        total = q.count()
+        finished_q = q.filter(DrawPredictionResult.actual_result.isnot(None))
+        finished = finished_q.count()
+        hits = finished_q.filter(DrawPredictionResult.actual_result == "draw").count()
+        pending = total - finished
+        accuracy = round((hits / finished) * 100, 1) if finished > 0 else 0.0
+        stats = {
+            "total": total,
+            "finished": finished,
+            "hits": hits,
+            "accuracy": accuracy,
+            "pending": pending,
         }
-        for p in preds
-    ]
+        preds = (
+            q.order_by(DrawPredictionResult.predicted_at.desc(), DrawPredictionResult.id.desc())
+            .offset((page - 1) * size)
+            .limit(size)
+            .all()
+        )
+
+    items = []
+    for p in preds:
+        meta = _normalize_meta(p.prediction_meta)
+        items.append(
+            {
+                "id": p.id,
+                "match_id": p.match_id,
+                "predicted_draw_prob": p.predicted_draw_prob,
+                "actual_result": p.actual_result,
+                "predicted_at": p.predicted_at,
+                "match_time": p.match_time,
+                "prediction_meta": meta,
+                "model_version_id": _extract_model_version_id(meta),
+            }
+        )
 
     return {
         "success": True,
@@ -237,19 +777,221 @@ async def list_predictions(
             "total": total,
             "page": page,
             "size": size,
-            "stats": {
-                "total": total,
-                "finished": finished,
-                "hits": hits,
-                "accuracy": accuracy,
-                "pending": pending,
-            },
+            "stats": stats,
         },
     }
 
+
+@router.get("/predictions/summary", response_model=dict)
+async def get_prediction_summary(
+    model_version_id: Optional[int] = Query(None),
+    start_date: Optional[datetime] = Query(None),
+    end_date: Optional[datetime] = Query(None),
+    db: Session = Depends(get_db),
+):
+    q = db.query(DrawPredictionResult)
+    if start_date:
+        q = q.filter(DrawPredictionResult.predicted_at >= start_date)
+    if end_date:
+        q = q.filter(DrawPredictionResult.predicted_at <= end_date)
+    rows = q.order_by(DrawPredictionResult.predicted_at.desc(), DrawPredictionResult.id.desc()).all()
+    if model_version_id is not None:
+        rows = [
+            row
+            for row in rows
+            if _extract_model_version_id(_normalize_meta(row.prediction_meta)) == model_version_id
+        ]
+    return {
+        "success": True,
+        "message": "ok",
+        "data": _calc_prediction_stats(rows),
+    }
+
+
+@router.post("/retrain-drafts", response_model=dict)
+async def create_retrain_draft(
+    payload: dict = Body(...),
+    db: Session = Depends(get_db),
+):
+    model_version_id = payload.get("model_version_id")
+    reason = payload.get("reason") or "监控指标下降，建议再训练"
+    if not model_version_id:
+        raise HTTPException(status_code=422, detail="model_version_id is required")
+
+    model = db.query(DrawModelVersion).filter(DrawModelVersion.id == int(model_version_id)).first()
+    if not model:
+        raise HTTPException(status_code=404, detail="Model version not found")
+
+    job = db.query(DrawTrainingJob).filter(DrawTrainingJob.id == model.training_job_id).first()
+    feature_set_ids = []
+    algorithm = "xgboost"
+    hyperparameters = {"epochs": 120, "batch_size": 32, "learning_rate": 0.001}
+    if job:
+        if isinstance(job.feature_set_ids, list):
+            feature_set_ids = job.feature_set_ids
+        if isinstance(job.algorithm, str) and job.algorithm:
+            algorithm = job.algorithm
+        if isinstance(job.hyperparameters, dict):
+            hyperparameters = job.hyperparameters
+
+    draft_id = f"retrain_{_utcnow().strftime('%Y%m%d%H%M%S')}_{uuid4().hex[:6]}"
+    draft = {
+        "draft_id": draft_id,
+        "status": "draft",
+        "reason": reason,
+        "model_version_id": int(model_version_id),
+        "source_training_job_id": model.training_job_id,
+        "suggestion": {
+            "job_name": f"再训练_{model.version_tag}_{_utcnow().strftime('%Y%m%d')}",
+            "algorithm": algorithm,
+            "feature_set_ids": feature_set_ids,
+            "hyperparameters": hyperparameters,
+        },
+        "created_at": _utcnow(),
+        "submitted_training_job_id": None,
+        "submitted_at": None,
+    }
+    with _RETRAIN_DRAFTS_LOCK:
+        _RETRAIN_DRAFTS[draft_id] = draft
+    return {
+        "success": True,
+        "message": "ok",
+        "data": _serialize_retrain_draft(draft),
+    }
+
+
+@router.get("/retrain-drafts/{draft_id}", response_model=dict)
+async def get_retrain_draft(draft_id: str):
+    with _RETRAIN_DRAFTS_LOCK:
+        draft = _RETRAIN_DRAFTS.get(draft_id)
+        if not draft:
+            raise HTTPException(status_code=404, detail="Draft not found")
+        return {
+            "success": True,
+            "message": "ok",
+            "data": _serialize_retrain_draft(draft),
+        }
+
+
+@router.post("/retrain-drafts/{draft_id}/submit", response_model=dict)
+async def submit_retrain_draft(
+    draft_id: str,
+    db: Session = Depends(get_db),
+):
+    with _RETRAIN_DRAFTS_LOCK:
+        draft = _RETRAIN_DRAFTS.get(draft_id)
+        if not draft:
+            raise HTTPException(status_code=404, detail="Draft not found")
+        if draft.get("status") == "submitted":
+            return {
+                "success": True,
+                "message": "ok",
+                "data": _serialize_retrain_draft(draft),
+            }
+
+    suggestion = draft.get("suggestion") or {}
+    created_by = _resolve_created_by_id(db)
+    try:
+        job = svc.create_training_job(
+            db,
+            {
+                "job_name": suggestion.get("job_name") or f"retrain_job_{_utcnow().strftime('%Y%m%d%H%M%S')}",
+                "feature_set_ids": suggestion.get("feature_set_ids") or [],
+                "algorithm": suggestion.get("algorithm") or "xgboost",
+                "hyperparameters": suggestion.get("hyperparameters") or {},
+            },
+            created_by=created_by,
+        )
+    except svc.TrainingValidationError as exc:
+        raise HTTPException(status_code=422, detail=exc.to_detail())
+    svc.append_training_log(job.id, f"Created from retrain draft {draft_id}")
+
+    with _RETRAIN_DRAFTS_LOCK:
+        latest = _RETRAIN_DRAFTS.get(draft_id)
+        if latest:
+            latest["status"] = "submitted"
+            latest["submitted_training_job_id"] = job.id
+            latest["submitted_at"] = _utcnow()
+            draft = latest
+
+    return {
+        "success": True,
+        "message": "ok",
+        "data": _serialize_retrain_draft(draft),
+    }
+
+
+@router.post("/mock/bootstrap", response_model=dict)
+async def bootstrap_draw_prediction_mock_data(db: Session = Depends(get_db)):
+    result = _bootstrap_draw_prediction_mock_data(db)
+    return {
+        "success": True,
+        "message": "ok",
+        "data": result,
+    }
+
+
+@router.get("/mock/bootstrap/status", response_model=dict)
+async def get_bootstrap_status(db: Session = Depends(get_db)):
+    counts = {
+        "features": db.query(DrawFeature).count(),
+        "training_jobs": db.query(DrawTrainingJob).count(),
+        "model_versions": db.query(DrawModelVersion).count(),
+        "predictions": db.query(DrawPredictionResult).count(),
+    }
+    return {
+        "success": True,
+        "message": "ok",
+        "data": {
+            "counts": counts,
+            "page_ready": {
+                "data_features": counts["features"] >= 17,
+                "training_evaluation": counts["training_jobs"] >= 1,
+                "model_deployment": counts["model_versions"] >= 1,
+                "prediction_monitoring": counts["predictions"] >= 1,
+            },
+            "feature_count_keep": counts["features"] >= 17,
+        },
+    }
+
+# ===== 通用抓取任务状态 =====
+@router.get("/tasks/{task_id}", response_model=dict)
+def get_fetch_task_status(task_id: str):
+    task = _get_fetch_task(task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="任务不存在或已过期")
+    return {
+        "success": True,
+        "message": "ok",
+        "data": task,
+    }
+
+
 # ===== Poisson 1-1 扫盘接口 =====
+@router.post("/poisson-11/fetch-async", response_model=dict)
+def fetch_poisson_11_async(
+    date_str: Optional[str] = Query(None, description="比赛日期 YYYY-MM-DD"),
+    data_source: str = Query("yingqiu_bd", description="数据源，默认yingqiu_bd"),
+):
+    target_date = datetime.strptime(date_str, "%Y-%m-%d").date() if date_str else datetime.now().date()
+    task_id = _create_fetch_task(
+        "poisson11_fetch",
+        params={"date": target_date.isoformat(), "data_source": data_source},
+    )
+    _FETCH_TASK_EXECUTOR.submit(_run_poisson_fetch_task, task_id, target_date, data_source)
+    return {
+        "success": True,
+        "message": "任务已提交",
+        "data": {
+            "task_id": task_id,
+            "status": "pending",
+            "polling_interval_ms": 1200,
+        },
+    }
+
+
 @router.post("/poisson-11/fetch", response_model=dict)
-async def fetch_poisson_11(
+def fetch_poisson_11(
     date_str: Optional[str] = Query(None, description="比赛日期 YYYY-MM-DD"),
     data_source: str = Query("yingqiu_bd", description="数据源，默认yingqiu_bd"),
     db: Session = Depends(get_db),
@@ -270,7 +1012,7 @@ async def fetch_poisson_11(
 
 
 @router.get("/poisson-11/list", response_model=dict)
-async def list_poisson_11(
+def list_poisson_11(
     date_str: Optional[str] = Query(None, description="比赛日期 YYYY-MM-DD"),
     data_source: str = Query("yingqiu_bd", description="数据源，默认yingqiu_bd"),
     db: Session = Depends(get_db),
@@ -280,6 +1022,8 @@ async def list_poisson_11(
     results = poisson_11_service.list_results(db, target_date, data_source=data_source)
     match_ids = [r.match_id for r in results]
     number_map = {}
+    odds_11_map = {}
+    odds_11_source_map = {}
     if match_ids:
         rows = (
             db.query(Match.match_identifier, Match.source_attributes, Match.source_match_id)
@@ -297,26 +1041,39 @@ async def list_poisson_11(
                 except json.JSONDecodeError:
                     attrs = {}
             number_map[match_identifier] = attrs.get("number") or source_match_id
+            odds_11_map[match_identifier] = (
+                attrs.get("odds_score_11")
+                or attrs.get("score_odds_11")
+                or attrs.get("odds_11")
+                or attrs.get("odds11")
+            )
+            odds_11_source_map[match_identifier] = attrs.get("odds_score_11_source")
 
-    items = [
-        {
-            "match_id": r.match_id,
-            "match_date": r.match_date,
-            "match_time": r.match_time,
-            "league": r.league,
-            "home_team": r.home_team,
-            "away_team": r.away_team,
-            "number": (r.input_payload or {}).get("number") or number_map.get(r.match_id),
-            "mu_total": r.mu_total,
-            "mu_diff": r.mu_diff,
-            "mu_home": r.mu_home,
-            "mu_away": r.mu_away,
-            "prob_11": r.prob_11,
-            "rank": r.rank,
-            "data_source": r.data_source,
-        }
-        for r in results
-    ]
+    items = []
+    for r in results:
+        payload = r.input_payload or {}
+        number_value = payload.get("number") or number_map.get(r.match_id)
+
+        items.append(
+            {
+                "match_id": r.match_id,
+                "match_date": r.match_date,
+                "match_time": r.match_time,
+                "league": r.league,
+                "home_team": r.home_team,
+                "away_team": r.away_team,
+                "number": number_value,
+                "mu_total": r.mu_total,
+                "mu_diff": r.mu_diff,
+                "mu_home": r.mu_home,
+                "mu_away": r.mu_away,
+                "prob_11": r.prob_11,
+                "odds_11": payload.get("odds_score_11") or odds_11_map.get(r.match_id),
+                "odds_11_source": payload.get("odds_score_11_source") or odds_11_source_map.get(r.match_id),
+                "rank": r.rank,
+                "data_source": r.data_source,
+            }
+        )
     return {
         "success": True,
         "message": "ok",
@@ -331,7 +1088,7 @@ async def list_poisson_11(
 
 
 @router.get("/poisson-11/detail/{match_id}", response_model=dict)
-async def get_poisson_11_detail(
+def get_poisson_11_detail(
     match_id: str,
     data_source: str = Query("yingqiu_bd", description="数据源，默认yingqiu_bd"),
     db: Session = Depends(get_db),
@@ -371,6 +1128,8 @@ async def get_poisson_11_detail(
             "mu_home": result.mu_home,
             "mu_away": result.mu_away,
             "prob_11": result.prob_11,
+            "odds_11": (result.input_payload or {}).get("odds_score_11"),
+            "odds_11_source": (result.input_payload or {}).get("odds_score_11_source"),
             "rank": result.rank,
             "data_source": result.data_source,
             "input_payload": result.input_payload,
@@ -479,6 +1238,27 @@ async def fetch_ai_draw(
             "date": target_date.isoformat(),
             "data_source": "yingqiu_bd",
             "total": len(items),
+        },
+    }
+
+
+@router.post("/ai-draw/fetch-async", response_model=dict)
+def fetch_ai_draw_async(
+    date_str: Optional[str] = Query(None, description="比赛日期 YYYY-MM-DD"),
+):
+    target_date = datetime.strptime(date_str, "%Y-%m-%d").date() if date_str else datetime.now().date()
+    task_id = _create_fetch_task(
+        "ai_draw_fetch",
+        params={"date": target_date.isoformat(), "data_source": "yingqiu_bd"},
+    )
+    _FETCH_TASK_EXECUTOR.submit(_run_ai_draw_fetch_task, task_id, target_date)
+    return {
+        "success": True,
+        "message": "任务已提交",
+        "data": {
+            "task_id": task_id,
+            "status": "pending",
+            "polling_interval_ms": 1200,
         },
     }
 

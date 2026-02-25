@@ -26,9 +26,10 @@ class BaseLLMProvider(ABC):
 class OpenAILLMProvider(BaseLLMProvider):
     """OpenAI GPT系列模型 (更新为异步)"""
     
-    def __init__(self, api_key: str, monitor: LLMUsageMonitor):
+    def __init__(self, api_key: str, monitor: LLMUsageMonitor, base_url: Optional[str] = None):
         self.client = None
         self.monitor = monitor
+        self.base_url = (base_url or "").strip() or None
         
         # 只有当API密钥非空且不是占位符时才尝试初始化
         if api_key and api_key.strip() and api_key != "your-openai-api-key-here":
@@ -36,7 +37,10 @@ class OpenAILLMProvider(BaseLLMProvider):
                 import socket
                 socket.setdefaulttimeout(5)  # 设置超时避免阻塞
                 
-                self.client = openai.AsyncOpenAI(api_key=api_key)
+                client_kwargs = {"api_key": api_key}
+                if self.base_url:
+                    client_kwargs["base_url"] = self.base_url
+                self.client = openai.AsyncOpenAI(**client_kwargs)
                 logger.info("OpenAI provider initialized successfully")
             except Exception as e:
                 logger.warning(f"OpenAI provider initialization failed (non-critical): {e}")

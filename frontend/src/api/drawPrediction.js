@@ -47,6 +47,14 @@ export function getTrainingJobs(params) {
   })
 }
 
+// 获取训练任务汇总
+export function getTrainingJobsSummary() {
+  return request({
+    url: '/api/draw-prediction/training-jobs/summary',
+    method: 'get'
+  })
+}
+
 // 创建训练任务
 export function createTrainingJob(data) {
   return request({
@@ -82,6 +90,14 @@ export function getModelVersions(params) {
   })
 }
 
+// 获取模型来源追溯信息
+export function getModelTrace(modelId) {
+  return request({
+    url: `/api/draw-prediction/models/${modelId}/trace`,
+    method: 'get'
+  })
+}
+
 // 部署模型版本
 export function deployModelVersion(modelId) {
   return request({
@@ -107,25 +123,97 @@ export function getPredictions(params) {
   })
 }
 
-// 触发专抓1-1扫盘
-export function fetchPoisson11(params) {
+// 获取预测汇总
+export function getPredictionSummary(params) {
   return request({
-    url: '/api/draw-prediction/poisson-11/fetch',
-    method: 'post',
-    params
-  })
-}
-
-// 获取专抓1-1扫盘列表
-export function getPoisson11List(params) {
-  return request({
-    url: '/api/v1/draw-prediction/poisson-11/list',
+    url: '/api/draw-prediction/predictions/summary',
     method: 'get',
     params
   })
 }
 
-// 获取专抓1-1模型详情
+// 创建再训练草稿
+export function createRetrainDraft(data) {
+  return request({
+    url: '/api/draw-prediction/retrain-drafts',
+    method: 'post',
+    data
+  })
+}
+
+// 获取再训练草稿
+export function getRetrainDraft(draftId) {
+  return request({
+    url: `/api/draw-prediction/retrain-drafts/${draftId}`,
+    method: 'get'
+  })
+}
+
+// 提交再训练草稿
+export function submitRetrainDraft(draftId) {
+  return request({
+    url: `/api/draw-prediction/retrain-drafts/${draftId}/submit`,
+    method: 'post'
+  })
+}
+
+// 初始化平局预测模拟数据（保留 data-features 已有数据）
+export function bootstrapDrawPredictionMockData() {
+  return request({
+    url: '/api/draw-prediction/mock/bootstrap',
+    method: 'post',
+    timeout: 30000
+  })
+}
+
+// 查询平局预测模拟数据初始化状态
+export function getDrawPredictionBootstrapStatus() {
+  return request({
+    url: '/api/draw-prediction/mock/bootstrap/status',
+    method: 'get'
+  })
+}
+
+// 触发1-1比分预测扫盘
+export function fetchPoisson11(params) {
+  return request({
+    url: '/api/draw-prediction/poisson-11/fetch',
+    method: 'post',
+    params,
+    timeout: 120000
+  })
+}
+
+// 异步触发1-1比分预测扫盘任务
+export function startPoisson11FetchTask(params) {
+  return request({
+    url: '/api/v1/draw-prediction/poisson-11/fetch-async',
+    method: 'post',
+    params,
+    timeout: 20000
+  })
+}
+
+// 查询平局预测抓取任务状态
+export function getDrawPredictionTask(taskId) {
+  return request({
+    url: `/api/v1/draw-prediction/tasks/${taskId}`,
+    method: 'get',
+    timeout: 15000
+  })
+}
+
+// 获取1-1比分预测扫盘列表
+export function getPoisson11List(params) {
+  return request({
+    url: '/api/v1/draw-prediction/poisson-11/list',
+    method: 'get',
+    params,
+    timeout: 45000
+  })
+}
+
+// 获取1-1比分预测模型详情
 export function getPoisson11Detail(matchId, params) {
   return request({
     url: `/api/v1/draw-prediction/poisson-11/detail/${matchId}`,
@@ -194,6 +282,16 @@ export function fetchAiDraw(params) {
   })
 }
 
+// 异步触发AI平局预测扫盘任务
+export function startAiDrawFetchTask(params) {
+  return request({
+    url: '/api/v1/draw-prediction/ai-draw/fetch-async',
+    method: 'post',
+    params,
+    timeout: 20000
+  })
+}
+
 // 获取AI平局预测扫盘列表
 export function getAiDrawList(params) {
   return request({
@@ -226,7 +324,8 @@ export function getBdIssueOptions(params) {
   return request({
     url: '/api/v1/admin/lottery-schedules/issue-options',
     method: 'get',
-    params
+    params,
+    timeout: 60000
   })
 }
 
@@ -238,6 +337,7 @@ export function getBdLeagueOptions(params) {
     params: {
       schedule_type: 'bd',
       ...(params || {})
-    }
+    },
+    timeout: 60000
   })
 }

@@ -4,7 +4,10 @@
       <template #header>
         <div class="card-header">
           <span>模型训练与评估</span>
-          <el-button type="primary" @click="handleStartTraining">开始训练</el-button>
+          <div class="header-actions">
+            <el-button @click="goModelDeployment">去模型部署</el-button>
+            <el-button type="primary" @click="handleStartTraining">开始训练</el-button>
+          </div>
         </div>
       </template>
       <div class="card-content">
@@ -39,11 +42,11 @@
           </el-table-column>
           <el-table-column prop="started_at" label="开始时间" width="180" :formatter="formatDate" />
           <el-table-column prop="finished_at" label="完成时间" width="180" :formatter="formatDate" />
-          <el-table-column label="操作" width="250">
+          <el-table-column label="操作" width="320">
             <template #default="scope">
               <el-button size="small" @click="viewLogs(scope.row.id)">查看日志</el-button>
               <el-button 
-                v-if="['pending', 'training'].includes(scope.row.status)" 
+                v-if="['pending', 'training', 'running'].includes(String(scope.row.status || '').toLowerCase())" 
                 size="small" 
                 type="primary" 
                 @click="updateJobStatus(scope.row.id, 'success')"
@@ -51,12 +54,20 @@
                 标记完成
               </el-button>
               <el-button 
-                v-if="['pending', 'training'].includes(scope.row.status)" 
+                v-if="['pending', 'training', 'running'].includes(String(scope.row.status || '').toLowerCase())" 
                 size="small" 
                 type="danger" 
                 @click="updateJobStatus(scope.row.id, 'failed')"
               >
                 标记失败
+              </el-button>
+              <el-button
+                v-if="['success', 'trained', 'evaluated'].includes(String(scope.row.status || '').toLowerCase())"
+                size="small"
+                type="success"
+                @click="pushToDeployment(scope.row)"
+              >
+                推送部署
               </el-button>
               <el-button size="small" @click="viewDetails(scope.row)">详情</el-button>
             </template>
@@ -86,12 +97,25 @@
         <el-form-item label="任务名称" prop="job_name">
           <el-input v-model="trainForm.job_name" placeholder="请输入训练任务名称" />
         </el-form-item>
-        <el-form-item label="训练参数">
+        <el-form-item label="算法" prop="algorithm">
+          <el-select v-model="trainForm.algorithm" placeholder="请选择算法" style="width: 100%;">
+            <el-option label="逻辑回归 (logistic_regression)" value="logistic_regression" />
+            <el-option label="随机森林 (random_forest)" value="random_forest" />
+            <el-option label="XGBoost (xgboost)" value="xgboost" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="特征ID列表">
+          <el-input
+            v-model="trainForm.feature_set_ids_text"
+            placeholder="多个ID用逗号分隔，如: 1,2,3"
+          />
+        </el-form-item>
+        <el-form-item label="超参数(JSON)">
           <el-input 
-            v-model="trainForm.params" 
+            v-model="trainForm.hyperparameters" 
             type="textarea" 
-            :rows="4" 
-            placeholder="请输入JSON格式的训练参数" 
+            :rows="5" 
+            placeholder="请输入JSON格式超参数" 
           />
         </el-form-item>
       </el-form>
@@ -154,9 +178,19 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { getTrainingJobs, createTrainingJob, getTrainingJobLogs, updateTrainingJobStatus } from '@/api/drawPrediction'
+import { useRoute, useRouter } from 'vue-router'
+import {
+  getTrainingJobs,
+  createTrainingJob,
+  getTrainingJobLogs,
+  updateTrainingJobStatus,
+  bootstrapDrawPredictionMockData,
+  getRetrainDraft
+} from '@/api/drawPrediction'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
+const route = useRoute()
+const router = useRouter()
 const keyword = ref('')
 const currentPage = ref(1)
 const pageSize = ref(10)
@@ -171,13 +205,84 @@ const trainFormRef = ref()
 
 const trainForm = ref({
   job_name: '',
-  params: '{}'
+  algorithm: 'xgboost',
+  feature_set_ids_text: '',
+  hyperparameters: JSON.stringify({
+    epochs: 100,
+    batch_size: 32,
+    learning_rate: 0.001,
+    validation_split: 0.2
+  }, null, 2)
 })
 
 const trainRules = {
   job_name: [
     { required: true, message: '请输入任务名称', trigger: 'blur' }
+  ],
+  algorithm: [
+    { required: true, message: '请选择算法', trigger: 'change' }
   ]
+}
+
+const parseFeatureSetIds = (rawText) => {
+  if (!rawText || !rawText.trim()) return []
+  return rawText
+    .split(',')
+    .map((item) => Number(item.trim()))
+    .filter((val) => Number.isInteger(val) && val > 0)
+}
+
+
+const extractTrainingErrorMessage = (err) => {
+  const detail = err?.response?.data?.detail
+  if (!detail) return ""
+  if (typeof detail === "string") return detail
+
+  const code = detail.code
+  if (code === "missing_feature_ids") {
+    const ids = Array.isArray(detail.missing_feature_ids) ? detail.missing_feature_ids.join(", ") : ""
+    return ids ? `Feature IDs not found: ${ids}` : "Found non-existent feature IDs"
+  }
+  if (code === "inactive_feature_ids") {
+    const ids = Array.isArray(detail.inactive_feature_ids) ? detail.inactive_feature_ids.join(", ") : ""
+    return ids ? `Disabled feature IDs: ${ids}` : "Contains disabled features"
+  }
+  if (code === "no_active_features") {
+    return detail.message || "No active features available. Please enable features first."
+  }
+  return detail.message || ""
+}
+
+const ensureMockDataReady = async () => {
+  try {
+    await bootstrapDrawPredictionMockData()
+  } catch (err) {
+    console.error('初始化模拟数据失败:', err)
+  }
+}
+
+const applyRetrainDraftIfNeeded = async () => {
+  const draftId = route.query?.draft_id
+  if (!draftId) return
+  try {
+    const draft = await getRetrainDraft(String(draftId))
+    const suggestion = draft?.suggestion || {}
+    trainForm.value = {
+      job_name: suggestion.job_name || `再训练_${new Date().toISOString().slice(0, 10)}`,
+      algorithm: suggestion.algorithm || 'xgboost',
+      feature_set_ids_text: Array.isArray(suggestion.feature_set_ids) ? suggestion.feature_set_ids.join(',') : '',
+      hyperparameters: JSON.stringify(suggestion.hyperparameters || {
+        epochs: 100,
+        batch_size: 32,
+        learning_rate: 0.001
+      }, null, 2)
+    }
+    trainDialogVisible.value = true
+    ElMessage.success('已加载再训练建议草稿，请确认后提交训练')
+  } catch (err) {
+    console.error('加载再训练草稿失败:', err)
+    ElMessage.error('加载再训练草稿失败')
+  }
 }
 
 const fetchTrainingJobs = async () => {
@@ -188,8 +293,8 @@ const fetchTrainingJobs = async () => {
       page_size: pageSize.value
     }
     const res = await getTrainingJobs(params)
-    jobList.value = res.data?.items || res.data || res || []
-    total.value = res.data?.total || jobList.value.length
+    jobList.value = Array.isArray(res) ? res : (res?.data || [])
+    total.value = Array.isArray(jobList.value) ? jobList.value.length : 0
   } catch (err) {
     console.error('获取训练任务失败:', err)
     ElMessage.error('获取训练任务失败')
@@ -199,7 +304,9 @@ const fetchTrainingJobs = async () => {
 const handleStartTraining = () => {
   trainForm.value = {
     job_name: `平局预测训练_${new Date().toISOString().slice(0, 10)}`,
-    params: JSON.stringify({
+    algorithm: 'xgboost',
+    feature_set_ids_text: '',
+    hyperparameters: JSON.stringify({
       epochs: 100,
       batch_size: 32,
       learning_rate: 0.001,
@@ -212,28 +319,34 @@ const handleStartTraining = () => {
 const startTraining = async () => {
   try {
     await trainFormRef.value.validate()
-    
-    // 解析参数
-    let paramsObj = {}
+
+    let hyperparameters = {}
     try {
-      paramsObj = JSON.parse(trainForm.value.params)
+      hyperparameters = JSON.parse(trainForm.value.hyperparameters || '{}')
     } catch (e) {
-      ElMessage.error('训练参数JSON格式错误')
+      ElMessage.error('Hyperparameters JSON is invalid')
       return
     }
-    
+
     const data = {
       job_name: trainForm.value.job_name,
-      params: paramsObj
+      algorithm: trainForm.value.algorithm,
+      feature_set_ids: parseFeatureSetIds(trainForm.value.feature_set_ids_text),
+      hyperparameters
     }
-    
-    await createTrainingJob(data)
-    ElMessage.success('训练任务已创建')
+
+    const resp = await createTrainingJob(data)
+    if (resp?.queue_warning) {
+      ElMessage.warning(resp.queue_warning)
+    } else {
+      ElMessage.success('Training job created')
+    }
     trainDialogVisible.value = false
     fetchTrainingJobs()
   } catch (err) {
-    console.error('创建训练任务失败:', err)
-    ElMessage.error('创建训练任务失败')
+    console.error('Create training job failed:', err)
+    const friendly = extractTrainingErrorMessage(err)
+    ElMessage.error(friendly || 'Create training job failed')
   }
 }
 
@@ -272,6 +385,17 @@ const viewDetails = (job) => {
   detailDialogVisible.value = true
 }
 
+const pushToDeployment = (job) => {
+  router.push({
+    path: '/admin/draw-prediction/model-deployment',
+    query: { training_job_id: String(job.id) }
+  })
+}
+
+const goModelDeployment = () => {
+  router.push('/admin/draw-prediction/model-deployment')
+}
+
 const resetFilter = () => {
   keyword.value = ''
   currentPage.value = 1
@@ -289,11 +413,16 @@ const handleCurrentChange = (page) => {
 }
 
 const getStatusType = (status) => {
-  switch (status) {
+  const value = String(status || '').toLowerCase()
+  switch (value) {
     case 'pending': return 'info'
+    case 'running': return 'warning'
     case 'training': return 'warning'
+    case 'success': return 'success'
     case 'trained': return 'primary'
     case 'evaluated': return 'success'
+    case 'active': return 'success'
+    case 'inactive': return 'info'
     case 'deployed': return 'danger'
     case 'failed': return 'danger'
     default: return 'info'
@@ -301,11 +430,16 @@ const getStatusType = (status) => {
 }
 
 const getStatusText = (status) => {
-  switch (status) {
+  const value = String(status || '').toLowerCase()
+  switch (value) {
     case 'pending': return '待处理'
+    case 'running': return '训练中'
     case 'training': return '训练中'
+    case 'success': return '训练完成'
     case 'trained': return '已训练'
     case 'evaluated': return '已评估'
+    case 'active': return '已上线'
+    case 'inactive': return '未上线'
     case 'deployed': return '已部署'
     case 'failed': return '失败'
     default: return status
@@ -325,8 +459,10 @@ const formatPercentage = (row, column, cellValue) => {
   return '-'
 }
 
-onMounted(() => {
+onMounted(async () => {
+  await ensureMockDataReady()
   fetchTrainingJobs()
+  applyRetrainDraftIfNeeded()
 })
 </script>
 
@@ -335,6 +471,12 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .toolbar {

@@ -2,6 +2,7 @@
 LLM供应商管理API路由
 """
 from typing import List, Optional, Dict, Any
+import asyncio
 from fastapi import APIRouter, Depends, HTTPException, status, Query, Body
 from sqlalchemy.orm import Session
 import logging
@@ -23,6 +24,38 @@ from backend.utils.llm_monitor import LLMUsageMonitor
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/llm-providers", tags=["llm-providers"])
+
+
+def _resolve_test_provider_name(provider) -> str:
+    """
+    Resolve provider runtime name for connection test.
+    Keep compatibility with historical records where zhipu/qwen providers
+    were stored as `custom`.
+    """
+    provider_name = str(getattr(getattr(provider, "provider_type", None), "value", "") or "").lower().strip()
+    if provider_name == "alibaba":
+        return "qwen"
+    if provider_name != "custom":
+        return provider_name
+
+    merged_text = " ".join(
+        [
+            str(getattr(provider, "name", "") or "").lower(),
+            str(getattr(provider, "base_url", "") or "").lower(),
+            str(getattr(provider, "default_model", "") or "").lower(),
+            str(getattr(provider, "description", "") or "").lower(),
+        ]
+    )
+
+    if any(token in merged_text for token in ("open.bigmodel.cn", "bigmodel", "zhipu", "glm")):
+        return "zhipuai"
+    if any(token in merged_text for token in ("dashscope", "qwen", "tongyi")):
+        return "qwen"
+    if any(token in merged_text for token in ("openai", "gpt", "ark.cn", "volces", "doubao", "volcengine")):
+        return "openai"
+    if any(token in merged_text for token in ("gemini", "google")):
+        return "gemini"
+    return provider_name
 
 
 @router.get("/", response_model=List[LLMProviderResponse])
@@ -261,48 +294,124 @@ async def test_llm_provider_connection(
     is_successful = False
     response_time_ms = 0
     error_message = ""
+    tested_model = ""
     
     try:
         # 根据提供商类型创建测试实例
-        from backend.services.llm_service import LLMService, LLMUsageMonitor
+        from backend.services.llm_service import LLMUsageMonitor
         
         monitor = LLMUsageMonitor()
         provider_name = provider.provider_type.value.lower()
         
         # 规范化提供商名称：将'alibaba'映射为'qwen'以保持一致性
-        normalized_name = provider_name
-        if provider_name == "alibaba":
-            normalized_name = "qwen"
+        normalized_name = _resolve_test_provider_name(provider)
+        test_model = test_data.model or provider.default_model
+        tested_model = test_model or ""
+        test_prompt = test_data.test_prompt if test_data.test_prompt else "Hello, this is a connection test."
+        requested_timeout_ms = int(getattr(test_data, "timeout_ms", 5000) or 5000)
+        requested_timeout_ms = max(1000, min(requested_timeout_ms, 30000))
+        per_model_timeout_sec = requested_timeout_ms / 1000.0
         
         # 创建对应的提供商实例
         if normalized_name == "openai":
             from backend.services.llm_service import OpenAILLMProvider
-            provider_instance = OpenAILLMProvider(decrypted_api_key, monitor)
+            provider_instance = OpenAILLMProvider(
+                decrypted_api_key,
+                monitor,
+                base_url=(provider.base_url or "").strip() or None
+            )
             # 发送一个简单的测试请求
-            test_prompt = test_data.test_prompt if test_data.test_prompt else "Hello, this is a connection test."
-            response = await provider_instance.generate_response(test_prompt, model="gpt-3.5-turbo", max_tokens=10)
-            is_successful = bool(response and len(response.strip()) > 0)
+            response = await asyncio.wait_for(
+                provider_instance.generate_response(
+                    test_prompt,
+                    model=test_model or "gpt-3.5-turbo",
+                    max_tokens=10
+                ),
+                timeout=per_model_timeout_sec
+            )
+            tested_model = test_model or "gpt-3.5-turbo"
+            response_text = response.strip() if isinstance(response, str) else str(response or "").strip()
+            is_successful = bool(response_text)
+            if not is_successful:
+                error_message = f"模型 {tested_model} 返回空内容"
             
         elif normalized_name == "gemini":
             from backend.services.llm_service import GeminiLLMProvider
             provider_instance = GeminiLLMProvider(decrypted_api_key, monitor)
-            test_prompt = test_data.test_prompt if test_data.test_prompt else "Hello, this is a connection test."
-            response = await provider_instance.generate_response(test_prompt, max_tokens=10)
-            is_successful = bool(response and len(response.strip()) > 0)
+            response = await asyncio.wait_for(
+                provider_instance.generate_response(test_prompt, max_tokens=10),
+                timeout=per_model_timeout_sec
+            )
+            tested_model = test_model or "gemini-pro"
+            response_text = response.strip() if isinstance(response, str) else str(response or "").strip()
+            is_successful = bool(response_text)
+            if not is_successful:
+                error_message = f"模型 {tested_model} 返回空内容"
             
         elif normalized_name == "qwen":
             from backend.services.llm_service import QwenLLMProvider
             provider_instance = QwenLLMProvider(decrypted_api_key, monitor)
-            test_prompt = test_data.test_prompt if test_data.test_prompt else "Hello, this is a connection test."
-            response = await provider_instance.generate_response(test_prompt, model="qwen-turbo", max_tokens=10)
-            is_successful = bool(response and len(response.strip()) > 0)
+            response = await asyncio.wait_for(
+                provider_instance.generate_response(
+                    test_prompt,
+                    model=test_model or "qwen-turbo",
+                    max_tokens=10
+                ),
+                timeout=per_model_timeout_sec
+            )
+            tested_model = test_model or "qwen-turbo"
+            response_text = response.strip() if isinstance(response, str) else str(response or "").strip()
+            is_successful = bool(response_text)
+            if not is_successful:
+                error_message = f"模型 {tested_model} 返回空内容"
             
         elif normalized_name == "zhipuai":
             from backend.services.llm_service import ZhipuAILLMProvider
             provider_instance = ZhipuAILLMProvider(decrypted_api_key, monitor)
-            test_prompt = test_data.test_prompt if test_data.test_prompt else "Hello, this is a connection test."
-            response = await provider_instance.generate_response(test_prompt, model="glm-4", max_tokens=10)
-            is_successful = bool(response and len(response.strip()) > 0)
+            candidate_models: List[str] = []
+            if test_data.model:
+                candidate_models = [test_data.model]
+            else:
+                # Prefer available/stable models first; fallback to default model last.
+                raw_models: List[Any] = []
+                if isinstance(provider.available_models, list):
+                    raw_models.extend(provider.available_models)
+                raw_models.extend(["glm-4", "glm-4-flash"])
+                raw_models.append(provider.default_model)
+
+                seen_models = set()
+                for model_name in raw_models:
+                    model_str = str(model_name or "").strip()
+                    if not model_str or model_str in seen_models:
+                        continue
+                    seen_models.add(model_str)
+                    candidate_models.append(model_str)
+
+            for model_name in candidate_models:
+                tested_model = model_name
+                try:
+                    response = await asyncio.wait_for(
+                        provider_instance.generate_response(
+                            test_prompt,
+                            model=model_name,
+                            max_tokens=10
+                        ),
+                        timeout=per_model_timeout_sec
+                    )
+                    response_text = response.strip() if isinstance(response, str) else str(response or "").strip()
+                    if response_text:
+                        is_successful = True
+                        break
+                except asyncio.TimeoutError:
+                    error_message = f"model {model_name} timeout ({requested_timeout_ms}ms)"
+                except Exception as model_err:
+                    error_message = f"模型 {model_name} 测试异常: {model_err}"
+
+            if not is_successful and not error_message:
+                if candidate_models:
+                    error_message = f"模型 {', '.join(candidate_models)} 返回空内容"
+                else:
+                    error_message = "未找到可用测试模型"
             
         else:
             # 不支持的其他提供商类型
@@ -337,7 +446,9 @@ async def test_llm_provider_connection(
         "message": message,
         "provider_id": provider_id,
         "provider_name": provider.name,
-        "provider_type": provider_name
+        "provider_type": provider_name,
+        "tested_provider_type": normalized_name,
+        "tested_model": tested_model
     }
 
 

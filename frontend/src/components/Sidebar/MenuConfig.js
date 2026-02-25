@@ -68,11 +68,11 @@ const menuConfig = [
     children: [
       {
         path: '/admin/draw-prediction/ai-draw',
-        text: 'AI平局预测'
+        text: '北单平局预测扫盘'
       },
       {
         path: '/admin/draw-prediction/poisson-11',
-        text: '专抓1-1'
+        text: '1-1比分预测扫盘'
       }
     ]
   },

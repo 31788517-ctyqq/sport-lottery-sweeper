@@ -1,6 +1,5 @@
 // 平局预测模块路由
 const drawPredictionRoutes = [
-  // 嵌套在/admin下的平局预测管理子路由
   {
     path: 'draw-prediction',
     name: 'DrawPredictionManagement',
@@ -12,6 +11,28 @@ const drawPredictionRoutes = [
       order: 5
     },
     children: [
+      {
+        path: 'ai-draw',
+        name: 'AiDrawScanner',
+        component: () => import('@/views/admin/draw_prediction/AiDrawScanner.vue'),
+        meta: {
+          title: '北单平局预测扫盘',
+          icon: 'data-analysis',
+          roles: ['admin', 'manager'],
+          keepAlive: true
+        }
+      },
+      {
+        path: 'poisson-11',
+        name: 'Poisson11Scanner',
+        component: () => import('@/views/admin/draw_prediction/Poisson11Scanner.vue'),
+        meta: {
+          title: '1-1比分预测扫盘',
+          icon: 'data-analysis',
+          roles: ['admin', 'manager'],
+          keepAlive: true
+        }
+      },
       {
         path: 'data-features',
         name: 'DataFeaturesManagement',
@@ -52,28 +73,6 @@ const drawPredictionRoutes = [
         meta: {
           title: '预测服务与监控',
           icon: 'monitor',
-          roles: ['admin', 'manager'],
-          keepAlive: true
-        }
-      },
-      {
-        path: 'ai-draw',
-        name: 'AiDrawScanner',
-        component: () => import('@/views/admin/draw_prediction/AiDrawScanner.vue'),
-        meta: {
-          title: 'AI平局预测',
-          icon: 'data-analysis',
-          roles: ['admin', 'manager'],
-          keepAlive: true
-        }
-      },
-      {
-        path: 'poisson-11',
-        name: 'Poisson11Scanner',
-        component: () => import('@/views/admin/draw_prediction/Poisson11Scanner.vue'),
-        meta: {
-          title: '专抓1-1',
-          icon: 'data-analysis',
           roles: ['admin', 'manager'],
           keepAlive: true
         }
