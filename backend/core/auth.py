@@ -140,20 +140,59 @@ def get_current_user(token: str = Depends(oauth2_scheme),
     )
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-        # Support both "sub" (standard) and "username" for compatibility
-        username: str = payload.get("sub") or payload.get("username")
-        if username is None:
-            raise credentials_exception
-        token_data = {"username": username}
     except JWTError:
         raise credentials_exception
-    
-    user = db.query(User).filter(User.username == username).first()
-    if user is not None:
-        return user
 
-    # Fallback to admin users table for admin tokens
-    admin_user = db.query(AdminUser).filter(AdminUser.username == username).first()
+    # Compatibility strategy:
+    # 1) Try explicit user_id claim.
+    # 2) Try numeric sub as user id.
+    # 3) Try username claim.
+    # 4) Fallback to non-numeric sub as username.
+    raw_sub = payload.get("sub")
+    username_claim = payload.get("username")
+    user_id_claim = payload.get("user_id")
+
+    candidate_ids = []
+    for value in (user_id_claim, raw_sub):
+        try:
+            if value is not None and str(value).strip().isdigit():
+                candidate_ids.append(int(str(value).strip()))
+        except Exception:
+            pass
+
+    candidate_usernames = []
+    if username_claim:
+        candidate_usernames.append(str(username_claim))
+    if raw_sub and not str(raw_sub).strip().isdigit():
+        candidate_usernames.append(str(raw_sub))
+
+    # Remove duplicates while preserving order
+    seen = set()
+    candidate_ids = [x for x in candidate_ids if not (x in seen or seen.add(x))]
+    seen.clear()
+    candidate_usernames = [x for x in candidate_usernames if not (x in seen or seen.add(x))]
+
+    # Try normal user table first
+    for uid in candidate_ids:
+        user = db.query(User).filter(User.id == uid).first()
+        if user is not None:
+            return user
+    for uname in candidate_usernames:
+        user = db.query(User).filter(User.username == uname).first()
+        if user is not None:
+            return user
+
+    # Then try admin table
+    admin_user = None
+    for uid in candidate_ids:
+        admin_user = db.query(AdminUser).filter(AdminUser.id == uid).first()
+        if admin_user is not None:
+            break
+    if admin_user is None:
+        for uname in candidate_usernames:
+            admin_user = db.query(AdminUser).filter(AdminUser.username == uname).first()
+            if admin_user is not None:
+                break
     if admin_user is None:
         raise credentials_exception
 

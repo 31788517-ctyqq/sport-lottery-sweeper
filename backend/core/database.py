@@ -11,10 +11,21 @@ from backend.models.base import Base
 
 # 同步数据库配置
 SQLALCHEMY_DATABASE_URL = settings.DATABASE_URL
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, 
-    connect_args={"check_same_thread": False}
-)
+_engine_kwargs = {}
+if str(SQLALCHEMY_DATABASE_URL).startswith("sqlite"):
+    _engine_kwargs["connect_args"] = {"check_same_thread": False}
+else:
+    _engine_kwargs.update(
+        {
+            "pool_size": settings.DB_POOL_SIZE,
+            "max_overflow": settings.DB_MAX_OVERFLOW,
+            "pool_timeout": settings.DB_POOL_TIMEOUT,
+            "pool_recycle": settings.DB_POOL_RECYCLE,
+            "pool_pre_ping": settings.DB_POOL_PRE_PING,
+        }
+    )
+
+engine = create_engine(SQLALCHEMY_DATABASE_URL, **_engine_kwargs)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 # Base已从backend.models.base导入
 # AI_DONE: coder1 @2026-01-26

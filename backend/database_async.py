@@ -3,7 +3,6 @@
 支持异步数据库操作和连接池管理
 """
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from sqlalchemy.pool import QueuePool
 from backend.config import settings
 from typing import AsyncGenerator
 
@@ -21,7 +20,6 @@ else:
     async_engine = create_async_engine(
         settings.ASYNC_DATABASE_URL,
         echo=settings.DATABASE_ECHO,
-        poolclass=QueuePool,
         pool_size=settings.ASYNC_DB_POOL_SIZE,
         max_overflow=settings.ASYNC_DB_MAX_OVERFLOW,
         pool_timeout=settings.ASYNC_DB_POOL_TIMEOUT,

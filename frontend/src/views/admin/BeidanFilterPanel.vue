@@ -269,7 +269,8 @@ const filterForm = reactive({
   stabilityTiers: [],
   leagues: [],
   dateTime: '',
-  dateRange: [],
+  lineIdStart: '',
+  lineIdEnd: '',
   sortBy: 'p_level',
   sortOrder: 'desc',
   includeDerating: true
@@ -540,12 +541,12 @@ const fetchRealData = async (silent = false) => {
   if (!silent) loading.value = true
   console.log('applyAdvancedFilter: loading set to true, filterForm.dateTime=', filterForm.dateTime)
   try {
-    const dateRange = buildDateRangePayload()
+    const lineRange = buildLineRangePayload()
     const params = {
       date_time: filterForm.dateTime || '',
       leagues: (filterForm.leagues || []).join(','),
-      start_date: dateRange.startDate || '',
-      end_date: dateRange.endDate || ''
+      start_line_id: lineRange.lineIdStart || '',
+      end_line_id: lineRange.lineIdEnd || ''
     }
     // 璋冪敤鍚庣API获取实时比赛数量
     const response = await request.get('/api/v1/beidan-filter/real-time-count', { params })
@@ -655,7 +656,8 @@ const onSaveStrategy = async () => {
         otherConditions: {
           leagues: filterForm.leagues || [],
           dateTime: filterForm.dateTime || '',
-          dateRange: filterForm.dateRange || {},
+          lineIdStart: filterForm.lineIdStart || '',
+          lineIdEnd: filterForm.lineIdEnd || '',
           // 添加前端筛选字段，确保后端正确保存
           powerDiffs: filterForm.powerDiffs || [],
           winPanDiffs: filterForm.winPanDiffs || [],
@@ -775,18 +777,59 @@ const normalizeDateTimeOptions = (values = []) => {
   return unique.slice(0, 5)
 }
 
-const buildDateRangePayload = () => {
 
-  if (!Array.isArray(filterForm.dateRange) || filterForm.dateRange.length !== 2) {
-    return {}
-  }
-  const [start, end] = filterForm.dateRange
-  if (!start || !end) return {}
-  return {
-    startDate: formatDateValue(start),
-    endDate: formatDateValue(end)
-  }
+const normalizeLineIdValue = (value) => {
+  if (value === null || value === undefined) return ''
+  const text = String(value).trim()
+  return text
 }
+
+const parseLineIdNumber = (value) => {
+  if (value === null || value === undefined) return null
+  const text = String(value).trim()
+  if (!text) return null
+  const match = text.match(/\d+/)
+  if (!match) return null
+  const num = Number(match[0])
+  return Number.isFinite(num) ? num : null
+}
+
+const applyLineIdRangeOnClient = (matches = []) => {
+  const { lineIdStart, lineIdEnd } = buildLineRangePayload()
+  const startNum = parseLineIdNumber(lineIdStart)
+  const endNum = parseLineIdNumber(lineIdEnd)
+  if (startNum === null && endNum === null) return matches
+  return matches.filter((m) => {
+    const lineVal = m?.lineId ?? m?.line_id
+    const lineNum = parseLineIdNumber(lineVal)
+    if (lineNum === null) return false
+    if (startNum !== null && lineNum < startNum) return false
+    if (endNum !== null && lineNum > endNum) return false
+    return true
+  })
+}
+
+const buildLineRangePayload = () => {
+  const lineIdStart = normalizeLineIdValue(filterForm.lineIdStart)
+  const lineIdEnd = normalizeLineIdValue(filterForm.lineIdEnd)
+  if (!lineIdStart && !lineIdEnd) return {}
+  return { lineIdStart, lineIdEnd }
+}
+
+
+const normalizeScoreValue = (value) => {
+  if (value === null || value === undefined) return ''
+  if (typeof value === 'object') {
+    const textValue = value.text ?? value.label ?? value.name ?? value.value
+    if (textValue !== undefined) return normalizeScoreValue(textValue)
+    return ''
+  }
+  let text = String(value).trim()
+  if (!text) return ''
+  text = text.replace('：', '-').replace(':', '-')
+  return text
+}
+
 
 const applyAdvancedFilter = async (generateCurrentStrategy = false) => {
   // 妫€鏌ヤ笁缁存潯浠舵槸鍚﹀叏閮ㄤ负绌猴紙瀹炲姏绛夌骇宸€佽耽鐩樼瓑绾у樊銆佺ǔ瀹氭€у垎灞傦級
@@ -829,7 +872,8 @@ const applyAdvancedFilter = async (generateCurrentStrategy = false) => {
       otherConditions: {
         leagues: filterForm.leagues || [],
         dateTime: filterForm.dateTime || '',
-        dateRange: buildDateRangePayload(),
+        lineIdStart: buildLineRangePayload().lineIdStart || '',
+        lineIdEnd: buildLineRangePayload().lineIdEnd || '',
         includeDerating: !!filterForm.includeDerating,
         // 涓夌淮绛涢€夋潯浠舵暟缁勶紝纭繚涓哄瓧绗︿覆绫诲瀷
         powerDiffs: (filterForm.powerDiffs || []).map(String),
@@ -852,8 +896,10 @@ const applyAdvancedFilter = async (generateCurrentStrategy = false) => {
     
     // 处理API响应数据
     if (response && response.matches) {
+      const lineFilteredMatches = applyLineIdRangeOnClient(response.matches)
       const totalItems = Number(
-        response?.pagination?.totalItems
+        lineFilteredMatches.length
+        ?? response?.pagination?.totalItems
         ?? response?.pagination?.total_items
         ?? response?.statistics?.filteredMatches
         ?? response?.statistics?.filtered_matches
@@ -861,9 +907,10 @@ const applyAdvancedFilter = async (generateCurrentStrategy = false) => {
         ?? 0
       )
       totalResults.value = totalItems
-      pagedResults.value = response.matches.map(match => {
+      pagedResults.value = lineFilteredMatches.map(match => {
         const sourceAttrs = resolveSourceAttrs(match)
         return ({
+
         // 鍩虹淇℃伅
         id: match.id,
         match_id: String(match.dateTime) + '_' + String(match.lineId),
@@ -872,6 +919,8 @@ const applyAdvancedFilter = async (generateCurrentStrategy = false) => {
         match_time: pickField(match, ['matchTime', 'match_time', 'matchTimeStr', 'match_time_str'], '', sourceAttrs),
         league: match.league,
         home_team: match.homeTeam,
+        score: normalizeScoreValue(pickField(match, ['score', 'full_score', 'fullScore', 'score_full'], '', sourceAttrs)),
+        half_score: normalizeScoreValue(pickField(match, ['halfScore', 'half_score', 'halftimeScore', 'halfTimeScore', 'mid_score'], '', sourceAttrs)),
         away_team: match.guestTeam,
         
         // 三维筛选字段（后端原始值）
@@ -1101,7 +1150,8 @@ const resetFilters = () => {
     stabilityTiers: [],
     leagues: [],
     dateTime: latestDateTime,
-    dateRange: [],
+    lineIdStart: '',
+    lineIdEnd: '',
     sortBy: 'p_level',
     sortOrder: 'desc',
     includeDerating: true
@@ -1142,14 +1192,19 @@ const handleSelectStrategy = async (name) => {
   }
   
   selectedStrategyName.value = name
+  const preservedLineIdStart = filterForm.lineIdStart
+  const preservedLineIdEnd = filterForm.lineIdEnd
+  const preservedDateTime = filterForm.dateTime
+  const preservedLeagues = Array.isArray(filterForm.leagues) ? [...filterForm.leagues] : []
   const strategy = strategiesMap.get(name)
   if (!strategy) {
     ElMessage.warning('未找到策略 "' + name + '" 的详情')
     return
   }
-  // 鍏堣繘鍏モ€滃凡閫夌瓥鐣モ€濇€侊紝纭繚缁熻/缁撴灉鍗＄墖鍙
+  // 鍏堣繘鍏モ€滃凡閫夌瓥鐣োম€濇€侊紝纭繚缁熻/缁撴灉鍗＄墖鍙
   strategySelected.value = true
   showStats.value = true
+
 
   // 检查策略数据结构
   if (strategy.strength !== undefined && strategy.winPan !== undefined && strategy.stability !== undefined) {
@@ -1187,10 +1242,16 @@ const handleSelectStrategy = async (name) => {
     return
   }
 
+  filterForm.lineIdStart = preservedLineIdStart
+  filterForm.lineIdEnd = preservedLineIdEnd
+  filterForm.dateTime = preservedDateTime
+  filterForm.leagues = preservedLeagues
+
   CURRENT_STRATEGY.value = name
 
   // 纯示例策略仅加载条件，不自动筛选
   const isPersistedStrategy = Boolean(strategy?.id || strategy?.originalData)
+
   if (exampleStrategyNames.includes(name) && !isPersistedStrategy) {
     strategySelected.value = false // 绀轰緥绛栫暐涓嶆縺娲荤粺璁″拰缁撴灉鍗＄墖
     hasResults.value = false
@@ -1199,7 +1260,9 @@ const handleSelectStrategy = async (name) => {
   }
 
   // 选择任意已保存策略或当前策略，立即应用筛选
+  await nextTick()
   await applyAdvancedFilter()
+
 
   // 鏍囪宸查€夋嫨绛栫暐
   strategySelected.value = true
@@ -1702,7 +1765,8 @@ watch(
   () => [
     ...(filterForm.leagues || []),
     filterForm.dateTime,
-    ...(filterForm.dateRange || [])
+    filterForm.lineIdStart,
+    filterForm.lineIdEnd
   ],
   () => {
     fetchRealData(true)

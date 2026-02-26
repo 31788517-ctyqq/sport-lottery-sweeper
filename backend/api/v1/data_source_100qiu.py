@@ -614,6 +614,7 @@ async def test_100qiu_data_source_connection(
 @router.post("/{source_id}/fetch")
 async def fetch_100qiu_data(
     source_id: int,
+    compare_update: bool = Query(True, description="当记录已存在时，是否对比更新"),
     db: Session = Depends(get_db)
 ):
     """从100qiu API获取数据并存储到数据库"""
@@ -843,9 +844,10 @@ async def fetch_100qiu_data(
         # 存储到数据库
         session = SqlSession(bind=engine)
         count = 0
+        updated_count = 0
+        unchanged_count = 0
         processed_count = 0
         failed_parsing_count = 0
-        duplicate_count = 0
         try:
             for i, item in enumerate(matches_data):
                 print(f"[DEBUG] 正在处理第 {i+1}/{len(matches_data)} 个项目: {str(item)[:500]}...")
@@ -872,8 +874,37 @@ async def fetch_100qiu_data(
                         count += 1
                         print(f"[INFO] 新增比赛记录: {match_data.get('match_id', 'N/A')}")
                     else:
-                        duplicate_count += 1
-                        print(f"[INFO] 比赛记录已存在，跳过: {match_data.get('match_id', 'N/A')}")
+                        if compare_update:
+                            updated_fields = []
+                            for field in [
+                                "date_time",
+                                "line_id",
+                                "home_team",
+                                "away_team",
+                                "match_time",
+                                "league",
+                                "status",
+                                "home_score",
+                                "away_score",
+                                "data_source",
+                                "source_attributes"
+                            ]:
+                                new_val = match_data.get(field)
+                                if new_val is None:
+                                    continue
+                                old_val = getattr(existing_match, field, None)
+                                if old_val != new_val:
+                                    setattr(existing_match, field, new_val)
+                                    updated_fields.append(field)
+                            if updated_fields:
+                                updated_count += 1
+                                print(f"[INFO] 更新比赛记录: {match_data.get('match_id', 'N/A')} fields={updated_fields}")
+                            else:
+                                unchanged_count += 1
+                                print(f"[INFO] 比赛记录未变化，跳过更新: {match_data.get('match_id', 'N/A')}")
+                        else:
+                            unchanged_count += 1
+                            print(f"[INFO] 比赛记录已存在，跳过: {match_data.get('match_id', 'N/A')}")
                 else:
                     failed_parsing_count += 1
                     print(f"[WARNING] 解析比赛数据失败，跳过第 {i+1} 个项目")
@@ -884,7 +915,10 @@ async def fetch_100qiu_data(
             duration = (end_time - start_time).total_seconds()
             
             if count == 0:
-                success_msg = f"获取成功，获取数量：0；数据库未新增数据条数。共处理 {processed_count} 条原始数据，其中 {duplicate_count} 条已存在，{failed_parsing_count} 条解析失败。"
+                success_msg = (
+                    f"获取成功，获取数量：0；数据库未新增数据条数。共处理 {processed_count} 条原始数据，"
+                    f"更新 {updated_count} 条，未变化 {unchanged_count} 条，解析失败 {failed_parsing_count} 条。"
+                )
                 print(f"[INFO] {success_msg}")
                 # 清除之前的错误信息
                 db_data_source.last_error = None
@@ -902,7 +936,8 @@ async def fetch_100qiu_data(
                         "source_id": source_id,
                         "total_fetched": 0,
                         "processed_count": processed_count,
-                        "duplicate_count": duplicate_count,
+                        "updated_count": updated_count,
+                        "unchanged_count": unchanged_count,
                         "failed_parsing_count": failed_parsing_count,
                         "duration_seconds": duration,
                         "action": "fetch_success_zero_detailed"
@@ -916,7 +951,10 @@ async def fetch_100qiu_data(
                     sample_data=matches_data[:3] if matches_data else []
                 )
             else:
-                success_msg = f"成功获取并存储了 {count} 条比赛数据 (共处理 {processed_count} 条原始数据，{duplicate_count} 条已存在，{failed_parsing_count} 条解析失败)"
+                success_msg = (
+                    f"成功获取并存储了 {count} 条比赛数据 (共处理 {processed_count} 条原始数据，"
+                    f"更新 {updated_count} 条，未变化 {unchanged_count} 条，解析失败 {failed_parsing_count} 条)"
+                )
                 print(f"[INFO] {success_msg}")
                 # 清除之前的错误信息
                 db_data_source.last_error = None
@@ -934,7 +972,8 @@ async def fetch_100qiu_data(
                         "source_id": source_id,
                         "total_fetched": count,
                         "processed_count": processed_count,
-                        "duplicate_count": duplicate_count,
+                        "updated_count": updated_count,
+                        "unchanged_count": unchanged_count,
                         "failed_parsing_count": failed_parsing_count,
                         "duration_seconds": duration,
                         "action": "fetch_success"

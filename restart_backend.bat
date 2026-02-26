@@ -1,16 +1,24 @@
 @echo off
-echo 正在停止后端服务...
-taskkill /f /im uvicorn.exe 2>nul
-taskkill /f /im python.exe 2>nul
+chcp 65001 >nul
+setlocal EnableDelayedExpansion
+
+echo Stopping backend service (port 8000)...
+for /f "tokens=5" %%a in ('netstat -ano ^| findstr :8000 ^| findstr LISTENING') do (
+    echo Terminating PID %%a ...
+    taskkill /PID %%a /F >nul 2>&1
+)
 
 echo.
-echo 等待几秒让进程完全终止...
+echo Waiting 3 seconds...
 timeout /t 3 /nobreak >nul
 
 echo.
-echo 正在启动后端服务...
-start cmd /k "cd /d %~dp0 && python -m uvicorn backend.main:app --host 0.0.0.0 --port 3000 --reload"
+echo Starting backend service...
+start cmd /k "cd /d %~dp0 && python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload"
 
 echo.
-echo 服务已在新窗口中启动，请检查新窗口确认服务运行状态。
-echo 您现在可以在浏览器中访问 http://localhost:3000 查看服务状态。
+echo Backend started. Check the new window for logs.
+echo Access: http://localhost:8000
+
+echo.
+pause

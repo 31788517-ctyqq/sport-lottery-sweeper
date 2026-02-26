@@ -76,7 +76,7 @@ async def get_role(
     """
     获取单个角色信息
     """
-    role = await crud_role.get(db, id=id)
+    role = await crud_role.get(db, role_id=id)
     if not role:
         raise HTTPException(status_code=404, detail="Role not found")
     return role
@@ -109,7 +109,7 @@ async def update_role(
     """
     更新角色信息
     """
-    role = await crud_role.get(db, id=id)
+    role = await crud_role.get(db, role_id=id)
     if not role:
         raise HTTPException(status_code=404, detail="Role not found")
 
@@ -131,7 +131,7 @@ async def delete_role(
     """
     删除角色
     """
-    role = await crud_role.get(db, id=id)
+    role = await crud_role.get(db, role_id=id)
     if not role:
         raise HTTPException(status_code=404, detail="Role not found")
 
@@ -154,11 +154,14 @@ async def update_role_status(
     """
     更新角色状态
     """
-    role = await crud_role.get(db, id=id)
+    role = await crud_role.get(db, role_id=id)
     if not role:
         raise HTTPException(status_code=404, detail="Role not found")
 
-    role = await crud_role.update_status(db, role_id=id, status=status)
+    try:
+        role = await crud_role.update_status(db, role_id=id, status=status)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
     return {"msg": f"Role status updated to {status}"}
 
 
@@ -171,7 +174,7 @@ async def get_role_permissions(
     """
     获取角色的权限列表
     """
-    role = await crud_role.get(db, id=id)
+    role = await crud_role.get(db, role_id=id)
     if not role:
         raise HTTPException(status_code=404, detail="Role not found")
     
@@ -190,7 +193,7 @@ async def assign_role_permissions(
     """
     为角色分配权限
     """
-    role = await crud_role.get(db, id=id)
+    role = await crud_role.get(db, role_id=id)
     if not role:
         raise HTTPException(status_code=404, detail="Role not found")
     

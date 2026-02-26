@@ -2,7 +2,7 @@
   <el-container class="admin-layout">
     <!-- 侧边栏 -->
     <el-aside width="200px" class="sidebar">
-      <div class="logo">彩票扫盘系统</div>
+      <div class="logo">足彩扫盘系统</div>
       <el-menu
         :default-active="activeMenu"
         router

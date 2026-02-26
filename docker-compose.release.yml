@@ -1,0 +1,90 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: sls-backend-prod
+    restart: unless-stopped
+    environment:
+      ENVIRONMENT: ${ENVIRONMENT:-production}
+      DEBUG: "${DEBUG:-false}"
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:${POSTGRES_PASSWORD:-password}@postgres:5432/${POSTGRES_DB:-sport_lottery}}
+      ASYNC_DATABASE_URL: ${ASYNC_DATABASE_URL:-postgresql+asyncpg://postgres:${POSTGRES_PASSWORD:-password}@postgres:5432/${POSTGRES_DB:-sport_lottery}}
+      SECRET_KEY: ${SECRET_KEY:-fallback-test-key-change-in-production}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:3000}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - sls-prod-net
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health').read()"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/frontend.production.Dockerfile
+      args:
+        VITE_API_BASE_URL: /api
+        VITE_API_URL: /api
+        VITE_WS_BASE_URL: /ws
+    container_name: sls-frontend-prod
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_started
+    networks:
+      - sls-prod-net
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: sls-postgres-prod
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-sport_lottery}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+    volumes:
+      - sls_postgres_prod_data:/var/lib/postgresql/data
+    networks:
+      - sls-prod-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d sport_lottery"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: sls-redis-prod
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - sls_redis_prod_data:/data
+    networks:
+      - sls-prod-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  sls-prod-net:
+    driver: bridge
+
+volumes:
+  sls_postgres_prod_data:
+  sls_redis_prod_data:

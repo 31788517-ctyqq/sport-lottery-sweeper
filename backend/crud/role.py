@@ -8,6 +8,19 @@ from backend.schemas.role import RoleCreate, RoleUpdate
 
 
 class CRUDRole:
+    @staticmethod
+    def _normalize_status_filter(status):
+        if status is None:
+            return None
+        if isinstance(status, bool):
+            return status
+        raw = str(status).strip().lower()
+        if raw in {"active", "enabled", "enable", "true", "1", "yes", "on"}:
+            return True
+        if raw in {"inactive", "disabled", "disable", "false", "0", "no", "off"}:
+            return False
+        return None
+
     async def get(self, db: AsyncSession, role_id: int) -> Optional[Role]:
         result = await db.execute(select(Role).filter(Role.id == role_id))
         return result.scalar_one_or_none()
@@ -29,16 +42,17 @@ class CRUDRole:
         """带过滤条件获取角色列表"""
         query = select(Role)
         
-        if status:
-            query = query.filter(Role.status == status)
+        status_filter = self._normalize_status_filter(status)
+        if status_filter is not None:
+            query = query.filter(Role.status.is_(status_filter))
         
         if search:
             query = query.filter(Role.name.contains(search) | Role.description.contains(search))
         
         # 获取总数
         count_query = select(func.count()).select_from(Role)
-        if status:
-            count_query = count_query.filter(Role.status == status)
+        if status_filter is not None:
+            count_query = count_query.filter(Role.status.is_(status_filter))
         if search:
             count_query = count_query.filter(Role.name.contains(search) | Role.description.contains(search))
         
@@ -79,7 +93,10 @@ class CRUDRole:
         """更新角色状态"""
         role = await self.get(db, role_id)
         if role:
-            role.status = status
+            status_filter = self._normalize_status_filter(status)
+            if status_filter is None:
+                raise ValueError("Invalid role status, expected active/inactive")
+            role.status = status_filter
             db.add(role)
             await db.commit()
             await db.refresh(role)

@@ -10,7 +10,7 @@ import warnings
 warnings.filterwarnings("ignore", category=UserWarning, message=".*Field name.*shadows an attribute in parent.*")
 warnings.filterwarnings("ignore", category=UserWarning, message=".*protected_namespaces.*")
 
-from typing import Optional  # AI_WORKING: coder1 @2026-02-10
+from typing import Optional, List  # AI_WORKING: coder1 @2026-02-10
 
 import os
 import sys
@@ -21,11 +21,6 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
-
-# AI_WORKING: coder1 @2026-02-10 - unset DATABASE_URL environment variable
-if "DATABASE_URL" in os.environ:
-    del os.environ["DATABASE_URL"]
-# AI_DONE: coder1 @2026-02-10
 
 # 获取项目根目录
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -230,8 +225,61 @@ class APIMigrationMiddleware(BaseHTTPMiddleware):
             request.scope["path"] = new_path
             logger.info(f"API路径重定向: {old_path} -> {new_path}")
             
+        elif old_path == "/api/admin/sources" or old_path.startswith("/api/admin/sources/"):
+            new_path = old_path.replace("/api/admin/sources", "/api/v1/admin/sources", 1)
+            request.scope["path"] = new_path
+            logger.info(f"API path redirected: {old_path} -> {new_path}")
+        elif old_path == "/api/admin/ip-pools" or old_path.startswith("/api/admin/ip-pools/"):
+            new_path = old_path.replace("/api/admin/ip-pools", "/api/v1/admin/ip-pools", 1)
+            request.scope["path"] = new_path
+            logger.info(f"API path redirected: {old_path} -> {new_path}")
+        elif old_path == "/api/admin/headers" or old_path.startswith("/api/admin/headers/"):
+            new_path = old_path.replace("/api/admin/headers", "/api/v1/admin/headers", 1)
+            request.scope["path"] = new_path
+            logger.info(f"API path redirected: {old_path} -> {new_path}")
+        elif old_path == "/api/system/monitor" or old_path.startswith("/api/system/monitor/"):
+            new_path = old_path.replace("/api/system/monitor", "/api/v1/admin/system/monitor", 1)
+            request.scope["path"] = new_path
+            logger.info(f"API path redirected: {old_path} -> {new_path}")
+        elif old_path == "/api/multi-strategy" or old_path.startswith("/api/multi-strategy/"):
+            new_path = old_path.replace("/api/multi-strategy", "/api/v1/multi-strategy", 1)
+            request.scope["path"] = new_path
+            logger.info(f"API path redirected: {old_path} -> {new_path}")
+
+        elif old_path.startswith("/api/draw-prediction"):
+
+            new_path = old_path.replace("/api/draw-prediction", "/api/v1/draw-prediction", 1)
+            request.scope["path"] = new_path
+            logger.info(f"API path redirected: {old_path} -> {new_path}")
+
         response = await call_next(request)
         return response
+
+def load_cors_origins() -> List[str]:
+    """Load CORS origins from environment variables with safe defaults."""
+    default_origins = [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:8080",
+        "http://127.0.0.1:8080",
+        "http://localhost",
+        "http://127.0.0.1",
+    ]
+
+    raw_origins = (
+        os.getenv("CORS_ORIGINS")
+        or os.getenv("ALLOWED_ORIGINS")
+        or os.getenv("BACKEND_CORS_ORIGINS")
+    )
+    if not raw_origins:
+        return default_origins
+
+    parsed = [origin.strip() for origin in raw_origins.split(",") if origin.strip()]
+    if not parsed:
+        return default_origins
+
+    logger.info("CORS origins loaded from env: %s", parsed)
+    return parsed
 
 # 创建FastAPI应用实例
 app = FastAPI(
@@ -257,22 +305,24 @@ app.add_middleware(APIMigrationMiddleware)
 # 添加中间件
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",      # 开发环境前端
-        "http://127.0.0.1:3000",      # 开发环境前端（IP形式）
-        "http://localhost:8080",      # 可能的其他开发端口
-        "http://127.0.0.1:8080",
-        "http://localhost",           # 生产环境可能的域名
-        "http://127.0.0.1",
-        # 注意：当allow_credentials=True时，不能包含"*"
-    ],
+    allow_origins=load_cors_origins(),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # 注册性能中间件
-app.add_middleware(PerformanceMiddleware)
+ENABLE_PERFORMANCE_MIDDLEWARE = os.getenv("ENABLE_PERFORMANCE_MIDDLEWARE", "0").strip().lower() in {
+    "1",
+    "true",
+    "yes",
+    "on",
+}
+if ENABLE_PERFORMANCE_MIDDLEWARE:
+    app.add_middleware(PerformanceMiddleware)
+    logger.info("PerformanceMiddleware enabled")
+else:
+    logger.warning("PerformanceMiddleware disabled by default for stability")
 
 # 注册安全头中间件
 app.add_middleware(SecurityHeadersMiddleware)

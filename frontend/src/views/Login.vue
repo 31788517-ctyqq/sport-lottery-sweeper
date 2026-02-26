@@ -10,11 +10,21 @@
     <!-- Login Form Card -->
     <div class="login-card">
       <div class="login-header">
-        <div class="logo">
-          <el-icon class="logo-icon"><Trophy /></el-icon>
+        <div class="login-title-row">
+          <div class="logo">
+            <div class="logo-icon" aria-hidden="true">
+              <svg viewBox="0 0 64 64" role="img" focusable="false" aria-hidden="true">
+                <circle cx="32" cy="32" r="28" fill="currentColor" opacity="0.12" />
+                <circle cx="32" cy="32" r="22" fill="none" stroke="currentColor" stroke-width="3" />
+                <path d="M32 18l8 6-3 9H27l-3-9 8-6z" fill="currentColor" />
+                <path d="M20 34l7 5-3 9-8-6 4-8zM44 34l4 8-8 6-3-9 7-5z" fill="currentColor" />
+                <path d="M27 41h10l3 9H24l3-9z" fill="currentColor" />
+              </svg>
+            </div>
+          </div>
+          <h2>足彩扫盘系统</h2>
         </div>
-        <h2>体育彩票扫盘系统</h2>
-        <p>Intelligent Sports Lottery Analysis Platform</p>
+        <p>Sports Betting Analysis System</p>
       </div>
 
       <el-form 
@@ -66,7 +76,7 @@
           </div>
         </el-form-item>
 
-        <el-form-item>
+        <el-form-item class="login-options-item">
           <div class="login-options">
             <el-checkbox v-model="loginForm.rememberMe">记住我</el-checkbox>
             <el-link type="primary" :underline="'never'" class="forgot-password" @click="handleForgotPassword">忘记密码？</el-link>
@@ -107,7 +117,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { ElMessage } from 'element-plus'
-import { Trophy, User, Lock, Key, Loading } from '@element-plus/icons-vue'
+import { User, Lock, Key, Loading } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -357,13 +367,31 @@ onMounted(() => {
   margin-bottom: 24px;
 }
 
+.login-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
 .logo {
-  margin-bottom: 16px;
+  margin-bottom: 0;
 }
 
 .logo-icon {
-  font-size: 40px;
+  width: 32px;
+  height: 32px;
   color: #409eff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logo-icon svg {
+  width: 32px;
+  height: 32px;
+  display: block;
 }
 
 .login-header h2 {
@@ -417,6 +445,12 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  width: 100%;
+  padding: 0 2px;
+}
+
+.login-options-item :deep(.el-form-item__content) {
+  width: 100%;
 }
 
 .forgot-password {

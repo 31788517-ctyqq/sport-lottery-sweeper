@@ -84,14 +84,15 @@
 
         <div class="grid-block dual-grid">
           <div>
-            <label>时间筛选-开始</label>
-            <input v-model="filterForm.dateRange[0]" class="select-input date-input" type="date" />
+            <label>场次筛选-开始</label>
+            <input v-model="filterForm.lineIdStart" class="select-input" inputmode="numeric" placeholder="开始场次" />
           </div>
           <div>
-            <label>时间筛选-结束</label>
-            <input v-model="filterForm.dateRange[1]" class="select-input date-input" type="date" />
+            <label>场次筛选-结束</label>
+            <input v-model="filterForm.lineIdEnd" class="select-input" inputmode="numeric" placeholder="结束场次" />
           </div>
         </div>
+
 
         <div class="grid-block">
           <label>联赛筛选</label>
@@ -472,11 +473,13 @@ const filterForm = reactive({
   stabilityTiers: [],
   leagues: [],
   dateTime: '',
-  dateRange: ['', ''],
+  lineIdStart: '',
+  lineIdEnd: '',
   sortBy: 'p_level',
   sortOrder: 'desc',
   includeDerating: true
 })
+
 const multiStrategyForm = reactive({
   taskName: '',
   cronType: 'daily',
@@ -536,8 +539,9 @@ const filterSummary = computed(() => {
   const parts = []
   if (selectedStrategyName.value) parts.push(`策略:${selectedStrategyName.value}`)
   if (filterForm.dateTime) parts.push(`期号:${filterForm.dateTime}`)
-  if (filterForm.dateRange?.[0] && filterForm.dateRange?.[1]) parts.push(`时间:${filterForm.dateRange[0]}~${filterForm.dateRange[1]}`)
+  if (filterForm.lineIdStart || filterForm.lineIdEnd) parts.push(`场次:${filterForm.lineIdStart || '-'}~${filterForm.lineIdEnd || '-'}`)
   if (filterForm.leagues.length > 0) parts.push(`联赛:${filterForm.leagues.join('/')}`)
+
   if (selectedStrategyName.value && filterForm.powerDiffs.length > 0) parts.push(`ΔP:${filterForm.powerDiffs.join(',')}`)
   if (selectedStrategyName.value && filterForm.winPanDiffs.length > 0) parts.push(`ΔWP:${filterForm.winPanDiffs.join(',')}`)
   if (selectedStrategyName.value && filterForm.stabilityTiers.length > 0) parts.push(`P:${filterForm.stabilityTiers.join(',')}`)
@@ -566,11 +570,19 @@ const restoreSelectedMultiStrategies = () => {
   }
 }
 
-const buildDateRangePayload = () => {
-  const [startDate, endDate] = filterForm.dateRange || []
-  if (!startDate || !endDate) return {}
-  return { startDate, endDate }
+const normalizeLineIdValue = (value) => {
+  if (value === null || value === undefined) return ''
+  const text = String(value).trim()
+  return text
 }
+
+const buildLineRangePayload = () => {
+  const lineIdStart = normalizeLineIdValue(filterForm.lineIdStart)
+  const lineIdEnd = normalizeLineIdValue(filterForm.lineIdEnd)
+  if (!lineIdStart && !lineIdEnd) return {}
+  return { lineIdStart, lineIdEnd }
+}
+
 
 const buildFilterPayload = () => ({
   threeDimensional: {
@@ -588,13 +600,15 @@ const buildFilterPayload = () => ({
   otherConditions: {
     leagues: filterForm.leagues || [],
     dateTime: filterForm.dateTime || '',
-    dateRange: buildDateRangePayload(),
+    lineIdStart: buildLineRangePayload().lineIdStart || '',
+    lineIdEnd: buildLineRangePayload().lineIdEnd || '',
     includeDerating: !!filterForm.includeDerating,
     // 移动端仅允许调用“已保存策略”，未选策略时不带三维条件
     powerDiffs: (selectedStrategyName.value ? filterForm.powerDiffs : []).map(String),
     winPanDiffs: (selectedStrategyName.value ? filterForm.winPanDiffs : []).map(String),
     stabilityTiers: (selectedStrategyName.value ? filterForm.stabilityTiers : []).map(String)
   },
+
   sort: {
     field: filterForm.sortBy || 'p_level',
     order: filterForm.sortOrder || 'desc'
@@ -623,8 +637,10 @@ const resetAllFilters = () => {
   resetThreeDimensional()
   filterForm.leagues = []
   filterForm.dateTime = ''
-  filterForm.dateRange = ['', '']
+  filterForm.lineIdStart = ''
+  filterForm.lineIdEnd = ''
   filterForm.sortBy = 'p_level'
+
   filterForm.sortOrder = 'desc'
   selectedLeague.value = ''
   clearStrategySelection()
@@ -765,13 +781,14 @@ const applyFilter = async () => {
 const fetchRealData = async () => {
   loading.value = true
   try {
-    const dateRange = buildDateRangePayload()
+    const lineRange = buildLineRangePayload()
     const params = {
       date_time: filterForm.dateTime || '',
       leagues: (filterForm.leagues || []).join(','),
-      start_date: dateRange.startDate || '',
-      end_date: dateRange.endDate || ''
+      start_line_id: lineRange.lineIdStart || '',
+      end_line_id: lineRange.lineIdEnd || ''
     }
+
     const response = await request.get('/api/v1/beidan-filter/real-time-count', { params })
     realTimeMatchCount.value = Number(response?.matchCount || 0)
     ElMessage.success(`实时匹配 ${realTimeMatchCount.value} 场`)
@@ -1014,7 +1031,9 @@ const saveStrategy = async () => {
       otherConditions: {
         leagues: filterForm.leagues,
         dateTime: filterForm.dateTime,
-        dateRange: buildDateRangePayload(),
+        lineIdStart: buildLineRangePayload().lineIdStart || '',
+        lineIdEnd: buildLineRangePayload().lineIdEnd || '',
+
         includeDerating: !!filterForm.includeDerating,
         powerDiffs: filterForm.powerDiffs.map(String),
         winPanDiffs: filterForm.winPanDiffs.map(String),

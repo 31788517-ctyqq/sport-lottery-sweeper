@@ -242,8 +242,10 @@ class Intelligence(BaseFullModel):
         Index('idx_intelligence_match_source', 'match_id', 'source_id'),
         Index('idx_intelligence_published_weight', 'published_at', 'calculated_weight'),
         Index('idx_intelligence_status_verified', 'status', 'is_verified'),
-        Index('idx_intelligence_tags', 'tags', postgresql_using='gin'),
-        Index('idx_intelligence_keywords', 'keywords', postgresql_using='gin'),
+        # tags/keywords are Text fields (JSON string payloads). Use regular indexes
+        # to keep compatibility across SQLite/PostgreSQL without GIN operator issues.
+        Index('idx_intelligence_tags', 'tags'),
+        Index('idx_intelligence_keywords', 'keywords'),
         Index('idx_intelligence_popularity', 'popularity_score'),
         Index('idx_intelligence_event_time', 'event_time'),
         Index('idx_intelligence_expiration', 'expiration_at'),

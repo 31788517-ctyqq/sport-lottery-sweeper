@@ -112,6 +112,8 @@ class MatchItem(BaseModel):
     league: str = Field(..., description="联赛名称")
     homeTeam: str = Field(..., description="主队名称")
     guestTeam: str = Field(..., description="客队名称")
+    score: Optional[str] = Field(None, description="全场比分")
+    halfScore: Optional[str] = Field(None, description="半场比分")
     dateTime: str = Field(..., description="期号")
     lineId: str = Field(..., description="线路ID")
     handicap: str = Field(..., description="让球数")
@@ -185,12 +187,15 @@ class OtherConditions(BaseModel):
     leagues: List[str] = Field(default_factory=list, description="联赛筛选")
     dateTime: Optional[str] = Field(None, description="特定日期时间")
     dateRange: Dict[str, str] = Field(default_factory=dict, description="日期范围")
+    lineIdStart: Optional[str] = Field(None, description="场次起始 lineId")
+    lineIdEnd: Optional[str] = Field(None, description="场次结束 lineId")
     # 兼容旧字段
     strength: Optional[str] = Field(None, description="强度筛选")
     # 新字段，用于三维筛选（与前端FilterSection.vue匹配）
     powerDiffs: List[str] = Field(default_factory=list, description="实力等级差筛选")
     winPanDiffs: List[str] = Field(default_factory=list, description="赢盘等级差筛选")
     stabilityTiers: List[str] = Field(default_factory=list, description="一赔稳定性筛选")
+
 
 class SortCondition(BaseModel):
     field: str = Field(..., description="排序字段")
@@ -346,6 +351,8 @@ async def get_real_time_count(
     leagues: Optional[str] = None,
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
+    start_line_id: Optional[str] = None,
+    end_line_id: Optional[str] = None,
     db: Session = Depends(get_db),
 ):
     """获取实时匹配场数（受其它条件联赛/date_time/date_range约束）"""
@@ -375,6 +382,8 @@ async def get_real_time_count(
                 "leagues": league_list,
                 "dateTime": date_time or "",
                 "dateRange": date_range,
+                "lineIdStart": start_line_id or "",
+                "lineIdEnd": end_line_id or "",
                 "powerDiffs": [],
                 "winPanDiffs": [],
                 "stabilityTiers": [],
@@ -515,6 +524,54 @@ async def advanced_filter(
         base_other_conditions["stabilityTiers"] = []
         base_filter_params["otherConditions"] = base_other_conditions
         base_matches = await beidan_service.get_filtered_matches(base_filter_params)
+
+        def _apply_line_id_range(matches: List[Dict[str, Any]], start_val: Optional[str], end_val: Optional[str]) -> List[Dict[str, Any]]:
+            def _to_int(value):
+                if value is None:
+                    return None
+                text = str(value).strip()
+                if not text:
+                    return None
+                try:
+                    return int(text)
+                except Exception:
+                    return None
+
+            start_num = _to_int(start_val)
+            end_num = _to_int(end_val)
+            if start_num is None and end_num is None:
+                return matches
+
+            filtered = []
+            for m in matches:
+                line_val = m.get("lineId", None)
+                if line_val is None:
+                    line_val = m.get("line_id", None)
+                line_num = _to_int(line_val)
+                if line_num is None:
+                    continue
+                if start_num is not None and line_num < start_num:
+                    continue
+                if end_num is not None and line_num > end_num:
+                    continue
+                filtered.append(m)
+            return filtered
+
+        other_conditions_dump = filter_request.otherConditions.model_dump()
+        line_start = (
+            filter_request.otherConditions.lineIdStart
+            or other_conditions_dump.get("line_id_start")
+            or other_conditions_dump.get("start_line_id")
+        )
+        line_end = (
+            filter_request.otherConditions.lineIdEnd
+            or other_conditions_dump.get("line_id_end")
+            or other_conditions_dump.get("end_line_id")
+        )
+        if line_start or line_end:
+            filtered_matches = _apply_line_id_range(filtered_matches, line_start, line_end)
+            base_matches = _apply_line_id_range(base_matches, line_start, line_end)
+
 
         def _normalize_signed(value: Any) -> str:
             if value is None:

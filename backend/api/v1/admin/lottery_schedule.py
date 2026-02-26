@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from datetime import date, datetime, timedelta
 import logging
@@ -101,6 +101,19 @@ STATUS_MAP_DB_TO_UI = {
 
 
 _WEEKDAY_CN_LABELS = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"]
+
+
+def _json_attr_text_expr(db: AsyncSession, column, key: str):
+    """Extract JSON text in a database-dialect-safe way."""
+    bind = None
+    try:
+        bind = db.get_bind()
+    except Exception:
+        bind = getattr(db, "bind", None)
+    dialect_name = ((getattr(getattr(bind, "dialect", None), "name", "") or "")).lower()
+    if dialect_name.startswith("postgres"):
+        return column.op("->>")(key)
+    return func.json_extract(column, f"$.{key}")
 
 
 def _weekday_cn_from_date_str(date_text: Optional[str]) -> Optional[str]:
@@ -229,7 +242,7 @@ async def _resolve_bd_issue_date(db: AsyncSession, issue_no: Optional[str]) -> O
         if seq <= 0:
             return None
         year = 2000 + yy
-        source_date_expr = func.json_extract(Match.source_attributes, "$.source_schedule_date")
+        source_date_expr = _json_attr_text_expr(db, Match.source_attributes, "source_schedule_date")
         q = (
             select(source_date_expr.label("source_date"))
             .where(
@@ -490,7 +503,7 @@ async def get_lottery_schedules(
             conditions.append(Match.status == STATUS_MAP_UI_TO_DB[status])
         if schedule_type == "bd":
             # 北单按期次日期过滤，避免把前一期次的次日凌晨比赛并入当前日期
-            source_date_expr = func.json_extract(Match.source_attributes, "$.source_schedule_date")
+            source_date_expr = _json_attr_text_expr(db, Match.source_attributes, "source_schedule_date")
             if issue_no:
                 resolved_issue_no, resolved_issue_dates = await _resolve_bd_issue_dates(db, issue_no)
                 if resolved_issue_dates:
@@ -515,8 +528,8 @@ async def get_lottery_schedules(
                     bd_prefetch_date = datetime.now().strftime("%Y-%m-%d")
         elif schedule_type == "jczq":
             # 竞彩按源日期过滤；单日查询再叠加“编号周几”限制，避免把下一天分组混入
-            source_date_expr = func.json_extract(Match.source_attributes, "$.source_schedule_date")
-            number_expr = func.json_extract(Match.source_attributes, "$.number")
+            source_date_expr = _json_attr_text_expr(db, Match.source_attributes, "source_schedule_date")
+            number_expr = _json_attr_text_expr(db, Match.source_attributes, "number")
             if date_from and date_to and date_from == date_to:
                 conditions.append(source_date_expr == date_from)
                 weekday_cn = _weekday_cn_from_date_str(date_from)
@@ -533,7 +546,7 @@ async def get_lottery_schedules(
                 conditions.append(
                     or_(
                         Match.match_date == target_date,
-                        func.json_extract(Match.source_attributes, "$.source_schedule_date") == date_from,
+                        _json_attr_text_expr(db, Match.source_attributes, "source_schedule_date") == date_from,
                     )
                 )
             else:
@@ -627,7 +640,7 @@ async def get_lottery_league_options(
             conditions.append(Match.data_source == "yingqiu_bd")
 
         if schedule_type == "bd":
-            source_date_expr = func.json_extract(Match.source_attributes, "$.source_schedule_date")
+            source_date_expr = _json_attr_text_expr(db, Match.source_attributes, "source_schedule_date")
             if issue_no:
                 resolved_issue_no, resolved_issue_dates = await _resolve_bd_issue_dates(db, issue_no)
                 if resolved_issue_dates:
@@ -646,8 +659,8 @@ async def get_lottery_league_options(
                 if date_to:
                     conditions.append(source_date_expr <= date_to)
         elif schedule_type == "jczq":
-            source_date_expr = func.json_extract(Match.source_attributes, "$.source_schedule_date")
-            number_expr = func.json_extract(Match.source_attributes, "$.number")
+            source_date_expr = _json_attr_text_expr(db, Match.source_attributes, "source_schedule_date")
+            number_expr = _json_attr_text_expr(db, Match.source_attributes, "number")
             if date_from and date_to and date_from == date_to:
                 conditions.append(source_date_expr == date_from)
                 weekday_cn = _weekday_cn_from_date_str(date_from)
@@ -664,7 +677,7 @@ async def get_lottery_league_options(
                 conditions.append(
                     or_(
                         Match.match_date == target_date,
-                        func.json_extract(Match.source_attributes, "$.source_schedule_date") == date_from,
+                        _json_attr_text_expr(db, Match.source_attributes, "source_schedule_date") == date_from,
                     )
                 )
             else:
@@ -2220,6 +2233,26 @@ async def _fetch_and_cache_other_odds_for_match(
     cached_items = attrs.get("other_odds")
     cached_tabs = _normalize_other_odds_tabs(attrs.get("other_odds_tabs"), cached_items)
     fixture_id = _resolve_match_fixture_id(match, attrs)
+    # Short-circuit repeated remote failures for a short time window.
+    if not force_refresh:
+        failed_at_raw = attrs.get("other_odds_fetch_failed_at")
+        if isinstance(failed_at_raw, str) and failed_at_raw.strip():
+            try:
+                failed_at = datetime.fromisoformat(failed_at_raw.strip())
+                if (datetime.utcnow() - failed_at).total_seconds() < 600:
+                    eu_rows = cached_tabs.get("eu") or []
+                    return {
+                        "match_id": int(match.id),
+                        "fixture_id": fixture_id,
+                        "data_source": match.data_source,
+                        "total": len(eu_rows),
+                        "items": eu_rows,
+                        "tabs": cached_tabs,
+                        "from_cache": True,
+                        "cache_reason": "recent_failure_cache",
+                    }
+            except Exception:
+                pass
 
     if _should_use_other_odds_cache(match, cached_tabs, force_refresh):
         eu_rows = cached_tabs.get("eu") or []
@@ -2243,7 +2276,7 @@ async def _fetch_and_cache_other_odds_for_match(
         else:
             eu_rows = await _fetch_500w_other_odds(fixture_id)
             tabs = {"eu": eu_rows, "asia": [], "goals": []}
-    except Exception:
+    except Exception as exc:
         # 远程抓取失败时，回退已有缓存，提升可用性
         if any(cached_tabs.values()):
             eu_rows = cached_tabs.get("eu") or []
@@ -2257,7 +2290,30 @@ async def _fetch_and_cache_other_odds_for_match(
                 "from_cache": True,
                 "cache_reason": "fallback",
             }
-        raise
+        # 无缓存时返回空结构，避免前端弹窗直接报500
+        empty_tabs = {"eu": [], "asia": [], "goals": []}
+        try:
+            new_attrs = dict(attrs)
+            new_attrs["other_odds"] = []
+            new_attrs["other_odds_tabs"] = empty_tabs
+            new_attrs["other_odds_fetch_failed_at"] = datetime.utcnow().isoformat()
+            new_attrs["other_odds_fetch_failed_message"] = str(exc)[:300]
+            match.source_attributes = new_attrs
+            flag_modified(match, "source_attributes")
+            await db.commit()
+        except Exception:
+            await db.rollback()
+        return {
+            "match_id": int(match.id),
+            "fixture_id": fixture_id,
+            "data_source": match.data_source,
+            "total": 0,
+            "items": [],
+            "tabs": empty_tabs,
+            "from_cache": True,
+            "cache_reason": "remote_unavailable",
+            "remote_error": str(exc)[:300],
+        }
 
     items = tabs.get("eu") or []
 
@@ -2289,9 +2345,8 @@ async def _run_bd_other_odds_prefetch_for_date(schedule_date: str) -> None:
     if not target_date:
         return
 
-    source_date_expr = func.json_extract(Match.source_attributes, "$.source_schedule_date")
-
     async with AsyncSessionLocal() as session:
+        source_date_expr = _json_attr_text_expr(session, Match.source_attributes, "source_schedule_date")
         rows = await session.execute(
             select(Match)
             .where(
@@ -2410,7 +2465,12 @@ async def get_other_odds(
         cache_reason = str(payload.get("cache_reason") or "")
         message = "获取其它赔率成功"
         if payload.get("from_cache"):
-            message = "远程获取失败，已返回缓存赔率" if cache_reason == "fallback" else "获取其它赔率成功（缓存）"
+            if cache_reason == "fallback":
+                message = "远程获取失败，已返回缓存赔率"
+            elif cache_reason in {"remote_unavailable", "recent_failure_cache"}:
+                message = "远程赔率暂不可用，已返回空数据"
+            else:
+                message = "获取其它赔率成功（缓存）"
 
         return UnifiedResponse(
             success=True,
@@ -2467,7 +2527,7 @@ async def import_yingqiu_bd_batch_by_year(
                     await db.execute(
                         delete(Match).where(
                             Match.data_source == "yingqiu_bd",
-                            func.json_extract(Match.source_attributes, "$.source_schedule_date") == date_str,
+                            _json_attr_text_expr(db, Match.source_attributes, "source_schedule_date") == date_str,
                         )
                     )
                     
@@ -2622,7 +2682,7 @@ async def import_yingqiu_bd_by_date(
         await db.execute(
             delete(Match).where(
                 Match.data_source == "yingqiu_bd",
-                func.json_extract(Match.source_attributes, "$.source_schedule_date") == schedule_date,
+                _json_attr_text_expr(db, Match.source_attributes, "source_schedule_date") == schedule_date,
             )
         )
 

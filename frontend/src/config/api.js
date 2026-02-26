@@ -2,8 +2,8 @@
 
 // 基础API配置
 export const API_CONFIG = {
-  // 基础URL - 开发环境使用空字符串以启用Vite代理，生产环境从环境变量获取
-  BASE_URL: import.meta.env.PROD ? (import.meta.env.VITE_API_BASE_URL || '') : '',
+  // 基础URL - 优先使用环境变量，未设置则回退为空字符串
+  BASE_URL: import.meta.env.VITE_API_BASE_URL || '',
   
   // WebSocket配置
   WS_BASE_URL: import.meta.env.VITE_WS_BASE_URL || 'ws://localhost:3000',
@@ -54,10 +54,10 @@ export const API_CONFIG = {
 export const API_ENDPOINTS = {
   // 认证相关
   AUTH: {
-    LOGIN: '/api/auth/login',
-    LOGOUT: '/api/logout',
-    REFRESH: '/api/refresh',
-    PROFILE: '/api/me'
+    LOGIN: '/api/v1/login',
+    LOGOUT: '/api/v1/logout',
+    REFRESH: '/api/v1/refresh',
+    PROFILE: '/api/v1/users/me'
   },
   
   // LLM服务相关

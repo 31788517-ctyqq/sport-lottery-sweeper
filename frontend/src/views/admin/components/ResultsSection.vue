@@ -3,10 +3,12 @@
     <template #header>
       <div class="card-header">
         <span>筛选结果</span>
-        <div>
-          <el-button @click="onExportResults('excel')">导出Excel</el-button>
-          <el-button @click="onExportResults('csv')">导出CSV</el-button>
-          <el-button @click="onToggleStats">{{ showStats ? '隐藏统计' : '显示统计' }}</el-button>
+        <div class="header-actions">
+          <el-button @click="onExportResults('excel')">导出 Excel</el-button>
+          <el-button @click="onExportResults('csv')">导出 CSV</el-button>
+          <el-button @click="onToggleStats">
+            {{ showStats ? '隐藏统计' : '显示统计' }}
+          </el-button>
         </div>
       </div>
     </template>
@@ -17,11 +19,14 @@
       v-loading="loading"
       @sort-change="onHandleSortChange"
     >
-      <el-table-column prop="match_id" label="比赛ID" width="120" sortable>
-        <template #default="{ row }">{{ formatMatchId(row.match_id) }}</template>
+      <el-table-column prop="line_id" label="比赛ID" width="120" sortable>
+        <template #default="{ row }">{{ formatMatchId(row.line_id) }}</template>
       </el-table-column>
       <el-table-column prop="home_team" label="主队" width="120">
         <template #default="{ row }">{{ displayValue(row.home_team) }}</template>
+      </el-table-column>
+      <el-table-column prop="score" label="比分/半场" width="120">
+        <template #default="{ row }">{{ formatScoreHalf(row) }}</template>
       </el-table-column>
       <el-table-column prop="away_team" label="客队" width="120">
         <template #default="{ row }">{{ displayValue(row.away_team) }}</template>
@@ -69,13 +74,13 @@
       </el-table-column>
 
       <template #empty>
-        <div class="empty-state" style="text-align: center; padding: 40px 0; color: #8b8680;">
+        <div class="empty-state">
           没有符合条件的比赛场次
         </div>
       </template>
     </el-table>
 
-      <el-pagination
+    <el-pagination
       @size-change="onHandleSizeChange"
       @current-change="onHandleCurrentChange"
       :current-page="currentPage"
@@ -93,15 +98,15 @@
 </template>
 
 <script>
-import { defineComponent } from 'vue';
-import { 
-  ElCard, 
-  ElTable, 
-  ElTableColumn, 
-  ElTag, 
-  ElPagination, 
-  ElButton 
-} from 'element-plus';
+import { defineComponent } from 'vue'
+import {
+  ElCard,
+  ElTable,
+  ElTableColumn,
+  ElTag,
+  ElPagination,
+  ElButton
+} from 'element-plus'
 
 export default defineComponent({
   name: 'ResultsSection',
@@ -140,77 +145,73 @@ export default defineComponent({
     }
   },
   emits: [
-    'toggleStats', 
-    'exportResults', 
-    'handleSortChange', 
-    'handleSizeChange', 
-    'handleCurrentChange', 
+    'toggleStats',
+    'exportResults',
+    'handleSortChange',
+    'handleSizeChange',
+    'handleCurrentChange',
     'openAnalysis'
   ],
   setup(props, { emit }) {
-    // 这里定义一些辅助函数，它们会被传递给父组件处理
     const formatMatchId = (value) => {
-      if (value === null || value === undefined || value === '') return '-';
-      return String(value);
-    };
+      if (value === null || value === undefined || value === '') return '-'
+      return String(value)
+    }
 
     const formatMatchTime = (value) => {
-      if (value === null || value === undefined || value === '') return '-';
-      const raw = String(value).trim();
-      if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+      if (value === null || value === undefined || value === '') return '-'
+      const raw = String(value).trim()
+      if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw
       if (/^\d{4}-\d{2}-\d{2}[T\s]00:00:00(?:\.000)?(?:Z)?$/.test(raw)) {
-        return raw.slice(0, 10);
+        return raw.slice(0, 10)
       }
-      const date = value instanceof Date ? value : new Date(value);
-      if (Number.isNaN(date.getTime())) return String(value);
-      const pad = (num) => String(num).padStart(2, '0');
-      return `${date.getFullYear()}/${pad(date.getMonth() + 1)}/${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
-    };
+      const date = value instanceof Date ? value : new Date(value)
+      if (Number.isNaN(date.getTime())) return String(value)
+      const pad = (num) => String(num).padStart(2, '0')
+      return `${date.getFullYear()}/${pad(date.getMonth() + 1)}/${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
+    }
 
     const displayValue = (value) => {
-      if (value === null || value === undefined || value === '') return '-';
-      return value;
-    };
+      if (value === null || value === undefined || value === '') return '-'
+      return value
+    }
+
+    const formatScoreHalf = (row) => {
+      const full = displayValue(row?.score)
+      const half = displayValue(row?.half_score)
+      if (full === '-' && half === '-') return '-'
+      return `${full}/${half}`
+    }
 
     const getPLevelTagType = (level) => {
       switch (level) {
-        case 1: return 'success'; // P1级用绿色
-        case 2: return 'primary'; // P2级用蓝色
-        case 3: return 'warning'; // P3级用黄色
-        case 4: return 'danger';  // P4级用红色
-        case 5: return 'info';    // P5级用灰色
-        default: return 'info';
+        case 1:
+          return 'success'
+        case 2:
+          return 'primary'
+        case 3:
+          return 'warning'
+        case 4:
+          return 'danger'
+        case 5:
+          return 'info'
+        default:
+          return 'info'
       }
-    };
+    }
 
-    const onToggleStats = () => {
-      emit('toggleStats');
-    };
-
-    const onExportResults = (format) => {
-      emit('exportResults', format);
-    };
-
-    const onHandleSortChange = (params) => {
-      emit('handleSortChange', params);
-    };
-
-    const onHandleSizeChange = (size) => {
-      emit('handleSizeChange', size);
-    };
-
-    const onHandleCurrentChange = (page) => {
-      emit('handleCurrentChange', page);
-    };
-
-    const onOpenAnalysis = (row) => {
-      emit('openAnalysis', row);
-    };
+    const onToggleStats = () => emit('toggleStats')
+    const onExportResults = (format) => emit('exportResults', format)
+    const onHandleSortChange = (params) => emit('handleSortChange', params)
+    const onHandleSizeChange = (size) => emit('handleSizeChange', size)
+    const onHandleCurrentChange = (page) => emit('handleCurrentChange', page)
+    const onOpenAnalysis = (row) => emit('openAnalysis', row)
 
     return {
       formatMatchId,
       formatMatchTime,
       displayValue,
+      formatScoreHalf,
       getPLevelTagType,
       onToggleStats,
       onExportResults,
@@ -218,9 +219,9 @@ export default defineComponent({
       onHandleSizeChange,
       onHandleCurrentChange,
       onOpenAnalysis
-    };
+    }
   }
-});
+})
 </script>
 
 <style scoped>
@@ -231,10 +232,28 @@ export default defineComponent({
   box-shadow: 0 14px 24px rgba(107, 103, 99, 0.12);
 }
 
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+}
+
 .result-card .el-table {
   margin-bottom: 12px;
   border-radius: 0;
   overflow: visible;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 0;
+  color: #8b8680;
 }
 
 .pagination-total {

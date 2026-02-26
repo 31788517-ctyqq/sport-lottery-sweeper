@@ -76,15 +76,23 @@
             </el-select>
           </div>
           <div class="filter-item">
-            <label>时间范围</label>
-            <el-date-picker
-              v-model="filterForm.dateRange"
-              type="daterange"
-              range-separator="至"
-              start-placeholder="开始日期"
-              end-placeholder="结束日期"
-              style="width: 100%"
-            />
+            <label>场次筛选</label>
+            <div class="match-range">
+              <el-input
+                v-model="filterForm.lineIdStart"
+                placeholder="开始场次 (如 10)"
+                inputmode="numeric"
+                clearable
+              />
+              <span class="range-separator">至</span>
+              <el-input
+                v-model="filterForm.lineIdEnd"
+                placeholder="结束场次 (如 20)"
+                inputmode="numeric"
+                clearable
+              />
+            </div>
+            <div class="match-range-hint">场次取值为 lineID</div>
           </div>
         </div>
       </el-col>
@@ -143,18 +151,10 @@
           />
 
           <div class="filter-actions">
-            <el-tooltip content="基于当前三维条件执行筛选" placement="top">
-              <el-button type="primary" @click="emit('applyAdvancedFilter')" :loading="loading">应用筛选</el-button>
-            </el-tooltip>
-            <el-tooltip content="清空全部筛选条件" placement="top">
-              <el-button @click="emit('resetFilters')">重置</el-button>
-            </el-tooltip>
-            <el-tooltip content="保存当前筛选为策略" placement="top">
-              <el-button type="success" @click="emit('saveStrategy')">保存策略</el-button>
-            </el-tooltip>
-            <el-tooltip content="查看、修改或删除已保存策略" placement="top">
-              <el-button @click="emit('manageStrategies')">管理策略</el-button>
-            </el-tooltip>
+            <el-button type="primary" @click="emit('applyAdvancedFilter')" :loading="loading">应用筛选</el-button>
+            <el-button @click="emit('resetFilters')">重置</el-button>
+            <el-button type="success" @click="emit('saveStrategy')">保存策略</el-button>
+            <el-button @click="emit('manageStrategies')">管理策略</el-button>
           </div>
         </div>
       </el-col>
@@ -232,6 +232,24 @@ const emit = defineEmits([
   font-weight: 600;
   color: #6b6763;
   font-size: 13px;
+}
+
+.match-range {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 8px;
+}
+
+.range-separator {
+  color: #8b8680;
+  font-size: 12px;
+}
+
+.match-range-hint {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #8b8680;
 }
 
 .checkbox-grid,

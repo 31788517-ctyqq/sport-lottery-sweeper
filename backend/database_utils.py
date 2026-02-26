@@ -14,23 +14,15 @@ from datetime import datetime
 
 # 使用统一的数据库路径配置
 try:
-    from backend.database import DATABASE_PATH
+    from backend.database import DATABASE_PATH, DATABASE_URL, SessionLocal
     # DATABASE_PATH 可能是 pathlib.Path 对象，转换为字符串
     DB_PATH = str(DATABASE_PATH)
 except ImportError:
+    DATABASE_URL = ""
+    SessionLocal = None
     # 回退逻辑：直接使用data目录
     PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    DB_PATH = os.path.join(PROJECT_ROOT, "data", "data/sport_lottery.db")
-
-    DB_PATH = None
-    for path in possible_paths:
-        if os.path.exists(path):
-            DB_PATH = path
-            break
-
-    if DB_PATH is None:
-        # 如果都不存在，使用根目录的默认路径
-        DB_PATH = os.path.join(PROJECT_ROOT, "data/sport_lottery.db")
+    DB_PATH = os.path.join(PROJECT_ROOT, "data", "sport_lottery.db")
 
 def get_db_connection():
     """获取数据库连接"""
@@ -61,10 +53,49 @@ def verify_password(password: str, password_hash: str) -> bool:
     try:
         return bcrypt.checkpw(password.encode('utf-8'), password_hash.encode('utf-8'))
     except Exception:
-        return False
+        # 回退到 passlib 版本，兼容不同哈希算法
+        try:
+            from backend.core.security import verify_password as verify_password_core
+            return verify_password_core(password, password_hash)
+        except Exception:
+            return False
+
+
+def _is_postgres_mode() -> bool:
+    return isinstance(DATABASE_URL, str) and DATABASE_URL.startswith("postgresql")
+
+
+def _enum_value(value: Any) -> Any:
+    return getattr(value, "value", value)
+
+
+def _serialize_admin_user(user: Any) -> Dict[str, Any]:
+    return {
+        "id": user.id,
+        "username": user.username,
+        "email": user.email,
+        "role": _enum_value(user.role),
+        "status": _enum_value(user.status),
+    }
 
 def authenticate_user(username: str, password: str) -> Optional[Dict[str, Any]]:
     """用户认证 - 验证用户名和密码"""
+    if _is_postgres_mode() and SessionLocal is not None:
+        from backend.models.admin_user import AdminUser
+        db = SessionLocal()
+        try:
+            user = db.query(AdminUser).filter(AdminUser.username == username).first()
+            if not user:
+                return None
+            status_value = str(_enum_value(user.status) or "").lower()
+            if status_value != "active":
+                return None
+            if verify_password(password, user.password_hash):
+                return _serialize_admin_user(user)
+            return None
+        finally:
+            db.close()
+
     conn = get_db_connection()
     try:
         cursor = conn.cursor()
@@ -88,6 +119,15 @@ def authenticate_user(username: str, password: str) -> Optional[Dict[str, Any]]:
 
 def get_user_by_id(user_id: int) -> Optional[Dict[str, Any]]:
     """根据ID获取用户信息"""
+    if _is_postgres_mode() and SessionLocal is not None:
+        from backend.models.admin_user import AdminUser
+        db = SessionLocal()
+        try:
+            user = db.query(AdminUser).filter(AdminUser.id == user_id).first()
+            return _serialize_admin_user(user) if user else None
+        finally:
+            db.close()
+
     conn = get_db_connection()
     try:
         cursor = conn.cursor()

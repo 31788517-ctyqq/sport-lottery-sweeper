@@ -38,6 +38,15 @@ def _safe_attrs(source_attributes: Any) -> Dict[str, Any]:
     return {}
 
 
+def _json_attr_text_expr(db: Session, column, key: str):
+    """Extract a JSON text attribute in a dialect-safe way."""
+    bind = getattr(db, "bind", None)
+    dialect_name = ((bind.dialect.name if bind and bind.dialect else "") or "").lower()
+    if dialect_name.startswith("postgres"):
+        return column.op("->>")(key)
+    return func.json_extract(column, f"$.{key}")
+
+
 def _extract_total_goals_line(attrs: Dict[str, Any]) -> Optional[float]:
     for key in ("total_goals_line", "goal_line", "ou_line", "over_under", "total_goals"):
         if key in attrs:
@@ -370,7 +379,7 @@ def _load_500w_daxiao_map_from_db(db: Session, target_date: date) -> Dict[str, D
         .filter(
             or_(
                 Match.match_date == target_date,
-                func.json_extract(Match.source_attributes, "$.source_schedule_date") == date_key,
+                _json_attr_text_expr(db, Match.source_attributes, "source_schedule_date") == date_key,
             )
         )
     )
@@ -423,7 +432,7 @@ def _persist_500w_daxiao_to_db(db: Session, target_date: date, daxiaosfc_map: Di
         .filter(
             or_(
                 Match.match_date == target_date,
-                func.json_extract(Match.source_attributes, "$.source_schedule_date") == date_key,
+                _json_attr_text_expr(db, Match.source_attributes, "source_schedule_date") == date_key,
             )
         )
     )
@@ -985,12 +994,12 @@ def list_for_date(
         .filter(Match.data_source == data_source)
     )
     if data_source == "yingqiu_bd":
-        query = query.filter(func.json_extract(Match.source_attributes, "$.source_schedule_date") == date_str)
+        query = query.filter(_json_attr_text_expr(db, Match.source_attributes, "source_schedule_date") == date_str)
     else:
         query = query.filter(
             or_(
                 Match.match_date == target_date,
-                func.json_extract(Match.source_attributes, "$.source_schedule_date") == date_str,
+                _json_attr_text_expr(db, Match.source_attributes, "source_schedule_date") == date_str,
             )
         )
     query = query.order_by(Match.scheduled_kickoff)

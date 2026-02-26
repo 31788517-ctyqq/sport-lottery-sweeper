@@ -4,8 +4,8 @@ import router from '@/router'
 
 // 创建axios实例
 const apiClient = axios.create({
-  // 强制使用空字符串，通过 Vite proxy 转发到后端，避免重复/api路径
-  baseURL: '',
+  // 优先使用环境变量，其次直连后端，避免Vite代理失效导致404
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000',
   timeout: parseInt(import.meta.env.VITE_API_TIMEOUT) || 30000,
   headers: {
     'Content-Type': 'application/json',

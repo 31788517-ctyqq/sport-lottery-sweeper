@@ -4,6 +4,7 @@ from typing import List, Optional
 import secrets
 from pathlib import Path
 import os
+from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 # 项目根目录 - 使用当前文件所在目录
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -105,8 +106,8 @@ class Settings(BaseSettings):
 
     # --- Database Pool Settings ---
     # Connection pool sizes
-    DB_POOL_SIZE: int = Field(default=5, description="Number of connections to keep in pool")
-    DB_MAX_OVERFLOW: int = Field(default=10, description="Maximum overflow connections allowed")
+    DB_POOL_SIZE: int = Field(default=20, description="Number of connections to keep in pool")
+    DB_MAX_OVERFLOW: int = Field(default=40, description="Maximum overflow connections allowed")
     DB_POOL_TIMEOUT: int = Field(default=30, description="Seconds to wait for connection from pool")
     DB_POOL_RECYCLE: int = Field(default=3600, description="Recycle connections after seconds")
     DB_POOL_PRE_PING: bool = Field(default=True, description="Enable connection health checks")
@@ -127,8 +128,8 @@ class Settings(BaseSettings):
     )
     
     # Async connection pool settings
-    ASYNC_DB_POOL_SIZE: int = Field(default=5, description="Async pool size")
-    ASYNC_DB_MAX_OVERFLOW: int = Field(default=10, description="Async max overflow")
+    ASYNC_DB_POOL_SIZE: int = Field(default=20, description="Async pool size")
+    ASYNC_DB_MAX_OVERFLOW: int = Field(default=40, description="Async max overflow")
     ASYNC_DB_POOL_TIMEOUT: int = Field(default=30, description="Async pool timeout")
     ASYNC_DB_POOL_RECYCLE: int = Field(default=3600, description="Async pool recycle")
 
@@ -156,7 +157,7 @@ class Settings(BaseSettings):
 
     @field_validator("DATABASE_URL", mode='before')
     def validate_database_url(cls, v):
-        """Validate and enhance database URL with pool settings"""
+        """Validate database URL and strip unsupported SQLAlchemy pool query params."""
         if v is None or str(v).strip() == "":
             return DEFAULT_DATABASE_URL
 
@@ -165,13 +166,11 @@ class Settings(BaseSettings):
             # 对 sqlite：统一使用项目根目录下的绝对路径，避免相对路径因工作目录不同导致“unable to open database file”
             return DEFAULT_DATABASE_URL
         elif v.startswith("postgresql"):
-            # Add pool settings for PostgreSQL
-            if "?" not in v:
-                v += "?"
-            else:
-                v += "&"
-            pool_params = f"pool_size={cls.DB_POOL_SIZE}&max_overflow={cls.DB_MAX_OVERFLOW}&pool_timeout={cls.DB_POOL_TIMEOUT}&pool_recycle={cls.DB_POOL_RECYCLE}&pool_pre_ping={str(cls.DB_POOL_PRE_PING).lower()}"
-            return v + pool_params
+            # Keep DSN clean; connection pool must be configured via create_engine kwargs.
+            parsed = urlparse(v)
+            blocked = {"pool_size", "max_overflow", "pool_timeout", "pool_recycle", "pool_pre_ping"}
+            kept = [(k, val) for k, val in parse_qsl(parsed.query, keep_blank_values=True) if k not in blocked]
+            return urlunparse(parsed._replace(query=urlencode(kept)))
         return v
 
     @field_validator("ASYNC_DATABASE_URL", mode='before')

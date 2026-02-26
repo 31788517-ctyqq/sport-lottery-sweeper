@@ -10,7 +10,7 @@ export const authAPI = {
    * @returns {Promise<Object>} - 返回包含token的对象
    */
   login(credentials) {
-    return client.post('/api/auth/login', credentials);
+    return client.post('/api/v1/login', credentials);
   },
 
   /**

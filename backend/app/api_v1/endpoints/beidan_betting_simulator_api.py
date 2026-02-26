@@ -27,6 +27,14 @@ logger = logging.getLogger(__name__)
 router = APIRouter(tags=["beidan-betting"])
 
 
+def json_attr_text_expr(db: Session, column, key: str):
+    """Extract a JSON text attribute in a dialect-safe way."""
+    dialect_name = ((db.bind.dialect.name if db.bind and db.bind.dialect else "") or "").lower()
+    if dialect_name.startswith("postgres"):
+        return column.op("->>")(key)
+    return func.json_extract(column, f"$.{key}")
+
+
 def normalize_match_seq(value: str) -> Optional[str]:
     if value is None:
         return None
@@ -245,8 +253,8 @@ def build_bd_schedule_candidates(
 
     HomeTeam = aliased(Team)
     AwayTeam = aliased(Team)
-    number_expr = func.json_extract(Match.source_attributes, "$.number")
-    source_date_expr = func.json_extract(Match.source_attributes, "$.source_schedule_date")
+    number_expr = json_attr_text_expr(db, Match.source_attributes, "number")
+    source_date_expr = json_attr_text_expr(db, Match.source_attributes, "source_schedule_date")
 
     query = (
         db.query(Match, HomeTeam, AwayTeam)
