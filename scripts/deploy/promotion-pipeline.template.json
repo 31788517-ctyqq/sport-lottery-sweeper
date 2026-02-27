@@ -1,0 +1,38 @@
+{
+  "sshKeyPath": "C:/Users/11581/Desktop/cty_gz.pem",
+  "sshPort": 22,
+  "runLocalChecks": true,
+  "keepBackups": 10,
+  "stages": [
+    {
+      "name": "testing",
+      "enabled": false,
+      "host": "TEST_SERVER_IP",
+      "user": "root",
+      "remoteDir": "/opt/sport-lottery-sweeper-test",
+      "initialBaseCommit": "",
+      "postDeployCommand": "cd /opt/sport-lottery-sweeper-test && docker compose --env-file .env.release -f docker-compose.edge.yml up -d --build",
+      "healthCheckUrl": "https://test.example.com/api/v1/health/live"
+    },
+    {
+      "name": "staging",
+      "enabled": false,
+      "host": "STAGING_SERVER_IP",
+      "user": "root",
+      "remoteDir": "/opt/sport-lottery-sweeper-staging",
+      "initialBaseCommit": "",
+      "postDeployCommand": "cd /opt/sport-lottery-sweeper-staging && docker compose --env-file .env.release -f docker-compose.edge.yml up -d --build",
+      "healthCheckUrl": "https://staging.example.com/api/v1/health/live"
+    },
+    {
+      "name": "production",
+      "enabled": true,
+      "host": "8.134.89.99",
+      "user": "root",
+      "remoteDir": "/opt/sport-lottery-sweeper",
+      "initialBaseCommit": "",
+      "postDeployCommand": "cd /opt/sport-lottery-sweeper && docker compose --env-file .env.release -f docker-compose.edge.yml up -d --build",
+      "healthCheckUrl": "https://sweeper365.cn/api/v1/health/live"
+    }
+  ]
+}
