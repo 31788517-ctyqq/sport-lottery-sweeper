@@ -46,6 +46,7 @@ class UserBase(BaseModel):
     email: EmailStr = Field(..., description="邮箱地址")
     nickname: Optional[str] = Field(None, max_length=50, description="昵称")
     phone: Optional[str] = Field(None, max_length=20, description="手机号")
+    bio: Optional[str] = Field(None, max_length=500, description="个人简介")
     avatar: Optional[str] = Field(None, description="头像URL")
 
 class UserCreate(UserBase):
@@ -84,7 +85,7 @@ class UserResponse(UserBase):
     """用户响应模式"""
     id: int
     status: UserStatusEnum
-    user_type: UserTypeEnum
+    user_type: UserTypeEnum = UserTypeEnum.FREE
     email_verified: bool
     phone_verified: bool
     last_login_time: Optional[datetime]

@@ -375,8 +375,12 @@ async def change_password(
 ):
     """修改用户密码"""
     from backend.core.security import verify_password
-    
+
+    ip_address = request.client.host if request.client else None
+    user_agent = request.headers.get("user-agent")
+
     # 验证新密码和确认密码
+
     if new_password != confirm_password:
         raise HTTPException(status_code=400, detail="新密码和确认密码不匹配")
     

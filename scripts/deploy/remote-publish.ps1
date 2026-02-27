@@ -101,14 +101,80 @@ if ($LASTEXITCODE -ne 0) {
   throw "SCP failed with exit code: $LASTEXITCODE"
 }
 
-$remoteScript = @"
+$remoteScriptTemplate = @'
 set -euo pipefail
-mkdir -p $RemoteDir
-tar -xzf /tmp/$archiveName -C $RemoteDir
-cd $RemoteDir
-chmod +x deploy/remote/setup-prod.sh
-./deploy/remote/setup-prod.sh '$Domain' '$CertbotEmail' '$RemoteDir'
-"@
+
+REMOTE_DIR='{0}'
+DEPLOY_DOMAIN='{1}'
+DEPLOY_EMAIL='{2}'
+ARCHIVE_PATH='/tmp/{3}'
+BACKUP_DIR="${REMOTE_DIR%/}_backups"
+KEEP_BACKUPS=5
+BACKUP_FILE=""
+
+mkdir -p "$REMOTE_DIR" "$BACKUP_DIR"
+
+if [ -d "$REMOTE_DIR" ] && [ "$(ls -A "$REMOTE_DIR" 2>/dev/null)" ]; then
+  BACKUP_FILE="$BACKUP_DIR/sls_release_backup_$(date +%Y%m%d_%H%M%S).tar.gz"
+  echo "[backup] Creating backup: $BACKUP_FILE"
+  tar -czf "$BACKUP_FILE" -C "$REMOTE_DIR" .
+else
+  echo "[backup] No existing release directory content detected, skipping backup."
+fi
+
+cleanup_old_backups() {{
+  if ! command -v ls >/dev/null 2>&1; then
+    return 0
+  fi
+  mapfile -t backups < <(ls -1t "$BACKUP_DIR"/sls_release_backup_*.tar.gz 2>/dev/null || true)
+  if [ "${{#backups[@]}}" -le "$KEEP_BACKUPS" ]; then
+    return 0
+  fi
+
+  for old_backup in "${{backups[@]:$KEEP_BACKUPS}}"; do
+    rm -f "$old_backup"
+  done
+}}
+
+deploy_release() {{
+  echo "[publish] Extracting release archive into $REMOTE_DIR"
+  tar -xzf "$ARCHIVE_PATH" -C "$REMOTE_DIR"
+  cd "$REMOTE_DIR"
+  chmod +x deploy/remote/setup-prod.sh
+  ./deploy/remote/setup-prod.sh "$DEPLOY_DOMAIN" "$DEPLOY_EMAIL" "$REMOTE_DIR"
+}}
+
+rollback_release() {{
+  if [ -z "$BACKUP_FILE" ] || [ ! -f "$BACKUP_FILE" ]; then
+    echo "[rollback] No backup file available, cannot rollback automatically."
+    return 1
+  fi
+
+  echo "[rollback] Restoring previous release from: $BACKUP_FILE"
+  find "$REMOTE_DIR" -mindepth 1 -maxdepth 1 ! -name 'deploy' -exec rm -rf {{}} +
+  tar -xzf "$BACKUP_FILE" -C "$REMOTE_DIR"
+  cd "$REMOTE_DIR"
+  chmod +x deploy/remote/setup-prod.sh
+  ./deploy/remote/setup-prod.sh "$DEPLOY_DOMAIN" "$DEPLOY_EMAIL" "$REMOTE_DIR"
+}}
+
+if deploy_release; then
+  cleanup_old_backups
+  echo "[done] Remote deployment completed."
+  if [ -n "$BACKUP_FILE" ]; then
+    echo "[done] Rollback backup retained at: $BACKUP_FILE"
+  fi
+else
+  echo "[error] Remote deployment failed, attempting rollback..."
+  if rollback_release; then
+    echo "[rollback] Rollback completed."
+  else
+    echo "[rollback] Rollback failed."
+  fi
+  exit 1
+fi
+'@
+$remoteScript = $remoteScriptTemplate -f $RemoteDir, $Domain, $CertbotEmail, $archiveName
 
 Write-Host "[publish] Running remote deployment..."
 $sshArgs = @("-i", $SshKeyPath, "-p", $SshPort) + $commonSshOptions + @(
@@ -121,3 +187,4 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 Write-Host "[done] Production publish completed: https://$Domain"
+Write-Host "[done] Remote backups directory: ${RemoteDir}_backups"

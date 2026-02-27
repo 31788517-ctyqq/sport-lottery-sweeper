@@ -14,6 +14,10 @@ import requests
 import psutil
 from pathlib import Path
 from datetime import datetime
+from typing import Dict, Any
+
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8', errors='ignore')
 
 class ProjectHealthCheck:
     def __init__(self, project_root: str = None):
@@ -36,7 +40,6 @@ class ProjectHealthCheck:
         self.backend_port = 8000
         self.required_files = [
             'STARTUP_GUIDE.md',
-            'PATH_ALIASES.md',
             'package.json',
             '.codebuddy/plugin_identities.json',
             'scripts/smart_start.py',
@@ -436,22 +439,22 @@ class ProjectHealthCheck:
         print(f"  Python: {'✅' if python_status == 'configured' else '❌'} {python_status}")
         
         # AI协同状态
-        print(f"\n🤖 AI协同状态")
+        print("\n[AI] 协同状态")
         ai = results['ai_coordination']
         ai_overall = ai.get('overall', 'unknown')
-        ai_icon = {'fully_functional': '✅', 'partially_functional': '⚠️', 'not_functional': '❌'}.get(ai_overall, '❓')
+        ai_icon = {'fully_functional': 'OK', 'partially_functional': 'WARN', 'not_functional': 'FAIL'}.get(ai_overall, '?')
         print(f"  整体状态: {ai_icon} {ai_overall}")
         print(f"  活跃锁: {ai.get('locks', {}).get('active_locks', 0)}")
         print(f"  注册插件: {ai.get('plugins', {}).get('registered_plugins', 0)}")
         
         # 建议
-        print(f"\n💡 建议操作")
+        print("\n[RECOMMEND] 建议操作")
         for rec in results['recommendations']:
-            priority_icon = {'critical': '🚨', 'high': '⚠️', 'medium': '💡', 'low': 'ℹ️', 'info': '✅'}.get(rec['priority'], '•')
+            priority_icon = {'critical': 'CRITICAL', 'high': 'HIGH', 'medium': 'MED', 'low': 'LOW', 'info': 'INFO'}.get(rec['priority'], 'INFO')
             print(f"  {priority_icon} {rec['text']}")
         
         # 快速启动命令
-        print(f"\n🚀 快速操作")
+        print("\n[ACTION] 快速操作")
         print("  npm run smart-start    # 智能启动所有服务")
         print("  npm run health         # 重新健康检查")
         print("  npm run compliance     # AI合规检查")
@@ -472,7 +475,7 @@ def main():
     with open(report_file, 'w', encoding='utf-8') as f:
         json.dump(results, f, indent=2, ensure_ascii=False)
     
-    print(f"\n📄 详细报告已保存到: {report_file}")
+    print(f"\n[REPORT] 详细报告已保存到: {report_file}")
 
 if __name__ == '__main__':
     main()

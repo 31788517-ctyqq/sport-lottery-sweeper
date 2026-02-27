@@ -2,27 +2,33 @@
 """
 测试模型导入和映射器配置
 """
+import os
 import sys
-sys.path.insert(0, '.')
+
+__test__ = False
+
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
 from sqlalchemy.orm import class_mapper
 
 try:
-    from models.user import User
+    from backend.models.user import User
     print("✓ User imported successfully")
 except Exception as e:
     print(f"✗ User import failed: {e}")
     sys.exit(1)
 
 try:
-    from models.predictions import UserPrediction
+    from backend.models.predictions import UserPrediction
     print("✓ UserPrediction imported successfully")
 except Exception as e:
     print(f"✗ UserPrediction import failed: {e}")
     sys.exit(1)
 
 try:
-    from models.predictions import Prediction
+    from backend.models.predictions import Prediction
     print("✓ Prediction imported successfully")
 except Exception as e:
     print(f"✗ Prediction import failed: {e}")

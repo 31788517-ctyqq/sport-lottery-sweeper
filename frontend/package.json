@@ -7,6 +7,8 @@
     "dev": "vite --port 3000",
     "build": "vite build",
     "typecheck": "vue-tsc",
+    "lint": "eslint src",
+    "test:run": "vitest run",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -39,6 +41,7 @@
     "@types/node": "^20.5.2",
     "@types/nprogress": "^0.2.0",
     "@types/qs": "^6.9.7",
+    "@babel/eslint-parser": "^7.25.0",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
     "@vitejs/plugin-vue": "^5.0.4",

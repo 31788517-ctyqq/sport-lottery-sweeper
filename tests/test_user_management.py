@@ -11,8 +11,12 @@ from datetime import datetime, timedelta
 import jwt
 import os
 
+os.environ.setdefault("DATABASE_PATH", os.path.abspath("./test.db"))
+
 from backend.main import app
-from backend.database import Base, get_db
+from backend.database import get_db, Base as LegacyBase
+from backend.models.base import Base as ModelsBase
+from backend.models.log_entry import LogEntry
 from backend.models.user import User, UserStatus
 from backend.models.admin_user import AdminUser, AdminRoleEnum, AdminStatusEnum
 from backend.core.security import get_password_hash
@@ -26,11 +30,18 @@ TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engin
 @pytest.fixture(scope="session")
 def test_db():
     """创建测试数据库"""
-    Base.metadata.create_all(bind=engine)
-    yield TestingSessionLocal()
-    Base.metadata.drop_all(bind=engine)
-    if os.path.exists("./test.db"):
-        os.remove("./test.db")
+    ModelsBase.metadata.create_all(bind=engine)
+    LegacyBase.metadata.create_all(bind=engine)
+    db = TestingSessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+        ModelsBase.metadata.drop_all(bind=engine)
+        LegacyBase.metadata.drop_all(bind=engine)
+        engine.dispose()
+        if os.path.exists("./test.db"):
+            os.remove("./test.db")
 
 @pytest.fixture(scope="function")
 def client(test_db):
@@ -49,6 +60,10 @@ def client(test_db):
 @pytest.fixture
 def test_user(test_db):
     """创建测试用户"""
+    test_db.rollback()
+    existing_user = test_db.query(User).filter(User.username == "testuser").first()
+    if existing_user:
+        return existing_user
     hashed_password = get_password_hash("testpassword123")
     user = User(
         username="testuser",
@@ -56,7 +71,6 @@ def test_user(test_db):
         hashed_password=hashed_password,
         nickname="Test User",
         status=UserStatus.ACTIVE,
-        user_type="free"
     )
     test_db.add(user)
     test_db.commit()
@@ -66,6 +80,10 @@ def test_user(test_db):
 @pytest.fixture
 def test_admin_user(test_db):
     """创建测试管理员用户"""
+    test_db.rollback()
+    existing_admin = test_db.query(AdminUser).filter(AdminUser.username == "admin").first()
+    if existing_admin:
+        return existing_admin
     hashed_password = get_password_hash("adminpassword123")
     admin_user = AdminUser(
         username="admin",
@@ -73,7 +91,7 @@ def test_admin_user(test_db):
         password_hash=hashed_password,
         real_name="Admin User",
         role=AdminRoleEnum.ADMIN,
-        status=AdminStatusEnum.ACTIVE
+        status=AdminStatusEnum.ACTIVE,
     )
     test_db.add(admin_user)
     test_db.commit()
@@ -81,14 +99,14 @@ def test_admin_user(test_db):
     return admin_user
 
 @pytest.fixture
-def auth_headers(test_admin_user):
+def auth_headers(test_user):
     """生成认证头部"""
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode = {
-        "sub": test_admin_user.username,
-        "user_id": test_admin_user.id,
-        "username": test_admin_user.username,
-        "role": test_admin_user.role.value,
+        "sub": test_user.username,
+        "user_id": test_user.id,
+        "username": test_user.username,
+        "role": "user",
     }
     expire = datetime.utcnow() + access_token_expires
     to_encode.update({"exp": expire})
@@ -100,7 +118,7 @@ class TestUserAuthentication:
     
     def test_user_login_success(self, client, test_admin_user):
         """测试用户登录成功"""
-        response = client.post("/api/v1/login", json={
+        response = client.post("/api/v1/auth/login", json={
             "username": "admin",
             "password": "adminpassword123"
         })
@@ -113,7 +131,7 @@ class TestUserAuthentication:
         
     def test_user_login_invalid_credentials(self, client):
         """测试无效凭据登录"""
-        response = client.post("/api/v1/login", json={
+        response = client.post("/api/v1/auth/login", json={
             "username": "admin",
             "password": "wrongpassword"
         })
@@ -134,7 +152,7 @@ class TestUserAuthentication:
         test_db.add(inactive_user)
         test_db.commit()
         
-        response = client.post("/api/v1/login", json={
+        response = client.post("/api/v1/auth/login", json={
             "username": "inactive",
             "password": "inactivepass"
         })
@@ -143,14 +161,14 @@ class TestUserAuthentication:
     def test_token_refresh_success(self, client, test_admin_user):
         """测试令牌刷新成功"""
         # 先登录获取refresh token
-        login_response = client.post("/api/v1/login", json={
+        login_response = client.post("/api/v1/auth/login", json={
             "username": "admin",
             "password": "adminpassword123"
         })
         refresh_token = login_response.json()["data"]["refresh_token"]
         
         # 刷新令牌
-        response = client.post("/api/v1/refresh", json={
+        response = client.post("/api/v1/auth/refresh", json={
             "refresh_token": refresh_token
         })
         assert response.status_code == 200
@@ -163,7 +181,7 @@ class TestUserProfileManagement:
     
     def test_get_profile_success(self, client, auth_headers, test_user):
         """测试获取个人资料成功"""
-        response = client.get("/api/v1/users/profile", headers=auth_headers)
+        response = client.get("/api/v1/admin/users/profile", headers=auth_headers)
         assert response.status_code == 200
         data = response.json()
         assert data["username"] == test_user.username
@@ -176,7 +194,7 @@ class TestUserProfileManagement:
             "bio": "Updated bio",
             "gender": "male"
         }
-        response = client.put("/api/v1/users/profile", json=update_data, headers=auth_headers)
+        response = client.put("/api/v1/admin/users/profile", json=update_data, headers=auth_headers)
         assert response.status_code == 200
         data = response.json()
         assert data["nickname"] == "Updated Nickname"
@@ -185,19 +203,21 @@ class TestUserProfileManagement:
     def test_update_profile_email_conflict(self, client, auth_headers, test_user, test_db):
         """测试更新邮箱冲突"""
         # 创建另一个用户
-        other_user = User(
-            username="otheruser",
-            email="other@example.com",
-            hashed_password=get_password_hash("otherpass"),
-            status=UserStatus.ACTIVE,
-            user_type="free"
-        )
-        test_db.add(other_user)
-        test_db.commit()
+        test_db.rollback()
+        other_user = test_db.query(User).filter(User.username == "otheruser").first()
+        if not other_user:
+            other_user = User(
+                username="otheruser",
+                email="other@example.com",
+                hashed_password=get_password_hash("otherpass"),
+                status=UserStatus.ACTIVE,
+            )
+            test_db.add(other_user)
+            test_db.commit()
         
         # 尝试更新为已存在的邮箱
         update_data = {"email": "other@example.com"}
-        response = client.put("/api/v1/users/profile", json=update_data, headers=auth_headers)
+        response = client.put("/api/v1/admin/users/profile", json=update_data, headers=auth_headers)
         assert response.status_code == 409
         
     def test_change_password_success(self, client, auth_headers, test_user):
@@ -207,7 +227,7 @@ class TestUserProfileManagement:
             "new_password": "newpassword123",
             "confirm_password": "newpassword123"
         }
-        response = client.put("/api/v1/users/profile/password", data=form_data, headers=auth_headers)
+        response = client.put("/api/v1/admin/users/profile/password", data=form_data, headers=auth_headers)
         assert response.status_code == 200
         
     def test_change_password_mismatch(self, client, auth_headers, test_user):
@@ -217,7 +237,7 @@ class TestUserProfileManagement:
             "new_password": "newpassword123",
             "confirm_password": "differentpassword"
         }
-        response = client.put("/api/v1/users/profile/password", data=form_data, headers=auth_headers)
+        response = client.put("/api/v1/admin/users/profile/password", data=form_data, headers=auth_headers)
         assert response.status_code == 400
 
 class TestAvatarUpload:
@@ -235,7 +255,7 @@ class TestAvatarUpload:
         img_byte_arr.seek(0)
         
         files = {"avatar": ("test_avatar.png", img_byte_arr, "image/png")}
-        response = client.post("/api/v1/users/profile/avatar", files=files, headers=auth_headers)
+        response = client.post("/api/v1/admin/users/profile/avatar", files=files, headers=auth_headers)
         assert response.status_code == 200
         data = response.json()
         assert "avatar_url" in data
@@ -248,7 +268,7 @@ class TestUserActivityLogging:
         """测试登录活动被记录"""
         initial_log_count = test_db.query(LogEntry).count()
         
-        client.post("/api/v1/login", json={
+        client.post("/api/v1/auth/login", json={
             "username": "admin",
             "password": "adminpassword123"
         })
@@ -266,7 +286,7 @@ class TestUserActivityLogging:
         initial_log_count = test_db.query(LogEntry).count()
         
         update_data = {"nickname": "Logged Update"}
-        client.put("/api/v1/users/profile", json=update_data, headers=auth_headers)
+        client.put("/api/v1/admin/users/profile", json=update_data, headers=auth_headers)
         
         final_log_count = test_db.query(LogEntry).count()
         assert final_log_count > initial_log_count

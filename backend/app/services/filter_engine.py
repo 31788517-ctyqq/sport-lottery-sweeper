@@ -69,8 +69,12 @@ class BeidanFilterEngine:
         """
         降级P级
         """
-        tier_order = ['P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7']
-        current_index = tier_order.index(match.tier) if match.tier in tier_order else len(tier_order)-1
+        tier_order = ["P1", "P2", "P3", "P4", "P5", "P6", "P7"]
+        current_index = (
+            tier_order.index(match.tier)
+            if match.tier in tier_order
+            else len(tier_order) - 1
+        )
         
         # 如果已经是P7，则不再降级
         if current_index < len(tier_order) - 1:
@@ -83,10 +87,19 @@ class BeidanFilterEngine:
         应用筛选条件
         """
         filtered = [
-            m for m in matches 
-            if (not filters.get('strength') or str(m.strength) in filters['strength']) and
-               (not filters.get('winLevel') or str(m.winLevel) in filters['winLevel']) and
-               (not filters.get('stability') or m.stability in filters['stability'])
+            m
+            for m in matches
+            if (
+                (not filters.get("strength") or str(m.strength) in filters["strength"])
+                and (
+                    not filters.get("winLevel")
+                    or str(m.winLevel) in filters["winLevel"]
+                )
+                and (
+                    not filters.get("stability")
+                    or m.stability in filters["stability"]
+                )
+            )
         ]
         
         # 北单特有规则处理

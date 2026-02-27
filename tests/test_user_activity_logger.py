@@ -9,7 +9,7 @@ from sqlalchemy.orm import sessionmaker
 import json
 import os
 
-from backend.database import Base
+from backend.models.base import Base as ModelsBase
 from backend.models.log_entry import LogEntry
 from backend.models.user import User, UserStatus
 from backend.services.user_activity_logger import UserActivityLogger
@@ -23,11 +23,16 @@ TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engin
 @pytest.fixture(scope="session")
 def test_db():
     """创建测试数据库"""
-    Base.metadata.create_all(bind=engine)
-    yield TestingSessionLocal()
-    Base.metadata.drop_all(bind=engine)
-    if os.path.exists("./test_activity.db"):
-        os.remove("./test_activity.db")
+    ModelsBase.metadata.create_all(bind=engine)
+    db = TestingSessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+        ModelsBase.metadata.drop_all(bind=engine)
+        engine.dispose()
+        if os.path.exists("./test_activity.db"):
+            os.remove("./test_activity.db")
 
 @pytest.fixture
 def activity_logger(test_db):
@@ -101,7 +106,7 @@ class TestUserActivityLogger:
         assert "更新了个人资料" in log_entry.message
         assert "nickname" in log_entry.message
         assert "email" in log_entry.message
-        assert "bio" not in log_entry.message  # bio字段应该被包含
+        assert "bio" in log_entry.message
         
         # 检查额外数据
         extra_data = json.loads(log_entry.extra_data)

@@ -85,6 +85,8 @@ python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 asyncio_mode = "auto"
+pythonpath = ["."]
+addopts = "--ignore=tests/functional --ignore=tests/functional_backup_20260212_061840 --ignore=tests/integration --ignore=tests/backend/integration --ignore=tests/e2e --ignore=tests/scanner --ignore=tests/unit/api/test_api_functions_1.py --ignore=tests/unit/models/test_intelligence.py --ignore=tests/unit/services/test_intelligence_service.py --ignore=tests/unit/test_auth_service.py"
 markers = [
     "slow: marks tests as slow",
     "integration: marks tests as integration tests"

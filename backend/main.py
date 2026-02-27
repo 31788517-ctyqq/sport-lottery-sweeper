@@ -46,7 +46,7 @@ from backend.api.dependencies import get_current_active_user, get_current_active
 from backend.models.user import User
 
 # 导入数据库相关模块
-from backend.database import engine, DATABASE_URL
+from backend.database import engine, DATABASE_URL, get_db
 from backend.models.base import Base
 
 # AI_WORKING: coder1 @2026-02-10 - 添加数据库路径日志
@@ -683,25 +683,57 @@ async def register(
 
 @app.post("/api/v1/auth/login")
 @limiter.limit("5/minute")  # Strict limit for login attempts - prevents brute force
-async def login_v1(request: Request, username: str = Body(...), password: str = Body(...)):
+async def login_v1(
+    request: Request,
+    username: str = Body(...),
+    password: str = Body(...),
+    db=Depends(get_db),
+):
     """用户登录接口 (/api/v1) - 真实数据库验证"""
     logger.info(f"Login attempt for username: {username}")
+    ip_address = request.client.host if request.client else None
+    user_agent = request.headers.get("user-agent")
     user = authenticate_user(username, password)
     if not user:
         logger.warning(f"Login failed: invalid credentials for username {username}")
+        try:
+            from backend.services.user_activity_logger import get_user_activity_logger
+            activity_logger = get_user_activity_logger(db)
+            activity_logger.log_user_login(
+                user_id=0,
+                username=username,
+                ip_address=ip_address,
+                user_agent=user_agent,
+                success=False,
+                failure_reason="用户名或密码错误",
+            )
+        except Exception as log_error:
+            logger.warning(f"Login failure log error: {log_error}")
         raise HTTPException(status_code=401, detail="用户名或密码错误")
-    
+
     logger.info(f"User logged in successfully: {user['username']} (ID: {user['id']})")
-    
+    try:
+        from backend.services.user_activity_logger import get_user_activity_logger
+        activity_logger = get_user_activity_logger(db)
+        activity_logger.log_user_login(
+            user_id=user["id"],
+            username=user["username"],
+            ip_address=ip_address,
+            user_agent=user_agent,
+            success=True,
+        )
+    except Exception as log_error:
+        logger.warning(f"Login success log error: {log_error}")
+
     # 创建JWT令牌
     access_token = create_access_token({
         "sub": str(user["id"]),
         "user_id": user["id"],
         "username": user["username"],
         "email": user["email"],
-        "role": user["role"]
+        "role": user["role"],
     })
-    
+
     return {
         "code": 200,
         "message": "登录成功",
@@ -718,6 +750,23 @@ async def login_v1(request: Request, username: str = Body(...), password: str = 
                 "status": user["status"]
             }
         }
+    }
+
+@app.post("/api/v1/auth/refresh")
+async def refresh_v1(refresh_token: str = Body(..., embed=True)):
+    """刷新访问令牌 (/api/v1)"""
+    if not refresh_token or not refresh_token.startswith("refresh-"):
+        raise HTTPException(status_code=401, detail="刷新令牌无效")
+    access_token = refresh_token.replace("refresh-", "", 1)
+    return {
+        "code": 200,
+        "message": "token refreshed",
+        "data": {
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "token_type": "bearer",
+            "expires_in": ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        },
     }
 
 @app.get("/api/v1/auth/me")

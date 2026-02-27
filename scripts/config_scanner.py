@@ -8,10 +8,14 @@ AI_WORKING: analyzer1 @2026-01-25T00:00:00 - 创建配置扫描器，生成AI可
 import os
 import ast
 import json
+import sys
 import yaml
 from pathlib import Path
 from typing import Dict, List, Any
 from datetime import datetime
+
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8', errors='ignore')
 
 class ConfigScanner:
     def __init__(self, project_root: str = None):
@@ -343,7 +347,7 @@ class ConfigScanner:
 def main():
     scanner = ConfigScanner()
     
-    print("🔍 开始扫描项目配置...")
+    print("[SCAN] 开始扫描项目配置...")
     
     # 生成AI可读配置
     config_text = scanner.generate_ai_readable_config()
@@ -351,10 +355,10 @@ def main():
     
     # 保存详细结果
     results_file = scanner.save_scan_results()
-    print(f"\n📄 详细结果已保存到: {results_file}")
+    print(f"\n[SCAN] 详细结果已保存到: {results_file}")
     
     # 输出快速摘要
-    print("\n📊 扫描摘要:")
+    print("\n[SCAN] 扫描摘要:")
     print(f"- 项目结构: {len(scanner.scan_results['project_structure']['directories'])} 个主要目录")
     print(f"- 入口文件: {'✓' if scanner.scan_results['entry_points'] else '✗'}")
     print(f"- API路由: {len(scanner.scan_results['api_routes'])} 个文件")

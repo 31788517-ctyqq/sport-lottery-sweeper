@@ -44,7 +44,7 @@ langchain==0.1.0
 langchain-openai==0.0.5
 langchain-community==0.0.20
 langchain-experimental==0.0.50
-langsmith==0.0.80
+langsmith==0.0.83
 
 # LLM提供商
 openai==1.10.0

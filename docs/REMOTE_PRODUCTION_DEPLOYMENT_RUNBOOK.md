@@ -58,3 +58,27 @@ deploy/remote/renew-certs.sh <域名> <邮箱> /opt/sport-lottery-sweeper
 ```bash
 0 3,15 * * * /opt/sport-lottery-sweeper/deploy/remote/renew-certs.sh <域名> <邮箱> /opt/sport-lottery-sweeper >> /var/log/sls-cert-renew.log 2>&1
 ```
+
+## 6. Rollback (Auto + Manual)
+
+`scripts/deploy/remote-publish.ps1` now creates a backup before each deploy:
+
+- Backup directory: `${RemoteDir}_backups`
+- File pattern: `sls_release_backup_<timestamp>.tar.gz`
+- Retention: latest 5 backups
+- Auto rollback: if remote deploy fails, it restores the previous backup and reruns `setup-prod.sh`
+
+Manual rollback on server:
+
+```bash
+REMOTE_DIR=/opt/sport-lottery-sweeper
+BACKUP_DIR="${REMOTE_DIR}_backups"
+LATEST_BACKUP=$(ls -1t "$BACKUP_DIR"/sls_release_backup_*.tar.gz | head -n 1)
+
+find "$REMOTE_DIR" -mindepth 1 -maxdepth 1 ! -name deploy -exec rm -rf {} +
+tar -xzf "$LATEST_BACKUP" -C "$REMOTE_DIR"
+
+cd "$REMOTE_DIR"
+chmod +x deploy/remote/setup-prod.sh
+./deploy/remote/setup-prod.sh "<domain>" "<certbot-email>" "$REMOTE_DIR"
+```

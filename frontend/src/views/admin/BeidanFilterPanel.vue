@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="beidan-filter-panel">
     <FilterCardHeader 
       :total-results="realTimeMatchCount" 
@@ -187,7 +187,7 @@ import {
   ElButton
 } from 'element-plus'
 import request from '@/utils/request'
-// 绛栫暐璇︽儏缂撳瓨锛歬ey 涓虹瓥鐣ュ悕锛寁alue 涓?filters 鏉′欢
+// 策略详情缓存，key 为策略名，value 为 filters 条件
 
 const strategiesMap = new Map([
   [
@@ -323,10 +323,10 @@ const MULTI_STRATEGY_SELECTION_KEY = 'beidan_multi_strategy_selected'
 const selectedMultiStrategies = ref([])
 const strategyManageTableRef = ref(null)
 
-// 缁熻数据
+// 统计数据
 const statistics = ref({})
 
-// 绀轰緥绛栫暐锛堜粎渚涢瑙堟潯浠讹紝涓嶈嚜鍔ㄥ簲鐢ㄧ瓫閫夛級
+// 示例策略（仅供预览条件，不自动应用筛选）
 const exampleStrategies = {
   strong: {
     powerDiffs: [2, 3],
@@ -366,36 +366,36 @@ const rebuildFilterStrategyOptions = () => {
     : topSaved
 }
 
-// 鐢熷懡鍛ㄦ湡
+// 生命周期
 onMounted(async () => {
   console.log('页面加载，开始初始化...')
   loadSelectedMultiStrategies()
   await loadStrategyOptions()
-  console.log('loadStrategyOptions瀹屾垚锛岃皟鐢╮efreshDateTimeOptions鍓?filterForm.dateTime:', filterForm.dateTime)
+  console.log('loadStrategyOptions 完成，调用 refreshDateTimeOptions 前 filterForm.dateTime:', filterForm.dateTime)
   await refreshDateTimeOptions()
   await fetchRealData(true)
-  // 椤甸潰鍔犺浇鍚庤嚜鍔ㄥ簲鐢ㄧ瓫閫夛紝鏄剧ず鏈€新期号的比赛数据
-  // 鏃犺filterForm.dateTime鏄惁鏈夊€硷紝閮藉皾璇曞簲鐢ㄧ瓫閫夛紙refreshDateTimeOptions浼氳缃渶鏂版湡鍙凤級
-  console.log('椤甸潰鍔犺浇瀹屾垚锛屽皾璇曡嚜鍔ㄥ簲鐢ㄧ瓫閫夛紝鏈熷彿:', filterForm.dateTime)
+  // 页面加载后自动应用筛选，显示最新期号的比赛数据
+  // 无论 filterForm.dateTime 是否有值，都会尝试应用筛选（refreshDateTimeOptions 会设置最新期号）
+  console.log('页面加载完成，尝试自动应用筛选，期号:', filterForm.dateTime)
   console.log('dateTimeOptions:', dateTimeOptions.value)
-  console.log('璋冪敤鍓?strategySelected:', strategySelected.value)
-  console.log('璋冪敤鍓?totalResults:', totalResults.value)
+  console.log('调用前 strategySelected:', strategySelected.value)
+  console.log('调用前 totalResults:', totalResults.value)
   try {
     await applyAdvancedFilter(false)
-    console.log('鑷姩绛涢€夊畬鎴愶紝鎬荤粨鏋滄暟:', totalResults.value)
-    console.log('璋冪敤鍚?strategySelected:', strategySelected.value)
-    console.log('璋冪敤鍚?hasResults:', hasResults.value)
-    console.log('璋冪敤鍚?pagedResults 数量:', pagedResults.value.length)
+    console.log('自动筛选完成，总结果数:', totalResults.value)
+    console.log('调用后 strategySelected:', strategySelected.value)
+    console.log('调用后 hasResults:', hasResults.value)
+    console.log('调用后 pagedResults 数量:', pagedResults.value.length)
   } catch (error) {
-    console.error('鑷姩绛涢€夊け璐?', error)
-    console.error('閿欒璇︽儏:', error.message)
-    console.error('閿欒鏍?', error.stack)
+    console.error('自动筛选失败', error)
+    console.error('错误详情:', error.message)
+    console.error('错误栈:', error.stack)
   }
 })
 
-// 将 powerDiffs 映射到 strength ֵ
+// 将 powerDiffs 映射到 strength 值
 function mapPowerDiffsToStrength(powerDiffs) {
-  // 濡傛灉杈撳叆鏄暟鍊兼暟缁勶紝鐩存帴杩斿洖鍘婚噸鍚庣殑鏁扮粍
+  // 如果输入是数值数组，直接返回去重后的数组
   if (powerDiffs.length > 0 && typeof powerDiffs[0] === 'number') {
     return [...new Set(powerDiffs)];
   }
@@ -414,9 +414,9 @@ function mapPowerDiffsToStrength(powerDiffs) {
   return [...new Set(result)];
 }
 
-// 将 winPanDiffs 映射到 winPan ֵ
+// 将 winPanDiffs 映射到 winPan 值
 function mapWinPanDiffsToWinPan(winPanDiffs) {
-  // 濡傛灉杈撳叆鏄暟鍊兼暟缁勶紝鐩存帴杩斿洖鍘婚噸鍚庣殑鏁扮粍
+  // 如果输入是数值数组，直接返回去重后的数组
   if (winPanDiffs.length > 0 && typeof winPanDiffs[0] === 'number') {
     return [...new Set(winPanDiffs)];
   }

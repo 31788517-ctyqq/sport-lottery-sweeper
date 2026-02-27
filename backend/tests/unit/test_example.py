@@ -27,11 +27,11 @@ def test_list_operations():
 
 class TestExampleClass:
     """示例测试类"""
-    
+
     def test_class_method(self):
         """测试类方法"""
         assert True
-    
+
     def test_with_fixture(self, example_fixture):
         """使用fixture的测试"""
         assert example_fixture == "fixture_data"

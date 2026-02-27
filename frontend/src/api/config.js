@@ -10,8 +10,8 @@ const DEVELOPMENT_CONFIG = {
   BASE_URL: '',
   
   // API版本前缀 - 不需要，由Vite proxy处理
-  API_PREFIX: ''
-  
+  API_PREFIX: '',
+
   // 超时时间（毫秒）
   TIMEOUT: 10000,
   

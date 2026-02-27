@@ -261,7 +261,6 @@ def extract_odds_from_feature(feature_str: str) -> List[float]:
     从特征字符串中提取一赔概率
     例如："一赔概率50%" -> [50.0]
     """
-    import re
     # 查找形如 "XX%" 的数字
     matches = re.findall(r'(\d+)%', feature_str)
     if matches:

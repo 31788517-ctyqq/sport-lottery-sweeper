@@ -16,7 +16,7 @@ from datetime import datetime
 try:
     from backend.database import DATABASE_PATH, DATABASE_URL, SessionLocal
     # DATABASE_PATH 可能是 pathlib.Path 对象，转换为字符串
-    DB_PATH = str(DATABASE_PATH)
+    DB_PATH = os.getenv("DATABASE_PATH", str(DATABASE_PATH))
 except ImportError:
     DATABASE_URL = ""
     SessionLocal = None

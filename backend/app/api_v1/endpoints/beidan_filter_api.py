@@ -572,8 +572,8 @@ async def advanced_filter(
             filtered_matches = _apply_line_id_range(filtered_matches, line_start, line_end)
             base_matches = _apply_line_id_range(base_matches, line_start, line_end)
 
-
         def _normalize_signed(value: Any) -> str:
+
             if value is None:
                 return ""
             text = str(value).strip()
@@ -728,7 +728,8 @@ async def get_strategies(
         # 从数据库获取用户的策略（按更新时间倒序）
         user_strategies = db.query(BeidanStrategy).filter(
             BeidanStrategy.user_id == user_id,
-            BeidanStrategy.is_active == True
+            BeidanStrategy.is_active.is_(True)
+
         ).order_by(BeidanStrategy.updated_at.desc(), BeidanStrategy.id.desc()).all()
 
         strategy_items = []
@@ -760,37 +761,37 @@ async def save_strategy(
         current_user = None
         try:
             current_user = await get_current_user(db=db, token=token)
-        except:
+        except Exception:
             # 如果认证失败，使用默认用户（仅用于开发测试）
             current_user = {"id": "1", "username": "admin", "is_admin": True, "role": "admin"}
             print("⚠️  开发模式：使用默认用户进行策略保存")
-        
+
         user_id = str(current_user["id"])  # 使用用户ID并统一为字符串，避免刷新后查不到
-        username = current_user["username"]  # 保留用户名用于日志
         current_time = datetime.utcnow()
-        
+
         logger.info(f"Received strategy from user {user_id}: {strategy.model_dump()}")
-        
+
         # 优先通过ID查找（如果提供了有效的ID）
         if strategy.id and strategy.id > 0:
             # 通过ID和用户ID查找策略
             existing_strategy = db.query(BeidanStrategy).filter(
                 BeidanStrategy.id == strategy.id,
                 BeidanStrategy.user_id == user_id,
-                BeidanStrategy.is_active == True
+                BeidanStrategy.is_active.is_(True),
             ).first()
-            
+
             if not existing_strategy:
                 raise HTTPException(status_code=404, detail="策略不存在或无权限更新")
-            
+
             # 检查新名称是否与其他策略冲突（同一用户下，排除自身）
             if strategy.name != existing_strategy.name:
                 name_conflict = db.query(BeidanStrategy).filter(
                     BeidanStrategy.name == strategy.name,
                     BeidanStrategy.user_id == user_id,
-                    BeidanStrategy.is_active == True,
-                    BeidanStrategy.id != strategy.id
+                    BeidanStrategy.is_active.is_(True),
+                    BeidanStrategy.id != strategy.id,
                 ).first()
+
                 if name_conflict:
                     raise HTTPException(status_code=400, detail=f"策略名称'{strategy.name}'已被使用")
             
@@ -811,8 +812,9 @@ async def save_strategy(
             existing_strategy = db.query(BeidanStrategy).filter(
                 BeidanStrategy.name == strategy.name,
                 BeidanStrategy.user_id == user_id,
-                BeidanStrategy.is_active == True
+                BeidanStrategy.is_active.is_(True),
             ).first()
+
             
             if existing_strategy:
                 # 更新现有策略
@@ -1106,4 +1108,6 @@ async def get_latest_date_times(db: Session = Depends(get_db)):
             dateTimes=[],
             total=0
         )
+
+
 

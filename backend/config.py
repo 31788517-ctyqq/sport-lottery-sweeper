@@ -155,6 +155,14 @@ class Settings(BaseSettings):
     # --- Redis URL ---
     REDIS_URL: str = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 
+    @field_validator("DEBUG", mode="before")
+    def parse_debug(cls, v):
+        if isinstance(v, str):
+            lowered = v.strip().lower()
+            if lowered in {"release", "prod", "production"}:
+                return False
+        return v
+
     @field_validator("DATABASE_URL", mode='before')
     def validate_database_url(cls, v):
         """Validate database URL and strip unsupported SQLAlchemy pool query params."""
