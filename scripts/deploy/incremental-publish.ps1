@@ -26,8 +26,8 @@ function ConvertTo-ShellSingleQuoted([string]$value) {
   return "'" + $value.Replace("'", "'""'""'") + "'"
 }
 
-function Invoke-CheckedTool([string]$tool, [string[]]$args) {
-  & $tool @args | Out-Host
+function Invoke-CheckedTool([string]$tool, [string[]]$commandArgs) {
+  & $tool @commandArgs | Out-Host
   if ($LASTEXITCODE -ne 0) {
     throw "$tool failed with exit code: $LASTEXITCODE"
   }
@@ -205,7 +205,7 @@ try {
     Set-Content -Path $deleteListPath -Value ($deletePaths -join "`n") -Encoding ascii
 
     if ($uploadPaths.Count -gt 0) {
-      Invoke-CheckedTool -tool "tar" -args @("-czf", $patchTarPath, "-C", $projectRoot, "-T", $uploadListPath)
+      Invoke-CheckedTool -tool "tar" -commandArgs @("-czf", $patchTarPath, "-C", $projectRoot, "-T", $uploadListPath)
     } else {
       Set-Content -Path $patchTarPath -Value "" -Encoding ascii
     }
@@ -216,10 +216,10 @@ try {
 
     $scpCommon = @("-i", $SshKeyPath, "-P", $SshPort) + $commonSshOptions
 
-    Invoke-CheckedTool -tool "scp" -args ($scpCommon + @($uploadListPath, "$UserName@$HostName`:$remoteUploadList"))
-    Invoke-CheckedTool -tool "scp" -args ($scpCommon + @($deleteListPath, "$UserName@$HostName`:$remoteDeleteList"))
+    Invoke-CheckedTool -tool "scp" -commandArgs ($scpCommon + @($uploadListPath, "$UserName@$HostName`:$remoteUploadList"))
+    Invoke-CheckedTool -tool "scp" -commandArgs ($scpCommon + @($deleteListPath, "$UserName@$HostName`:$remoteDeleteList"))
     if ($uploadPaths.Count -gt 0) {
-      Invoke-CheckedTool -tool "scp" -args ($scpCommon + @($patchTarPath, "$UserName@$HostName`:$remotePatchPath"))
+      Invoke-CheckedTool -tool "scp" -commandArgs ($scpCommon + @($patchTarPath, "$UserName@$HostName`:$remotePatchPath"))
     }
 
     $postDeployB64 = ""
@@ -328,7 +328,7 @@ rm -rf "$TMP_BACKUP"
 
     $remoteScriptEncoded = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($remoteScript))
     $remoteExecCmd = "echo '$remoteScriptEncoded' | base64 -d | bash"
-    Invoke-CheckedTool -tool "ssh" -args (@("-i", $SshKeyPath, "-p", $SshPort) + $commonSshOptions + @("$UserName@$HostName", $remoteExecCmd))
+    Invoke-CheckedTool -tool "ssh" -commandArgs (@("-i", $SshKeyPath, "-p", $SshPort) + $commonSshOptions + @("$UserName@$HostName", $remoteExecCmd))
 
     Wait-For-HealthCheck -hostName $HostName -user $UserName -key $SshKeyPath -port $SshPort -sshOptions $commonSshOptions -url $HealthCheckUrl
 
