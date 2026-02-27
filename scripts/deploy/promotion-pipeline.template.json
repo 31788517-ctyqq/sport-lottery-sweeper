@@ -1,5 +1,5 @@
 {
-  "sshKeyPath": "C:/Users/11581/Desktop/cty_gz.pem",
+  "sshKeyPath": "C:/path/to/deploy_key.pem",
   "sshPort": 22,
   "runLocalChecks": true,
   "keepBackups": 10,
