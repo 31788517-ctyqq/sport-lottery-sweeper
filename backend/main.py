@@ -476,6 +476,16 @@ except Exception as e:
 
 
 try:
+    from backend.api.v1.data_source_100qiu import router as data_source_100qiu_router
+    app.include_router(data_source_100qiu_router, prefix="/api/v1/data-source-100qiu", tags=["data-source-100qiu"])
+    logger.info("100qiu data source API routes registered (/api/v1/data-source-100qiu)")
+except Exception as e:
+    logger.error(f"100qiu数据源API路由注册失败: {e}")
+    import traceback
+    logger.error(f"详细堆栈: {traceback.format_exc()}")
+
+
+try:
     from backend.api.v1.admin.crawler_configs import router as crawler_configs_router
     app.include_router(crawler_configs_router, prefix="/api/v1/admin", tags=["crawler-configs"])
     logger.info("Crawler config API routes registered (/api/v1/admin/crawler/config)")
