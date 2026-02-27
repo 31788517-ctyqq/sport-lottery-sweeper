@@ -30,6 +30,68 @@ class SPManagementService:
     
     def __init__(self, db: Session):
         self.db = db
+
+    @staticmethod
+    def _status_to_db(value: Any, default: int = 1) -> int:
+        """Normalize API status values to DB integer status (1=online, 0=offline)."""
+        if value is None:
+            return default
+
+        if isinstance(value, bool):
+            return 1 if value else 0
+
+        if isinstance(value, (int, float)):
+            return 1 if int(value) != 0 else 0
+
+        if isinstance(value, str):
+            normalized = value.strip().lower()
+            if not normalized:
+                return default
+
+            mapping = {
+                "online": 1,
+                "offline": 0,
+                "maintenance": 0,
+                "error": 0,
+                "true": 1,
+                "false": 0,
+                "yes": 1,
+                "no": 0,
+                "on": 1,
+                "off": 0,
+                "enabled": 1,
+                "disabled": 0,
+                "1": 1,
+                "0": 0,
+            }
+            if normalized in mapping:
+                return mapping[normalized]
+
+            if normalized.lstrip("-").isdigit():
+                return 1 if int(normalized) != 0 else 0
+
+        return default
+
+    @staticmethod
+    def _status_to_api(value: Any) -> str:
+        """Normalize DB status values to API string status."""
+        if isinstance(value, str):
+            normalized = value.strip().lower()
+            if normalized in ("online", "offline"):
+                return normalized
+            if normalized in ("1", "true", "yes", "on", "enabled"):
+                return "online"
+            if normalized in ("0", "false", "no", "off", "disabled"):
+                return "offline"
+            return "online"
+
+        if isinstance(value, bool):
+            return "online" if value else "offline"
+
+        if isinstance(value, (int, float)):
+            return "online" if int(value) != 0 else "offline"
+
+        return "online"
     
     # ============================================================================
     # 数据源管理相关方法
@@ -57,7 +119,7 @@ class SPManagementService:
             params_values['type'] = params.type
         if params.status is not None:
             conditions.append("status = :status")
-            params_values['status'] = params.status
+            params_values['status'] = self._status_to_db(params.status)
         if params.search:
             conditions.append("(name LIKE :search OR url LIKE :search)")
             params_values['search'] = f"%{params.search}%"
@@ -106,6 +168,7 @@ class SPManagementService:
             else:
                 status_str = status_val
             
+            status_str = self._status_to_api(row[4])
             source_dict = {
                 'id': row[0],
                 'source_id': row[1] or f"DS{row[0]:03d}",  # 确保source_id被包含
@@ -165,6 +228,7 @@ class SPManagementService:
         else:
             status_str = status_val
         
+        status_str = self._status_to_api(result[4])
         source_dict = {
             'id': result[0],
             'source_id': result[1] or f"DS{result[0]:03d}",
@@ -206,6 +270,7 @@ class SPManagementService:
             # 如果没有提供config，设置为默认的空JSON字符串
             source_dict['config'] = '{}'
         
+        source_dict['status'] = self._status_to_db(source_dict.get('status'))
         source_dict['created_by'] = created_by
         
         # 先不设置source_id，让它为None，稍后在保存后设置
@@ -225,7 +290,7 @@ class SPManagementService:
             'source_id': db_source.source_id or f"DS{db_source.id:03d}",
             'name': db_source.name,
             'type': db_source.type,
-            'status': db_source.status,
+            'status': self._status_to_api(db_source.status),
             'url': db_source.url,
             'config': db_source.config_dict,  # 使用属性获取字典格式的配置
             'last_update': db_source.last_update,
@@ -269,6 +334,15 @@ class SPManagementService:
                     setattr(db_source, field, json.dumps(value, ensure_ascii=False))
                 else:
                     setattr(db_source, field, value)
+            elif field == 'status':
+                setattr(
+                    db_source,
+                    field,
+                    self._status_to_db(
+                        value,
+                        default=self._status_to_db(db_source.status)
+                    )
+                )
             else:
                 setattr(db_source, field, value)
         
@@ -282,7 +356,7 @@ class SPManagementService:
             'source_id': db_source.source_id or f"DS{db_source.id:03d}",
             'name': db_source.name,
             'type': db_source.type,
-            'status': db_source.status if isinstance(db_source.status, str) else ('online' if db_source.status == 1 else 'offline'),
+            'status': self._status_to_api(db_source.status),
             'url': db_source.url,
             'config': db_source.config_dict if hasattr(db_source, 'config_dict') else (json.loads(db_source.config) if db_source.config else {}),
             'last_update': db_source.last_update,
@@ -465,7 +539,17 @@ class SPManagementService:
         
         # 更新字段
         for field, value in update_data.items():
-            setattr(db_source, field, value)
+            if field == "status":
+                setattr(
+                    db_source,
+                    field,
+                    self._status_to_db(
+                        value,
+                        default=self._status_to_db(db_source.status)
+                    )
+                )
+            else:
+                setattr(db_source, field, value)
         
         db_source.updated_at = datetime.now()
         self.db.commit()
