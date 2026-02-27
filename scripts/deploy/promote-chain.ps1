@@ -42,6 +42,37 @@ function Run-LocalGateChecks([string]$projectRoot) {
   }
 }
 
+function Invoke-LocalStageCommand([string]$projectRoot, [string]$command) {
+  Push-Location $projectRoot
+  try {
+    Write-Host "[local-stage] > $command"
+    & powershell -NoProfile -ExecutionPolicy Bypass -Command $command | Out-Host
+    if ($LASTEXITCODE -ne 0) {
+      throw "Local stage command failed (exit $LASTEXITCODE): $command"
+    }
+  } finally {
+    Pop-Location
+  }
+}
+
+function Wait-LocalHealthCheck([string]$url, [int]$maxRetries = 10) {
+  if ([string]::IsNullOrWhiteSpace($url)) {
+    return
+  }
+
+  for ($i = 1; $i -le $maxRetries; $i++) {
+    Write-Host "[local-stage] Health check $i/$maxRetries -> $url"
+    & curl.exe -fsS --max-time 15 $url | Out-Null
+    if ($LASTEXITCODE -eq 0) {
+      Write-Host "[local-stage] Health check passed: $url"
+      return
+    }
+    Start-Sleep -Seconds 6
+  }
+
+  throw "Local stage health check failed: $url"
+}
+
 Require-Command "git"
 
 $scriptDir = (Resolve-Path $PSScriptRoot).Path
@@ -109,6 +140,36 @@ foreach ($stage in $config.stages) {
   $stageName = [string]$stage.name
   if ([string]::IsNullOrWhiteSpace($stageName)) {
     $stageName = "stage-$stageIndex"
+  }
+
+  $isLocalStage = $false
+  if ($null -ne $stage.local) {
+    $isLocalStage = [bool]$stage.local
+  }
+
+  if ($isLocalStage) {
+    $localCommand = [string]$stage.localCommand
+    if ([string]::IsNullOrWhiteSpace($localCommand)) {
+      throw "Local stage '$stageName' requires 'localCommand'."
+    }
+
+    Write-Host "[pipeline] Stage #${stageIndex} -> $stageName (local)"
+    if ($DryRun) {
+      Write-Host "[dry-run] localCommand: $localCommand"
+      if (-not [string]::IsNullOrWhiteSpace([string]$stage.healthCheckUrl)) {
+        Write-Host "[dry-run] healthCheckUrl: $([string]$stage.healthCheckUrl)"
+      }
+      Write-Host "[pipeline] Stage '$stageName' completed."
+      continue
+    }
+
+    Invoke-LocalStageCommand -projectRoot $projectRoot -command $localCommand
+    if (-not [string]::IsNullOrWhiteSpace([string]$stage.healthCheckUrl)) {
+      Wait-LocalHealthCheck -url ([string]$stage.healthCheckUrl)
+    }
+
+    Write-Host "[pipeline] Stage '$stageName' completed."
+    continue
   }
 
   $stageHost = [string]$stage.host

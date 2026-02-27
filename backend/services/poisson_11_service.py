@@ -11,7 +11,7 @@ import requests
 from bs4 import BeautifulSoup, Comment
 
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import delete, func, or_
+from sqlalchemy import delete, func, or_, cast
 
 from backend.models.match import Match
 from backend.models.poisson_11_result import Poisson11Result
@@ -184,6 +184,18 @@ def _normalize_number_key(value: Any) -> str:
         except Exception:
             return m.group(0).lstrip("0") or m.group(0)
     return text
+
+
+def _json_extract_text(db: Session, column: Any, path: str):
+    dialect = getattr(getattr(db, "bind", None), "dialect", None)
+    name = getattr(dialect, "name", "")
+    if name == "postgresql":
+        from sqlalchemy.dialects.postgresql import JSONB
+
+        path_key = path.lstrip("$").strip(".")
+        keys = [key for key in path_key.split(".") if key]
+        return func.jsonb_extract_path_text(cast(column, JSONB), *keys)
+    return func.json_extract(column, path)
 
 
 def _normalize_other_odds_tabs(raw_tabs: Any, fallback_eu: Any = None) -> Dict[str, List[Dict[str, Any]]]:
@@ -1056,12 +1068,16 @@ def scan_for_date(
     date_key = target_date.isoformat()
     query = db.query(Match).options(joinedload(Match.league), joinedload(Match.home_team), joinedload(Match.away_team)).filter(Match.data_source == schedule_source)
     if schedule_source == "yingqiu_bd":
-        query = query.filter(func.json_extract(Match.source_attributes, "$.source_schedule_date") == date_key)
+        query = query.filter(
+            _json_extract_text(db, Match.source_attributes, "$.source_schedule_date")
+            == date_key
+        )
     else:
         query = query.filter(
             or_(
                 Match.match_date == target_date,
-                func.json_extract(Match.source_attributes, "$.source_schedule_date") == date_key,
+                _json_extract_text(db, Match.source_attributes, "$.source_schedule_date")
+                == date_key,
             )
         )
     matches = query.all()

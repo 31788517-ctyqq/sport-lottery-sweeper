@@ -1,6 +1,7 @@
 ﻿"""
-鎯呮姤鏁版嵁澶勭悊浠诲姟
+情报数据处理任务
 """
+
 import logging
 from datetime import datetime, timedelta
 from typing import List, Dict, Any, Optional
@@ -36,11 +37,11 @@ logger = logging.getLogger(__name__)
 @shared_task(base=DatabaseTask, bind=True, name="app.tasks.intelligence_tasks.crawl_intelligence_periodic")
 def crawl_intelligence_periodic(self):
     """
-    瀹氭湡鐖彇鎯呮姤鏁版嵁浠诲姟
-    
-    姣?0鍒嗛挓鎵ц涓€娆★紝鐖彇鏈€鏂扮殑鎯呮姤鏁版嵁
+    定期爬取情报数据任务
+    每30分钟执行一次，爬取最新的情报数据
     """
-    logger.info("寮€濮嬫墽琛屽畾鏈熸儏鎶ユ暟鎹埇鍙栦换鍔?)
+    logger.info("开始执行定期情报数据爬取任务")
+
     
     try:
         db = self.db
@@ -99,38 +100,41 @@ def crawl_intelligence_periodic(self):
 @shared_task(base=DatabaseTask, bind=True, name="app.tasks.intelligence_tasks.update_intelligence_weights")
 def update_intelligence_weights(self):
     """
-    鏇存柊鎯呮姤鏉冮噸浠诲姟
-    
-    姣忓皬鏃舵墽琛屼竴娆★紝閲嶆柊璁＄畻鎵€鏈夋儏鎶ョ殑鏉冮噸
+    更新情报权重任务
+    每小时执行一次，重新计算所有情报的权重
     """
-    logger.info("寮€濮嬫墽琛屾儏鎶ユ潈閲嶆洿鏂颁换鍔?)
-    
+    logger.info("开始执行情报权重更新任务")
+
     try:
         db = self.db
         intelligence_service = IntelligenceService(db)
-        
-        # 鑾峰彇鏈€杩?澶╁唴鐨勬椿璺冩儏鎶?        cutoff_date = datetime.utcnow() - timedelta(days=7)
-        
+
+        # 获取最近7天内的活跃情报
+        cutoff_date = datetime.utcnow() - timedelta(days=7)
+
         intelligence_items = intelligence_service.get_intelligence_by_date_range(
-            cutoff_date, 
+            cutoff_date,
             datetime.utcnow()
         )
-        
+
         updated = 0
         errors = []
-        
+
         for item in intelligence_items:
             try:
-                # 閲嶆柊璁＄畻鏉冮噸
+                # 重新计算权重
                 old_weight = item.calculated_weight
                 new_weight = item.calculate_weight()
-                
-                if abs(new_weight - old_weight) > 0.01:  # 鍙湁鍙樺寲瓒呰繃1%鎵嶆洿鏂?                    item.calculated_weight = new_weight
+
+                if abs(new_weight - old_weight) > 0.01:
+                    item.calculated_weight = new_weight
                     item.updated_at = datetime.utcnow()
                     updated += 1
-                
-                # 姣忔洿鏂?00鏉℃彁浜や竴娆?                if updated % 100 == 0:
+
+                # 每更新100条提交一次
+                if updated % 100 == 0:
                     db.commit()
+
                 
             except Exception as e:
                 errors.append(f"鏇存柊鎯呮姤 {item.id} 鏉冮噸澶辫触: {str(e)}")
@@ -250,15 +254,18 @@ def process_intelligence_batch(self, intelligence_ids: List[int]):
                     errors.append(f"鎯呮姤涓嶅瓨鍦? {intel_id}")
                     continue
                 
-                # 澶勭悊鎯呮姤
+                # 处理情报
                 intelligence_service.process_intelligence(intelligence)
-                
-                # 鏇存柊鐑棬搴?                intelligence.update_popularity()
-                
+
+                # 更新热门度
+                intelligence.update_popularity()
+
                 processed += 1
-                
-                # 姣忓鐞?0鏉℃彁浜や竴娆?                if processed % 50 == 0:
+
+                # 每处理50条提交一次
+                if processed % 50 == 0:
                     db.commit()
+
                 
             except Exception as e:
                 errors.append(f"澶勭悊鎯呮姤 {intel_id} 澶辫触: {str(e)}")
@@ -320,7 +327,8 @@ def deduplicate_intelligence(self, hours_back: int = 24):
             except Exception as e:
                 errors.append(f"鍚堝苟閲嶅鎯呮姤澶辫触: {str(e)}")
         
-        logger.info(f"鎯呮姤鍘婚噸瀹屾垚: 鍚堝苟={merged} 缁勯噸澶嶆儏鎶?)
+        logger.info(f"情报去重完成: 合并={merged} 组重复情报")
+
         
         return {
             "success": True,

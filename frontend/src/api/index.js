@@ -31,6 +31,12 @@ apiClient.interceptors.request.use(
     if (config.data instanceof FormData) {
       config.headers['Content-Type'] = 'multipart/form-data'
     }
+
+    // 规避 baseURL 含 /api 时重复拼接 /api
+    const baseUrl = config.baseURL || apiClient.defaults.baseURL || ''
+    if ((baseUrl.endsWith('/api') || baseUrl.endsWith('/api/')) && config.url?.startsWith('/api/')) {
+      config.url = config.url.replace(/^\/api/, '')
+    }
     
     return config
   },

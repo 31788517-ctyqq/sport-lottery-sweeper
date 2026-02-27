@@ -63,6 +63,12 @@ http.interceptors.request.use(
         _t: Date.now()
       }
     }
+
+    // 规避 baseURL 含 /api 时重复拼接 /api
+    const baseUrl = config.baseURL || ''
+    if ((baseUrl.endsWith('/api') || baseUrl.endsWith('/api/')) && config.url?.startsWith('/api/')) {
+      config.url = config.url.replace(/^\/api/, '')
+    }
     
     return config
   },

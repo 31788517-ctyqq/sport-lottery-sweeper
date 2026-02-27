@@ -34,6 +34,12 @@ Then edit `scripts/deploy/promotion-pipeline.json`:
 - set `healthCheckUrl`
 - set `enabled` for each stage
 
+For local testing/staging stages on the same machine:
+
+- set `"local": true`
+- set `"localCommand"` (for example `python -m pytest`)
+- `host/user/remoteDir` are not required for local stage
+
 ## 2) First-time baseline
 
 Incremental deploy needs baseline commit at remote:
