@@ -104,10 +104,10 @@ if ($LASTEXITCODE -ne 0) {
 $remoteScriptTemplate = @'
 set -euo pipefail
 
-REMOTE_DIR='{0}'
-DEPLOY_DOMAIN='{1}'
-DEPLOY_EMAIL='{2}'
-ARCHIVE_PATH='/tmp/{3}'
+REMOTE_DIR='__REMOTE_DIR__'
+DEPLOY_DOMAIN='__DEPLOY_DOMAIN__'
+DEPLOY_EMAIL='__DEPLOY_EMAIL__'
+ARCHIVE_PATH='/tmp/__ARCHIVE_NAME__'
 BACKUP_DIR="${REMOTE_DIR%/}_backups"
 KEEP_BACKUPS=5
 BACKUP_FILE=""
@@ -122,41 +122,41 @@ else
   echo "[backup] No existing release directory content detected, skipping backup."
 fi
 
-cleanup_old_backups() {{
+cleanup_old_backups() {
   if ! command -v ls >/dev/null 2>&1; then
     return 0
   fi
   mapfile -t backups < <(ls -1t "$BACKUP_DIR"/sls_release_backup_*.tar.gz 2>/dev/null || true)
-  if [ "${{#backups[@]}}" -le "$KEEP_BACKUPS" ]; then
+  if [ "${#backups[@]}" -le "$KEEP_BACKUPS" ]; then
     return 0
   fi
 
-  for old_backup in "${{backups[@]:$KEEP_BACKUPS}}"; do
+  for old_backup in "${backups[@]:$KEEP_BACKUPS}"; do
     rm -f "$old_backup"
   done
-}}
+}
 
-deploy_release() {{
+deploy_release() {
   echo "[publish] Extracting release archive into $REMOTE_DIR"
   tar -xzf "$ARCHIVE_PATH" -C "$REMOTE_DIR"
   cd "$REMOTE_DIR"
   chmod +x deploy/remote/setup-prod.sh
   ./deploy/remote/setup-prod.sh "$DEPLOY_DOMAIN" "$DEPLOY_EMAIL" "$REMOTE_DIR"
-}}
+}
 
-rollback_release() {{
+rollback_release() {
   if [ -z "$BACKUP_FILE" ] || [ ! -f "$BACKUP_FILE" ]; then
     echo "[rollback] No backup file available, cannot rollback automatically."
     return 1
   fi
 
   echo "[rollback] Restoring previous release from: $BACKUP_FILE"
-  find "$REMOTE_DIR" -mindepth 1 -maxdepth 1 ! -name 'deploy' -exec rm -rf {{}} +
+  find "$REMOTE_DIR" -mindepth 1 -maxdepth 1 ! -name 'deploy' -exec rm -rf {} +
   tar -xzf "$BACKUP_FILE" -C "$REMOTE_DIR"
   cd "$REMOTE_DIR"
   chmod +x deploy/remote/setup-prod.sh
   ./deploy/remote/setup-prod.sh "$DEPLOY_DOMAIN" "$DEPLOY_EMAIL" "$REMOTE_DIR"
-}}
+}
 
 if deploy_release; then
   cleanup_old_backups
@@ -174,12 +174,17 @@ else
   exit 1
 fi
 '@
-$remoteScript = $remoteScriptTemplate -f $RemoteDir, $Domain, $CertbotEmail, $archiveName
+$remoteScript = $remoteScriptTemplate.Replace("__REMOTE_DIR__", $RemoteDir).
+  Replace("__DEPLOY_DOMAIN__", $Domain).
+  Replace("__DEPLOY_EMAIL__", $CertbotEmail).
+  Replace("__ARCHIVE_NAME__", $archiveName)
+$remoteScriptEncoded = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($remoteScript))
+$remoteExecCommand = "echo '$remoteScriptEncoded' | base64 -d | bash"
 
 Write-Host "[publish] Running remote deployment..."
 $sshArgs = @("-i", $SshKeyPath, "-p", $SshPort) + $commonSshOptions + @(
   "$UserName@$HostName",
-  $remoteScript
+  $remoteExecCommand
 )
 & ssh @sshArgs | Out-Host
 if ($LASTEXITCODE -ne 0) {
