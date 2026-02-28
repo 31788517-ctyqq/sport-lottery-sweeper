@@ -1,0 +1,99 @@
+{
+  "timestamp": "2026-02-27T09:33:43.876388",
+  "overall_status": "excellent",
+  "services": {
+    "backend": {
+      "status": "healthy",
+      "response_time": 2.065491,
+      "details": "服务正常运行"
+    },
+    "api_docs": {
+      "status": "accessible",
+      "details": "API文档可访问"
+    },
+    "frontend": {
+      "status": "accessible",
+      "response_time": 2.076271,
+      "details": "前端服务可访问"
+    }
+  },
+  "ports": {
+    "frontend": {
+      "port": 3000,
+      "status": "occupied",
+      "accessible": true
+    },
+    "backend": {
+      "port": 8000,
+      "status": "occupied",
+      "accessible": true
+    }
+  },
+  "files": {
+    "present": [
+      "STARTUP_GUIDE.md",
+      "package.json",
+      ".codebuddy/plugin_identities.json",
+      "scripts/smart_start.py",
+      "scripts/config_scanner.py",
+      "scripts/check_ai_compliance.py"
+    ],
+    "missing": [],
+    "total": 6,
+    "present_count": 6,
+    "missing_count": 0,
+    "completeness": 100.0
+  },
+  "dependencies": {
+    "node": {
+      "status": "configured",
+      "dependencies_count": 18,
+      "dev_dependencies_count": 34,
+      "scripts_available": true
+    },
+    "python": {
+      "status": "configured",
+      "requirements_count": 51,
+      "pyproject": "present"
+    },
+    "overall": "ready"
+  },
+  "ai_coordination": {
+    "locks": {
+      "status": "active",
+      "active_locks": 0,
+      "lock_files": []
+    },
+    "plugins": {
+      "status": "configured",
+      "registered_plugins": 5,
+      "plugin_types": [
+        "coder1",
+        "coder2",
+        "tester1",
+        "reviewer1",
+        "analyzer1"
+      ]
+    },
+    "active_plugins": {
+      "status": "active",
+      "registered": 0,
+      "system_metrics": {
+        "total_operations": 0,
+        "successful_operations": 0,
+        "failed_operations": 0,
+        "conflicts_resolved": 0,
+        "average_operation_time": 0
+      }
+    },
+    "overall": "fully_functional"
+  },
+  "score": 90.0,
+  "issues": [],
+  "recommendations": [
+    {
+      "priority": "info",
+      "text": "🎉 项目健康状况优秀！"
+    }
+  ]
+}

@@ -36,6 +36,13 @@ from .draw_training_job import DrawTrainingJob
 from .draw_model_version import DrawModelVersion
 from .draw_prediction_result import DrawPredictionResult
 from .poisson_11_result import Poisson11Result
+from .odds_snapshot import OddsSnapshot
+from .bet_suggestion import BetSuggestion
+from .paper_bet import PaperBet
+from .market_regime_daily import MarketRegimeDaily
+from .risk_killswitch_state import RiskKillSwitchState
+from .external_source_mapping import ExternalSourceMapping
+from .async_task import AsyncTask
 from .llm_provider import LLMProvider, LLMProviderTypeEnum, LLMProviderStatusEnum
 from .log_entry import LogEntry
 from .role import Role
@@ -67,6 +74,13 @@ __all__ = [
     "RequestHeader",
     "IPPool",
     "LLMProvider",
+    "OddsSnapshot",
+    "BetSuggestion",
+    "PaperBet",
+    "MarketRegimeDaily",
+    "RiskKillSwitchState",
+    "ExternalSourceMapping",
+    "AsyncTask",
     "MultiStrategyTask",
     "BeidanBettingScheme",
     "BeidanBettingSchemeItem",

@@ -68,6 +68,14 @@ export function getIpStats() {
   })
 }
 
+export function reconcileIpPool(data = { dry_run: true }) {
+  return request({
+    url: '/api/admin/ip-pools/reconcile',
+    method: 'post',
+    data
+  })
+}
+
 export function exportIpPool() {
   return request({
     url: '/api/admin/ip-pools/export',

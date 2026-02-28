@@ -21,11 +21,13 @@ from fastapi.responses import Response
 from sqlalchemy import case, func, or_
 from sqlalchemy.orm import Session
 
+from backend.config import settings
 from backend.database import get_db
 from backend.models.ip_pool import IPPool
 from backend.models.data_sources import DataSource
 from backend.models.system_config import SystemConfig
 from backend.schemas.ip_pool import IPPoolUpdate
+from backend.services.pool_reconciler_service import PoolReconcilerService
 
 router = APIRouter(prefix="", tags=["ip-pool-adapter"])
 
@@ -66,6 +68,8 @@ def _map_status_for_frontend(status: str) -> str:
         "inactive": "unavailable",
         "banned": "unavailable",
         "pending": "pending",
+        "testing": "pending",
+        "cooling": "cooling",
     }.get(status, "pending")
 
 
@@ -731,6 +735,13 @@ async def get_ip_pool_stats(db: Session = Depends(get_db)):
         active_count = db.query(IPPool).filter(IPPool.status == "active").count()
         inactive_count = db.query(IPPool).filter(IPPool.status == "inactive").count()
         banned_count = db.query(IPPool).filter(IPPool.status == "banned").count()
+        testing_count = db.query(IPPool).filter(IPPool.status == "testing").count()
+        cooling_count = db.query(IPPool).filter(IPPool.status == "cooling").count()
+        pending_count = db.query(IPPool).filter(IPPool.status == "pending").count()
+
+        reconciler = PoolReconcilerService(db)
+        summary = reconciler.summarize_for_api()
+        ip_summary = summary.get("ip", {})
         return {
             "code": 200,
             "data": {
@@ -738,9 +749,34 @@ async def get_ip_pool_stats(db: Session = Depends(get_db)):
                 "active": active_count,
                 "inactive": inactive_count,
                 "banned": banned_count,
+                "pending": pending_count,
+                "testing": testing_count,
+                "cooling": cooling_count,
+                "activeTarget": int(settings.IP_POOL_TARGET_ACTIVE),
+                "standbyTarget": int(settings.IP_POOL_TARGET_STANDBY),
+                "activeGap": int(ip_summary.get("active_gap", max(0, settings.IP_POOL_TARGET_ACTIVE - active_count))),
+                "standbyGap": int(ip_summary.get("standby_gap", max(0, settings.IP_POOL_TARGET_STANDBY - inactive_count))),
+                "capacity": ip_summary,
                 "latest_update": datetime.utcnow().isoformat(),
             },
             "message": "缁熻淇℃伅鑾峰彇鎴愬姛",
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/ip-pools/reconcile")
+async def reconcile_ip_pool(
+    dry_run: bool = Body(True, embed=True),
+    db: Session = Depends(get_db),
+):
+    try:
+        service = PoolReconcilerService(db)
+        result = service.reconcile(dry_run=dry_run)
+        return {
+            "code": 200,
+            "data": result,
+            "message": "IP池调节任务已执行",
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -812,10 +848,18 @@ async def batch_test_ip_pools(ids: List[int] = Body(..., embed=True), db: Sessio
     for pool in pools:
         response_time = random.randint(50, 1000)
         success_rate = random.randint(70, 100)
+        pool.status = "testing"
         pool.latency_ms = response_time
         pool.success_rate = success_rate
         pool.last_checked = now
-        pool.status = "active" if success_rate >= 80 else "inactive"
+        if success_rate >= 80:
+            pool.status = "active"
+            pool.success_count = int(pool.success_count or 0) + 1
+            pool.fail_reason = None
+        else:
+            pool.status = "cooling"
+            pool.failure_count = int(pool.failure_count or 0) + 1
+            pool.fail_reason = f"health_check_low_success_rate_{success_rate}"
         results.append(
             {
                 "id": pool.id,
@@ -941,10 +985,18 @@ async def test_ip_pool_connection(pool_id: int, db: Session = Depends(get_db)):
             raise HTTPException(status_code=404, detail="IP姹犱笉瀛樺湪")
         response_time = random.randint(50, 1000)
         success_rate = random.randint(70, 100)
+        pool.status = "testing"
         pool.latency_ms = response_time
         pool.success_rate = success_rate
         pool.last_checked = datetime.utcnow()
-        pool.status = "active" if success_rate >= 80 else "inactive"
+        if success_rate >= 80:
+            pool.status = "active"
+            pool.success_count = int(pool.success_count or 0) + 1
+            pool.fail_reason = None
+        else:
+            pool.status = "cooling"
+            pool.failure_count = int(pool.failure_count or 0) + 1
+            pool.fail_reason = f"health_check_low_success_rate_{success_rate}"
         db.commit()
         return {
             "code": 200,

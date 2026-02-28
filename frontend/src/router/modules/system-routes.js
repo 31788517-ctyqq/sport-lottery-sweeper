@@ -1,12 +1,12 @@
-﻿// 绯荤粺绠＄悊妯″潡璺敱
+// 系统管理模块路由
 const systemRoutes = [
-  // 宓屽鍦?admin涓嬬殑绯荤粺绠＄悊瀛愯矾鐢?
+  // 嵌套在/admin下的系统管理子路由
   {
     path: 'system',
     name: 'SystemManagement',
     redirect: '/admin/system/config',
     meta: {
-      title: '绯荤粺绠＄悊',
+      title: '系统管理',
       icon: 'Setting',
       roles: ['admin'],
       order: 12
@@ -21,6 +21,17 @@ const systemRoutes = [
           icon: 'setting',
           roles: ['admin'],
           tab: 'config'
+        }
+      },
+      {
+        path: 'entity-mappings',
+        name: 'EntityMappings',
+        component: () => import('@/views/admin/system/EntityMappings.vue'),
+        meta: {
+          title: '实体映射管理',
+          icon: 'map-location',
+          roles: ['admin', 'manager'],
+          keepAlive: true
         }
       },
       {

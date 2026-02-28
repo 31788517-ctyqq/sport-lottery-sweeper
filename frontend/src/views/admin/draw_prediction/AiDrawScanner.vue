@@ -351,7 +351,15 @@ import {
   getBdLeagueOptions
 } from '@/api/drawPrediction'
 
-const queryDate = ref(new Date().toISOString().slice(0, 10))
+const getLocalDateString = () => {
+  const now = new Date()
+  const yyyy = now.getFullYear()
+  const mm = String(now.getMonth() + 1).padStart(2, '0')
+  const dd = String(now.getDate()).padStart(2, '0')
+  return `${yyyy}-${mm}-${dd}`
+}
+
+const queryDate = ref(getLocalDateString())
 const queryIssueNo = ref('')
 const queryLeague = ref('')
 const dataSource = ref('yingqiu_bd')
@@ -360,6 +368,7 @@ const issueOptionsLoading = ref(false)
 const leagueOptions = ref([])
 const leagueOptionsLoading = ref(false)
 const resolvedIssueDates = ref([])
+let leagueOptionsReqSeq = 0
 const loading = ref(false)
 const fetching = ref(false)
 const fetchTaskId = ref('')
@@ -610,10 +619,13 @@ const loadIssueOptions = async () => {
 }
 
 const loadLeagueOptions = async ({ silent = false } = {}) => {
+  const reqSeq = ++leagueOptionsReqSeq
   const issueNo = normalizeIssueNo(queryIssueNo.value)
   if (issueNo && !isValidIssueNo(issueNo)) {
+    if (reqSeq !== leagueOptionsReqSeq) return
     resolvedIssueDates.value = []
     leagueOptions.value = []
+    leagueOptionsLoading.value = false
     if (queryLeague.value) {
       queryLeague.value = ''
     }
@@ -632,12 +644,14 @@ const loadLeagueOptions = async ({ silent = false } = {}) => {
   leagueOptionsLoading.value = true
   try {
     const res = await getBdLeagueOptions(params)
+    if (reqSeq !== leagueOptionsReqSeq) return
     leagueOptions.value = Array.isArray(res?.items) ? res.items : []
     resolvedIssueDates.value = Array.isArray(res?.resolved_issue_dates) ? res.resolved_issue_dates : []
     if (queryLeague.value && !leagueOptions.value.includes(queryLeague.value)) {
       queryLeague.value = ''
     }
   } catch (err) {
+    if (reqSeq !== leagueOptionsReqSeq) return
     console.error('加载赛事选项失败:', err)
     leagueOptions.value = []
     resolvedIssueDates.value = []
@@ -645,8 +659,20 @@ const loadLeagueOptions = async ({ silent = false } = {}) => {
       ElMessage.error('加载赛事选项失败')
     }
   } finally {
-    leagueOptionsLoading.value = false
+    if (reqSeq === leagueOptionsReqSeq) {
+      leagueOptionsLoading.value = false
+    }
   }
+}
+
+const applyPagination = () => {
+  total.value = allItems.value.length
+  const maxPage = Math.max(1, Math.ceil(total.value / pageSize.value))
+  if (currentPage.value > maxPage) {
+    currentPage.value = maxPage
+  }
+  const start = (currentPage.value - 1) * pageSize.value
+  tableData.value = allItems.value.slice(start, start + pageSize.value)
 }
 
 const clearFetchTaskPollTimer = () => {
@@ -732,8 +758,7 @@ const fetchList = async () => {
       : (queryDate.value ? [queryDate.value] : [])
     if (!targetDates.length) {
       allItems.value = []
-      total.value = 0
-      tableData.value = []
+      applyPagination()
       tableKey.value = Date.now()
       return
     }
@@ -760,9 +785,7 @@ const fetchList = async () => {
       .map((item, idx) => ({ ...item, rank: idx + 1 }))
 
     allItems.value = items
-    total.value = allItems.value.length
-    const start = (currentPage.value - 1) * pageSize.value
-    tableData.value = allItems.value.slice(start, start + pageSize.value)
+    applyPagination()
     tableKey.value = Date.now()
   } catch (err) {
     console.error('获取扫盘列表失败:', err)
@@ -813,7 +836,7 @@ const handleQuery = () => {
 }
 
 const resetFilter = () => {
-  queryDate.value = new Date().toISOString().slice(0, 10)
+  queryDate.value = getLocalDateString()
   queryIssueNo.value = ''
   queryLeague.value = ''
   resolvedIssueDates.value = []
@@ -824,12 +847,13 @@ const resetFilter = () => {
 
 const handleSizeChange = (size) => {
   pageSize.value = size
-  fetchList()
+  currentPage.value = 1
+  applyPagination()
 }
 
 const handleCurrentChange = (page) => {
   currentPage.value = page
-  fetchList()
+  applyPagination()
 }
 
 const toDisplayValue = (value, digits = null) => {

@@ -32,9 +32,9 @@ const authAPI = USE_MOCK ? {
   // 使用真实API
       login: async (credentials) => {
         try {
-          console.log('Sending login request to /api/v1/login with credentials:', credentials);
+          console.log('Sending login request to /api/v1/auth/login with credentials:', credentials);
           // 使用带拦截器的request实例
-          const response = await request.post('/api/v1/login', credentials);
+          const response = await request.post('/api/v1/auth/login', credentials);
           console.log('Login response received:', response);
       
       // 将扁平结构转换为前端期望的嵌套结构

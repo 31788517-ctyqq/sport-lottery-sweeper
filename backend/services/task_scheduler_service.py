@@ -4,10 +4,12 @@
 """
 from typing import List, Optional, Dict, Any
 from datetime import datetime, timedelta
+from urllib.parse import urlparse
 from sqlalchemy.orm import Session
 from sqlalchemy import func, and_, desc
 import uuid
 
+from ..config import settings
 from ..models.crawler_config import CrawlerConfig
 from ..models.crawler_tasks import CrawlerTask
 from ..models.crawler_logs import CrawlerTaskLog
@@ -15,6 +17,7 @@ from ..models.headers import RequestHeader
 from ..models.data_source_headers import DataSourceHeader
 from ..models.crawler_task_headers import CrawlerTaskHeader
 from ..models.admin_user import AdminUser
+from ..models.ip_pool import IPPool
 from ..schemas.crawler import (
     CrawlerTaskCreate, CrawlerTaskUpdate, CrawlerTaskResponse
 )
@@ -26,6 +29,45 @@ class TaskSchedulerService(BaseCrawlerService):
     
     # 用于存储运行中任务的线程信息
     _running_tasks = {}
+    _domain_fail_state: Dict[str, Dict[str, Any]] = {}
+
+    @staticmethod
+    def _resolve_domain(url: str) -> str:
+        try:
+            return (urlparse(url).hostname or "").strip().lower()
+        except Exception:
+            return ""
+
+    def _is_domain_circuit_open(self, domain: str) -> bool:
+        if not domain:
+            return False
+        state = self._domain_fail_state.get(domain) or {}
+        open_until = state.get("open_until")
+        if not open_until:
+            return False
+        if datetime.utcnow() >= open_until:
+            state["open_until"] = None
+            state["fail_count"] = 0
+            self._domain_fail_state[domain] = state
+            return False
+        return True
+
+    def _record_domain_result(self, domain: str, *, success: bool, status_code: Optional[int] = None) -> None:
+        if not domain:
+            return
+        now = datetime.utcnow()
+        state = self._domain_fail_state.setdefault(domain, {"fail_count": 0, "open_until": None, "last_status": None})
+        state["last_status"] = status_code
+        if success:
+            state["fail_count"] = 0
+            state["open_until"] = None
+            return
+
+        state["fail_count"] = int(state.get("fail_count", 0)) + 1
+        threshold = max(1, int(settings.REQUEST_DOMAIN_FAILURE_THRESHOLD))
+        if state["fail_count"] >= threshold:
+            cooldown = max(30, int(settings.REQUEST_DOMAIN_COOLDOWN_SECONDS))
+            state["open_until"] = now + timedelta(seconds=cooldown)
 
     def get_tasks(self, status: Optional[str] = None, source_id: Optional[int] = None,
                   page: int = 1, page_size: int = 20) -> List[CrawlerTaskResponse]:
@@ -310,11 +352,20 @@ class TaskSchedulerService(BaseCrawlerService):
         import json
         from datetime import datetime
         from backend.models.matches import FootballMatch
-        
+        used_header_ids: List[int] = []
+        proxy: Optional[IPPool] = None
+        request_meta: Dict[str, Any] = {
+            "proxy_used": None,
+            "proxy_id": None,
+            "header_ids": [],
+            "fallback_reason": None,
+            "used_direct": True,
+        }
+
         try:
             # 使用数据源配置进行请求
             url = source.url
-            used_header_ids: List[int] = []
+            domain = self._resolve_domain(url)
             # 从config_data解析配置
             import ast
             try:
@@ -343,11 +394,67 @@ class TaskSchedulerService(BaseCrawlerService):
             # 添加默认请求头
             if not headers.get("User-Agent"):
                 headers["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-            
-            # 发起请求
-            response = requests.get(url, headers=headers, timeout=timeout)
+
+            if self._is_domain_circuit_open(domain):
+                return {
+                    "status": "FAILED",
+                    "items_processed": 0,
+                    "items_success": 0,
+                    "items_failed": 0,
+                    "success": False,
+                    "message": f"域名熔断中: {domain}",
+                    "request_meta": {
+                        **request_meta,
+                        "domain": domain,
+                        "fallback_reason": "domain_circuit_open",
+                    },
+                }
+
+            proxy = self._choose_proxy_for_request()
+            request_meta = {
+                "proxy_used": f"{proxy.protocol}://{proxy.ip}:{proxy.port}" if proxy else None,
+                "proxy_id": int(proxy.id) if proxy else None,
+                "header_ids": list(used_header_ids),
+                "fallback_reason": None,
+                "used_direct": proxy is None,
+                "domain": domain,
+            }
+
+            request_kwargs: Dict[str, Any] = {"headers": headers, "timeout": timeout}
+            if proxy and settings.REQUEST_USE_PROXY_BY_DEFAULT:
+                proxy_url = f"{proxy.protocol}://{proxy.ip}:{proxy.port}"
+                request_kwargs["proxies"] = {"http": proxy_url, "https": proxy_url}
+            elif not settings.REQUEST_ALLOW_DIRECT_FALLBACK and settings.REQUEST_USE_PROXY_BY_DEFAULT:
+                return {
+                    "status": "FAILED",
+                    "items_processed": 0,
+                    "items_success": 0,
+                    "items_failed": 0,
+                    "success": False,
+                    "message": "无可用代理且不允许直连回退",
+                    "request_meta": {
+                        **request_meta,
+                        "fallback_reason": "proxy_pool_unavailable",
+                    },
+                }
+
+            try:
+                response = requests.get(url, **request_kwargs)
+            except requests.exceptions.RequestException as req_exc:
+                # Proxy-first fallback to direct request once.
+                if request_kwargs.get("proxies") and settings.REQUEST_ALLOW_DIRECT_FALLBACK:
+                    request_meta["fallback_reason"] = "proxy_request_failed_direct_fallback"
+                    request_meta["used_direct"] = True
+                    request_meta["proxy_used"] = None
+                    request_kwargs.pop("proxies", None)
+                    response = requests.get(url, **request_kwargs)
+                else:
+                    raise req_exc
+
             print(f"请求完成，状态码: {response.status_code}")
+            self._record_domain_result(domain, success=response.status_code == 200, status_code=response.status_code)
             self._record_header_usage(used_header_ids, response.status_code == 200)
+            self._record_proxy_usage(proxy, response.status_code == 200)
             
             if response.status_code == 200:
                 # 解析响应数据
@@ -430,7 +537,8 @@ class TaskSchedulerService(BaseCrawlerService):
                             "items_success": success_count,
                             "items_failed": items_count - success_count,
                             "success": True,
-                            "message": f"成功处理了 {items_count} 条数据记录，其中 {success_count} 条成功保存到数据库"
+                            "message": f"成功处理了 {items_count} 条数据记录，其中 {success_count} 条成功保存到数据库",
+                            "request_meta": request_meta,
                         }
                     else:
                         # 对于其他数据源，暂时只统计而不保存
@@ -442,7 +550,8 @@ class TaskSchedulerService(BaseCrawlerService):
                             "items_success": items_count,
                             "items_failed": 0,
                             "success": True,
-                            "message": f"成功处理了 {items_count} 条数据记录"
+                            "message": f"成功处理了 {items_count} 条数据记录",
+                            "request_meta": request_meta,
                         }
                 except ValueError as ve:
                     print(f"响应不是JSON格式: {ve}")
@@ -455,7 +564,8 @@ class TaskSchedulerService(BaseCrawlerService):
                         "items_success": min(content_length, 1),
                         "items_failed": 0,
                         "success": True,
-                        "message": "成功处理了数据，但格式不是JSON"
+                        "message": "成功处理了数据，但格式不是JSON",
+                        "request_meta": request_meta,
                     }
             else:
                 # 请求失败
@@ -466,13 +576,16 @@ class TaskSchedulerService(BaseCrawlerService):
                     "items_success": 0,
                     "items_failed": 0,
                     "success": False,
-                    "message": f"HTTP请求失败，状态码: {response.status_code}"
+                    "message": f"HTTP请求失败，状态码: {response.status_code}",
+                    "request_meta": request_meta,
                 }
                 
         except requests.exceptions.Timeout as te:
             print(f"请求超时: {te}")
             try:
+                self._record_domain_result(self._resolve_domain(source.url), success=False, status_code=None)
                 self._record_header_usage(used_header_ids, False)
+                self._record_proxy_usage(proxy, False)
             except Exception:
                 pass
             return {
@@ -481,12 +594,15 @@ class TaskSchedulerService(BaseCrawlerService):
                 "items_success": 0,
                 "items_failed": 0,
                 "success": False,
-                "message": "请求超时"
+                "message": "请求超时",
+                "request_meta": {**request_meta, "fallback_reason": request_meta.get("fallback_reason") or "request_timeout"},
             }
         except requests.exceptions.RequestException as re:
             print(f"请求异常: {re}")
             try:
+                self._record_domain_result(self._resolve_domain(source.url), success=False, status_code=None)
                 self._record_header_usage(used_header_ids, False)
+                self._record_proxy_usage(proxy, False)
             except Exception:
                 pass
             return {
@@ -495,7 +611,8 @@ class TaskSchedulerService(BaseCrawlerService):
                 "items_success": 0,
                 "items_failed": 0,
                 "success": False,
-                "message": f"请求异常: {str(re)}"
+                "message": f"请求异常: {str(re)}",
+                "request_meta": {**request_meta, "fallback_reason": request_meta.get("fallback_reason") or "request_exception"},
             }
         except Exception as e:
             print(f"执行异常: {e}")
@@ -507,7 +624,8 @@ class TaskSchedulerService(BaseCrawlerService):
                 "items_success": 0,
                 "items_failed": 0,
                 "success": False,
-                "message": f"执行异常: {str(e)}"
+                "message": f"执行异常: {str(e)}",
+                "request_meta": {**request_meta, "fallback_reason": request_meta.get("fallback_reason") or "unexpected_exception"},
             }
 
     def _process_hundred_qiu_data(self, item):
@@ -598,6 +716,8 @@ class TaskSchedulerService(BaseCrawlerService):
     def _get_bound_headers(self, task_id: int, data_source_id: int) -> (Dict[str, str], List[int]):
         header_map: Dict[str, Dict[str, Any]] = {}
         used_ids = set()
+        reuse_seconds = max(0, int(settings.REQUEST_PROXY_REUSE_MIN_SECONDS))
+        recent_before = datetime.utcnow() - timedelta(seconds=reuse_seconds) if reuse_seconds > 0 else None
 
         data_source_bindings = (
             self.db.query(DataSourceHeader, RequestHeader)
@@ -611,6 +731,8 @@ class TaskSchedulerService(BaseCrawlerService):
             if header.status != "enabled":
                 continue
             priority = binding.priority_override if binding.priority_override is not None else header.priority
+            if recent_before and header.last_used and header.last_used >= recent_before:
+                priority = int(priority or 0) - 10
             existing = header_map.get(header.name)
             if not existing or priority >= existing["priority"]:
                 header_map[header.name] = {"value": header.value, "priority": priority, "id": header.id}
@@ -627,6 +749,8 @@ class TaskSchedulerService(BaseCrawlerService):
             if header.status != "enabled":
                 continue
             priority = binding.priority_override if binding.priority_override is not None else header.priority
+            if recent_before and header.last_used and header.last_used >= recent_before:
+                priority = int(priority or 0) - 10
             # 任务绑定优先
             header_map[header.name] = {"value": header.value, "priority": priority, "id": header.id}
 
@@ -646,6 +770,47 @@ class TaskSchedulerService(BaseCrawlerService):
             if success:
                 header.success_count = (header.success_count or 0) + 1
             header.last_used = now
+        self.db.commit()
+
+    def _choose_proxy_for_request(self) -> Optional[IPPool]:
+        reuse_seconds = max(0, int(settings.REQUEST_PROXY_REUSE_MIN_SECONDS))
+        base_query = self.db.query(IPPool).filter(IPPool.status.in_(["active", "testing"]))
+
+        if reuse_seconds > 0:
+            recent_before = datetime.utcnow() - timedelta(seconds=reuse_seconds)
+            preferred = (
+                base_query.filter(and_(IPPool.last_used.isnot(None), IPPool.last_used < recent_before))
+                .order_by(IPPool.last_used.asc(), IPPool.updated_at.asc(), IPPool.id.asc())
+                .first()
+            )
+            if preferred:
+                return preferred
+
+            never_used = (
+                base_query.filter(IPPool.last_used.is_(None))
+                .order_by(IPPool.updated_at.asc(), IPPool.id.asc())
+                .first()
+            )
+            if never_used:
+                return never_used
+
+        return base_query.order_by(IPPool.last_used.asc(), IPPool.updated_at.asc(), IPPool.id.asc()).first()
+
+    def _record_proxy_usage(self, proxy: Optional[IPPool], success: bool) -> None:
+        if not proxy:
+            return
+
+        proxy.last_used = datetime.utcnow()
+        if success:
+            proxy.success_count = int(proxy.success_count or 0) + 1
+            proxy.fail_reason = None
+            proxy.status = "active"
+        else:
+            proxy.failure_count = int(proxy.failure_count or 0) + 1
+            proxy.fail_reason = "request_failed"
+            fail_count = int(proxy.failure_count or 0)
+            threshold = max(1, int(settings.IP_POOL_FAILURES_BEFORE_COOLING))
+            proxy.status = "cooling" if fail_count >= threshold else "testing"
         self.db.commit()
 
     def _execute_task_logic(self, task: CrawlerTask) -> Dict[str, Any]:

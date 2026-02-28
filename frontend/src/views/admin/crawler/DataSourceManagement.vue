@@ -36,6 +36,33 @@
       </el-col>
     </el-row>
 
+    <el-row :gutter="20" style="margin-bottom: 20px;">
+      <el-col :span="8">
+        <el-card shadow="hover">
+          <div class="stat-card">
+            <div class="stat-value">{{ poolHealth.ipActive }}/{{ poolHealth.ipTarget }}</div>
+            <div class="stat-label">IP可用/目标（缺口 {{ poolHealth.ipGap }}）</div>
+          </div>
+        </el-card>
+      </el-col>
+      <el-col :span="8">
+        <el-card shadow="hover">
+          <div class="stat-card">
+            <div class="stat-value">{{ poolHealth.headerDomains }}/{{ poolHealth.lowQualityHeaders }}</div>
+            <div class="stat-label">Headers域名数/低质量总数</div>
+          </div>
+        </el-card>
+      </el-col>
+      <el-col :span="8">
+        <el-card shadow="hover">
+          <div class="stat-card">
+            <div class="stat-value">{{ poolHealth.bindingCoverage }}%</div>
+            <div class="stat-label">数据源Header绑定覆盖率</div>
+          </div>
+        </el-card>
+      </el-col>
+    </el-row>
+
     <!-- 工具栏和筛选栏 -->
     <el-card class="box-card" style="margin-bottom: 20px;">
       <div class="toolbar">
@@ -282,7 +309,8 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox, ElForm, ElFormItem, ElInput, ElSelect, ElOption, ElSwitch, ElDialog, ElTabs, ElTabPane } from 'element-plus'
-import { bindHeadersToDataSource, getHeaderBindings, getHeadersList, unbindHeadersFromDataSource } from '@/api/headers'
+import { bindHeadersToDataSource, getHeaderBindings, getHeadersList, getHeaderStats, unbindHeadersFromDataSource } from '@/api/headers'
+import { getIpStats } from '@/api/ipPool'
 
 const tableData = ref([])
 const fetchingIds = ref([])
@@ -304,6 +332,14 @@ const stats = ref({
   online: 0,
   offline: 0,
   errorRate: 0
+})
+const poolHealth = ref({
+  ipActive: 0,
+  ipTarget: 0,
+  ipGap: 0,
+  headerDomains: 0,
+  lowQualityHeaders: 0,
+  bindingCoverage: 0
 })
 
 // 筛选条件
@@ -351,26 +387,52 @@ const loadData = async () => {
     if (filters.value.search) queryParams.push(`search=${encodeURIComponent(filters.value.search)}`)
     
     const queryString = queryParams.length > 0 ? '?' + queryParams.join('&') : ''
-    const url = `/api/admin/sources${queryString}`
+    const url = `/api/v1/admin/crawler/sources${queryString}`
     
     const response = await fetch(url, {
       method: 'GET',
       credentials: 'include'
     })
     const data = await response.json()
+    const listData = Array.isArray(data) ? data : (data.data?.items || data.items || [])
+    const totalCount = Array.isArray(data) ? listData.length : (data.data?.total || data.total || listData.length)
+    const ok = response.ok && (Array.isArray(data) || data.success || data.code === 200)
     
-    if (data.success) {
-      tableData.value = data.data?.items || []
-      total.value = data.data?.total || 0
+    if (ok) {
+      tableData.value = listData
+      total.value = totalCount
       
       // 计算统计数据
-      calculateStats(data.data?.items || [])
+      calculateStats(listData)
+      loadPoolHealth()
     } else {
-      throw new Error('加载失败')
+      throw new Error(data?.message || '加载失败')
     }
   } catch (error) {
     ElMessage.error('加载数据失败')
     console.error('加载数据失败:', error)
+  }
+}
+
+const loadPoolHealth = async () => {
+  try {
+    const [ipRes, headerRes] = await Promise.all([getIpStats(), getHeaderStats()])
+    const ipPayload = ipRes?.data || ipRes || {}
+    const ipData = ipPayload?.data || ipPayload || {}
+    const headerPayload = headerRes?.data || headerRes || {}
+    const headerData = headerPayload?.data || headerPayload || {}
+    const coverage = headerData.capacity?.bindings_coverage || {}
+
+    poolHealth.value = {
+      ipActive: Number(ipData.active || 0),
+      ipTarget: Number(ipData.activeTarget || 0),
+      ipGap: Number(ipData.activeGap || 0),
+      headerDomains: Number(headerData.capacity?.domains_count || 0),
+      lowQualityHeaders: Number(headerData.capacity?.low_quality_total || 0),
+      bindingCoverage: Number(coverage.coverage_rate || 0)
+    }
+  } catch (error) {
+    console.error('加载池健康摘要失败:', error)
   }
 }
 
@@ -795,7 +857,7 @@ const checkHealth = async (row) => {
 const handleFetch = async (row) => {
   fetchingIds.value.push(row.id)
   try {
-    const response = await fetch(`/api/data-source-100qiu/${row.id}/fetch`, {
+    const response = await fetch(`/api/v1/data-source-100qiu/${row.id}/fetch`, {
       method: 'POST',
       credentials: 'include'
     })

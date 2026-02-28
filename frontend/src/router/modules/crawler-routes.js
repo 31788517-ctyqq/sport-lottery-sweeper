@@ -80,6 +80,17 @@ const crawlerRoutes = [
           icon: 'monitor',
           roles: ['admin', 'manager']
         }
+      },
+      {
+        path: 'official-info',
+        name: 'OfficialInfoManagement',
+        component: () => import('@/views/admin/crawler/OfficialInfoManagement.vue'),
+        meta: {
+          title: '官方信息管理',
+          icon: 'link',
+          roles: ['admin', 'manager'],
+          keepAlive: true
+        }
       }
     ]
   }

@@ -22,3 +22,5 @@ __all__ = [
     'create_captcha_solver',
     'integrate_with_scraper'
 ]
+
+# Services package

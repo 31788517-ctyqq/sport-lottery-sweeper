@@ -958,120 +958,120 @@
 
 目标：先看清楚当前池健康与缺口，不触发自动补齐，避免误操作。
 
-- [ ] 文件：`backend/config.py`
-- [ ] 任务：新增第21章配置项（目标活跃IP、headers最小比、巡检周期）。
-- [ ] 验收：服务启动后可读取配置，日志打印生效值。
+- [x] 文件：`backend/config.py`
+- [x] 任务：新增第21章配置项（目标活跃IP、headers最小比、巡检周期）。
+- [x] 验收：服务启动后可读取配置，日志打印生效值。
 
-- [ ] 文件：`backend/models/ip_pool.py`
-- [ ] 任务：补齐池状态字段映射（active/standby/cooling/banned）与索引需求评估。
-- [ ] 验收：可按状态快速统计数量。
+- [x] 文件：`backend/models/ip_pool.py`
+- [x] 任务：补齐池状态字段映射（active/standby/cooling/banned）与索引需求评估。
+- [x] 验收：可按状态快速统计数量。
 
-- [ ] 文件：`backend/models/headers.py`
-- [ ] 任务：确认可用字段支持质量评分（usage_count/success_count/last_used）。
-- [ ] 验收：可计算每域名header成功率。
+- [x] 文件：`backend/models/headers.py`
+- [x] 任务：确认可用字段支持质量评分（usage_count/success_count/last_used）。
+- [x] 验收：可计算每域名header成功率。
 
-- [ ] 文件：`backend/api/v1/ip_pool_adapter.py`
-- [ ] 任务：增加“容量视图”响应字段（active_count/standby_count/target_gap）。
-- [ ] 验收：IP池页面可显示“当前 vs 目标”。
+- [x] 文件：`backend/api/v1/ip_pool_adapter.py`
+- [x] 任务：增加“容量视图”响应字段（active_count/standby_count/target_gap）。
+- [x] 验收：IP池页面可显示“当前 vs 目标”。
 
-- [ ] 文件：`backend/api/v1/admin/headers_management.py`
-- [ ] 任务：增加“域名维度统计”接口字段（active_headers、low_quality_headers）。
-- [ ] 验收：Headers页面可显示每域名可用头数量。
+- [x] 文件：`backend/api/v1/admin/headers_management.py`
+- [x] 任务：增加“域名维度统计”接口字段（active_headers、low_quality_headers）。
+- [x] 验收：Headers页面可显示每域名可用头数量。
 
-- [ ] 文件：`docs/`
-- [ ] 任务：新增巡检报表模板（每5分钟快照、每小时汇总）。
-- [ ] 验收：有固定报表字段与阈值。
+- [x] 文件：`docs/`
+- [x] 任务：新增巡检报表模板（每5分钟快照、每小时汇总）。
+- [x] 验收：有固定报表字段与阈值。
 
 ### 22.2 迭代S2：Reconciler框架上线（可告警，不补齐）
 
 目标：实现自动对比目标与现状，先告警不执行。
 
-- [ ] 文件：`backend/services/pool_reconciler_service.py`（新建）
-- [ ] 任务：实现 `reconcile(dry_run=True)`，输出每域名缺口计划。
-- [ ] 输出：`ip_gap`、`header_gap`、`risk_level`、`recommended_actions`。
-- [ ] 验收：dry_run日志可稳定输出，未对库数据做修改。
+- [x] 文件：`backend/services/pool_reconciler_service.py`（新建）
+- [x] 任务：实现 `reconcile(dry_run=True)`，输出每域名缺口计划。
+- [x] 输出：`ip_gap`、`header_gap`、`risk_level`、`recommended_actions`。
+- [x] 验收：dry_run日志可稳定输出，未对库数据做修改。
 
-- [ ] 文件：`backend/tasks/simple_celery.py`
-- [ ] 任务：注册 `pool.reconcile` 定时任务（默认dry_run）。
-- [ ] 验收：任务按周期执行，队列可见。
+- [x] 文件：`backend/tasks/simple_celery.py`
+- [x] 任务：注册 `pool.reconcile` 定时任务（默认dry_run）。
+- [x] 验收：任务按周期执行，队列可见。
 
-- [ ] 文件：`backend/tasks/`（新建 `pool_reconcile_tasks.py`）
-- [ ] 任务：封装Celery任务入口，支持 `dry_run` 开关。
-- [ ] 验收：手工触发和定时触发结果一致。
+- [x] 文件：`backend/tasks/`（新建 `pool_reconcile_tasks.py`）
+- [x] 任务：封装Celery任务入口，支持 `dry_run` 开关。
+- [x] 验收：手工触发和定时触发结果一致。
 
-- [ ] 文件：`docs/CRAWLER_HEADERS_IPPOOL_ROLLOUT.md`（新建）
-- [ ] 任务：记录S2阶段只告警策略与回滚方式。
-- [ ] 验收：值班人员可按文档执行。
+- [x] 文件：`docs/CRAWLER_HEADERS_IPPOOL_ROLLOUT.md`（新建）
+- [x] 任务：记录S2阶段只告警策略与回滚方式。
+- [x] 验收：值班人员可按文档执行。
 
 ### 22.3 迭代S3：IP池自动补齐闭环
 
 目标：当活跃IP低于阈值时，自动补IP并晋升到活跃池。
 
-- [ ] 文件：`backend/services/pool_reconciler_service.py`
-- [ ] 任务：实现 `ip_pool.replenish` 动作编排（从来源抓取 -> 入库 -> 测试 -> 晋升）。
-- [ ] 验收：缺口出现时，IP数量可自动回升到目标区间。
+- [x] 文件：`backend/services/pool_reconciler_service.py`
+- [x] 任务：实现 `ip_pool.replenish` 动作编排（从来源抓取 -> 入库 -> 测试 -> 晋升）。
+- [x] 验收：缺口出现时，IP数量可自动回升到目标区间。
 
-- [ ] 文件：`backend/tasks/ip_pool_refresh.py`
-- [ ] 任务：支持按“目标缺口”动态抓取页数/数量，不再固定参数。
-- [ ] 验收：补齐速度与缺口大小匹配。
+- [x] 文件：`backend/tasks/ip_pool_refresh.py`
+- [x] 任务：支持按“目标缺口”动态抓取页数/数量，不再固定参数。
+- [x] 验收：补齐速度与缺口大小匹配。
 
-- [ ] 文件：`backend/api/v1/ip_pool_adapter.py`
-- [ ] 任务：补充批量健康检查与状态迁移接口（active/standby/cooling）。
-- [ ] 验收：可通过接口看到IP状态机流转。
+- [x] 文件：`backend/api/v1/ip_pool_adapter.py`
+- [x] 任务：补充批量健康检查与状态迁移接口（active/standby/cooling）。
+- [x] 验收：可通过接口看到IP状态机流转。
 
-- [ ] 文件：`backend/services/task_scheduler_service.py`
-- [ ] 任务：新增“无可用IP时回退直连”策略开关判定。
-- [ ] 验收：代理池异常不会导致任务整体阻塞。
+- [x] 文件：`backend/services/task_scheduler_service.py`
+- [x] 任务：新增“无可用IP时回退直连”策略开关判定。
+- [x] 验收：代理池异常不会导致任务整体阻塞。
 
 ### 22.4 迭代S4：Headers池自动补齐与自动绑定
 
 目标：保证每域名 headers 数量与质量达标，并自动绑定到数据源/任务。
 
-- [ ] 文件：`backend/services/headers_pool_service.py`（新建）
-- [ ] 任务：实现 headers 质量评分、低分回收、缺口补齐（模板生成或导入）。
-- [ ] 验收：每域名 `active_headers >= active_ip * 3`。
+- [x] 文件：`backend/services/headers_pool_service.py`（新建）
+- [x] 任务：实现 headers 质量评分、低分回收、缺口补齐（模板生成或导入）。
+- [x] 验收：每域名 `active_headers >= active_ip * 3`。
 
-- [ ] 文件：`backend/api/v1/admin/headers_management.py`
-- [ ] 任务：新增“批量自动绑定”接口（按域名、优先级）。
-- [ ] 验收：可自动为数据源补齐主/备headers绑定。
+- [x] 文件：`backend/api/v1/admin/headers_management.py`
+- [x] 任务：新增“批量自动绑定”接口（按域名、优先级）。
+- [x] 验收：可自动为数据源补齐主/备headers绑定。
 
-- [ ] 文件：`backend/models/data_source_headers.py`
-- [ ] 任务：校验唯一性与优先级策略，避免重复绑定。
-- [ ] 验收：同一 data_source + header 不重复。
+- [x] 文件：`backend/models/data_source_headers.py`
+- [x] 任务：校验唯一性与优先级策略，避免重复绑定。
+- [x] 验收：同一 data_source + header 不重复。
 
-- [ ] 文件：`backend/services/task_scheduler_service.py`
-- [ ] 任务：绑定缺失时自动降级使用默认headers并记录告警。
-- [ ] 验收：任务不中断，日志可追踪。
+- [x] 文件：`backend/services/task_scheduler_service.py`
+- [x] 任务：绑定缺失时自动降级使用默认headers并记录告警。
+- [x] 验收：任务不中断，日志可追踪。
 
 ### 22.5 迭代S5：调度联动与防封策略闭环
 
 目标：池容量达标与请求调度联动，稳定控制403/429。
 
-- [ ] 文件：`backend/services/task_scheduler_service.py`
-- [ ] 任务：接入 `IP + Header` 组合复用间隔、失败分型退避、域名熔断。
-- [ ] 验收：429/403在高峰期可控，失败后自动降频。
+- [x] 文件：`backend/services/task_scheduler_service.py`
+- [x] 任务：接入 `IP + Header` 组合复用间隔、失败分型退避、域名熔断。
+- [x] 验收：429/403在高峰期可控，失败后自动降频。
 
-- [ ] 文件：`backend/api/v1/admin/lottery_schedule.py`
-- [ ] 任务：北单详情补抓链路记录 `proxy_used/header_ids/fallback_reason`。
-- [ ] 验收：可审计每次抓取走向。
+- [x] 文件：`backend/api/v1/admin/lottery_schedule.py`
+- [x] 任务：北单详情补抓链路记录 `proxy_used/header_ids/fallback_reason`。
+- [x] 验收：可审计每次抓取走向。
 
-- [ ] 文件：`backend/api/v1/data_source_100qiu.py`
-- [ ] 任务：100球抓取链路接入同样日志与failover策略。
-- [ ] 验收：100球“获取”稳定性提升，失败可回退。
+- [x] 文件：`backend/api/v1/data_source_100qiu.py`
+- [x] 任务：100球抓取链路接入同样日志与failover策略。
+- [x] 验收：100球“获取”稳定性提升，失败可回退。
 
 ### 22.6 前端配套任务（可视化与运维可用性）
 
-- [ ] 文件：`frontend/src/views/admin/crawler/IpPoolManagement.vue`
-- [ ] 任务：新增“目标值/当前值/缺口”展示与状态色标。
-- [ ] 验收：可直接看到是否达标。
+- [x] 文件：`frontend/src/views/admin/crawler/IpPoolManagement.vue`
+- [x] 任务：新增“目标值/当前值/缺口”展示与状态色标。
+- [x] 验收：可直接看到是否达标。
 
-- [ ] 文件：`frontend/src/views/admin/crawler/HeadersManagement.vue`
-- [ ] 任务：新增域名维度“可用headers/低质量headers/绑定覆盖率”看板。
-- [ ] 验收：能定位是哪类headers不足。
+- [x] 文件：`frontend/src/views/admin/crawler/HeadersManagement.vue`
+- [x] 任务：新增域名维度“可用headers/低质量headers/绑定覆盖率”看板。
+- [x] 验收：能定位是哪类headers不足。
 
-- [ ] 文件：`frontend/src/views/admin/crawler/DataSourceManagement.vue`
-- [ ] 任务：新增数据源级“池健康摘要”（IP可用、headers可用、降级状态）。
-- [ ] 验收：业务侧能判断是否需要手动干预。
+- [x] 文件：`frontend/src/views/admin/crawler/DataSourceManagement.vue`
+- [x] 任务：新增数据源级“池健康摘要”（IP可用、headers可用、降级状态）。
+- [x] 验收：业务侧能判断是否需要手动干预。
 
 ### 22.7 统一验收清单（S1-S5完成后）
 
@@ -1090,9 +1090,9 @@
 
 ### 22.9 文档更新责任
 
-- [ ] 每个迭代结束后，更新本文件对应勾选项。
+- [x] 每个迭代结束后，更新本文件对应勾选项。
 - [ ] 每个阈值调整后，更新第21章“容量基线”和第22章“验收结果”。
-- [ ] 每次生产变更后，在 `docs/CHANGELOG.md` 追加记录。
+- [x] 每次生产变更后，在 `docs/CHANGELOG.md` 追加记录。
 
 ### 22.10 每周PR清单（PR-1/2/3）+ 验收用例
 

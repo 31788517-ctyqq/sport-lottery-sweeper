@@ -291,7 +291,15 @@ import {
 
 const VALUE_MARGIN = 0.08
 
-const queryDate = ref(new Date().toISOString().slice(0, 10))
+const getLocalDateString = () => {
+  const now = new Date()
+  const yyyy = now.getFullYear()
+  const mm = String(now.getMonth() + 1).padStart(2, '0')
+  const dd = String(now.getDate()).padStart(2, '0')
+  return `${yyyy}-${mm}-${dd}`
+}
+
+const queryDate = ref(getLocalDateString())
 const dataSource = ref('yingqiu_bd')
 const queryIssueNo = ref('')
 const queryLeague = ref('')
@@ -308,6 +316,7 @@ const issueOptionsLoading = ref(false)
 const leagueOptions = ref([])
 const leagueOptionsLoading = ref(false)
 const resolvedIssueDates = ref([])
+let leagueOptionsReqSeq = 0
 
 const detailVisible = ref(false)
 const detailData = ref(null)
@@ -855,6 +864,10 @@ const isValidIssueNo = (value) => /^\d{5}$/.test(normalizeIssueNo(value))
 
 const refreshCurrentPageData = () => {
   total.value = allItems.value.length
+  const maxPage = Math.max(1, Math.ceil(total.value / pageSize.value))
+  if (currentPage.value > maxPage) {
+    currentPage.value = maxPage
+  }
   const start = (currentPage.value - 1) * pageSize.value
   tableData.value = allItems.value.slice(start, start + pageSize.value)
   tableKey.value = Date.now()
@@ -938,10 +951,13 @@ const loadIssueOptions = async () => {
 }
 
 const loadLeagueOptions = async ({ silent = false } = {}) => {
+  const reqSeq = ++leagueOptionsReqSeq
   const issueNo = normalizeIssueNo(queryIssueNo.value)
   if (issueNo && !isValidIssueNo(issueNo)) {
+    if (reqSeq !== leagueOptionsReqSeq) return
     resolvedIssueDates.value = []
     leagueOptions.value = []
+    leagueOptionsLoading.value = false
     if (queryLeague.value) queryLeague.value = ''
     return
   }
@@ -958,18 +974,22 @@ const loadLeagueOptions = async ({ silent = false } = {}) => {
   leagueOptionsLoading.value = true
   try {
     const res = await getBdLeagueOptions(params)
+    if (reqSeq !== leagueOptionsReqSeq) return
     leagueOptions.value = Array.isArray(res?.items) ? res.items : []
     resolvedIssueDates.value = Array.isArray(res?.resolved_issue_dates) ? res.resolved_issue_dates : []
     if (queryLeague.value && !leagueOptions.value.includes(queryLeague.value)) {
       queryLeague.value = ''
     }
   } catch (err) {
+    if (reqSeq !== leagueOptionsReqSeq) return
     console.error('加载赛事选项失败:', err)
     leagueOptions.value = []
     resolvedIssueDates.value = []
     if (!silent) ElMessage.error('加载赛事选项失败')
   } finally {
-    leagueOptionsLoading.value = false
+    if (reqSeq === leagueOptionsReqSeq) {
+      leagueOptionsLoading.value = false
+    }
   }
 }
 
@@ -1080,7 +1100,7 @@ const handleQuery = () => {
 }
 
 const resetFilter = () => {
-  queryDate.value = new Date().toISOString().slice(0, 10)
+  queryDate.value = getLocalDateString()
   dataSource.value = 'yingqiu_bd'
   queryIssueNo.value = ''
   queryLeague.value = ''

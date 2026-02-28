@@ -115,7 +115,7 @@ const updateGauge = () => {
           }
         },
         axisLabel: {
-          color: 'auto',
+          color: 'inherit',
           distance: 30,
           fontSize: 12
         },

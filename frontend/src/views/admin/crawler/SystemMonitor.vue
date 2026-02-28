@@ -106,7 +106,7 @@
                   </div>
                   <div class="task-progress">
                     <el-progress 
-                      :percentage="task.progress || 0" 
+                      :percentage="normalizeProgress(task.progress)" 
                       :status="getProgressStatus(task.status)"
                       :stroke-width="6"
                     />
@@ -268,6 +268,7 @@ import { ref, reactive, onMounted, onUnmounted, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Refresh, VideoPlay, Top, Bottom } from '@element-plus/icons-vue'
 import * as echarts from 'echarts'
+import ResourceGauge from '@/components/common/ResourceGauge.vue'
 // AI_WORKING: coder1 @2026-02-04T18:38:22 - 修复导入错误：将getSystemHealth改为getHealthStatus，getSystemResources改为getResourcesUsage
 import { 
   getHealthStatus, 
@@ -434,20 +435,99 @@ const getStatusText = (status) => {
 // 获取进度状态
 const getProgressStatus = (status) => {
   const statuses = {
-    'RUNNING': 'success',
-    'SUCCESS': 'success',
-    'FAILED': 'exception',
-    'PENDING': 'warning'
+    RUNNING: 'success',
+    SUCCESS: 'success',
+    FAILED: 'exception',
+    PENDING: 'warning',
+    CANCELLED: 'warning'
   }
-  return statuses[status] || 'normal'
+  return statuses[String(status || '').toUpperCase()] || ''
+}
+
+const normalizeProgress = (value) => {
+  const n = Number(value)
+  if (!Number.isFinite(n)) return 0
+  if (n < 0) return 0
+  if (n > 100) return 100
+  return Math.round(n)
+}
+
+const unwrapApiData = (res) => {
+  if (!res || typeof res !== 'object') return {}
+  return Object.prototype.hasOwnProperty.call(res, 'data') ? (res.data || {}) : res
 }
 
 // 加载健康状态数据
 const loadHealthStatus = async () => {
   try {
     const res = await getHealthStatus()  // AI_MODIFIED: coder1 @2026-02-04T18:38:22
-    // TODO: 根据实际API返回格式处理数据
-    console.log('Health status:', res.data)
+    const payload = unwrapApiData(res)
+    const systemHealth = payload.systemHealth || {}
+    const crawlerHealth = payload.crawlerHealth || {}
+
+    const cpu = normalizeProgress(systemHealth.cpu?.usage)
+    const memory = normalizeProgress(systemHealth.memory?.usage)
+    const disk = normalizeProgress(systemHealth.disk?.usage)
+
+    const successRate = normalizeProgress(crawlerHealth.successRate)
+    const dataQuality = normalizeProgress(crawlerHealth.dataQuality)
+    const responsePerformance = normalizeProgress(crawlerHealth.responsePerformance)
+
+    const overallHealthy = String(payload.overall || '').toLowerCase() === 'healthy'
+    const overallScore = normalizeProgress((successRate + dataQuality + responsePerformance) / 3)
+
+    healthStatuses.value = [
+      {
+        name: '系统健康度',
+        value: overallHealthy ? '健康' : '异常',
+        type: overallHealthy ? 'success' : 'danger',
+        percentage: overallScore,
+        progressStatus: overallHealthy ? 'success' : 'exception',
+        currentValue: overallScore,
+        unit: '%',
+        trend: 'up',
+        change: '-'
+      },
+      {
+        name: '采集成功率',
+        value: successRate >= 90 ? '正常' : '波动',
+        type: successRate >= 90 ? 'success' : 'warning',
+        percentage: successRate,
+        progressStatus: successRate >= 90 ? 'success' : 'warning',
+        currentValue: successRate,
+        unit: '%',
+        trend: 'up',
+        change: '-'
+      },
+      {
+        name: '数据质量',
+        value: dataQuality >= 90 ? '优秀' : '一般',
+        type: dataQuality >= 90 ? 'success' : 'warning',
+        percentage: dataQuality,
+        progressStatus: dataQuality >= 90 ? 'success' : 'warning',
+        currentValue: dataQuality,
+        unit: '%',
+        trend: 'up',
+        change: '-'
+      },
+      {
+        name: '响应性能',
+        value: responsePerformance >= 90 ? '良好' : '需关注',
+        type: responsePerformance >= 90 ? 'success' : 'warning',
+        percentage: responsePerformance,
+        progressStatus: responsePerformance >= 90 ? 'success' : 'warning',
+        currentValue: responsePerformance,
+        unit: '%',
+        trend: 'down',
+        change: '-'
+      }
+    ]
+
+    Object.assign(systemResources, {
+      cpu,
+      memory,
+      disk
+    })
   } catch (error) {
     console.error('Load health status failed:', error)
   }
@@ -458,8 +538,9 @@ const loadAlerts = async () => {
   alertsLoading.value = true
   try {
     const res = await getAlerts({ status: 'active' })
-    activeAlerts.value = res.data?.items || []
-    
+    const payload = unwrapApiData(res)
+    activeAlerts.value = Array.isArray(payload.items) ? payload.items : []
+
     // 统计告警数量
     alertCounts.critical = activeAlerts.value.filter(a => a.severity === 'critical').length
     alertCounts.warning = activeAlerts.value.filter(a => a.severity === 'warning').length
@@ -475,7 +556,14 @@ const loadAlerts = async () => {
 const loadSystemResources = async () => {
   try {
     const res = await getResourcesUsage()  // AI_MODIFIED: coder1 @2026-02-04T18:38:22
-    Object.assign(systemResources, res.data)
+    const payload = unwrapApiData(res)
+    Object.assign(systemResources, {
+      cpu: Number.isFinite(Number(payload.cpu)) ? Number(payload.cpu) : systemResources.cpu,
+      memory: Number.isFinite(Number(payload.memory)) ? Number(payload.memory) : systemResources.memory,
+      disk: Number.isFinite(Number(payload.disk)) ? Number(payload.disk) : systemResources.disk,
+      dbConnections: Number.isFinite(Number(payload.dbConnections)) ? Number(payload.dbConnections) : systemResources.dbConnections,
+      dbMaxConnections: Number.isFinite(Number(payload.dbMaxConnections)) ? Number(payload.dbMaxConnections) : systemResources.dbMaxConnections
+    })
   } catch (error) {
     console.error('Load system resources failed:', error)
   }

@@ -2,17 +2,21 @@
 
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Union
+from urllib.parse import urlparse
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Query
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
+from backend.config import settings
 from backend.database import get_db
 from backend.models.crawler_task_headers import CrawlerTaskHeader
 from backend.models.crawler_tasks import CrawlerTask
 from backend.models.data_source_headers import DataSourceHeader
 from backend.models.data_sources import DataSource
 from backend.models.headers import RequestHeader
+from backend.services.headers_pool_service import HeadersPoolService
+from backend.services.pool_reconciler_service import PoolReconcilerService
 
 router = APIRouter(dependencies=[Depends(get_db)])
 
@@ -87,6 +91,15 @@ def _to_frontend_dict(header: RequestHeader) -> Dict[str, Any]:
         "createdAt": header.created_at.isoformat() if header.created_at else None,
         "updatedAt": header.updated_at.isoformat() if header.updated_at else None,
     }
+
+
+def _resolve_domain_from_url(url: Optional[str]) -> str:
+    if not url:
+        return "__global__"
+    try:
+        return (urlparse(url).hostname or "__global__").lower()
+    except Exception:
+        return "__global__"
 
 
 @router.get("/headers")
@@ -215,6 +228,10 @@ async def get_headers_stats(db: Session = Depends(get_db)):
 
         type_counts = db.query(RequestHeader.type, func.count(RequestHeader.id)).group_by(RequestHeader.type).all()
         type_stats = {item[0]: item[1] for item in type_counts}
+        service = HeadersPoolService(db)
+        domain_stats = service.domain_stats()
+        low_quality_total = sum(int(x.get("low_quality", 0)) for x in domain_stats)
+        coverage = PoolReconcilerService.resolve_data_source_header_coverage(db)
 
         return {
             "success": True,
@@ -223,12 +240,40 @@ async def get_headers_stats(db: Session = Depends(get_db)):
                 "enabled": enabled_count,
                 "disabled": disabled_count,
                 "by_type": type_stats,
+                "domain_stats": domain_stats,
+                "capacity": {
+                    "domains_count": len(domain_stats),
+                    "low_quality_total": low_quality_total,
+                    "headers_per_active_ip": int(settings.HEADER_POOL_HEADERS_PER_ACTIVE_IP),
+                    "min_active_per_domain": int(settings.HEADER_POOL_MIN_ACTIVE_PER_DOMAIN),
+                    "bindings_coverage": coverage,
+                },
                 "latest_update": datetime.utcnow().isoformat(),
             },
             "message": "统计信息获取成功",
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/headers/auto-bind/data-source")
+async def auto_bind_headers_to_data_source(data: Dict[str, Any] = Body(...), db: Session = Depends(get_db)):
+    data_source_id = data.get("dataSourceId")
+    if not data_source_id:
+        raise HTTPException(status_code=400, detail="dataSourceId is required")
+
+    source = db.query(DataSource).filter(DataSource.id == int(data_source_id)).first()
+    if not source:
+        raise HTTPException(status_code=404, detail="data source not found")
+
+    service = HeadersPoolService(db)
+    result = service.auto_bind_headers_for_data_source(
+        data_source_id=int(data_source_id),
+        domain=data.get("domain") or _resolve_domain_from_url(source.url),
+        dry_run=bool(data.get("dryRun", True)),
+        min_bindings=data.get("minBindings"),
+    )
+    return {"success": True, "data": result, "message": "自动绑定执行完成"}
 
 
 @router.post("/headers/import")

@@ -669,6 +669,11 @@ const getOptimizationTypeColor = (type) => {
   return type === 'auto' ? 'primary' : 'success'
 }
 
+const getStatusColor = (status) => {
+  const colors = { success: 'success', failure: 'danger', pending: 'warning' }
+  return colors[status] || 'info'
+}
+
 const getABTestResultColor = (result) => {
   const colors = { success: 'success', failure: 'danger', pending: 'warning' }
   return colors[result] || 'info'

@@ -75,10 +75,9 @@
           </template>
           <el-menu-item index="/admin/draw-prediction/ai-draw">北单平局预测扫盘</el-menu-item>
           <el-menu-item index="/admin/draw-prediction/poisson-11">1-1比分预测扫盘</el-menu-item>
-          <el-menu-item index="/admin/draw-prediction/data-features">数据与特征管理</el-menu-item>
-          <el-menu-item index="/admin/draw-prediction/training-evaluation">模型训练与评估</el-menu-item>
-          <el-menu-item index="/admin/draw-prediction/model-deployment">模型管理与部署</el-menu-item>
-          <el-menu-item index="/admin/draw-prediction/prediction-monitoring">预测服务与监控</el-menu-item>
+          <el-menu-item index="/admin/draw-prediction/suggestion-center">下注建议中心</el-menu-item>
+          <el-menu-item index="/admin/draw-prediction/killswitch">风控与熔断监控</el-menu-item>
+          <el-menu-item index="/admin/draw-prediction/model-workbench">模型工坊</el-menu-item>
         </el-sub-menu>
 
 
@@ -150,7 +149,6 @@
     </el-aside>
 
     <el-container>
-      <!-- 顶部导航栏 -->
       <el-header class="header">
         <div class="breadcrumb">
           <el-breadcrumb separator="/">
@@ -158,18 +156,32 @@
             <el-breadcrumb-item>{{ route.meta.title || '当前页' }}</el-breadcrumb-item>
           </el-breadcrumb>
         </div>
-        <div class="user-info">
-          <el-dropdown>
-            <span class="el-dropdown-link">
-              {{ authStore.user?.username || '管理员' }}
-              <el-icon class="el-icon--right"><ArrowDown /></el-icon>
-            </span>
-            <template #dropdown>
-              <el-dropdown-menu>
-                <el-dropdown-item @click="logout">退出登录</el-dropdown-item>
-              </el-dropdown-menu>
-            </template>
-          </el-dropdown>
+        <div class="header-right">
+          <div
+            class="risk-indicator"
+            :title="riskUpdatedAt ? `最近更新: ${riskUpdatedAt}` : '风控状态'"
+            role="button"
+            tabindex="0"
+            @click="goToRiskMonitor"
+            @keydown.enter="goToRiskMonitor"
+            @keydown.space.prevent="goToRiskMonitor"
+          >
+            <span class="risk-dot" :class="`is-${riskStateText.toLowerCase()}`" />
+            <el-tag size="small" :type="riskTagType">风控 {{ riskStateText }}</el-tag>
+          </div>
+          <div class="user-info">
+            <el-dropdown>
+              <span class="el-dropdown-link">
+                {{ authStore.user?.username || '管理员' }}
+                <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+              </span>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item @click="logout">退出登录</el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+          </div>
         </div>
       </el-header>
 
@@ -182,9 +194,10 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { getKillSwitchState } from '@/api/drawPrediction'
 import { 
   House, 
   UserFilled,
@@ -197,8 +210,10 @@ import {
   Setting, 
   Tickets,
   ArrowDown,
-  DataAnalysis
+  DataAnalysis,
+  Histogram
 } from '@element-plus/icons-vue'
+
 
 const route = useRoute()
 const router = useRouter()
@@ -206,11 +221,50 @@ const authStore = useAuthStore()
 
 const activeMenu = computed(() => route.path)
 
+const riskState = ref('RUN')
+const riskUpdatedAt = ref('')
+let riskTimer = null
+
+const riskStateText = computed(() => String(riskState.value || 'RUN').toUpperCase())
+const riskTagType = computed(() => {
+  if (riskStateText.value === 'STOP') return 'danger'
+  if (riskStateText.value === 'WARN') return 'warning'
+  return 'success'
+})
+
+const loadRiskState = async () => {
+  try {
+    const data = await getKillSwitchState()
+    riskState.value = String(data?.state || 'RUN').toUpperCase()
+    riskUpdatedAt.value = data?.updated_at ? new Date(data.updated_at).toLocaleString() : ''
+  } catch (_) {}
+}
+
+const goToRiskMonitor = () => {
+  if (route.path !== '/admin/draw-prediction/killswitch') {
+    router.push('/admin/draw-prediction/killswitch')
+  }
+}
+
 const logout = () => {
   authStore.logout()
   router.push('/login')
 }
+
+
+onMounted(async () => {
+  await loadRiskState()
+  riskTimer = setInterval(loadRiskState, 30000)
+})
+
+onBeforeUnmount(() => {
+  if (riskTimer) {
+    clearInterval(riskTimer)
+    riskTimer = null
+  }
+})
 </script>
+
 
 <style scoped>
 .admin-layout {
@@ -294,6 +348,43 @@ const logout = () => {
   color: #374151;
 }
 
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.risk-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.risk-indicator:hover {
+  opacity: 0.88;
+}
+
+
+.risk-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #67c23a;
+}
+
+.risk-dot.is-stop {
+  background: #f56c6c;
+}
+
+.risk-dot.is-warn {
+  background: #e6a23c;
+}
+
+.risk-dot.is-run {
+  background: #67c23a;
+}
+
 .user-info {
   cursor: pointer;
   color: #374151;
@@ -303,6 +394,7 @@ const logout = () => {
   align-items: center;
   gap: 6px;
 }
+
 
 /* 涓诲唴瀹瑰尯 - 杞荤泩鑳屾櫙锛岄€傚綋鐣欑櫧 */
 .main {

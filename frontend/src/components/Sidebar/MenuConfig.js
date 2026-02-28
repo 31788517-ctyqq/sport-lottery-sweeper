@@ -73,6 +73,18 @@ const menuConfig = [
       {
         path: '/admin/draw-prediction/poisson-11',
         text: '1-1比分预测扫盘'
+      },
+      {
+        path: '/admin/draw-prediction/suggestion-center',
+        text: '下注建议中心'
+      },
+      {
+        path: '/admin/draw-prediction/killswitch',
+        text: '风控与熔断监控'
+      },
+      {
+        path: '/admin/draw-prediction/model-workbench',
+        text: '模型工坊'
       }
     ]
   },

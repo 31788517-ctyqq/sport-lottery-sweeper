@@ -19,6 +19,10 @@ from backend.models.admin_user import AdminUser
 from backend.services import draw_prediction_service as svc
 from backend.services import poisson_11_service
 from backend.services import ai_draw_prediction_service
+from backend.services.draw_suggestion_service import DrawSuggestionService
+from backend.services.odds_snapshot_service import OddsSnapshotService
+from backend.services.llm_content_service import LLMContentService
+from backend.models.async_task import AsyncTask
 from backend.api.dependencies import get_db, get_current_active_admin_user
 from backend.database import SessionLocal
 from sqlalchemy.orm import Session
@@ -91,6 +95,34 @@ def _cleanup_fetch_tasks_locked(now: datetime) -> None:
         _FETCH_TASKS.pop(task_id, None)
 
 
+def _save_task_to_db(task: Dict[str, Any]) -> None:
+    db = SessionLocal()
+    try:
+        row = db.query(AsyncTask).filter(AsyncTask.task_id == task.get("task_id")).first()
+        if not row:
+            row = AsyncTask(
+                task_id=str(task.get("task_id")),
+                task_type=str(task.get("type") or task.get("task_type") or "generic"),
+                status=str(task.get("status") or "PENDING").upper(),
+                payload=task.get("params") if isinstance(task.get("params"), dict) else {},
+                result=task.get("result") if isinstance(task.get("result"), dict) else None,
+                error_message=task.get("error"),
+                progress=float(task.get("progress") or 0.0),
+            )
+            db.add(row)
+        else:
+            row.status = str(task.get("status") or row.status or "PENDING").upper()
+            row.payload = task.get("params") if isinstance(task.get("params"), dict) else row.payload
+            row.result = task.get("result") if isinstance(task.get("result"), dict) else row.result
+            row.error_message = task.get("error") or row.error_message
+            row.progress = float(task.get("progress") or row.progress or 0.0)
+        db.commit()
+    except Exception:
+        db.rollback()
+    finally:
+        db.close()
+
+
 def _create_fetch_task(task_type: str, params: Optional[Dict[str, Any]] = None) -> str:
     now = _utcnow()
     task_id = f"{task_type}_{now.strftime('%Y%m%d%H%M%S')}_{uuid4().hex[:8]}"
@@ -114,6 +146,7 @@ def _create_fetch_task(task_type: str, params: Optional[Dict[str, Any]] = None) 
     with _FETCH_TASKS_LOCK:
         _cleanup_fetch_tasks_locked(now)
         _FETCH_TASKS[task_id] = task
+    _save_task_to_db(task)
     return task_id
 
 
@@ -125,6 +158,8 @@ def _update_fetch_task(task_id: str, **kwargs: Any) -> None:
         for key, value in kwargs.items():
             task[key] = value
         task["updated_at"] = _utcnow()
+        task_copy = dict(task)
+    _save_task_to_db(task_copy)
 
 
 def _get_fetch_task(task_id: str) -> Optional[Dict[str, Any]]:
@@ -132,9 +167,27 @@ def _get_fetch_task(task_id: str) -> Optional[Dict[str, Any]]:
     with _FETCH_TASKS_LOCK:
         _cleanup_fetch_tasks_locked(now)
         task = _FETCH_TASKS.get(task_id)
-        if not task:
+        if task:
+            return _serialize_task(dict(task))
+
+    db = SessionLocal()
+    try:
+        row = db.query(AsyncTask).filter(AsyncTask.task_id == task_id).first()
+        if not row:
             return None
-        return _serialize_task(dict(task))
+        return {
+            "task_id": row.task_id,
+            "type": row.task_type,
+            "status": str(row.status or "").lower(),
+            "progress": row.progress,
+            "result": row.result,
+            "error": row.error_message,
+            "created_at": row.created_at.isoformat() if row.created_at else None,
+            "updated_at": row.updated_at.isoformat() if row.updated_at else None,
+        }
+    finally:
+        db.close()
+
 
 
 def _run_poisson_fetch_task(task_id: str, target_date: date, data_source: str) -> None:
@@ -245,7 +298,139 @@ def _run_ai_draw_fetch_task(task_id: str, target_date: date) -> None:
         db.close()
 
 
+def _run_draw_suggestion_snapshot_fetch_task(task_id: str, target_date: date, source: str) -> None:
+    db = SessionLocal()
+    _update_fetch_task(
+        task_id,
+        status="running",
+        phase="fetch_snapshots",
+        started_at=_utcnow(),
+        message="开始采集赔率快照",
+        progress=2.0,
+    )
+    try:
+        result = OddsSnapshotService.fetch_snapshots_for_date(
+            db,
+            target_date=target_date,
+            source=source,
+            overwrite=False,
+            progress_callback=lambda p: _update_fetch_task(
+                task_id,
+                phase=str(p.get("phase") or "fetch_snapshots"),
+                progress=float(p.get("progress") or 0.0),
+                current=int(p.get("current") or 0),
+                total=int(p.get("total") or 0),
+                message=str(p.get("message") or "处理中"),
+            ),
+        )
+        _update_fetch_task(
+            task_id,
+            status="success",
+            phase="finished",
+            progress=100.0,
+            message="快照采集完成",
+            result=result,
+            completed_at=_utcnow(),
+            error=None,
+        )
+    except Exception as exc:
+        try:
+            db.rollback()
+        except Exception:
+            pass
+        _update_fetch_task(
+            task_id,
+            status="failed",
+            phase="failed",
+            message="快照采集失败",
+            error=str(exc),
+            completed_at=_utcnow(),
+        )
+    finally:
+        db.close()
+
+
+def _run_draw_suggestion_generate_task(task_id: str, target_date: date, force: bool) -> None:
+    db = SessionLocal()
+    _update_fetch_task(
+        task_id,
+        status="running",
+        phase="generate_suggestions",
+        started_at=_utcnow(),
+        message="开始生成下注建议",
+        progress=3.0,
+    )
+    try:
+        result = DrawSuggestionService.generate_suggestions_for_date(db, target_date=target_date, force=force)
+        _update_fetch_task(
+            task_id,
+            status="success",
+            phase="finished",
+            progress=100.0,
+            message="建议生成完成",
+            result=result,
+            completed_at=_utcnow(),
+            error=None,
+        )
+    except Exception as exc:
+        try:
+            db.rollback()
+        except Exception:
+            pass
+        _update_fetch_task(
+            task_id,
+            status="failed",
+            phase="failed",
+            message="建议生成失败",
+            error=str(exc),
+            completed_at=_utcnow(),
+        )
+    finally:
+        db.close()
+
+
+def _run_draw_suggestion_settle_task(task_id: str, target_date: Optional[date]) -> None:
+    db = SessionLocal()
+    _update_fetch_task(
+        task_id,
+        status="running",
+        phase="settle_paper_bets",
+        started_at=_utcnow(),
+        message="开始结算模拟下注",
+        progress=5.0,
+    )
+    try:
+        settle_result = DrawSuggestionService.settle_paper_bets(db, target_date=target_date)
+        ks_state = DrawSuggestionService.evaluate_and_apply_killswitch(db)
+        _update_fetch_task(
+            task_id,
+            status="success",
+            phase="finished",
+            progress=100.0,
+            message="结算完成",
+            result={"settlement": settle_result, "killswitch": ks_state},
+            completed_at=_utcnow(),
+            error=None,
+        )
+    except Exception as exc:
+        try:
+            db.rollback()
+        except Exception:
+            pass
+        _update_fetch_task(
+            task_id,
+            status="failed",
+            phase="failed",
+            message="结算失败",
+            error=str(exc),
+            completed_at=_utcnow(),
+        )
+    finally:
+        db.close()
+
+
 def _normalize_meta(raw_meta: Any) -> Dict[str, Any]:
+
     if isinstance(raw_meta, dict):
         return raw_meta
     if isinstance(raw_meta, str) and raw_meta:
@@ -965,6 +1150,196 @@ def get_fetch_task_status(task_id: str):
         "message": "ok",
         "data": task,
     }
+
+
+# ===== 形态B：draw-suggestion 接口 =====
+@router.post("/draw-suggestion/odds-snapshots/fetch-async", response_model=dict)
+def draw_suggestion_fetch_snapshots_async(
+    date_str: Optional[str] = Query(None, description="比赛日期 YYYY-MM-DD"),
+    source: str = Query("500", description="数据源"),
+):
+    try:
+        target_date = datetime.strptime(date_str, "%Y-%m-%d").date() if date_str else datetime.now().date()
+    except Exception:
+        raise HTTPException(status_code=400, detail="INVALID_DATE")
+
+    task_id = _create_fetch_task("draw_suggestion_snapshot_fetch", params={"date": target_date.isoformat(), "source": source})
+    _FETCH_TASK_EXECUTOR.submit(_run_draw_suggestion_snapshot_fetch_task, task_id, target_date, source)
+    return {
+        "success": True,
+        "message": "任务已提交",
+        "data": {"task_id": task_id, "status": "pending", "polling_interval_ms": 1200},
+    }
+
+
+@router.get("/draw-suggestion/odds-snapshots", response_model=dict)
+def draw_suggestion_list_snapshots(
+    match_id: Optional[str] = Query(None),
+    date_str: Optional[str] = Query(None),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=200),
+    db: Session = Depends(get_db),
+):
+    data = OddsSnapshotService.list_snapshots(db, match_id=match_id, date_str=date_str, page=page, page_size=page_size)
+    return {"success": True, "message": "ok", "data": data}
+
+
+@router.post("/draw-suggestion/suggestions/generate-async", response_model=dict)
+def draw_suggestion_generate_async(payload: dict = Body(default={})):
+    req = payload or {}
+    date_value = req.get("date") or req.get("date_str")
+    force = bool(req.get("force") or False)
+
+    try:
+        target_date = datetime.strptime(str(date_value), "%Y-%m-%d").date() if date_value else datetime.now().date()
+    except Exception:
+        raise HTTPException(status_code=400, detail="INVALID_DATE")
+
+    task_id = _create_fetch_task(
+        "draw_suggestion_generate",
+        params={"date": target_date.isoformat(), "force": force},
+    )
+    _FETCH_TASK_EXECUTOR.submit(_run_draw_suggestion_generate_task, task_id, target_date, force)
+    return {
+        "success": True,
+        "message": "任务已提交",
+        "data": {"task_id": task_id, "status": "pending", "polling_interval_ms": 1200},
+    }
+
+
+@router.get("/draw-suggestion/suggestions", response_model=dict)
+def draw_suggestion_list(
+    date_str: Optional[str] = Query(None),
+    decision: Optional[str] = Query(None),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=200),
+    db: Session = Depends(get_db),
+):
+    data = DrawSuggestionService.list_suggestions(db, date_str=date_str, decision=decision, page=page, page_size=page_size)
+    return {"success": True, "message": "ok", "data": data}
+
+
+@router.get("/draw-suggestion/suggestions/{suggestion_id}", response_model=dict)
+def draw_suggestion_detail(suggestion_id: int, db: Session = Depends(get_db)):
+    row = DrawSuggestionService.get_suggestion(db, suggestion_id)
+    if not row:
+        raise HTTPException(status_code=404, detail="suggestion not found")
+    return {
+        "success": True,
+        "message": "ok",
+        "data": {
+            "id": row.id,
+            "match_id": row.match_id,
+            "decision": row.decision,
+            "stake_pct": row.stake_pct,
+            "edge": row.edge,
+            "reason_codes": row.reason_codes or [],
+            "reason_text": row.reason_text,
+            "features": row.features or {},
+            "killswitch_state": row.killswitch_state,
+            "created_at": row.created_at,
+        },
+    }
+
+
+@router.post("/draw-suggestion/paper-bets/create", response_model=dict)
+def draw_suggestion_create_paper_bets(payload: dict = Body(...), db: Session = Depends(get_db)):
+    suggestion_ids = payload.get("suggestion_ids") if isinstance(payload, dict) else []
+    if not isinstance(suggestion_ids, list) or not suggestion_ids:
+        raise HTTPException(status_code=422, detail="suggestion_ids is required")
+    data = DrawSuggestionService.create_paper_bets(db, suggestion_ids)
+    return {"success": True, "message": "ok", "data": data}
+
+
+@router.post("/draw-suggestion/paper-bets/settle-async", response_model=dict)
+def draw_suggestion_settle_async(payload: dict = Body(default={})):
+    req = payload or {}
+    date_value = req.get("date") or req.get("date_str")
+    target_date: Optional[date] = None
+    if date_value:
+        try:
+            target_date = datetime.strptime(str(date_value), "%Y-%m-%d").date()
+        except Exception:
+            raise HTTPException(status_code=400, detail="INVALID_DATE")
+
+    task_id = _create_fetch_task(
+        "draw_suggestion_settle",
+        params={"date": target_date.isoformat() if target_date else None},
+    )
+    _FETCH_TASK_EXECUTOR.submit(_run_draw_suggestion_settle_task, task_id, target_date)
+    return {
+        "success": True,
+        "message": "任务已提交",
+        "data": {"task_id": task_id, "status": "pending", "polling_interval_ms": 1200},
+    }
+
+
+@router.get("/draw-suggestion/metrics/summary", response_model=dict)
+def draw_suggestion_metrics_summary(days: int = Query(7, ge=1, le=180), db: Session = Depends(get_db)):
+    data = DrawSuggestionService.get_metrics_summary(db, days=days)
+    return {"success": True, "message": "ok", "data": data}
+
+
+@router.get("/draw-suggestion/killswitch/state", response_model=dict)
+def draw_suggestion_killswitch_state(db: Session = Depends(get_db)):
+    try:
+        data = DrawSuggestionService.get_killswitch_state(db)
+        return {"success": True, "message": "ok", "data": data}
+    except Exception as exc:
+        return {
+            "success": True,
+            "message": f"killswitch degraded: {exc}",
+            "data": {
+                "state": "RUN",
+                "reason": {"mode": "degraded", "message": "killswitch endpoint fallback"},
+                "manual_override": 0,
+                "updated_at": datetime.utcnow().isoformat(),
+            },
+        }
+
+
+
+@router.post("/draw-suggestion/killswitch/manual-stop", response_model=dict)
+def draw_suggestion_killswitch_stop(payload: dict = Body(default={}), db: Session = Depends(get_db)):
+    data = DrawSuggestionService.set_killswitch_state(
+        db,
+        state="STOP",
+        operator=(payload or {}).get("operator"),
+        note=(payload or {}).get("note"),
+        manual_override=1,
+    )
+    return {"success": True, "message": "ok", "data": data}
+
+
+@router.post("/draw-suggestion/killswitch/manual-release", response_model=dict)
+def draw_suggestion_killswitch_release(payload: dict = Body(default={}), db: Session = Depends(get_db)):
+    data = DrawSuggestionService.set_killswitch_state(
+        db,
+        state="RUN",
+        operator=(payload or {}).get("operator"),
+        note=(payload or {}).get("note"),
+        manual_override=1,
+    )
+    return {"success": True, "message": "ok", "data": data}
+
+
+# ===== LLM 文案接口 =====
+@router.post("/llm/explain", response_model=dict)
+def llm_explain(payload: dict = Body(...)):
+    result = LLMContentService.explain(payload or {})
+    return result
+
+
+@router.post("/llm/alert-summary", response_model=dict)
+def llm_alert_summary(payload: dict = Body(...)):
+    result = LLMContentService.alert_summary(payload or {})
+    return result
+
+
+@router.post("/llm/report", response_model=dict)
+def llm_report(payload: dict = Body(...)):
+    result = LLMContentService.report(payload or {})
+    return result
 
 
 # ===== Poisson 1-1 扫盘接口 =====

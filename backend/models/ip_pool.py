@@ -16,7 +16,8 @@ class IPPool(Base):
     port = Column(Integer, nullable=False)
     protocol = Column(String(10), nullable=False, default="http")  # http, https, socks5
     location = Column(String(100), nullable=True)  # IP地理位置
-    status = Column(String(20), nullable=False, default="active")  # active, inactive, banned
+    # active/inactive/pending/testing/cooling/banned
+    status = Column(String(20), nullable=False, default="active", index=True)
     remarks = Column(Text, nullable=True)  # 备注
     success_count = Column(Integer, nullable=False, default=0)  # 成功次数
     failure_count = Column(Integer, nullable=False, default=0)  # 失败次数

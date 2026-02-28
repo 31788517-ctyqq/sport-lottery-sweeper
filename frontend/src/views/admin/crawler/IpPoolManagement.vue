@@ -10,6 +10,8 @@
           <div class="header-actions">
             <el-button type="primary" @click="addIp">新增IP</el-button>
             <el-button type="success" :loading="recrawling" @click="handleRecrawl">自动爬取</el-button>
+            <el-button @click="runReconcile(true)">容量巡检</el-button>
+            <el-button type="warning" @click="runReconcile(false)">执行补齐</el-button>
             <el-button @click="openSourceDialog">获取地址编辑</el-button>
             <el-button @click="refreshList">刷新</el-button>
             <el-button @click="testAllIps">测试全部</el-button>
@@ -32,6 +34,8 @@
             <el-option label="可用" value="available" />
             <el-option label="不可用" value="unavailable" />
             <el-option label="待测试" value="pending" />
+            <el-option label="测试中" value="testing" />
+            <el-option label="冷却中" value="cooling" />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -39,6 +43,33 @@
           <el-button @click="resetQuery">重置</el-button>
         </el-form-item>
       </el-form>
+
+      <div class="stats-row">
+        <el-card class="stat-card">
+          <div class="stat-title">活跃IP</div>
+          <div class="stat-value">{{ poolStats.active }} / {{ poolStats.activeTarget }}</div>
+          <div class="stat-extra" :class="poolStats.activeGap > 0 ? 'text-danger' : 'text-success'">
+            缺口 {{ poolStats.activeGap }}
+          </div>
+        </el-card>
+        <el-card class="stat-card">
+          <div class="stat-title">备用IP</div>
+          <div class="stat-value">{{ poolStats.standby }} / {{ poolStats.standbyTarget }}</div>
+          <div class="stat-extra" :class="poolStats.standbyGap > 0 ? 'text-warning' : 'text-success'">
+            缺口 {{ poolStats.standbyGap }}
+          </div>
+        </el-card>
+        <el-card class="stat-card">
+          <div class="stat-title">测试/冷却</div>
+          <div class="stat-value">{{ poolStats.testing }} / {{ poolStats.cooling }}</div>
+          <div class="stat-extra">待测 {{ poolStats.pending }}</div>
+        </el-card>
+        <el-card class="stat-card">
+          <div class="stat-title">总量/封禁</div>
+          <div class="stat-value">{{ poolStats.total }} / {{ poolStats.banned }}</div>
+          <div class="stat-extra">更新时间 {{ poolStats.latestUpdate || '-' }}</div>
+        </el-card>
+      </div>
 
       <el-table :data="ipList" style="width: 100%" v-loading="loading" @selection-change="handleSelectionChange">
         <el-table-column type="selection" width="50" />
@@ -215,7 +246,9 @@ import {
   createIp,
   deleteIp,
   deleteSourceAddress,
+  getIpStats,
   getIpPoolList,
+  reconcileIpPool,
   getSourceAddresses,
   recrawlIps,
   testIp,
@@ -238,6 +271,20 @@ const sourceDialogVisible = ref(false)
 const sourceEditVisible = ref(false)
 const sourceLoading = ref(false)
 const sourceList = ref([])
+const poolStats = reactive({
+  total: 0,
+  active: 0,
+  standby: 0,
+  pending: 0,
+  testing: 0,
+  cooling: 0,
+  banned: 0,
+  activeTarget: 0,
+  standbyTarget: 0,
+  activeGap: 0,
+  standbyGap: 0,
+  latestUpdate: ''
+})
 
 const sourceEditForm = reactive({
   oldSource: '',
@@ -328,6 +375,45 @@ const getIpList = async () => {
     ElMessage.error('获取IP池失败')
   } finally {
     loading.value = false
+  }
+}
+
+const loadPoolStats = async () => {
+  try {
+    const res = await getIpStats()
+    const payload = res?.data || res || {}
+    const data = payload?.data || payload || {}
+    poolStats.total = Number(data.total || 0)
+    poolStats.active = Number(data.active || 0)
+    poolStats.standby = Number(data.inactive || 0)
+    poolStats.pending = Number(data.pending || 0)
+    poolStats.testing = Number(data.testing || 0)
+    poolStats.cooling = Number(data.cooling || 0)
+    poolStats.banned = Number(data.banned || 0)
+    poolStats.activeTarget = Number(data.activeTarget || 0)
+    poolStats.standbyTarget = Number(data.standbyTarget || 0)
+    poolStats.activeGap = Number(data.activeGap || 0)
+    poolStats.standbyGap = Number(data.standbyGap || 0)
+    poolStats.latestUpdate = data.latest_update ? formatTime(data.latest_update) : ''
+  } catch (error) {
+    console.error(error)
+  }
+}
+
+const runReconcile = async (dryRun = true) => {
+  try {
+    const res = await reconcileIpPool({ dry_run: dryRun })
+    const payload = res?.data || res || {}
+    const data = payload?.data || payload || {}
+    const actions = Array.isArray(data.actions) ? data.actions.length : 0
+    ElMessage.success(dryRun ? `巡检完成：建议动作 ${actions} 项` : `补齐执行完成：动作 ${actions} 项`)
+    await loadPoolStats()
+    if (!dryRun) {
+      await getIpList()
+    }
+  } catch (error) {
+    console.error(error)
+    ElMessage.error(dryRun ? '巡检失败' : '补齐执行失败')
   }
 }
 
@@ -425,6 +511,7 @@ const removeSource = async (row) => {
     ElMessage.success(deleteRelatedIps ? '地址与关联IP已删除' : '地址配置已删除')
     await loadSourceList()
     await getIpList()
+    await loadPoolStats()
   } catch (error) {
     if (error !== 'cancel') {
       console.error(error)
@@ -448,6 +535,7 @@ const handleRecrawl = async () => {
     const summary = data.summary || {}
     ElMessage.success(`自动爬取完成：新增 ${summary.newCount || 0}，更新 ${summary.updatedCount || 0}`)
     await getIpList()
+    await loadPoolStats()
     if (sourceDialogVisible.value) {
       await loadSourceList()
     }
@@ -462,6 +550,7 @@ const handleRecrawl = async () => {
 const onQuery = () => {
   currentPage.value = 1
   getIpList()
+  loadPoolStats()
 }
 
 const resetQuery = () => {
@@ -470,6 +559,7 @@ const resetQuery = () => {
   queryParams.status = ''
   currentPage.value = 1
   getIpList()
+  loadPoolStats()
 }
 
 const addIp = () => {
@@ -525,7 +615,8 @@ const saveIp = async () => {
       ElMessage.success('创建成功')
     }
     dialogVisible.value = false
-    getIpList()
+    await getIpList()
+    await loadPoolStats()
   } catch (error) {
     console.error(error)
     ElMessage.error('保存失败')
@@ -545,7 +636,8 @@ const deleteIpRow = async (row) => {
     )
     await deleteIp(row.id)
     ElMessage.success('删除成功')
-    getIpList()
+    await getIpList()
+    await loadPoolStats()
   } catch (error) {
     if (error !== 'cancel') {
       ElMessage.error('删除失败')
@@ -562,7 +654,8 @@ const batchTest = async () => {
   try {
     await batchTestIps({ ids: selectedIds.value })
     ElMessage.success('批量测试完成')
-    getIpList()
+    await getIpList()
+    await loadPoolStats()
   } catch (error) {
     console.error(error)
     ElMessage.error('批量测试失败')
@@ -584,7 +677,8 @@ const batchDelete = async () => {
     await batchDeleteIps({ ids: selectedIds.value })
     ElMessage.success('批量删除成功')
     selectedIds.value = []
-    getIpList()
+    await getIpList()
+    await loadPoolStats()
   } catch (error) {
     if (error !== 'cancel') {
       ElMessage.error('批量删除失败')
@@ -641,7 +735,8 @@ const testAllIps = async () => {
     ElMessage.info('开始测试当前页全部IP')
     await batchTestIps({ ids: ipList.value.map((x) => x.id) })
     ElMessage.success('当前页IP测试完成')
-    getIpList()
+    await getIpList()
+    await loadPoolStats()
   } catch (error) {
     console.error(error)
     ElMessage.error('测试失败')
@@ -670,6 +765,7 @@ const toggleStatus = async (row) => {
       fail_reason: row.failReason
     })
     ElMessage.success(nextEnabled ? '启用成功' : '禁用成功')
+    loadPoolStats()
   } catch (error) {
     row.isEnabled = prevEnabled
     row.status = prevEnabled ? 'available' : 'unavailable'
@@ -680,22 +776,27 @@ const toggleStatus = async (row) => {
 
 const refreshList = () => {
   getIpList()
+  loadPoolStats()
 }
 
 const handleSizeChange = (size) => {
   pageSize.value = size
   getIpList()
+  loadPoolStats()
 }
 
 const handleCurrentChange = (page) => {
   currentPage.value = page
   getIpList()
+  loadPoolStats()
 }
 
 const getStatusText = (status) => {
   if (status === 'available') return '可用'
   if (status === 'unavailable') return '不可用'
   if (status === 'pending') return '待测试'
+  if (status === 'testing') return '测试中'
+  if (status === 'cooling') return '冷却中'
   return status
 }
 
@@ -703,6 +804,8 @@ const getStatusTagType = (status) => {
   if (status === 'available') return 'success'
   if (status === 'unavailable') return 'danger'
   if (status === 'pending') return 'info'
+  if (status === 'testing') return 'warning'
+  if (status === 'cooling') return 'danger'
   return 'info'
 }
 
@@ -727,6 +830,7 @@ const getSuccessRateColor = (rate) => {
 
 onMounted(() => {
   getIpList()
+  loadPoolStats()
 })
 </script>
 
@@ -764,6 +868,34 @@ onMounted(() => {
   margin-bottom: 20px;
 }
 
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.stat-card {
+  min-height: 96px;
+}
+
+.stat-title {
+  color: #909399;
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+
+.stat-value {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.stat-extra {
+  color: #909399;
+  font-size: 12px;
+}
+
 .pagination {
   margin-top: 20px;
   justify-content: center;
@@ -791,5 +923,11 @@ onMounted(() => {
 
 .text-danger {
   color: #f56c6c;
+}
+
+@media (max-width: 1200px) {
+  .stats-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 </style>

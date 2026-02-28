@@ -49,7 +49,40 @@
           <div class="stat-title">成功率</div>
           <div class="stat-value">{{ stats.successRate }}%</div>
         </el-card>
+        <el-card class="stat-card">
+          <div class="stat-title">低质量Header</div>
+          <div class="stat-value">{{ stats.lowQualityTotal }}</div>
+        </el-card>
+        <el-card class="stat-card">
+          <div class="stat-title">绑定覆盖率</div>
+          <div class="stat-value">{{ stats.bindingCoverageRate }}%</div>
+        </el-card>
       </div>
+
+      <div class="domain-toolbar">
+        <div class="domain-title">域名容量视图</div>
+        <div class="domain-actions">
+          <el-input v-model="autoBindForm.dataSourceId" placeholder="数据源ID" style="width: 120px" />
+          <el-input v-model="autoBindForm.domain" placeholder="域名(可选)" style="width: 180px" />
+          <el-input-number v-model="autoBindForm.minBindings" :min="1" :max="10" size="small" controls-position="right" />
+          <el-button size="small" @click="runAutoBind(true)">自动绑定预演</el-button>
+          <el-button size="small" type="primary" @click="runAutoBind(false)">自动绑定执行</el-button>
+        </div>
+      </div>
+
+      <el-table :data="domainStats" size="small" style="width: 100%; margin-bottom: 12px;">
+        <el-table-column prop="domain" label="域名" min-width="220" />
+        <el-table-column prop="enabled" label="可用Headers" width="120" />
+        <el-table-column prop="low_quality" label="低质量" width="100" />
+        <el-table-column prop="target" label="目标" width="90" />
+        <el-table-column prop="gap" label="缺口" width="90">
+          <template #default="scope">
+            <el-tag :type="scope.row.gap > 0 ? 'danger' : 'success'">
+              {{ scope.row.gap }}
+            </el-tag>
+          </template>
+        </el-table-column>
+      </el-table>
 
       <div class="batch-actions">
         <el-button size="small" type="primary" :disabled="selectedIds.length === 0" @click="batchEnable">批量启用</el-button>
@@ -330,7 +363,8 @@ import {
   importHeaders,
   bindHeadersToDataSource,
   bindHeadersToTask,
-  getHeaderBindings
+  getHeaderBindings,
+  autoBindHeadersToDataSource
 } from '@/api/headers'
 
 const loading = ref(false)
@@ -349,7 +383,15 @@ const stats = reactive({
   total: 0,
   enabled: 0,
   disabled: 0,
-  successRate: 100
+  successRate: 100,
+  lowQualityTotal: 0,
+  bindingCoverageRate: 0
+})
+const domainStats = ref([])
+const autoBindForm = reactive({
+  dataSourceId: '',
+  domain: '',
+  minBindings: 3
 })
 
 const queryParams = reactive({
@@ -444,12 +486,17 @@ const getHeadersList = async () => {
 const loadStats = async () => {
   try {
     const res = await getHeaderStats()
-    const data = res.data || {}
+    const payload = res?.data || res || {}
+    const data = payload?.data || payload || {}
     stats.total = data.total || 0
     stats.enabled = data.enabled || 0
     stats.disabled = data.disabled || 0
     const totalCount = data.total || 0
     stats.successRate = totalCount > 0 ? Math.round((data.enabled / totalCount) * 100) : 100
+    stats.lowQualityTotal = Number(data.capacity?.low_quality_total || 0)
+    const coverage = data.capacity?.bindings_coverage || {}
+    stats.bindingCoverageRate = Number(coverage.coverage_rate || 0)
+    domainStats.value = Array.isArray(data.domain_stats) ? data.domain_stats : []
   } catch (error) {
     console.error('Error loading header stats:', error)
   }
@@ -578,6 +625,38 @@ const confirmBind = async () => {
     bindDialogVisible.value = false
   } catch (error) {
     ElMessage.error('绑定失败')
+  }
+}
+
+const runAutoBind = async (dryRun = true) => {
+  const dataSourceId = Number(autoBindForm.dataSourceId)
+  if (!dataSourceId) {
+    ElMessage.warning('请输入数据源ID')
+    return
+  }
+  try {
+    const res = await autoBindHeadersToDataSource({
+      dataSourceId,
+      domain: autoBindForm.domain || undefined,
+      minBindings: Number(autoBindForm.minBindings || 3),
+      dryRun,
+    })
+    const payload = res?.data || res || {}
+    const data = payload?.data || payload || {}
+    const selectedCount = Number(data.selected_count || 0)
+    const boundCount = Number(data.bound_count || 0)
+    ElMessage.success(
+      dryRun
+        ? `预演完成：可选 ${selectedCount}，预计新增绑定 ${boundCount}`
+        : `执行完成：本次新增绑定 ${boundCount}`
+    )
+    await loadStats()
+    if (!dryRun && bindForm.dataSourceId && Number(bindForm.dataSourceId) === dataSourceId) {
+      await loadBindings()
+    }
+  } catch (error) {
+    console.error(error)
+    ElMessage.error(dryRun ? '自动绑定预演失败' : '自动绑定执行失败')
   }
 }
 
@@ -925,13 +1004,14 @@ onMounted(() => {
 }
 
 .stats-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 12px;
   margin-bottom: 12px;
 }
 
 .stat-card {
-  flex: 1;
+  min-height: 96px;
 }
 
 .stat-title {
@@ -949,6 +1029,25 @@ onMounted(() => {
   display: flex;
   gap: 10px;
   margin-bottom: 12px;
+}
+
+.domain-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.domain-title {
+  font-size: 13px;
+  color: #606266;
+  font-weight: 600;
+}
+
+.domain-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .binding-preview {
@@ -995,5 +1094,11 @@ onMounted(() => {
 .preview-count {
   font-size: 13px;
   color: #606266;
+}
+
+@media (max-width: 1440px) {
+  .stats-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 </style>

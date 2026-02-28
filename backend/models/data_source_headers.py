@@ -1,7 +1,7 @@
 """
 数据源请求头绑定表模型
 """
-from sqlalchemy import Column, Integer, DateTime, Boolean, ForeignKey, UniqueConstraint
+from sqlalchemy import Column, Integer, DateTime, Boolean, ForeignKey, UniqueConstraint, CheckConstraint
 from sqlalchemy.sql import func
 from .base import Base
 
@@ -20,4 +20,8 @@ class DataSourceHeader(Base):
 
     __table_args__ = (
         UniqueConstraint("data_source_id", "header_id", name="uq_data_source_header"),
+        CheckConstraint(
+            "(priority_override IS NULL) OR (priority_override >= 1 AND priority_override <= 3)",
+            name="ck_data_source_header_priority_override_range",
+        ),
     )

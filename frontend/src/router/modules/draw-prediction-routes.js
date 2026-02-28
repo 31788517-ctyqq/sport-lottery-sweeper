@@ -3,7 +3,7 @@ const drawPredictionRoutes = [
   {
     path: 'draw-prediction',
     name: 'DrawPredictionManagement',
-    redirect: '/admin/draw-prediction/data-features',
+    redirect: '/admin/draw-prediction/ai-draw',
     meta: {
       title: '平局预测管理',
       icon: 'histogram',
@@ -34,48 +34,53 @@ const drawPredictionRoutes = [
         }
       },
       {
-        path: 'data-features',
-        name: 'DataFeaturesManagement',
-        component: () => import('@/views/admin/draw_prediction/DrawDataFeature.vue'),
+        path: 'suggestion-center',
+        name: 'DrawSuggestionCenter',
+        component: () => import('@/views/admin/draw_prediction/DrawSuggestionCenter.vue'),
         meta: {
-          title: '数据与特征管理',
-          icon: 'data-analysis',
+          title: '下注建议中心',
+          icon: 'tickets',
           roles: ['admin', 'manager'],
           keepAlive: true
         }
+      },
+      {
+        path: 'killswitch',
+        name: 'DrawKillSwitchMonitor',
+        component: () => import('@/views/admin/draw_prediction/DrawKillSwitchMonitor.vue'),
+        meta: {
+          title: '风控与熔断监控',
+          icon: 'warning',
+          roles: ['admin', 'manager'],
+          keepAlive: true
+        }
+      },
+      {
+        path: 'model-workbench',
+        name: 'DrawModelWorkbench',
+        component: () => import('@/views/admin/draw_prediction/ModelWorkbench.vue'),
+        meta: {
+          title: '模型工坊',
+          icon: 'grid',
+          roles: ['admin', 'manager'],
+          keepAlive: true
+        }
+      },
+      {
+        path: 'data-features',
+        redirect: '/admin/draw-prediction/model-workbench?tab=data'
       },
       {
         path: 'training-evaluation',
-        name: 'TrainingEvaluation',
-        component: () => import('@/views/admin/draw_prediction/DrawModelTrainEval.vue'),
-        meta: {
-          title: '模型训练与评估',
-          icon: 'files',
-          roles: ['admin', 'manager'],
-          keepAlive: true
-        }
+        redirect: '/admin/draw-prediction/model-workbench?tab=training'
       },
       {
         path: 'model-deployment',
-        name: 'ModelDeployment',
-        component: () => import('@/views/admin/draw_prediction/DrawModelManageDeploy.vue'),
-        meta: {
-          title: '模型管理与部署',
-          icon: 'upload',
-          roles: ['admin', 'manager'],
-          keepAlive: true
-        }
+        redirect: '/admin/draw-prediction/model-workbench?tab=deployment'
       },
       {
         path: 'prediction-monitoring',
-        name: 'PredictionMonitoring',
-        component: () => import('@/views/admin/draw_prediction/DrawPredictionMonitor.vue'),
-        meta: {
-          title: '预测服务与监控',
-          icon: 'monitor',
-          roles: ['admin', 'manager'],
-          keepAlive: true
-        }
+        redirect: '/admin/draw-prediction/model-workbench?tab=monitoring'
       }
     ]
   }

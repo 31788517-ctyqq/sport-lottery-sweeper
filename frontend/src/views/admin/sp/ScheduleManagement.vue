@@ -168,15 +168,39 @@
       width="980px"
       :close-on-click-modal="false"
     >
+      <div class="other-odds-toolbar">
+        <el-button
+          type="primary"
+          plain
+          size="small"
+          :icon="Refresh"
+          :loading="otherOddsLoading"
+          :disabled="!currentOtherOddsMatchId"
+          @click="refreshOtherOddsForce"
+        >
+          手动强制刷新
+        </el-button>
+      </div>
+
       <el-tabs v-model="otherOddsActiveTab" class="other-odds-tabs">
         <el-tab-pane label="欧指数" name="eu" />
         <el-tab-pane label="让球" name="asia" />
         <el-tab-pane label="进球数" name="goals" />
       </el-tabs>
 
+      <el-alert
+        v-if="otherOddsNoticeText"
+        :title="otherOddsNoticeText"
+        type="warning"
+        :closable="false"
+        show-icon
+        style="margin-bottom: 10px"
+      />
+
       <el-table
         v-if="otherOddsActiveTab === 'eu'"
         :data="otherOddsEuRows"
+        :empty-text="otherOddsEmptyText"
         v-loading="otherOddsLoading"
         stripe
         max-height="480"
@@ -194,6 +218,7 @@
       <el-table
         v-else-if="otherOddsActiveTab === 'asia'"
         :data="otherOddsAsiaRows"
+        :empty-text="otherOddsEmptyText"
         v-loading="otherOddsLoading"
         stripe
         max-height="480"
@@ -212,6 +237,7 @@
       <el-table
         v-else
         :data="otherOddsGoalsRows"
+        :empty-text="otherOddsEmptyText"
         v-loading="otherOddsLoading"
         stripe
         max-height="480"
@@ -231,7 +257,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Delete, Refresh, Search } from '@element-plus/icons-vue'
 import request from '@/utils/request'
@@ -274,6 +300,78 @@ const otherOddsActiveTab = ref('eu')
 const otherOddsEuRows = ref([])
 const otherOddsAsiaRows = ref([])
 const otherOddsGoalsRows = ref([])
+const currentOtherOddsMatchId = ref(null)
+const otherOddsCacheReason = ref('')
+const otherOddsRemoteError = ref('')
+const OTHER_ODDS_AUTO_RETRY_MAX = 4
+const OTHER_ODDS_AUTO_RETRY_DELAY_MS = 3500
+const OTHER_ODDS_AUTO_FORCE_MAX = 1
+const OTHER_ODDS_AUTO_FORCE_DELAY_MS = 1200
+const OTHER_ODDS_AUTO_RETRY_REASONS = new Set([
+  'cache_incomplete',
+  'degraded_eu_only',
+  'partial_tabs_missing',
+  'fallback_base_odds',
+  'base_odds_fallback',
+  'remote_unavailable',
+  'recent_failure_cache'
+])
+const otherOddsAutoRetryCount = ref(0)
+const otherOddsAutoForceCount = ref(0)
+let otherOddsAutoRetryTimer = null
+
+const clearOtherOddsAutoRetry = () => {
+  if (otherOddsAutoRetryTimer) {
+    clearTimeout(otherOddsAutoRetryTimer)
+    otherOddsAutoRetryTimer = null
+  }
+}
+
+const otherOddsNoticeText = computed(() => {
+  const reason = String(otherOddsCacheReason.value || '')
+  if (reason === 'degraded_eu_only') {
+    return '当前仅返回欧指；让球/进球数可能需稍后重试。'
+  }
+  if (reason === 'partial_tabs_missing') {
+    return '已返回部分赔率；后台正在补抓缺失标签。'
+  }
+  if (reason === 'fallback_base_odds' || reason === 'base_odds_fallback') {
+    return '当前仅返回基础赔率（远程详情不可用）。'
+  }
+  if (reason === 'remote_unavailable' || reason === 'recent_failure_cache') {
+    const brief = String(otherOddsRemoteError.value || '').trim().slice(0, 120)
+    return brief ? `远程详情暂不可用：${brief}` : '远程详情暂不可用，请稍后重试。'
+  }
+  if (
+    otherOddsEuRows.value.length > 0 &&
+    otherOddsAsiaRows.value.length === 0 &&
+    otherOddsGoalsRows.value.length === 0
+  ) {
+    return '当前仅返回欧指数据；让球/进球数暂无。'
+  }
+  return ''
+})
+
+const otherOddsEmptyText = computed(() => {
+  if (otherOddsLoading.value) return '加载中...'
+  const isBdPartial =
+    isBd.value &&
+    otherOddsEuRows.value.length > 0 &&
+    ((otherOddsActiveTab.value === 'asia' && otherOddsAsiaRows.value.length === 0) ||
+      (otherOddsActiveTab.value === 'goals' && otherOddsGoalsRows.value.length === 0))
+  if (
+    isBdPartial &&
+    (otherOddsCacheReason.value === 'degraded_eu_only' ||
+      otherOddsCacheReason.value === 'partial_tabs_missing' ||
+      (otherOddsEuRows.value.length > 0 &&
+        otherOddsAsiaRows.value.length === 0 &&
+        otherOddsGoalsRows.value.length === 0))
+  ) {
+    return '后台正在补抓该标签赔率，页面会自动刷新；如仍无数据可点“手动强制刷新”'
+  }
+  return '暂无数据'
+})
+
 let leagueOptionsRequestSeq = 0
 
 const queryParams = reactive({
@@ -393,12 +491,12 @@ const mapBdRow = (row) => ({
   score: normalizeScore(row.score ?? row.full_score ?? row.score_full),
   halftimeScore: normalizeScore(row.halftime_score ?? row.half_score ?? row.halfTimeScore),
   // 北单显示双行SP：与让球0/让球值两行对齐，真实SP放到匹配让球值那一行，另一行显示"-"
-  oddsNspfWin: hasBdHandicapLine(row.handicap) ? '-' : formatOdds(row.odds_nspf_win),
-  oddsNspfDraw: hasBdHandicapLine(row.handicap) ? '-' : formatOdds(row.odds_nspf_draw),
-  oddsNspfLose: hasBdHandicapLine(row.handicap) ? '-' : formatOdds(row.odds_nspf_lose),
-  oddsSpfWin: hasBdHandicapLine(row.handicap) ? formatOdds(row.odds_nspf_win) : '-',
-  oddsSpfDraw: hasBdHandicapLine(row.handicap) ? formatOdds(row.odds_nspf_draw) : '-',
-  oddsSpfLose: hasBdHandicapLine(row.handicap) ? formatOdds(row.odds_nspf_lose) : '-'
+  oddsNspfWin: hasBdHandicapLine(row.handicap) ? '-' : formatOdds(row.odds_nspf_win ?? row.odds_win),
+  oddsNspfDraw: hasBdHandicapLine(row.handicap) ? '-' : formatOdds(row.odds_nspf_draw ?? row.odds_draw),
+  oddsNspfLose: hasBdHandicapLine(row.handicap) ? '-' : formatOdds(row.odds_nspf_lose ?? row.odds_lose),
+  oddsSpfWin: hasBdHandicapLine(row.handicap) ? formatOdds(row.odds_nspf_win ?? row.odds_win) : '-',
+  oddsSpfDraw: hasBdHandicapLine(row.handicap) ? formatOdds(row.odds_nspf_draw ?? row.odds_draw) : '-',
+  oddsSpfLose: hasBdHandicapLine(row.handicap) ? formatOdds(row.odds_nspf_lose ?? row.odds_lose) : '-'
 })
 
 const compareByMatchNumber = (a, b) => {
@@ -531,23 +629,72 @@ const fetchFromYingqiuBd = async () => {
   }
 }
 
-const openOtherOdds = async (row) => {
+const openOtherOdds = async (row, forceRefresh = false, preserveExisting = false, silent = false) => {
+  const targetMatchId = row?.id || currentOtherOddsMatchId.value
+  if (!targetMatchId) {
+    ElMessage.warning('未找到可刷新的场次')
+    return
+  }
+
+  currentOtherOddsMatchId.value = targetMatchId
   otherOddsVisible.value = true
   otherOddsLoading.value = true
-  otherOddsActiveTab.value = 'eu'
-  otherOddsEuRows.value = []
-  otherOddsAsiaRows.value = []
-  otherOddsGoalsRows.value = []
+
+  if (!preserveExisting) {
+    clearOtherOddsAutoRetry()
+  }
+
+  if (!forceRefresh && !preserveExisting) {
+    otherOddsActiveTab.value = 'eu'
+    otherOddsEuRows.value = []
+    otherOddsAsiaRows.value = []
+    otherOddsGoalsRows.value = []
+    otherOddsAutoRetryCount.value = 0
+    otherOddsAutoForceCount.value = 0
+  }
+  if (forceRefresh) {
+    otherOddsAutoRetryCount.value = 0
+  }
+  otherOddsCacheReason.value = ''
+  otherOddsRemoteError.value = ''
+
   try {
-    const data = await request.get(`${API_BASE}/${row.id}/other-odds`, {
-      // 北单详情优先实时抓取，避免历史缓存导致标签页数据缺失或错位
-      params: { force_refresh: isBd.value },
-      timeout: 60000
-    })
+    const reqConfig = {
+      timeout: forceRefresh ? 90000 : 70000,
+      suppressErrorMessage: !!silent
+    }
+    // 默认走缓存优先，避免每次打开弹窗都触发慢速远程抓取导致超时。
+    // 仅在用户手动点击“强制刷新”时透传 force_refresh=true。
+    if (forceRefresh) {
+      reqConfig.params = { force_refresh: true }
+    }
+
+    const data = await request.get(`${API_BASE}/${targetMatchId}/other-odds`, reqConfig)
     const tabs = data.tabs || {}
     const euRows = tabs.eu || data.items || []
     const asiaRows = tabs.asia || []
     const goalsRows = tabs.goals || []
+
+    const cacheReason = String(data.cache_reason || '')
+    const remoteErr = String(data.remote_error || '').trim()
+    otherOddsCacheReason.value = cacheReason
+    otherOddsRemoteError.value = remoteErr
+
+    if (!silent) {
+      if (cacheReason === 'degraded_eu_only') {
+        ElMessage.warning('已降级为仅欧指数据（让球/进球数暂不可用）')
+      } else if (cacheReason === 'partial_tabs_missing') {
+        ElMessage.warning('已返回部分赔率，后台正在补抓缺失标签')
+      } else if (cacheReason === 'fallback_base_odds' || cacheReason === 'base_odds_fallback') {
+        const briefErr = remoteErr ? remoteErr.slice(0, 220) : '远程详情抓取失败'
+        ElMessage.warning(`当前仅返回基础赔率：${briefErr}`)
+      } else if (cacheReason === 'remote_unavailable' || cacheReason === 'recent_failure_cache') {
+        const briefErr = remoteErr ? remoteErr.slice(0, 220) : '远程详情抓取失败'
+        ElMessage.warning(`让球/进球数暂不可用：${briefErr}`)
+      } else if (euRows.length > 0 && asiaRows.length === 0 && goalsRows.length === 0) {
+        ElMessage.warning('当前仅返回欧指数据（让球/进球数暂无）')
+      }
+    }
 
     otherOddsEuRows.value = euRows.map((x) => ({
       company: x.company || '-',
@@ -593,16 +740,59 @@ const openOtherOdds = async (row) => {
     ) {
       otherOddsActiveTab.value = 'goals'
     }
+
+    const shouldAutoRetryByReason = OTHER_ODDS_AUTO_RETRY_REASONS.has(cacheReason)
+    const shouldAutoRetryByShape =
+      isBd.value && euRows.length > 0 && (asiaRows.length === 0 || goalsRows.length === 0)
+    const shouldAutoRecover = shouldAutoRetryByReason || shouldAutoRetryByShape
+    if (
+      !forceRefresh &&
+      otherOddsVisible.value &&
+      shouldAutoRecover &&
+      otherOddsAutoForceCount.value < OTHER_ODDS_AUTO_FORCE_MAX
+    ) {
+      otherOddsAutoForceCount.value += 1
+      clearOtherOddsAutoRetry()
+      otherOddsAutoRetryTimer = setTimeout(() => {
+        openOtherOdds({ id: targetMatchId }, true, true, true)
+      }, OTHER_ODDS_AUTO_FORCE_DELAY_MS)
+    } else if (
+      !forceRefresh &&
+      otherOddsVisible.value &&
+      shouldAutoRecover &&
+      otherOddsAutoRetryCount.value < OTHER_ODDS_AUTO_RETRY_MAX
+    ) {
+      otherOddsAutoRetryCount.value += 1
+      clearOtherOddsAutoRetry()
+      otherOddsAutoRetryTimer = setTimeout(() => {
+        openOtherOdds({ id: targetMatchId }, false, true)
+      }, OTHER_ODDS_AUTO_RETRY_DELAY_MS)
+    }
   } catch (error) {
     console.error('加载其它赔率失败:', error)
     if (error?.code === 'ECONNABORTED' || String(error?.message || '').includes('timeout')) {
-      ElMessage.error('加载其它赔率超时，请稍后重试')
+      if (!silent) {
+        ElMessage.error('加载其它赔率超时，请稍后重试')
+      }
       return
     }
-    ElMessage.error(error?.response?.data?.detail || '加载其它赔率失败')
+    if (!silent) {
+      ElMessage.error(error?.response?.data?.detail || '加载其它赔率失败')
+    }
   } finally {
     otherOddsLoading.value = false
   }
+}
+
+const refreshOtherOddsForce = async () => {
+  if (!currentOtherOddsMatchId.value) {
+    ElMessage.warning('请先打开一场比赛的详情弹窗')
+    return
+  }
+  clearOtherOddsAutoRetry()
+  otherOddsAutoRetryCount.value = 0
+  otherOddsAutoForceCount.value = 0
+  await openOtherOdds({ id: currentOtherOddsMatchId.value }, true)
 }
 
 const handleQuery = () => {
@@ -658,11 +848,28 @@ watch(
 )
 
 watch(
+  () => otherOddsVisible.value,
+  (visible) => {
+    if (!visible) {
+      clearOtherOddsAutoRetry()
+      otherOddsAutoRetryCount.value = 0
+      otherOddsAutoForceCount.value = 0
+    }
+  }
+)
+
+watch(
   () => [queryParams.matchDate, queryParams.issueNo, props.scheduleType],
   () => {
     getLeagueOptions()
   }
 )
+
+onBeforeUnmount(() => {
+  clearOtherOddsAutoRetry()
+  otherOddsAutoRetryCount.value = 0
+  otherOddsAutoForceCount.value = 0
+})
 </script>
 
 <style scoped>
@@ -778,6 +985,12 @@ watch(
 
 .other-odds-btn {
   min-width: 58px;
+}
+
+.other-odds-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 8px;
 }
 
 .other-odds-tabs {

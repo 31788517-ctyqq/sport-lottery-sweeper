@@ -7,6 +7,8 @@
 import os
 import sys
 from celery import Celery
+from celery.schedules import crontab
+from backend.config import settings
 
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -19,6 +21,7 @@ celery = Celery(
     include=[
         'backend.tasks.500wang_scheduler',
         'backend.tasks.ip_pool_refresh',
+        'backend.tasks.pool_reconcile_tasks',
     ]
 )
 
@@ -30,5 +33,18 @@ celery.conf.update(
     timezone='Asia/Shanghai',
     enable_utc=True,
 )
+
+if settings.POOL_RECONCILE_ENABLED:
+    celery.conf.beat_schedule = {
+        **getattr(celery.conf, "beat_schedule", {}),
+        "pool-reconcile-every-minute": {
+            "task": "pool.reconcile.scheduled",
+            "schedule": max(10, int(settings.POOL_RECONCILE_INTERVAL_SECONDS)),
+        },
+        "ip-pool-refresh-every-10-minutes": {
+            "task": "ip_pool.refresh",
+            "schedule": crontab(minute="*/10"),
+        },
+    }
 
 print("[celery] simple configuration loaded")

@@ -341,3 +341,145 @@ export function getBdLeagueOptions(params) {
     timeout: 60000
   })
 }
+
+// ==================== 形态B（下注建议 + Kill-Switch）联调API ====================
+
+// 异步抓取赔率快照
+export function fetchOddsSnapshotsAsync(params) {
+  return request({
+    url: '/api/v1/draw-prediction/draw-suggestion/odds-snapshots/fetch-async',
+    method: 'post',
+    params,
+    timeout: 20000
+  })
+}
+
+// 查询赔率快照列表
+export function getOddsSnapshots(params) {
+  return request({
+    url: '/api/v1/draw-prediction/draw-suggestion/odds-snapshots',
+    method: 'get',
+    params,
+    timeout: 30000
+  })
+}
+
+// 异步生成建议
+export function generateSuggestionsAsync(data) {
+  return request({
+    url: '/api/v1/draw-prediction/draw-suggestion/suggestions/generate-async',
+    method: 'post',
+    data,
+    timeout: 20000
+  })
+}
+
+// 查询建议列表
+export function getSuggestionList(params) {
+  return request({
+    url: '/api/v1/draw-prediction/draw-suggestion/suggestions',
+    method: 'get',
+    params,
+    timeout: 30000
+  })
+}
+
+// 查询建议详情
+export function getSuggestionDetail(id) {
+  return request({
+    url: `/api/v1/draw-prediction/draw-suggestion/suggestions/${id}`,
+    method: 'get',
+    timeout: 15000
+  })
+}
+
+// 创建模拟下注
+export function createPaperBets(data) {
+  return request({
+    url: '/api/v1/draw-prediction/draw-suggestion/paper-bets/create',
+    method: 'post',
+    data,
+    timeout: 20000
+  })
+}
+
+// 异步结算模拟下注
+export function settlePaperBetsAsync(data) {
+  return request({
+    url: '/api/v1/draw-prediction/draw-suggestion/paper-bets/settle-async',
+    method: 'post',
+    data,
+    timeout: 20000
+  })
+}
+
+// 获取建议/结算指标汇总
+export function getDrawSuggestionMetricsSummary(params) {
+  return request({
+    url: '/api/v1/draw-prediction/draw-suggestion/metrics/summary',
+    method: 'get',
+    params,
+    timeout: 15000
+  })
+}
+
+// 获取 Kill-Switch 状态
+export function getKillSwitchState() {
+  return request({
+    url: '/api/v1/draw-prediction/draw-suggestion/killswitch/state',
+    method: 'get',
+    timeout: 15000
+  })
+}
+
+// 手动触发 Kill-Switch STOP
+export function manualStopKillSwitch(data) {
+  return request({
+    url: '/api/v1/draw-prediction/draw-suggestion/killswitch/manual-stop',
+    method: 'post',
+    data,
+    timeout: 15000
+  })
+}
+
+// 手动释放 Kill-Switch
+export function manualReleaseKillSwitch(data) {
+  return request({
+    url: '/api/v1/draw-prediction/draw-suggestion/killswitch/manual-release',
+    method: 'post',
+    data,
+    timeout: 15000
+  })
+}
+
+// ==================== LLM 文案联调API ====================
+
+// AI解读（单条建议）
+export function llmExplain(data) {
+  return request({
+    url: '/api/v1/draw-prediction/llm/explain',
+    method: 'post',
+    data,
+    timeout: 30000
+  })
+}
+
+// 风控告警摘要
+export function llmAlertSummary(data) {
+  return request({
+    url: '/api/v1/draw-prediction/llm/alert-summary',
+    method: 'post',
+    data,
+    timeout: 30000
+  })
+}
+
+// 日报/周报生成
+export function llmReport(data) {
+  return request({
+    url: '/api/v1/draw-prediction/llm/report',
+    method: 'post',
+    data,
+    timeout: 45000
+  })
+}

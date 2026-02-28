@@ -9,40 +9,57 @@ from backend.services.alert_service import check_and_trigger_alert
 from backend.services.draw_prediction_service import get_predictions
 from backend.services.poisson_11_service import scan_for_date
 from backend.models.draw_prediction_result import DrawPredictionResult
+from backend.models.match import Match
 from datetime import datetime, timedelta
+
 
 
 @celery_app.task
 def update_prediction_results():
     """
-    定时任务：从数据源获取比赛结果并更新预测记录
-    建议每天凌晨执行一次
+    定时任务：基于真实比分回写预测结果
+    优先使用 Match.home_score / Match.away_score
     """
     db = SessionLocal()
     try:
-        # 获取最近30天内未结束的比赛预测
         start_date = datetime.utcnow() - timedelta(days=30)
         predictions = get_predictions(db, start_date=start_date)
 
-        # TODO: 实际项目中，这里应该对接爬虫或第三方API获取比赛结果
-        # 这里是模拟实现，随机更新一些预测结果
         updated_count = 0
+        unresolved_count = 0
         for pred in predictions:
-            if not pred.actual_result:
-                # 模拟：50%的概率已出结果
-                import random
-                if random.random() < 0.5:
-                    # 随机生成比赛结果（平局、主胜、客胜）
-                    result = random.choice(['draw', 'home', 'away'])
-                    pred.actual_result = result
-                    updated_count += 1
+            if pred.actual_result:
+                continue
+
+            match = (
+                db.query(Match)
+                .filter(Match.match_identifier == pred.match_id)
+                .order_by(Match.id.desc())
+                .first()
+            )
+            if not match:
+                unresolved_count += 1
+                continue
+
+            if match.home_score is None or match.away_score is None:
+                unresolved_count += 1
+                continue
+
+            if match.home_score == match.away_score:
+                pred.actual_result = "draw"
+            elif match.home_score > match.away_score:
+                pred.actual_result = "home"
+            else:
+                pred.actual_result = "away"
+            updated_count += 1
 
         db.commit()
-        logger.debug(f"[定时任务] 更新了 {updated_count} 条预测结果")
+        logger.debug(f"[定时任务] 更新了 {updated_count} 条预测结果，未解析 {unresolved_count} 条")
 
         return {
             "status": "success",
             "updated_count": updated_count,
+            "unresolved_count": unresolved_count,
             "timestamp": datetime.utcnow().isoformat()
         }
 
@@ -52,6 +69,7 @@ def update_prediction_results():
         raise
     finally:
         db.close()
+
 
 
 @celery_app.task

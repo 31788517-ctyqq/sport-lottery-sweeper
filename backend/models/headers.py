@@ -17,7 +17,7 @@ class RequestHeader(Base):
     value = Column(Text, nullable=False)  # 请求头值
     type = Column(String(50), nullable=False, default="general")  # general, request, response
     priority = Column(Integer, nullable=False, default=1)  # 优先级，数值越大优先级越高
-    status = Column(String(20), nullable=False, default="enabled")  # enabled, disabled
+    status = Column(String(20), nullable=False, default="enabled", index=True)  # enabled, disabled
     remarks = Column(Text, nullable=True)  # 备注
     usage_count = Column(Integer, nullable=False, default=0)  # 使用次数
     success_count = Column(Integer, nullable=False, default=0)  # 成功次数

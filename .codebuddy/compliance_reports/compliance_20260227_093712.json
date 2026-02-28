@@ -1,0 +1,324 @@
+{
+  "timestamp": "2026-02-27T09:37:02.421941",
+  "checks": {
+    "utf8_encoding": {
+      "passed": 38,
+      "failed": 42,
+      "issues": [
+        {
+          "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\api_test_simple.py",
+          "issue": "缺少UTF-8编码声明",
+          "severity": "medium"
+        },
+        {
+          "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\auth_smoke_get.py",
+          "issue": "缺少UTF-8编码声明",
+          "severity": "medium"
+        },
+        {
+          "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\auth_smoke_get_final.py",
+          "issue": "缺少UTF-8编码声明",
+          "severity": "medium"
+        },
+        {
+          "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend_crawler_minimal.py",
+          "issue": "缺少UTF-8编码声明",
+          "severity": "medium"
+        },
+        {
+          "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend_test_crawler.py",
+          "issue": "缺少UTF-8编码声明",
+          "severity": "medium"
+        },
+        {
+          "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\check_routes.py",
+          "issue": "缺少UTF-8编码声明",
+          "severity": "medium"
+        },
+        {
+          "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\check_source.py",
+          "issue": "缺少UTF-8编码声明",
+          "severity": "medium"
+        },
+        {
+          "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\check_table.py",
+          "issue": "缺少UTF-8编码声明",
+          "severity": "medium"
+        },
+        {
+          "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\check_table_schema.py",
+          "issue": "缺少UTF-8编码声明",
+          "severity": "medium"
+        },
+        {
+          "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\clear_tasks.py",
+          "issue": "缺少UTF-8编码声明",
+          "severity": "medium"
+        },
+        {
+          "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\completed_e2e_test.py",
+          "issue": "缺少UTF-8编码声明",
+          "severity": "medium"
+        },
+        {
+          "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\complete_e2e_test.py",
+          "issue": "缺少UTF-8编码声明",
+          "severity": "medium"
+        },
+        {
+          "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\complete_migration.py",
+          "issue": "缺少UTF-8编码声明",
+          "severity": "medium"
+        },
+        {
+          "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\complete_simulation_final.py",
+          "issue": "缺少UTF-8编码声明",
+          "severity": "medium"
+        },
+        {
+          "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\comprehensive_api_validation.py",
+          "issue": "缺少UTF-8编码声明",
+          "severity": "medium"
+        },
+        {
+          "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\continuous_monitor_task_32.py",
+          "issue": "缺少UTF-8编码声明",
+          "severity": "medium"
+        },
+        {
+          "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\count_crawler_tasks.py",
+          "issue": "缺少UTF-8编码声明",
+          "severity": "medium"
+        },
+        {
+          "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\count_data_sources.py",
+          "issue": "缺少UTF-8编码声明",
+          "severity": "medium"
+        },
+        {
+          "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\count_matches.py",
+          "issue": "缺少UTF-8编码声明",
+          "severity": "medium"
+        },
+        {
+          "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\debug_health_check.py",
+          "issue": "缺少UTF-8编码声明",
+          "severity": "medium"
+        },
+        {
+          "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\debug_parse_function.py",
+          "issue": "缺少UTF-8编码声明",
+          "severity": "medium"
+        },
+        {
+          "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\demo_captcha_service.py",
+          "issue": "缺少UTF-8编码声明",
+          "severity": "medium"
+        },
+        {
+          "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\detailed_api_check.py",
+          "issue": "缺少UTF-8编码声明",
+          "severity": "medium"
+        },
+        {
+          "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\detect_encoding.py",
+          "issue": "缺少UTF-8编码声明",
+          "severity": "medium"
+        },
+        {
+          "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\direct_click_test.py",
+          "issue": "缺少UTF-8编码声明",
+          "severity": "medium"
+        },
+        {
+          "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\direct_sql_test.py",
+          "issue": "缺少UTF-8编码声明",
+          "severity": "medium"
+        },
+        {
+          "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\e2e_task_console_py_test.py",
+          "issue": "缺少UTF-8编码声明",
+          "severity": "medium"
+        },
+        {
+          "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\e2e_test_datasource_management.py",
+          "issue": "缺少UTF-8编码声明",
+          "severity": "medium"
+        },
+        {
+          "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\e2e_test_data_source_page.py",
+          "issue": "缺少UTF-8编码声明",
+          "severity": "medium"
+        },
+        {
+          "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\e2e_test_final.py",
+          "issue": "缺少UTF-8编码声明",
+          "severity": "medium"
+        },
+        {
+          "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\e2e_test_runner.py",
+          "issue": "缺少UTF-8编码声明",
+          "severity": "medium"
+        },
+        {
+          "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\e2e_test_task_console.py",
+          "issue": "缺少UTF-8编码声明",
+          "severity": "medium"
+        },
+        {
+          "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\e2e_user_list_complete_test.py",
+          "issue": "缺少UTF-8编码声明",
+          "severity": "medium"
+        },
+        {
+          "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\e2e_user_list_test.py",
+          "issue": "缺少UTF-8编码声明",
+          "severity": "medium"
+        },
+        {
+          "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\element_ui_test.py",
+          "issue": "缺少UTF-8编码声明",
+          "severity": "medium"
+        },
+        {
+          "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\exact_id_test.py",
+          "issue": "缺少UTF-8编码声明",
+          "severity": "medium"
+        },
+        {
+          "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\execute_sql.py",
+          "issue": "缺少UTF-8编码声明",
+          "severity": "medium"
+        },
+        {
+          "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\execute_task_32_and_save_data.py",
+          "issue": "缺少UTF-8编码声明",
+          "severity": "medium"
+        },
+        {
+          "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\export_db_to_debug.py",
+          "issue": "缺少UTF-8编码声明",
+          "severity": "medium"
+        },
+        {
+          "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\fetch_api_data.py",
+          "issue": "缺少UTF-8编码声明",
+          "severity": "medium"
+        },
+        {
+          "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\tmp_bjdc_bf_js.js",
+          "issue": "文件不是有效的UTF-8编码",
+          "severity": "high"
+        },
+        {
+          "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\tmp_bjdc_core_js.js",
+          "issue": "文件不是有效的UTF-8编码",
+          "severity": "high"
+        }
+      ]
+    },
+    "path_aliases": {
+      "passed": 53,
+      "failed": 0,
+      "issues": [
+        {
+          "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\check_matches.py",
+          "issue": "检查失败: 'utf-8' codec can't decode byte 0xff in position 0: invalid start byte",
+          "severity": "low"
+        }
+      ]
+    },
+    "ai_comments": {
+      "passed": 0,
+      "failed": 10,
+      "issues": [
+        {
+          "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\alternative_redis_setup.py",
+          "issue": "可能是AI修改的文件但缺少AI注释",
+          "severity": "medium"
+        },
+        {
+          "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\api_test_simple.py",
+          "issue": "可能是AI修改的文件但缺少AI注释",
+          "severity": "medium"
+        },
+        {
+          "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\auth_smoke_get.py",
+          "issue": "可能是AI修改的文件但缺少AI注释",
+          "severity": "medium"
+        },
+        {
+          "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\auth_smoke_get_final.py",
+          "issue": "可能是AI修改的文件但缺少AI注释",
+          "severity": "medium"
+        },
+        {
+          "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend_crawler_minimal.py",
+          "issue": "可能是AI修改的文件但缺少AI注释",
+          "severity": "medium"
+        },
+        {
+          "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend_start.py",
+          "issue": "可能是AI修改的文件但缺少AI注释",
+          "severity": "medium"
+        },
+        {
+          "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend_start_8000.py",
+          "issue": "可能是AI修改的文件但缺少AI注释",
+          "severity": "medium"
+        },
+        {
+          "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend_test_crawler.py",
+          "issue": "可能是AI修改的文件但缺少AI注释",
+          "severity": "medium"
+        },
+        {
+          "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\check_routes.py",
+          "issue": "可能是AI修改的文件但缺少AI注释",
+          "severity": "medium"
+        },
+        {
+          "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\check_source.py",
+          "issue": "可能是AI修改的文件但缺少AI注释",
+          "severity": "medium"
+        }
+      ],
+      "found_comments": []
+    },
+    "file_locks": {
+      "active_locks": 0,
+      "stale_locks": 0,
+      "issues": []
+    },
+    "project_structure": {
+      "passed": 9,
+      "failed": 1,
+      "issues": [
+        {
+          "item": "PATH_ALIASES.md",
+          "issue": "缺少必需文件: PATH_ALIASES.md",
+          "severity": "high"
+        }
+      ]
+    }
+  },
+  "violations": [],
+  "recommendations": [
+    {
+      "category": "编码规范",
+      "priority": "high",
+      "suggestion": "为所有Python/JS文件添加UTF-8编码声明，确保文件使用UTF-8编码保存"
+    },
+    {
+      "category": "AI协作",
+      "priority": "medium",
+      "suggestion": "AI修改代码时必须添加AI_WORKING和AI_DONE注释标记"
+    },
+    {
+      "category": "总体评价",
+      "priority": "critical",
+      "suggestion": "❌ 项目AI合规性需要大幅改进，请优先处理高优先级问题"
+    }
+  ],
+  "score": 65.58
+}

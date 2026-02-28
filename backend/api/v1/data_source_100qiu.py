@@ -5,6 +5,7 @@ import json
 from datetime import datetime as dt, datetime
 import os
 import requests
+from urllib.parse import urlparse
 from sqlalchemy.orm import Session
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.exceptions import HTTPException
@@ -17,6 +18,10 @@ from ...database import get_db
 
 # 导入数据模型
 from ...models.data_sources import DataSource
+from ...models.data_source_headers import DataSourceHeader
+from ...models.headers import RequestHeader
+from ...models.ip_pool import IPPool
+from ...config import settings
 
 # 添加日志服务导入
 from ...services.log_service import LogService
@@ -30,6 +35,123 @@ os.environ.pop("http_proxy", None)
 os.environ.pop("https_proxy", None)
 _NO_PROXY_SESSION = requests.Session()
 _NO_PROXY_SESSION.trust_env = False
+
+
+def _resolve_domain(raw_url: Optional[str]) -> str:
+    try:
+        return (urlparse(raw_url or "").hostname or "__global__").lower()
+    except Exception:
+        return "__global__"
+
+
+def _build_header_context(db: Session, data_source_id: int, url: str) -> Dict[str, Any]:
+    domain = _resolve_domain(url)
+    bindings = (
+        db.query(DataSourceHeader, RequestHeader)
+        .join(RequestHeader, DataSourceHeader.header_id == RequestHeader.id)
+        .filter(DataSourceHeader.data_source_id == int(data_source_id))
+        .filter(DataSourceHeader.enabled.is_(True))
+        .filter(RequestHeader.status == "enabled")
+        .all()
+    )
+    selected: Dict[str, Dict[str, Any]] = {}
+    selected_ids: List[int] = []
+    for binding, header in bindings:
+        if header.domain not in {domain, "__global__"}:
+            continue
+        priority = binding.priority_override if binding.priority_override is not None else int(header.priority or 0)
+        existing = selected.get(header.name)
+        if not existing or priority >= existing["priority"]:
+            selected[header.name] = {"value": header.value, "priority": priority, "id": int(header.id)}
+    for row in selected.values():
+        selected_ids.append(int(row["id"]))
+    headers = {name: row["value"] for name, row in selected.items()}
+    return {"headers": headers, "header_ids": selected_ids, "domain": domain}
+
+
+def _choose_proxy(db: Session) -> Optional[IPPool]:
+    if not settings.REQUEST_USE_PROXY_BY_DEFAULT:
+        return None
+    return (
+        db.query(IPPool)
+        .filter(IPPool.status.in_(["active", "testing"]))
+        .order_by(IPPool.last_used.asc(), IPPool.id.asc())
+        .first()
+    )
+
+
+def _record_proxy_result(db: Session, proxy: Optional[IPPool], success: bool, reason: Optional[str] = None) -> None:
+    if not proxy:
+        return
+    proxy.last_used = datetime.utcnow()
+    if success:
+        proxy.success_count = int(proxy.success_count or 0) + 1
+        proxy.status = "active"
+        proxy.fail_reason = None
+    else:
+        proxy.failure_count = int(proxy.failure_count or 0) + 1
+        threshold = max(1, int(settings.IP_POOL_FAILURES_BEFORE_COOLING))
+        proxy.status = "cooling" if int(proxy.failure_count or 0) >= threshold else "testing"
+        proxy.fail_reason = reason or "request_failed"
+    db.commit()
+
+
+def _record_header_usage(db: Session, header_ids: List[int], success: bool) -> None:
+    if not header_ids:
+        return
+    now = datetime.utcnow()
+    rows = db.query(RequestHeader).filter(RequestHeader.id.in_(header_ids)).all()
+    for row in rows:
+        row.usage_count = int(row.usage_count or 0) + 1
+        if success:
+            row.success_count = int(row.success_count or 0) + 1
+        row.last_used = now
+    db.commit()
+
+
+def _request_with_pool_context(db: Session, source_id: int, url: str, timeout: int = 30) -> Dict[str, Any]:
+    header_ctx = _build_header_context(db, source_id, url)
+    headers = header_ctx["headers"] or {}
+    if "User-Agent" not in headers:
+        headers["User-Agent"] = (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+            "(KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"
+        )
+
+    proxy = _choose_proxy(db)
+    trace = {
+        "proxy_used": None,
+        "proxy_id": int(proxy.id) if proxy else None,
+        "header_ids": list(header_ctx["header_ids"]),
+        "fallback_reason": None,
+        "used_direct": proxy is None,
+    }
+    request_kwargs: Dict[str, Any] = {"headers": headers, "timeout": timeout}
+    if proxy:
+        proxy_url = f"{proxy.protocol}://{proxy.ip}:{proxy.port}"
+        request_kwargs["proxies"] = {"http": proxy_url, "https": proxy_url}
+        trace["proxy_used"] = proxy_url
+
+    try:
+        response = _NO_PROXY_SESSION.get(url, **request_kwargs)
+    except requests.RequestException:
+        if request_kwargs.get("proxies") and settings.REQUEST_ALLOW_DIRECT_FALLBACK:
+            trace["fallback_reason"] = "proxy_request_failed_direct_fallback"
+            trace["used_direct"] = True
+            trace["proxy_used"] = None
+            request_kwargs.pop("proxies", None)
+            response = _NO_PROXY_SESSION.get(url, **request_kwargs)
+        else:
+            _record_proxy_result(db, proxy, False, reason="request_exception")
+            _record_header_usage(db, header_ctx["header_ids"], False)
+            raise
+
+    success = response.status_code == 200
+    _record_proxy_result(db, proxy, success, reason=f"status_{response.status_code}")
+    _record_header_usage(db, header_ctx["header_ids"], success)
+    if proxy is None and settings.REQUEST_USE_PROXY_BY_DEFAULT:
+        trace["fallback_reason"] = "proxy_pool_empty_direct"
+    return {"response": response, "trace": trace}
 
 
 def validation_exception_handler(request: Request, exc: ValidationError):
@@ -108,6 +230,7 @@ class FetchDataResponse(BaseModel):
     message: str
     total_fetched: int
     sample_data: Optional[List[Dict[str, Any]]] = None
+    request_trace: Optional[Dict[str, Any]] = None
 
 
 router = APIRouter(prefix="/data-source-100qiu", tags=["data-source-100qiu"])
@@ -544,14 +667,16 @@ async def test_100qiu_data_source_connection(
         else:
             api_url = f"{db_data_source.url}?dateTime={date_time}"
         
-        # 发送请求
-        response = _NO_PROXY_SESSION.get(api_url, timeout=30)
+        # 发送请求（带池化上下文）
+        request_ctx = _request_with_pool_context(db, source_id, api_url, timeout=30)
+        response = request_ctx["response"]
+        request_trace = request_ctx["trace"]
         
         if response.status_code != 200:
             return TestConnectionResponse(
                 success=False,
                 message=f"API请求失败，状态码: {response.status_code}",
-                data={"status_code": response.status_code}
+                data={"status_code": response.status_code, "request_trace": request_trace}
             )
         
         try:
@@ -560,7 +685,7 @@ async def test_100qiu_data_source_connection(
             return TestConnectionResponse(
                 success=False,
                 message=f"响应不是有效JSON格式: {str(e)}",
-                data=None
+                data={"request_trace": request_trace}
             )
         
         # 检查数据结构
@@ -568,7 +693,7 @@ async def test_100qiu_data_source_connection(
             return TestConnectionResponse(
                 success=False,
                 message="API返回的数据格式不符合预期，应为数组或对象",
-                data=None
+                data={"request_trace": request_trace}
             )
         
         # 获取样本数据
@@ -587,7 +712,8 @@ async def test_100qiu_data_source_connection(
                 "status_code": response.status_code,
                 "content_length": len(response.content),
                 "has_data": len(sample_data) > 0,
-                "response_time_ms": response.elapsed.total_seconds() * 1000
+                "response_time_ms": response.elapsed.total_seconds() * 1000,
+                "request_trace": request_trace,
             },
             sample_data=sample_data
         )
@@ -621,6 +747,13 @@ async def fetch_100qiu_data(
     # 初始化日志服务
     log_service = LogService(db)
     
+    request_trace: Dict[str, Any] = {
+        "proxy_used": None,
+        "proxy_id": None,
+        "header_ids": [],
+        "fallback_reason": None,
+        "used_direct": True,
+    }
     try:
         db_data_source = db.query(DataSource).filter(DataSource.id == source_id).first()
         
@@ -665,8 +798,10 @@ async def fetch_100qiu_data(
         else:
             api_url = f"{db_data_source.url}?dateTime={date_time}"
         
-        # 发送请求
-        response = _NO_PROXY_SESSION.get(api_url, timeout=30)
+        # 发送请求（带池化上下文）
+        request_ctx = _request_with_pool_context(db, source_id, api_url, timeout=30)
+        response = request_ctx["response"]
+        request_trace = request_ctx["trace"]
         
         if response.status_code != 200:
             error_msg = f"API请求失败，状态码: {response.status_code}"
@@ -688,14 +823,16 @@ async def fetch_100qiu_data(
                     "status_code": response.status_code,
                     "url": api_url,
                     "action": "fetch_failed",
-                    "error_type": "http_error"
+                    "error_type": "http_error",
+                    "request_trace": request_trace,
                 }, ensure_ascii=False)
             ))
             
             return FetchDataResponse(
                 success=False,
                 message=error_msg,
-                total_fetched=0
+                total_fetched=0,
+                request_trace=request_trace,
             )
         
         try:
@@ -720,14 +857,16 @@ async def fetch_100qiu_data(
                     "url": api_url,
                     "action": "fetch_failed",
                     "error_type": "json_parse_error",
-                    "response_preview": str(response.content)[:500] if response.content else ""
+                    "response_preview": str(response.content)[:500] if response.content else "",
+                    "request_trace": request_trace,
                 }, ensure_ascii=False)
             ))
             
             return FetchDataResponse(
                 success=False,
                 message=error_msg,
-                total_fetched=0
+                total_fetched=0,
+                request_trace=request_trace,
             )
         
         # 解析数据并存储到数据库
@@ -799,7 +938,8 @@ async def fetch_100qiu_data(
             return FetchDataResponse(
                 success=False,
                 message=error_msg,
-                total_fetched=0
+                total_fetched=0,
+                request_trace=request_trace,
             )
         
         print(f"[INFO] 最终解析的比赛数据数量: {len(matches_data)}")
@@ -829,7 +969,8 @@ async def fetch_100qiu_data(
                     "raw_data_count": len(matches_data),
                     "action": "fetch_success_zero",
                     "available_keys": list(data.keys()) if isinstance(data, dict) else [],
-                    "duration_seconds": duration
+                    "duration_seconds": duration,
+                    "request_trace": request_trace,
                 }, ensure_ascii=False)
             ))
             
@@ -837,7 +978,8 @@ async def fetch_100qiu_data(
                 success=True,
                 message=success_msg,
                 total_fetched=0,
-                sample_data=[]
+                sample_data=[],
+                request_trace=request_trace,
             )
             return response_obj
         
@@ -940,7 +1082,8 @@ async def fetch_100qiu_data(
                         "unchanged_count": unchanged_count,
                         "failed_parsing_count": failed_parsing_count,
                         "duration_seconds": duration,
-                        "action": "fetch_success_zero_detailed"
+                        "action": "fetch_success_zero_detailed",
+                        "request_trace": request_trace,
                     }, ensure_ascii=False)
                 ))
                 
@@ -948,7 +1091,8 @@ async def fetch_100qiu_data(
                     success=True,
                     message=success_msg,
                     total_fetched=count,
-                    sample_data=matches_data[:3] if matches_data else []
+                    sample_data=matches_data[:3] if matches_data else [],
+                    request_trace=request_trace,
                 )
             else:
                 success_msg = (
@@ -976,7 +1120,8 @@ async def fetch_100qiu_data(
                         "unchanged_count": unchanged_count,
                         "failed_parsing_count": failed_parsing_count,
                         "duration_seconds": duration,
-                        "action": "fetch_success"
+                        "action": "fetch_success",
+                        "request_trace": request_trace,
                     }, ensure_ascii=False)
                 ))
                 
@@ -984,7 +1129,8 @@ async def fetch_100qiu_data(
                     success=True,
                     message=success_msg,
                     total_fetched=count,
-                    sample_data=matches_data[:3] if matches_data else []
+                    sample_data=matches_data[:3] if matches_data else [],
+                    request_trace=request_trace,
                 )
             
             return response_obj
@@ -1008,7 +1154,8 @@ async def fetch_100qiu_data(
                     "source_id": source_id,
                     "action": "fetch_failed",
                     "error_type": "database_error",
-                    "processed_count": processed_count
+                    "processed_count": processed_count,
+                    "request_trace": request_trace,
                 }, ensure_ascii=False)
             ))
             
@@ -1018,7 +1165,8 @@ async def fetch_100qiu_data(
                 "data": FetchDataResponse(
                     success=False,
                     message=error_msg,
-                    total_fetched=0
+                    total_fetched=0,
+                    request_trace=request_trace,
                 ).dict()
             }
         finally:
@@ -1043,7 +1191,8 @@ async def fetch_100qiu_data(
             extra_data=json.dumps({
                 "source_id": source_id,
                 "action": "fetch_exception",
-                "error_type": "unexpected_error"
+                "error_type": "unexpected_error",
+                "request_trace": request_trace,
             }, ensure_ascii=False)
         ))
         
@@ -1053,7 +1202,8 @@ async def fetch_100qiu_data(
             "data": FetchDataResponse(
                 success=False,
                 message=error_msg,
-                total_fetched=0
+                total_fetched=0,
+                request_trace=request_trace,
             ).dict()
         }
 

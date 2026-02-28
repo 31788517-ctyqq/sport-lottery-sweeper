@@ -141,6 +141,84 @@ class Settings(BaseSettings):
     REDIS_POOL_SIZE: int = Field(default=10, description="Redis connection pool size")
     REDIS_MAX_CONNECTIONS: int = Field(default=20, description="Max Redis connections")
 
+    # --- Pool Reconcile Settings ---
+    POOL_RECONCILE_ENABLED: bool = Field(
+        default=True,
+        description="Enable periodic pool reconcile task",
+    )
+    POOL_RECONCILE_INTERVAL_SECONDS: int = Field(
+        default=60,
+        description="Pool reconcile interval in seconds",
+    )
+    POOL_RECONCILE_DRY_RUN: bool = Field(
+        default=True,
+        description="Run reconcile in dry-run mode by default",
+    )
+
+    # --- IP Pool Capacity Targets ---
+    IP_POOL_TARGET_ACTIVE: int = Field(default=60, description="Target active proxy count")
+    IP_POOL_TARGET_STANDBY: int = Field(default=20, description="Target standby proxy count")
+    IP_POOL_FAILURES_BEFORE_COOLING: int = Field(
+        default=5,
+        description="Failure threshold before moving proxy to cooling status",
+    )
+    IP_POOL_EXPECTED_ACTIVE_PER_FETCH_PAGE: int = Field(
+        default=5,
+        description="Expected active proxies per fetch page",
+    )
+    IP_POOL_AUTO_REPLENISH_ENABLED: bool = Field(
+        default=False,
+        description="Enable automatic IP pool replenishment",
+    )
+
+    # --- Headers Pool Capacity Targets ---
+    HEADER_POOL_HEADERS_PER_ACTIVE_IP: int = Field(
+        default=3,
+        description="Target headers per active proxy",
+    )
+    HEADER_POOL_MIN_ACTIVE_PER_DOMAIN: int = Field(
+        default=30,
+        description="Minimum enabled headers for each domain",
+    )
+    HEADER_POOL_LOW_QUALITY_MIN_USAGE: int = Field(
+        default=20,
+        description="Minimum usage count before quality check",
+    )
+    HEADER_POOL_LOW_QUALITY_SUCCESS_RATE: float = Field(
+        default=70.0,
+        description="Headers with lower success rate are considered low quality",
+    )
+    HEADER_POOL_AUTO_REPLENISH_ENABLED: bool = Field(
+        default=False,
+        description="Enable automatic headers pool replenishment",
+    )
+    HEADER_POOL_MIN_BINDINGS_PER_SOURCE: int = Field(
+        default=6,
+        description="Minimum headers binding count per data source",
+    )
+
+    # --- Runtime Request Fallback Settings ---
+    REQUEST_USE_PROXY_BY_DEFAULT: bool = Field(
+        default=True,
+        description="Use proxy first for crawler HTTP requests",
+    )
+    REQUEST_ALLOW_DIRECT_FALLBACK: bool = Field(
+        default=True,
+        description="Allow direct request fallback when proxy is unavailable",
+    )
+    REQUEST_PROXY_REUSE_MIN_SECONDS: int = Field(
+        default=15,
+        description="Minimum seconds before reusing same proxy in scheduler requests",
+    )
+    REQUEST_DOMAIN_FAILURE_THRESHOLD: int = Field(
+        default=5,
+        description="Failure threshold to open domain circuit breaker",
+    )
+    REQUEST_DOMAIN_COOLDOWN_SECONDS: int = Field(
+        default=300,
+        description="Domain circuit breaker cooldown window in seconds",
+    )
+
     # --- Logging Settings ---
     LOG_LEVEL: str = Field(default="INFO", description="Logging level")
     LOG_FILE_MAX_BYTES: int = Field(default=10485760, description="Max bytes per log file (10MB)")

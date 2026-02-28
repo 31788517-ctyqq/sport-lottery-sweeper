@@ -148,3 +148,11 @@ export function unbindHeadersFromTask(data) {
     data
   })
 }
+
+export function autoBindHeadersToDataSource(data) {
+  return request({
+    url: '/api/admin/headers/auto-bind/data-source',
+    method: 'post',
+    data
+  })
+}

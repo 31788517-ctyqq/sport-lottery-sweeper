@@ -56,3 +56,7 @@ Thumbs.db
 backend.env
 crawler.env
 config/*/settings.toml
+
+# Sensitive key material
+.ssh/
+*.pem
