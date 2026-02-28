@@ -66,7 +66,7 @@
         </el-table-column>
         <el-table-column label="操作" width="150">
           <template #default="scope">
-            <el-button size="small" type="link" @click="viewDetails(scope.row)">查看详情</el-button>
+            <el-button size="small" link type="primary" @click="viewDetails(scope.row)">查看详情</el-button>
           </template>
         </el-table-column>
       </el-table>

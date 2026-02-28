@@ -77,7 +77,7 @@
     <el-card class="recent-logs-card">
       <template #header>
         <span>最近日志</span>
-        <el-button type="link" @click="refreshData">刷新</el-button>
+        <el-button link type="primary" @click="refreshData">刷新</el-button>
       </template>
       <LogTable
         :logs="recentLogs"

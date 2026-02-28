@@ -79,9 +79,9 @@
         <el-table-column label="选择" min-width="240">
           <template #default="{ row }">
             <el-checkbox-group v-model="selections[row.matchSeq]" size="small" :disabled="isSelectionLocked(row)">
-              <el-checkbox-button label="win">胜</el-checkbox-button>
-              <el-checkbox-button label="draw">平</el-checkbox-button>
-              <el-checkbox-button label="lose">负</el-checkbox-button>
+              <el-checkbox-button value="win">胜</el-checkbox-button>
+              <el-checkbox-button value="draw">平</el-checkbox-button>
+              <el-checkbox-button value="lose">负</el-checkbox-button>
             </el-checkbox-group>
           </template>
         </el-table-column>
@@ -240,9 +240,9 @@
         <el-table-column label="选择" min-width="240">
           <template #default="{ row }">
             <el-checkbox-group v-model="editSelections[row.matchSeq]" size="small" :disabled="isSelectionLocked(row)">
-              <el-checkbox-button label="win">胜</el-checkbox-button>
-              <el-checkbox-button label="draw">平</el-checkbox-button>
-              <el-checkbox-button label="lose">负</el-checkbox-button>
+              <el-checkbox-button value="win">胜</el-checkbox-button>
+              <el-checkbox-button value="draw">平</el-checkbox-button>
+              <el-checkbox-button value="lose">负</el-checkbox-button>
             </el-checkbox-group>
           </template>
         </el-table-column>

@@ -1,28 +1,17 @@
-<template>
+﻿<template>
   <div class="intelligence-management-container">
-    <!-- Page Header -->
     <div class="page-header">
       <h2>情感分析</h2>
       <p class="page-description">对情报数据进行情感分析和情绪倾向判断</p>
     </div>
 
-    <!-- Quick Actions -->
     <div class="quick-actions">
-      <el-button type="primary" :icon="Plus" @click="analyzeSentiment">
-        开始分析
-      </el-button>
-      <el-button type="success" :icon="VideoPlay" @click="startRealTimeMonitoring">
-        实时监控
-      </el-button>
-      <el-button type="warning" :icon="RefreshLeft" @click="refreshData">
-        刷新数据
-      </el-button>
-      <el-button type="info" :icon="Download" @click="exportReport">
-        导出报告
-      </el-button>
+      <el-button type="primary" :icon="Plus" @click="analyzeSentiment">开始分析</el-button>
+      <el-button type="success" :icon="VideoPlay" @click="startRealTimeMonitoring">实时监控</el-button>
+      <el-button type="warning" :icon="RefreshLeft" @click="refreshData">刷新数据</el-button>
+      <el-button type="info" :icon="Download" @click="exportReport">导出报告</el-button>
     </div>
 
-    <!-- Statistics Cards -->
     <div class="stats-section">
       <el-row :gutter="20">
         <el-col :span="6">
@@ -64,9 +53,7 @@
       </el-row>
     </div>
 
-    <!-- Main Content Tabs -->
     <el-tabs v-model="activeTab" class="management-tabs">
-      <!-- Sentiment Distribution Tab -->
       <el-tab-pane label="情感分布" name="distribution">
         <div class="tab-content">
           <el-card>
@@ -76,13 +63,12 @@
               </div>
             </template>
             <div class="chart-container">
-              <ve-pie :data="sentimentDistributionData" :settings="chartSettings" />
+              <div ref="distributionChartRef" class="chart-canvas" />
             </div>
           </el-card>
         </div>
       </el-tab-pane>
 
-      <!-- Sentiment Timeline Tab -->
       <el-tab-pane label="情感趋势" name="timeline">
         <div class="tab-content">
           <el-card>
@@ -92,13 +78,12 @@
               </div>
             </template>
             <div class="chart-container">
-              <ve-line :data="sentimentTimelineData" :settings="lineChartSettings" />
+              <div ref="timelineChartRef" class="chart-canvas" />
             </div>
           </el-card>
         </div>
       </el-tab-pane>
 
-      <!-- Detailed Analysis Tab -->
       <el-tab-pane label="详细分析" name="detailed">
         <div class="tab-content">
           <el-table :data="sentimentList" style="width: 100%" v-loading="loading">
@@ -139,12 +124,12 @@
       </el-tab-pane>
     </el-tabs>
 
-    <!-- View Details Dialog -->
     <el-dialog v-model="showViewDialog" title="情感分析详情" width="60%">
       <div v-if="selectedItem">
         <h3>{{ selectedItem.source }}</h3>
         <p><strong>原文内容：</strong>{{ selectedItem.content }}</p>
-        <p><strong>情感倾向：</strong>
+        <p>
+          <strong>情感倾向：</strong>
           <el-tag :type="getSentimentTagType(selectedItem.sentiment)">
             {{ selectedItem.sentiment }}
           </el-tag>
@@ -163,16 +148,22 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { 
-  Plus, VideoPlay, RefreshLeft, Download, CaretTop, CaretBottom, Minus, Aim 
+import {
+  Plus,
+  VideoPlay,
+  RefreshLeft,
+  Download,
+  CaretTop,
+  CaretBottom,
+  Minus,
+  Aim
 } from '@element-plus/icons-vue'
+import * as echarts from 'echarts'
 
-// Tab control
 const activeTab = ref('distribution')
 
-// Stats
 const stats = reactive({
   positiveCount: 1240,
   negativeCount: 562,
@@ -180,75 +171,129 @@ const stats = reactive({
   accuracy: 92.4
 })
 
-// Loading state
 const loading = ref(false)
 
-// Pagination
 const pagination = reactive({
   currentPage: 1,
   pageSize: 10,
   total: 100
 })
 
-// Chart settings
-const chartSettings = {
-  dimension: '情感类型',
-  metrics: '数量',
-  dataType: {
-    '数量': 'percent'
-  }
-}
-
-const lineChartSettings = {
-  xAxisType: 'time',
-  dimension: '时间',
-  metrics: ['正面', '负面', '中性']
-}
-
-// Sample data for charts
 const sentimentDistributionData = {
   columns: ['情感类型', '数量'],
   rows: [
-    { '情感类型': '正面', '数量': 1240 },
-    { '情感类型': '负面', '数量': 562 },
-    { '情感类型': '中性', '数量': 890 }
+    { 情感类型: '正面', 数量: 1240 },
+    { 情感类型: '负面', 数量: 562 },
+    { 情感类型: '中性', 数量: 890 }
   ]
 }
 
 const sentimentTimelineData = {
   columns: ['时间', '正面', '负面', '中性'],
   rows: [
-    { '时间': '2024-01-01', '正面': 320, '负面': 120, '中性': 200 },
-    { '时间': '2024-01-02', '正面': 280, '负面': 180, '中性': 180 },
-    { '时间': '2024-01-03', '正面': 350, '负面': 100, '中性': 220 },
-    { '时间': '2024-01-04', '正面': 400, '负面': 90, '中性': 250 },
-    { '时间': '2024-01-05', '正面': 380, '负面': 110, '中性': 240 },
-    { '时间': '2024-01-06', '正面': 420, '负面': 80, '中性': 260 },
-    { '时间': '2024-01-07', '正面': 450, '负面': 70, '中性': 280 }
+    { 时间: '2024-01-01', 正面: 320, 负面: 120, 中性: 200 },
+    { 时间: '2024-01-02', 正面: 280, 负面: 180, 中性: 180 },
+    { 时间: '2024-01-03', 正面: 350, 负面: 100, 中性: 220 },
+    { 时间: '2024-01-04', 正面: 400, 负面: 90, 中性: 250 },
+    { 时间: '2024-01-05', 正面: 380, 负面: 110, 中性: 240 },
+    { 时间: '2024-01-06', 正面: 420, 负面: 80, 中性: 260 },
+    { 时间: '2024-01-07', 正面: 450, 负面: 70, 中性: 280 }
   ]
 }
 
-// Sentiment list
 const sentimentList = ref([
-  { id: 1, source: '社交媒体', content: '这支队伍最近的表现真是令人振奋，球员们状态很好...', sentiment: '正面', confidence: 0.92, date: '2024-01-15 10:30' },
-  { id: 2, source: '新闻报道', content: '由于伤病困扰，球队主力无法出场，前景堪忧...', sentiment: '负面', confidence: 0.87, date: '2024-01-15 09:45' },
-  { id: 3, source: '专家评论', content: '从数据来看，两队实力相当，胜负难料...', sentiment: '中性', confidence: 0.78, date: '2024-01-15 08:20' },
-  { id: 4, source: '球迷论坛', content: '虽然输了比赛，但球员们的拼搏精神值得称赞...', sentiment: '正面', confidence: 0.85, date: '2024-01-14 22:10' },
-  { id: 5, source: '技术分析', content: '从赔率变化看，市场对这场比赛的态度比较谨慎...', sentiment: '中性', confidence: 0.72, date: '2024-01-14 18:30' }
+  { id: 1, source: '社交媒体', content: '这支队伍最近表现令人振奋，球员状态很好。', sentiment: '正面', confidence: 0.92, date: '2024-01-15 10:30' },
+  { id: 2, source: '新闻报道', content: '由于伤病困扰，球队主力无法出场，前景堪忧。', sentiment: '负面', confidence: 0.87, date: '2024-01-15 09:45' },
+  { id: 3, source: '专家评论', content: '从数据来看，两队实力相当，胜负难料。', sentiment: '中性', confidence: 0.78, date: '2024-01-15 08:20' },
+  { id: 4, source: '球迷论坛', content: '虽然输了比赛，但球员拼搏精神值得称赞。', sentiment: '正面', confidence: 0.85, date: '2024-01-14 22:10' },
+  { id: 5, source: '技术分析', content: '从赔率变化看，市场对本场比赛态度谨慎。', sentiment: '中性', confidence: 0.72, date: '2024-01-14 18:30' }
 ])
 
-// Selected item for details
 const selectedItem = ref(null)
 const showViewDialog = ref(false)
 
-// Methods
+const distributionChartRef = ref(null)
+const timelineChartRef = ref(null)
+let distributionChart = null
+let timelineChart = null
+
+const buildDistributionOption = () => {
+  const [nameKey, valueKey] = sentimentDistributionData.columns || []
+  const rows = sentimentDistributionData.rows || []
+
+  return {
+    tooltip: { trigger: 'item' },
+    legend: { bottom: 0 },
+    series: [
+      {
+        type: 'pie',
+        radius: ['40%', '70%'],
+        label: { show: true, formatter: '{b}: {d}%' },
+        data: rows.map((row) => ({
+          name: row?.[nameKey] ?? '-',
+          value: Number(row?.[valueKey] ?? 0)
+        }))
+      }
+    ]
+  }
+}
+
+const buildTimelineOption = () => {
+  const [xKey, ...metricKeys] = sentimentTimelineData.columns || []
+  const rows = sentimentTimelineData.rows || []
+
+  return {
+    tooltip: { trigger: 'axis' },
+    legend: { top: 8 },
+    grid: { left: 40, right: 20, top: 40, bottom: 40 },
+    xAxis: {
+      type: 'category',
+      boundaryGap: false,
+      data: rows.map((row) => row?.[xKey] ?? '-')
+    },
+    yAxis: { type: 'value' },
+    series: metricKeys.map((key) => ({
+      name: key,
+      type: 'line',
+      smooth: true,
+      data: rows.map((row) => Number(row?.[key] ?? 0))
+    }))
+  }
+}
+
+const renderDistributionChart = () => {
+  if (!distributionChartRef.value) return
+  if (!distributionChart) distributionChart = echarts.init(distributionChartRef.value)
+  distributionChart.setOption(buildDistributionOption())
+}
+
+const renderTimelineChart = () => {
+  if (!timelineChartRef.value) return
+  if (!timelineChart) timelineChart = echarts.init(timelineChartRef.value)
+  timelineChart.setOption(buildTimelineOption())
+}
+
+const renderActiveChart = () => {
+  if (activeTab.value === 'distribution') {
+    renderDistributionChart()
+    return
+  }
+  if (activeTab.value === 'timeline') {
+    renderTimelineChart()
+  }
+}
+
+const handleChartResize = () => {
+  if (distributionChart) distributionChart.resize()
+  if (timelineChart) timelineChart.resize()
+}
+
 const analyzeSentiment = () => {
   ElMessage.success('开始情感分析...')
-  // Simulate API call
   loading.value = true
   setTimeout(() => {
     loading.value = false
-    ElMessage.success('情感分析完成！')
+    ElMessage.success('情感分析完成')
   }, 1500)
 }
 
@@ -258,6 +303,9 @@ const startRealTimeMonitoring = () => {
 
 const refreshData = () => {
   ElMessage.info('刷新数据中...')
+  nextTick(() => {
+    renderActiveChart()
+  })
 }
 
 const exportReport = () => {
@@ -277,33 +325,55 @@ const viewDetails = (item) => {
 
 const deleteItem = (item) => {
   ElMessageBox.confirm(
-    `确定要删除来自 "${item.source}" 的情感分析数据吗？`,
+    `确定要删除来自“${item.source}”的情感分析数据吗？`,
     '删除确认',
     {
       confirmButtonText: '确定',
       cancelButtonText: '取消',
       type: 'warning'
     }
-  ).then(() => {
-    sentimentList.value = sentimentList.value.filter(i => i.id !== item.id)
-    ElMessage.success('删除成功')
-  }).catch(() => {
-    ElMessage.info('已取消删除')
-  })
+  )
+    .then(() => {
+      sentimentList.value = sentimentList.value.filter((i) => i.id !== item.id)
+      ElMessage.success('删除成功')
+    })
+    .catch(() => {
+      ElMessage.info('已取消删除')
+    })
 }
 
 const handleSizeChange = (size) => {
   pagination.pageSize = size
-  console.log(`每页 ${size} 条`)
 }
 
 const handleCurrentChange = (page) => {
   pagination.currentPage = page
-  console.log(`当前页: ${page}`)
 }
 
+watch(activeTab, () => {
+  nextTick(() => {
+    renderActiveChart()
+  })
+})
+
 onMounted(() => {
-  console.log('Sentiment Analysis module loaded')
+  nextTick(() => {
+    renderDistributionChart()
+    renderTimelineChart()
+  })
+  window.addEventListener('resize', handleChartResize)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', handleChartResize)
+  if (distributionChart) {
+    distributionChart.dispose()
+    distributionChart = null
+  }
+  if (timelineChart) {
+    timelineChart.dispose()
+    timelineChart = null
+  }
 })
 </script>
 
@@ -382,6 +452,11 @@ onMounted(() => {
 
 .chart-container {
   height: 400px;
+}
+
+.chart-canvas {
+  width: 100%;
+  height: 100%;
 }
 
 .pagination {

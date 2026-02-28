@@ -48,6 +48,7 @@ from backend.models.user import User
 # 导入数据库相关模块
 from backend.database import engine, DATABASE_URL, get_db
 from backend.models.base import Base
+from backend.config import settings
 
 # AI_WORKING: coder1 @2026-02-10 - 添加数据库路径日志
 logger.info(f"数据库连接URL: {DATABASE_URL}")
@@ -226,7 +227,11 @@ class APIMigrationMiddleware(BaseHTTPMiddleware):
             logger.info(f"API路径重定向: {old_path} -> {new_path}")
             
         elif old_path == "/api/admin/sources" or old_path.startswith("/api/admin/sources/"):
-            new_path = old_path.replace("/api/admin/sources", "/api/v1/admin/sources", 1)
+            new_path = old_path.replace("/api/admin/sources", "/api/v1/admin/crawler/sources", 1)
+            request.scope["path"] = new_path
+            logger.info(f"API path redirected: {old_path} -> {new_path}")
+        elif old_path == "/api/v1/admin/data" or old_path.startswith("/api/v1/admin/data/"):
+            new_path = old_path.replace("/api/v1/admin/data", "/api/admin/data", 1)
             request.scope["path"] = new_path
             logger.info(f"API path redirected: {old_path} -> {new_path}")
         elif old_path == "/api/admin/ip-pools" or old_path.startswith("/api/admin/ip-pools/"):
@@ -281,6 +286,18 @@ def load_cors_origins() -> List[str]:
     logger.info("CORS origins loaded from env: %s", parsed)
     return parsed
 
+
+def load_rate_limit_defaults() -> List[str]:
+    """Load optional global rate-limit rules from env.
+
+    Keep empty by default so admin pages with many concurrent requests
+    are not blocked by a low global cap.
+    """
+    raw_limits = os.getenv("API_DEFAULT_RATE_LIMITS", "").strip()
+    if not raw_limits:
+        return []
+    return [item.strip() for item in raw_limits.split(",") if item.strip()]
+
 # 创建FastAPI应用实例
 app = FastAPI(
     lifespan=lifespan,
@@ -290,14 +307,19 @@ app = FastAPI(
 )
 
 # Initialize rate limiter
+default_rate_limits = load_rate_limit_defaults()
 limiter = Limiter(
     key_func=get_remote_address,
-    default_limits=["100/hour"],  # Default global rate limit
+    default_limits=default_rate_limits,
     storage_uri="memory://"  # Use memory storage for simplicity
 )
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.add_middleware(SlowAPIMiddleware)
+if default_rate_limits:
+    logger.info("Global rate limits enabled: %s", default_rate_limits)
+else:
+    logger.warning("Global rate limits disabled (API_DEFAULT_RATE_LIMITS not set)")
 
 # 添加API迁移中间件（放在其他中间件之前）
 app.add_middleware(APIMigrationMiddleware)
@@ -343,14 +365,27 @@ os.environ['FULL_API_MODE'] = 'true'
 # AI_WORKING: coder1 @2026-01-29 - 替换print为logging，统一日志记录
 # 导入API v1路由 - 启用完整API模式
 logger.info("Registering API routes...")
+# ===== /api/v1 路由 =====
 try:
     from backend.api.v1 import router as api_v1_router
     app.include_router(api_v1_router, prefix="/api/v1")
     logger.info("API v1 routes registered successfully")
 except Exception as e:
     logger.error(f"API v1 路由注册失败: {e}")
+    import traceback
+    logger.error(f"详细堆栈: {traceback.format_exc()}")
     # 即使API路由注册失败，也继续运行基本服务
 
+# 注册实体映射和官方信息管理API路由
+try:
+    from backend.api.v1.admin.entity_mapping import router as entity_mapping_router
+    app.include_router(entity_mapping_router, prefix="/api/v1", tags=["entity-mapping"])
+    logger.info("Entity mapping API routes registered (/api/v1/entity-mapping)")
+except Exception as e:
+    logger.error(f"实体映射API路由注册失败: {e}")
+    import traceback
+    logger.error(f"详细堆栈: {traceback.format_exc()}")
+    
 # 注册数据源管理路由（已通过admin路由注册，此处注释避免重复）
 # try:
 #     from backend.api.v1.admin.data_source import router as data_source_router
@@ -550,6 +585,51 @@ except Exception as e:
     import traceback
     logger.error(f"详细堆栈: {traceback.format_exc()}")
 
+try:
+    from backend.api.v1.draw_prediction import router as draw_prediction_router
+    app.include_router(draw_prediction_router, prefix="/api/v1", tags=["draw-prediction"])
+    logger.info("Draw prediction API routes registered (/api/v1/draw-prediction)")
+except Exception as e:
+    logger.error(f"平局预测API路由注册失败: {e}")
+    import traceback
+    logger.error(f"详细堆栈: {traceback.format_exc()}")
+
+try:
+    from backend.api.v1.admin.lottery_schedule import router as admin_lottery_schedule_router
+    app.include_router(admin_lottery_schedule_router, prefix="/api/v1/admin/lottery-schedules", tags=["admin-lottery-schedules"])
+    logger.info("Admin lottery schedule API routes registered (/api/v1/admin/lottery-schedules)")
+except Exception as e:
+    logger.error(f"北单赛程API路由注册失败: {e}")
+    import traceback
+    logger.error(f"详细堆栈: {traceback.format_exc()}")
+
+try:
+    from backend.api.v1.data_center_adapter import router as data_center_adapter_router
+    app.include_router(data_center_adapter_router, prefix="/api/v1", tags=["data-center-adapter"])
+    logger.info("Data center adapter API routes registered (/api/v1/stats/data-center)")
+except Exception as e:
+    logger.error(f"数据中心适配API路由注册失败: {e}")
+    import traceback
+    logger.error(f"详细堆栈: {traceback.format_exc()}")
+
+try:
+    from backend.api.v1.llm_providers import router as llm_providers_router
+    app.include_router(llm_providers_router, prefix="/api/v1", tags=["llm-providers"])
+    logger.info("LLM providers API routes registered (/api/v1/llm-providers)")
+except Exception as e:
+    logger.error(f"LLM供应商API路由注册失败: {e}")
+    import traceback
+    logger.error(f"详细堆栈: {traceback.format_exc()}")
+
+try:
+    from backend.api.v1.admin.intelligence_collection import router as admin_intelligence_collection_router
+    app.include_router(admin_intelligence_collection_router, prefix="/api/v1/admin", tags=["intelligence-collection"])
+    logger.info("Admin intelligence collection API routes registered (/api/v1/admin/intelligence/collection)")
+except Exception as e:
+    logger.error(f"情报采集API路由注册失败: {e}")
+    import traceback
+    logger.error(f"详细堆栈: {traceback.format_exc()}")
+
 # 注册北单过滤API路由 - 直接导入
 try:
     from backend.app.api_v1.endpoints.beidan_filter_api import router as beidan_filter_router
@@ -649,15 +729,15 @@ from fastapi import Body
 import jwt
 from datetime import datetime as dt, timezone, timedelta
 
-SECRET_KEY = os.getenv("SECRET_KEY", "fallback-test-key-change-in-production")  # 从环境变量读取密钥
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 7200  # 2小时
+SECRET_KEY = settings.SECRET_KEY
+ALGORITHM = settings.ALGORITHM
+ACCESS_TOKEN_EXPIRE_MINUTES = settings.ACCESS_TOKEN_EXPIRE_MINUTES
 
 def create_access_token(data: dict):
     """创建JWT访问令牌"""
     to_encode = data.copy()
     expire = dt.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    to_encode.update({"exp": expire})
+    to_encode.update({"exp": expire, "iat": dt.now(timezone.utc), "type": "access"})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
@@ -691,8 +771,14 @@ async def register(
         }
     }
 
+LOGIN_RATE_LIMIT = os.getenv("LOGIN_RATE_LIMIT", "10/minute")
+DASHBOARD_RATE_LIMIT = os.getenv("DASHBOARD_RATE_LIMIT", "180/minute")
+INTELLIGENCE_RATE_LIMIT = os.getenv("INTELLIGENCE_RATE_LIMIT", "240/minute")
+STATS_RATE_LIMIT = os.getenv("STATS_RATE_LIMIT", "240/minute")
+
+
 @app.post("/api/v1/auth/login")
-@limiter.limit("5/minute")  # Strict limit for login attempts - prevents brute force
+@limiter.limit(LOGIN_RATE_LIMIT)  # Strict limit for login attempts - prevents brute force
 async def login_v1(
     request: Request,
     username: str = Body(...),
@@ -737,7 +823,7 @@ async def login_v1(
 
     # 创建JWT令牌
     access_token = create_access_token({
-        "sub": str(user["id"]),
+        "sub": user["username"],
         "user_id": user["id"],
         "username": user["username"],
         "email": user["email"],
@@ -859,7 +945,12 @@ async def login_compat_get():
     return {"code": 405, "message": "此接口仅支持POST方法", "detail": "请使用POST方法访问登录接口"}
 
 @app.post("/api/auth/login")
-async def login_compat(username: str = Body(...), password: str = Body(...)):
+@limiter.limit(LOGIN_RATE_LIMIT)
+async def login_compat(
+    request: Request,
+    username: str = Body(...),
+    password: str = Body(...)
+):
     """兼容前端登录接口 - 真实数据库验证"""
     logger.info(f"Compatibility login attempt for username: {username}")
     user = authenticate_user(username, password)
@@ -871,7 +962,7 @@ async def login_compat(username: str = Body(...), password: str = Body(...)):
     
     # 创建JWT令牌
     access_token = create_access_token({
-        "sub": str(user["id"]),
+        "sub": user["username"],
         "user_id": user["id"],
         "username": user["username"],
         "email": user["email"],
@@ -923,7 +1014,7 @@ async def get_profile_compat():
     }
 
 @app.get("/api/dashboard/summary")
-@limiter.limit("30/minute")  # Reasonable limit for dashboard data
+@limiter.limit(DASHBOARD_RATE_LIMIT)
 async def dashboard_summary(
     request: Request,
     current_user: User = Depends(get_current_active_admin_user)
@@ -941,7 +1032,7 @@ async def dashboard_summary(
         raise HTTPException(status_code=500, detail=f"获取仪表板数据失败: {str(e)}")
 
 @app.get("/api/intelligence/screening/list")
-@limiter.limit("60/minute")  # Moderate limit for intelligence data
+@limiter.limit(INTELLIGENCE_RATE_LIMIT)
 async def screening_list(
     request: Request,
     current_user: User = Depends(get_current_active_admin_user)
@@ -959,7 +1050,7 @@ async def screening_list(
         raise HTTPException(status_code=500, detail=f"获取情报筛选列表失败: {str(e)}")
 
 @app.get("/api/stats/data-center")
-@limiter.limit("60/minute")  # Moderate limit for stats data
+@limiter.limit(STATS_RATE_LIMIT)
 async def get_data_center_stats(
     request: Request,
     current_user: User = Depends(get_current_active_admin_user)
