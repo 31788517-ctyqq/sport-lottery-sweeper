@@ -7,8 +7,8 @@
     "dev": "concurrently \"npm run backend:dev\" \"npm run frontend:dev\"",
     "backend:dev": "cd backend && python main.py",
     "frontend:dev": "cd frontend && npm run dev",
-    "install": "npm run install:backend && npm run install:frontend",
-    "install:backend": "pip install -r requirements.txt",
+    "bootstrap": "npm run install:backend && npm run install:frontend",
+    "install:backend": "python -m pip install -r requirements.txt",
     "install:frontend": "cd frontend && npm install",
     "test": "npm run test:backend && npm run test:frontend",
     "test:backend": "cd backend && pytest",
@@ -21,7 +21,7 @@
     "compliance": "python scripts/check_ai_compliance.py",
     "smart-start": "python scripts/smart_start.py",
     "test:e2e": "cd frontend && npx playwright test",
-    "cleanup": "force_kill_port_8000.bat && npm run install",
+    "cleanup": "force_kill_port_8000.bat && npm run bootstrap",
     "reset": "npm run cleanup && npm run dev"
   },
   "devDependencies": {
