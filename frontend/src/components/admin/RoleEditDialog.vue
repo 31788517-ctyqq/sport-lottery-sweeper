@@ -2,12 +2,22 @@
   <el-dialog
     :title="dialogTitle"
     v-model="visible"
-    width="600px"
+    width="650px"
     @close="handleClose"
   >
     <el-form ref="formRef" :model="formData" :rules="rules" label-width="120px">
       <el-form-item label="角色名称" prop="name">
         <el-input v-model="formData.name" placeholder="请输入角色名称" />
+      </el-form-item>
+
+      <el-form-item label="角色等级" prop="level">
+        <el-select v-model="formData.level" placeholder="请选择角色等级">
+          <el-option label="超级管理员 (L5)" :value="5" />
+          <el-option label="管理员 (L4)" :value="4" />
+          <el-option label="审计员 (L3)" :value="3" />
+          <el-option label="运营员 (L2)" :value="2" />
+          <el-option label="观察者 (L1)" :value="1" />
+        </el-select>
       </el-form-item>
 
       <el-form-item label="角色描述" prop="description">
@@ -17,6 +27,10 @@
           :rows="3"
           placeholder="请输入角色描述"
         />
+      </el-form-item>
+
+      <el-form-item label="系统内置角色" prop="is_system">
+        <el-checkbox v-model="formData.is_system" label="是否为系统内置角色（勾选后无法删除）" />
       </el-form-item>
 
       <el-form-item label="权限配置" prop="permissions">
@@ -33,9 +47,8 @@
             <template #default="{ node, data }">
               <span class="tree-node">
                 <span>{{ node.label }}</span>
-                <el-tag v-if="data.type === 'menu'" size="small" type="info">菜单</el-tag>
-                <el-tag v-else-if="data.type === 'button'" size="small" type="success">按钮</el-tag>
-                <el-tag v-else-if="data.type === 'api'" size="small" type="warning">接口</el-tag>
+                <el-tag v-if="data.code" size="small" type="info">{{ data.code }}</el-tag>
+                <span v-if="data.description" class="desc-text">{{ data.description }}</span>
               </span>
             </template>
           </el-tree>
@@ -72,6 +85,8 @@ const formData = reactive({
   id: null,
   name: '',
   description: '',
+  level: 2,
+  is_system: false,
   permissions: []
 })
 
@@ -85,6 +100,7 @@ const rules = {
     { required: true, message: '请输入角色名称', trigger: 'blur' },
     { min: 2, max: 50, message: '长度在 2 到 50 个字符', trigger: 'blur' }
   ],
+  level: [{ required: true, message: '请选择角色等级', trigger: 'change' }],
   description: [{ max: 200, message: '长度不能超过 200 个字符', trigger: 'blur' }]
 }
 
@@ -114,6 +130,8 @@ const resetForm = () => {
     id: null,
     name: '',
     description: '',
+    level: 2,
+    is_system: false,
     permissions: []
   })
   nextTick(() => {
@@ -127,6 +145,8 @@ const loadRoleData = () => {
     id: props.roleData.id ?? null,
     name: props.roleData.name ?? '',
     description: props.roleData.description ?? '',
+    level: props.roleData.level ?? 2,
+    is_system: props.roleData.is_system ?? false,
     permissions: normalizePermissions(props.roleData.permissions)
   })
   nextTick(() => {
@@ -163,8 +183,9 @@ const handleClose = () => {
 .permission-tree-container {
   border: 1px solid var(--el-border-color-light);
   border-radius: 4px;
-  max-height: 300px;
+  max-height: 400px;
   overflow-y: auto;
+  padding: 8px;
 }
 
 .tree-node {
@@ -172,6 +193,12 @@ const handleClose = () => {
   align-items: center;
   gap: 8px;
   flex: 1;
+}
+
+.desc-text {
+  color: #909399;
+  font-size: 12px;
+  margin-left: auto;
 }
 
 .dialog-footer {

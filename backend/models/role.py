@@ -1,8 +1,18 @@
-from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, ForeignKey, Enum
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from backend.models.base import Base, BaseFullModel
 from backend.models.admin_user import AdminUser
+import enum
+
+
+class RoleLevelEnum(enum.Enum):
+    """角色等级枚举"""
+    SUPER_ADMIN = 5      # 超级管理员 - 所有权限
+    ADMIN = 4            # 管理员 - 大部分管理权限
+    AUDITOR = 3          # 审计员 - 查看日志和报表
+    OPERATOR = 2         # 运营员 - 数据维护和执行权限
+    OBSERVER = 1         # 观察者 - 只读访问
 
 
 class Role(BaseFullModel):
@@ -13,6 +23,8 @@ class Role(BaseFullModel):
     name = Column(String(100), nullable=False, index=True, unique=True)  # 角色名称
     description = Column(Text, nullable=True)  # 角色描述
     permissions = Column(Text, nullable=True)  # 权限列表（JSON格式存储）
+    level = Column(Integer, nullable=False, default=1, index=True)  # 角色级别 (1-5)
+    is_system = Column(Boolean, default=False, nullable=False)  # 是否为系统内置角色
     status = Column(Boolean, default=True, nullable=False, index=True)  # 状态
     sort_order = Column(Integer, default=0, nullable=False)  # 排序
 

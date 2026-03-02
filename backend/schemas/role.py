@@ -4,13 +4,34 @@
 from pydantic import BaseModel, validator
 from typing import Optional, List
 from datetime import datetime
+from enum import Enum
 import json
+
+
+class RoleLevelEnum(str, Enum):
+    """角色等级枚举"""
+    SUPER_ADMIN = "5"   # 超级管理员
+    ADMIN = "4"         # 管理员
+    AUDITOR = "3"       # 审计员
+    OPERATOR = "2"      # 运营员
+    OBSERVER = "1"      # 观察者
+
+
+ROLE_LEVEL_NAMES = {
+    "5": "超级管理员 (L5)",
+    "4": "管理员 (L4)",
+    "3": "审计员 (L3)",
+    "2": "运营员 (L2)",
+    "1": "观察者 (L1)",
+}
 
 
 class RoleBase(BaseModel):
     """角色基础模型"""
     name: str
     description: Optional[str] = None
+    level: int = 1
+    is_system: bool = False
     permissions: Optional[list] = []
 
     @validator('permissions', pre=True)
@@ -30,6 +51,8 @@ class RoleCreate(RoleBase):
     """创建角色请求模型"""
     name: str
     description: Optional[str] = None
+    level: int = 1
+    is_system: bool = False
     permissions: Optional[list] = []
 
 
@@ -37,6 +60,8 @@ class RoleUpdate(BaseModel):
     """更新角色请求模型"""
     name: Optional[str] = None
     description: Optional[str] = None
+    level: Optional[int] = None
+    is_system: Optional[bool] = None
     permissions: Optional[list] = None
 
     @validator('permissions', pre=True)
@@ -57,6 +82,8 @@ class RoleResponse(RoleBase):
     id: int
     name: str
     description: Optional[str]
+    level: int
+    is_system: bool
     permissions: list
     created_at: datetime
     updated_at: Optional[datetime] = None
