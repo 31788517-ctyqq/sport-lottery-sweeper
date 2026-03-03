@@ -63,6 +63,34 @@
       </el-col>
     </el-row>
 
+    <el-card class="box-card" style="margin-bottom: 20px;">
+      <div class="sync-status-bar">
+        <div class="sync-status-main">
+          <div class="sync-status-title">100球自动同步状态</div>
+          <div class="sync-status-meta">
+            <span>500w最新期号：{{ syncStatus.latest_issue_no || '-' }}</span>
+            <span>100球最后成功期号：{{ syncStatus.last_success_issue_no || '-' }}</span>
+            <span>上次成功时间：{{ formatDate(syncStatus.last_sync_at) }}</span>
+            <span>下次同步时间：{{ formatDate(syncStatus.next_sync_at) }}</span>
+          </div>
+          <div v-if="syncStatus.last_error" class="sync-status-error">
+            最近错误：{{ syncStatus.last_error }}
+          </div>
+        </div>
+        <div class="sync-status-actions">
+          <el-tag :type="syncStatusTagType">{{ syncStatus.sync_status || 'idle' }}</el-tag>
+          <el-button
+            type="primary"
+            size="small"
+            :loading="syncStatus.runningNow"
+            @click="runSourceSyncNow"
+          >
+            立即同步
+          </el-button>
+        </div>
+      </div>
+    </el-card>
+
     <!-- 工具栏和筛选栏 -->
     <el-card class="box-card" style="margin-bottom: 20px;">
       <div class="toolbar">
@@ -307,7 +335,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { ElMessage, ElMessageBox, ElForm, ElFormItem, ElInput, ElSelect, ElOption, ElSwitch, ElDialog, ElTabs, ElTabPane } from 'element-plus'
 import { bindHeadersToDataSource, getHeaderBindings, getHeadersList, getHeaderStats, unbindHeadersFromDataSource } from '@/api/headers'
 import { getIpStats } from '@/api/ipPool'
@@ -340,6 +368,15 @@ const poolHealth = ref({
   headerDomains: 0,
   lowQualityHeaders: 0,
   bindingCoverage: 0
+})
+const syncStatus = ref({
+  sync_status: 'idle',
+  latest_issue_no: '',
+  last_success_issue_no: '',
+  last_sync_at: null,
+  next_sync_at: null,
+  last_error: '',
+  runningNow: false
 })
 
 // 筛选条件
@@ -405,6 +442,7 @@ const loadData = async () => {
       // 计算统计数据
       calculateStats(listData)
       loadPoolHealth()
+      loadSourceSyncStatus()
     } else {
       throw new Error(data?.message || '加载失败')
     }
@@ -435,6 +473,57 @@ const loadPoolHealth = async () => {
     console.error('加载池健康摘要失败:', error)
   }
 }
+
+const loadSourceSyncStatus = async () => {
+  try {
+    const response = await fetch('/api/v1/admin/source-sync/status', {
+      method: 'GET',
+      credentials: 'include'
+    })
+    const data = await response.json()
+    if (response.ok && data.success && data.data) {
+      syncStatus.value = {
+        ...syncStatus.value,
+        ...data.data,
+        runningNow: false
+      }
+    }
+  } catch (error) {
+    console.error('加载自动同步状态失败:', error)
+  }
+}
+
+const runSourceSyncNow = async () => {
+  syncStatus.value.runningNow = true
+  try {
+    const response = await fetch('/api/v1/admin/source-sync/run-now', {
+      method: 'POST',
+      credentials: 'include'
+    })
+    const data = await response.json()
+    if (response.ok && data.success) {
+      ElMessage.success('已触发同步任务')
+      setTimeout(() => {
+        loadSourceSyncStatus()
+        loadData()
+      }, 1200)
+    } else {
+      throw new Error(data.message || '触发失败')
+    }
+  } catch (error) {
+    ElMessage.error(error.message || '触发失败')
+  } finally {
+    syncStatus.value.runningNow = false
+  }
+}
+
+const syncStatusTagType = computed(() => {
+  const status = syncStatus.value.sync_status
+  if (status === 'success') return 'success'
+  if (status === 'running') return 'warning'
+  if (status === 'degraded' || status === 'failed') return 'danger'
+  return 'info'
+})
 
 const calculateStats = (items) => {
   const total = items.length
@@ -1050,6 +1139,45 @@ onMounted(() => {
 
 .dialog-form {
   margin-top: 20px;
+}
+
+.sync-status-bar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.sync-status-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.sync-status-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #303133;
+}
+
+.sync-status-meta {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  color: #606266;
+  font-size: 13px;
+}
+
+.sync-status-error {
+  margin-top: 8px;
+  font-size: 13px;
+  color: #f56c6c;
+}
+
+.sync-status-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .bind-header-actions {

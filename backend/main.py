@@ -47,6 +47,8 @@ from backend.models.user import User
 from backend.database import engine, DATABASE_URL, get_db
 from backend.models.base import Base
 from backend.config import settings
+from backend.models.source_issue_state import SourceIssueState  # noqa: F401
+from backend.models.source_issue_fetch_runs import SourceIssueFetchRun  # noqa: F401
 
 # AI_WORKING: coder1 @2026-02-10 - 娣诲姞鏁版嵁搴撹矾寰勬棩蹇?logger.info(f"鏁版嵁搴撹繛鎺RL: {DATABASE_URL}")
 
@@ -189,7 +191,7 @@ async def lifespan(app: FastAPI):
     # AI_DONE: coder1 @2026-02-10
     
     # Initialize DB metadata
-    from backend.database import engine, Base
+    from backend.database import engine
     Base.metadata.create_all(bind=engine, checkfirst=True)
     
     # 鏆傛椂绂佺敤鍚姩鏃剁殑鏁版嵁婧愬悓姝ワ紝閬垮厤ORM鍐茬獊
@@ -197,10 +199,26 @@ async def lifespan(app: FastAPI):
     
     # 鍒濆鍖栧悇绉嶆湇鍔?    # initialize_services()
     # ???LLM??
-    init_llm_service()  # 鏆傛椂娉ㄩ噴鎺夋湭瀹氫箟鐨勫嚱鏁拌皟鐢?    
+    init_llm_service()  # 鏆傛椂娉ㄩ噴鎺夋湭瀹氫箟鐨勫嚱鏁拌皟鐢?
+
+    # Start auto issue sync scheduler: 500w issue discovery -> 100qiu fetch.
+    try:
+        from backend.services.source_sync_service import source_issue_auto_sync_service
+
+        source_issue_auto_sync_service.start()
+    except Exception as e:
+        logger.error(f"Failed to start source sync scheduler: {e}")
+
     yield
     
     # 搴旂敤鍏抽棴鏃剁殑娓呯悊
+    try:
+        from backend.services.source_sync_service import source_issue_auto_sync_service
+
+        source_issue_auto_sync_service.shutdown()
+    except Exception as e:
+        logger.error(f"Failed to stop source sync scheduler: {e}")
+
     logger.info("Application shutting down...")
 
 # 鏂板锛欰PI閲嶅畾鍚戜腑闂翠欢锛堜复鏃舵柟妗堬級
@@ -536,6 +554,16 @@ except Exception as e:
     logger.error(f"100qiu鏁版嵁婧怉PI璺敱娉ㄥ唽澶辫触: {e}")
     import traceback
     logger.error(f"璇︾粏鍫嗘爤: {traceback.format_exc()}")
+
+try:
+    from backend.api.v1.admin.source_sync import router as source_sync_router
+
+    app.include_router(source_sync_router, prefix="/api/v1/admin", tags=["source-sync"])
+    logger.info("Source sync API routes registered (/api/v1/admin/source-sync)")
+except Exception as e:
+    logger.error(f"Source sync API route registration failed: {e}")
+    import traceback
+    logger.error(f"Details: {traceback.format_exc()}")
 
 
 try:

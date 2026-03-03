@@ -42,6 +42,8 @@ from .paper_bet import PaperBet
 from .market_regime_daily import MarketRegimeDaily
 from .risk_killswitch_state import RiskKillSwitchState
 from .external_source_mapping import ExternalSourceMapping
+from .source_issue_state import SourceIssueState
+from .source_issue_fetch_runs import SourceIssueFetchRun
 from .async_task import AsyncTask
 from .llm_provider import LLMProvider, LLMProviderTypeEnum, LLMProviderStatusEnum
 from .log_entry import LogEntry
@@ -80,6 +82,8 @@ __all__ = [
     "MarketRegimeDaily",
     "RiskKillSwitchState",
     "ExternalSourceMapping",
+    "SourceIssueState",
+    "SourceIssueFetchRun",
     "AsyncTask",
     "MultiStrategyTask",
     "BeidanBettingScheme",

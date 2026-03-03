@@ -219,6 +219,32 @@ class Settings(BaseSettings):
         description="Domain circuit breaker cooldown window in seconds",
     )
 
+    # --- Auto 500w -> 100qiu Sync Settings ---
+    AUTO_100QIU_SYNC_ENABLED: bool = Field(
+        default=True,
+        description="Enable automatic 500w issue discovery and 100qiu fetch",
+    )
+    AUTO_100QIU_BASE_INTERVAL_HOURS: int = Field(
+        default=3,
+        description="Base interval hours for automatic issue discovery",
+    )
+    AUTO_100QIU_WINDOW_ENABLED: bool = Field(
+        default=True,
+        description="Enable windowed high-frequency discovery schedule",
+    )
+    AUTO_100QIU_WINDOW_HOURS: str = Field(
+        default="10-23",
+        description="Cron hour expression for windowed discovery schedule",
+    )
+    AUTO_100QIU_WINDOW_MINUTE_STEP: int = Field(
+        default=30,
+        description="Minute step for windowed discovery schedule",
+    )
+    AUTO_100QIU_SOURCE_UPDATE_FREQUENCY_MINUTES: int = Field(
+        default=180,
+        description="update_frequency value for auto-created 100qiu sources",
+    )
+
     # --- Logging Settings ---
     LOG_LEVEL: str = Field(default="INFO", description="Logging level")
     LOG_FILE_MAX_BYTES: int = Field(default=10485760, description="Max bytes per log file (10MB)")
