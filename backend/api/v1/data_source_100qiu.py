@@ -2,6 +2,7 @@
 100qiu数据源API - 专门处理100qiu数据源的获取和管理
 """
 import json
+import re
 from datetime import datetime as dt, datetime
 import os
 import requests
@@ -35,6 +36,121 @@ os.environ.pop("http_proxy", None)
 os.environ.pop("https_proxy", None)
 _NO_PROXY_SESSION = requests.Session()
 _NO_PROXY_SESSION.trust_env = False
+_EXPECT_OPTIONS_CACHE: List[str] = []
+_EXPECT_OPTIONS_CACHE_TS: Optional[dt] = None
+_EXPECT_OPTIONS_CACHE_TTL_SECONDS = 300
+
+
+def _parse_json_payload(response: requests.Response) -> Any:
+    """
+    Parse upstream response payload with lightweight compatibility fallbacks:
+    - UTF-8 BOM
+    - JSONP wrapper: callback({...})
+    """
+    try:
+        return response.json()
+    except Exception:
+        text = (response.text or "").strip()
+        text = text.lstrip("\ufeff").strip()
+        if not text:
+            raise ValueError("empty response body")
+
+        # JSONP fallback
+        jsonp_match = re.match(r"^[A-Za-z_$][\w$]*\s*\((.*)\)\s*;?\s*$", text, re.S)
+        if jsonp_match:
+            inner = jsonp_match.group(1).strip()
+            return json.loads(inner)
+
+        return json.loads(text)
+
+
+def _looks_like_json_payload(response: requests.Response) -> bool:
+    try:
+        text = (response.text or "").lstrip("\ufeff \t\r\n")
+    except Exception:
+        return False
+    if not text:
+        return False
+    if text[0] in ("{", "["):
+        return True
+    # JSONP style callback(...)
+    if re.match(r"^[A-Za-z_$][\w$]*\s*\(", text):
+        return True
+    return False
+
+
+def _fetch_500w_expect_options(limit: int = 6) -> List[str]:
+    """
+    Read latest Beidan issue numbers from 500w.
+    Returned values are ordered as they appear on page (latest first).
+    """
+    global _EXPECT_OPTIONS_CACHE_TS
+    now = dt.utcnow()
+    if (
+        _EXPECT_OPTIONS_CACHE
+        and _EXPECT_OPTIONS_CACHE_TS is not None
+        and (now - _EXPECT_OPTIONS_CACHE_TS).total_seconds() < _EXPECT_OPTIONS_CACHE_TTL_SECONDS
+    ):
+        return _EXPECT_OPTIONS_CACHE[: max(1, int(limit))]
+
+    try:
+        response = _NO_PROXY_SESSION.get(
+            "https://trade.500.com/bjdc/",
+            headers={
+                "User-Agent": (
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                    "(KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"
+                ),
+                "Referer": "https://trade.500.com/bjdc/",
+                "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+            },
+            timeout=15,
+        )
+        if response.status_code != 200:
+            return []
+
+        values = re.findall(r'<option[^>]+value=["\'](\d{5,6})["\']', response.text or "", flags=re.I)
+        result: List[str] = []
+        seen = set()
+        for value in values:
+            if value in seen:
+                continue
+            seen.add(value)
+            result.append(value)
+            if len(result) >= max(1, int(limit)):
+                break
+        if result:
+            _EXPECT_OPTIONS_CACHE.clear()
+            _EXPECT_OPTIONS_CACHE.extend(result)
+            _EXPECT_OPTIONS_CACHE_TS = now
+        return result
+    except Exception:
+        return []
+
+
+def _resolve_date_time_candidates(raw_date_time: Optional[Any], max_candidates: int = 3) -> List[str]:
+    """
+    Resolve candidate dateTime values for 100qiu requests.
+    - explicit date_time -> use it directly
+    - latest/empty -> use latest issues from 500w, fallback to 26011
+    """
+    value = str(raw_date_time or "").strip().lower()
+    explicit = str(raw_date_time).strip() if raw_date_time is not None else ""
+    # Explicit date_time should not trigger extra remote lookups.
+    if value and value != "latest" and explicit:
+        return [explicit]
+
+    options = _fetch_500w_expect_options(limit=max(3, max_candidates))
+    if options:
+        return options[: max(1, int(max_candidates))]
+    return ["26011"]
+
+
+def _build_100qiu_api_url(base_url: str, date_time: str) -> str:
+    if "dateTime=" in base_url:
+        return re.sub(r"dateTime=\w+", f"dateTime={date_time}", base_url)
+    joiner = "&" if "?" in base_url else "?"
+    return f"{base_url}{joiner}dateTime={date_time}"
 
 
 def _resolve_domain(raw_url: Optional[str]) -> str:
@@ -146,12 +262,31 @@ def _request_with_pool_context(db: Session, source_id: int, url: str, timeout: i
             _record_header_usage(db, header_ctx["header_ids"], False)
             raise
 
+    # Proxy may return HTTP 200 with non-JSON/html content; fallback to direct once.
+    if (
+        request_kwargs.get("proxies")
+        and settings.REQUEST_ALLOW_DIRECT_FALLBACK
+        and response.status_code == 200
+        and not _looks_like_json_payload(response)
+    ):
+        trace["fallback_reason"] = "proxy_non_json_direct_fallback"
+        trace["used_direct"] = True
+        trace["proxy_used"] = None
+        request_kwargs.pop("proxies", None)
+        response = _NO_PROXY_SESSION.get(url, **request_kwargs)
+
     success = response.status_code == 200
     _record_proxy_result(db, proxy, success, reason=f"status_{response.status_code}")
     _record_header_usage(db, header_ctx["header_ids"], success)
     if proxy is None and settings.REQUEST_USE_PROXY_BY_DEFAULT:
         trace["fallback_reason"] = "proxy_pool_empty_direct"
-    return {"response": response, "trace": trace}
+    return {
+        "response": response,
+        "trace": trace,
+        "headers": headers,
+        "timeout": timeout,
+        "url": url,
+    }
 
 
 def validation_exception_handler(request: Request, exc: ValidationError):
@@ -645,47 +780,45 @@ async def test_100qiu_data_source_connection(
         if not db_data_source:
             raise HTTPException(status_code=404, detail="数据源不存在")
         
-        # 获取配置
+        # 获取配置并解析期号候选（latest 会自动解析为 500w 最新期号）
         config = db_data_source.config_dict
-        date_time = config.get("date_time", "latest")
-        
-        # 确保date_time不为None且为字符串类型
-        if date_time is None:
-            date_time = "latest"
-        if not isinstance(date_time, str):
-            date_time = str(date_time)
-        
-        # 修复：当date_time为'latest'时，使用默认的有效dateTime值
-        if date_time == "latest":
-            # 使用一个默认的有效dateTime值，可以根据实际需求调整
-            date_time = "26011"
-        
-        # 构造API URL
-        if "dateTime" in db_data_source.url:
-            import re
-            api_url = re.sub(r'dateTime=\w+', f'dateTime={date_time}', db_data_source.url)
-        else:
-            api_url = f"{db_data_source.url}?dateTime={date_time}"
-        
-        # 发送请求（带池化上下文）
-        request_ctx = _request_with_pool_context(db, source_id, api_url, timeout=30)
-        response = request_ctx["response"]
-        request_trace = request_ctx["trace"]
-        
-        if response.status_code != 200:
+        date_time_candidates = _resolve_date_time_candidates(config.get("date_time", "latest"), max_candidates=3)
+
+        data: Any = None
+        response: Optional[requests.Response] = None
+        request_trace: Dict[str, Any] = {}
+        api_url = ""
+        last_error_message = ""
+        used_date_time = ""
+
+        for candidate in date_time_candidates:
+            used_date_time = candidate
+            api_url = _build_100qiu_api_url(db_data_source.url, candidate)
+            request_ctx = _request_with_pool_context(db, source_id, api_url, timeout=30)
+            response = request_ctx["response"]
+            request_trace = request_ctx["trace"]
+            request_trace["date_time"] = candidate
+
+            if response.status_code != 200:
+                last_error_message = f"API请求失败，状态码: {response.status_code}"
+                continue
+
+            try:
+                data = _parse_json_payload(response)
+                break
+            except Exception as e:
+                last_error_message = f"响应不是有效JSON格式: {str(e)}"
+                continue
+
+        if response is None or data is None:
             return TestConnectionResponse(
                 success=False,
-                message=f"API请求失败，状态码: {response.status_code}",
-                data={"status_code": response.status_code, "request_trace": request_trace}
-            )
-        
-        try:
-            data = response.json()
-        except Exception as e:
-            return TestConnectionResponse(
-                success=False,
-                message=f"响应不是有效JSON格式: {str(e)}",
-                data={"request_trace": request_trace}
+                message=last_error_message or "测试失败：上游返回无效响应",
+                data={
+                    "request_trace": request_trace,
+                    "tried_date_times": date_time_candidates,
+                    "api_url": api_url,
+                }
             )
         
         # 检查数据结构
@@ -714,6 +847,8 @@ async def test_100qiu_data_source_connection(
                 "has_data": len(sample_data) > 0,
                 "response_time_ms": response.elapsed.total_seconds() * 1000,
                 "request_trace": request_trace,
+                "date_time": used_date_time,
+                "tried_date_times": date_time_candidates,
             },
             sample_data=sample_data
         )
@@ -776,41 +911,43 @@ async def fetch_100qiu_data(
             }, ensure_ascii=False)
         ))
         
-        # 获取配置
+        # 获取配置并解析期号候选（latest 会自动解析为 500w 最新期号）
         config = db_data_source.config_dict
-        date_time = config.get("date_time", "latest")
-        
-        # 确保date_time不为None且为字符串类型
-        if date_time is None:
-            date_time = "latest"
-        if not isinstance(date_time, str):
-            date_time = str(date_time)
-        
-        # 修复：当date_time为'latest'时，使用默认的有效dateTime值
-        if date_time == "latest":
-            # 使用一个默认的有效dateTime值，可以根据实际需求调整
-            date_time = "26011"
-        
-        # 构造API URL
-        if "dateTime" in db_data_source.url:
-            import re
-            api_url = re.sub(r'dateTime=\w+', f'dateTime={date_time}', db_data_source.url)
-        else:
-            api_url = f"{db_data_source.url}?dateTime={date_time}"
-        
-        # 发送请求（带池化上下文）
-        request_ctx = _request_with_pool_context(db, source_id, api_url, timeout=30)
-        response = request_ctx["response"]
-        request_trace = request_ctx["trace"]
-        
-        if response.status_code != 200:
-            error_msg = f"API请求失败，状态码: {response.status_code}"
+        date_time_candidates = _resolve_date_time_candidates(config.get("date_time", "latest"), max_candidates=3)
+
+        response: Optional[requests.Response] = None
+        data: Any = None
+        api_url = ""
+        used_date_time = ""
+        last_error_msg = ""
+
+        for candidate in date_time_candidates:
+            used_date_time = candidate
+            api_url = _build_100qiu_api_url(db_data_source.url, candidate)
+            request_ctx = _request_with_pool_context(db, source_id, api_url, timeout=30)
+            response = request_ctx["response"]
+            request_trace = request_ctx["trace"]
+            request_trace["date_time"] = candidate
+
+            if response.status_code != 200:
+                last_error_msg = f"API请求失败，状态码: {response.status_code}"
+                continue
+
+            try:
+                data = _parse_json_payload(response)
+                break
+            except Exception as e:
+                last_error_msg = f"响应不是有效JSON格式: {str(e)}"
+                continue
+
+        if response is None or data is None:
+            error_msg = last_error_msg or "API返回无效响应"
             print(f"[ERROR] {error_msg}")
             # 更新数据源错误信息
             db_data_source.last_error = error_msg
             db_data_source.last_error_time = datetime.utcnow()
             db.commit()
-            
+
             # 记录错误日志
             log_service.create_log_entry(LogEntryCreate(
                 timestamp=dt.utcnow(),
@@ -820,54 +957,22 @@ async def fetch_100qiu_data(
                 user_id=None,
                 extra_data=json.dumps({
                     "source_id": source_id,
-                    "status_code": response.status_code,
                     "url": api_url,
                     "action": "fetch_failed",
-                    "error_type": "http_error",
+                    "error_type": "upstream_invalid_response",
+                    "tried_date_times": date_time_candidates,
                     "request_trace": request_trace,
                 }, ensure_ascii=False)
             ))
-            
+
             return FetchDataResponse(
                 success=False,
                 message=error_msg,
                 total_fetched=0,
                 request_trace=request_trace,
             )
-        
-        try:
-            data = response.json()
-        except Exception as e:
-            error_msg = f"响应不是有效JSON格式: {str(e)}"
-            print(f"[ERROR] {error_msg}")
-            # 更新数据源错误信息
-            db_data_source.last_error = error_msg
-            db_data_source.last_error_time = datetime.utcnow()
-            db.commit()
-            
-            # 记录错误日志
-            log_service.create_log_entry(LogEntryCreate(
-                timestamp=dt.utcnow(),
-                level="ERROR",
-                message=f"100qiu数据源 {source_id} JSON解析失败: {error_msg}",
-                module="data_source_100qiu",
-                user_id=None,
-                extra_data=json.dumps({
-                    "source_id": source_id,
-                    "url": api_url,
-                    "action": "fetch_failed",
-                    "error_type": "json_parse_error",
-                    "response_preview": str(response.content)[:500] if response.content else "",
-                    "request_trace": request_trace,
-                }, ensure_ascii=False)
-            ))
-            
-            return FetchDataResponse(
-                success=False,
-                message=error_msg,
-                total_fetched=0,
-                request_trace=request_trace,
-            )
+
+        date_time = used_date_time
         
         # 解析数据并存储到数据库
         from ...models.matches import FootballMatch

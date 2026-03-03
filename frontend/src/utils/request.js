@@ -39,7 +39,7 @@ const redirectToLogin = () => {
 
 const request = axios.create({
   baseURL: '',
-  timeout: 15000
+  timeout: 30000
 })
 
 request.interceptors.request.use(

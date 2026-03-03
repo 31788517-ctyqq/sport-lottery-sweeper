@@ -230,7 +230,8 @@ class APIMigrationMiddleware(BaseHTTPMiddleware):
             logger.info(f"API璺緞閲嶅畾鍚? {old_path} -> {new_path}")
             
         elif old_path == "/api/admin/sources" or old_path.startswith("/api/admin/sources/"):
-            new_path = old_path.replace("/api/admin/sources", "/api/v1/admin/crawler/sources", 1)
+            # Map legacy source management API paths to full CRUD source endpoints.
+            new_path = old_path.replace("/api/admin/sources", "/api/v1/admin/sources", 1)
             request.scope["path"] = new_path
             logger.info(f"API path redirected: {old_path} -> {new_path}")
         elif old_path == "/api/admin/data" or old_path.startswith("/api/admin/data/"):
@@ -405,6 +406,15 @@ except Exception as e:
     
 # 娉ㄥ唽鐖櫕鐩戞帶API璺敱
 try:
+    from backend.api.v1.admin.data_source import router as data_source_router
+    app.include_router(data_source_router, prefix="/api/v1/admin", tags=["data-sources"])
+    logger.info("Data source management routes registered (/api/v1/admin/sources)")
+except Exception as e:
+    logger.error(f"Data source management route registration failed: {e}")
+    import traceback
+    logger.error(f"Traceback: {traceback.format_exc()}")
+
+try:
     from backend.api.v1.crawler_monitor import router as crawler_monitor_router
     # 缁熶竴浣跨敤 /api/v1/admin 浣滀负绠＄悊绫籄PI鐨勫熀纭€鍓嶇紑
     app.include_router(crawler_monitor_router, prefix="/api/v1/admin", tags=["crawler-monitor"])
@@ -519,7 +529,8 @@ except Exception as e:
 
 try:
     from backend.api.v1.data_source_100qiu import router as data_source_100qiu_router
-    app.include_router(data_source_100qiu_router, prefix="/api/v1/data-source-100qiu", tags=["data-source-100qiu"])
+    # Router already has "/data-source-100qiu" prefix; mount under "/api/v1" only.
+    app.include_router(data_source_100qiu_router, prefix="/api/v1", tags=["data-source-100qiu"])
     logger.info("100qiu data source API routes registered (/api/v1/data-source-100qiu)")
 except Exception as e:
     logger.error(f"100qiu鏁版嵁婧怉PI璺敱娉ㄥ唽澶辫触: {e}")
@@ -1201,5 +1212,3 @@ if __name__ == "__main__":
             raise
     
     logger.info("Application service stopped")
-
-

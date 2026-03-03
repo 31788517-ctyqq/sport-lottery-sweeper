@@ -387,7 +387,7 @@ const loadData = async () => {
     if (filters.value.search) queryParams.push(`search=${encodeURIComponent(filters.value.search)}`)
     
     const queryString = queryParams.length > 0 ? '?' + queryParams.join('&') : ''
-    const url = `/api/v1/admin/crawler/sources${queryString}`
+    const url = `/api/admin/sources${queryString}`
     
     const response = await fetch(url, {
       method: 'GET',
