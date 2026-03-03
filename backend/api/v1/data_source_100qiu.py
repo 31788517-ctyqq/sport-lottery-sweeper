@@ -1280,11 +1280,18 @@ async def fetch_100qiu_data(
     except Exception as e:
         error_msg = f"获取数据失败: {str(e)}"
         print(f"[ERROR] {error_msg}")
+        try:
+            db.rollback()
+        except Exception:
+            pass
         # 更新数据源错误信息
         if 'db_data_source' in locals():
-            db_data_source.last_error = error_msg
-            db_data_source.last_error_time = datetime.utcnow()
-            db.commit()
+            try:
+                db_data_source.last_error = error_msg
+                db_data_source.last_error_time = datetime.utcnow()
+                db.commit()
+            except Exception:
+                db.rollback()
         
         # 记录错误日志
         log_service.create_log_entry(LogEntryCreate(

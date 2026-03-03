@@ -587,7 +587,9 @@ except Exception as e:
 
 try:
     from backend.api.v1.frontend_user_management import router as frontend_user_management_router
-    app.include_router(frontend_user_management_router, prefix="/api/v1/admin", tags=["frontend-user-management"])
+    # Keep frontend-user APIs namespaced to avoid catching generic /api/v1/admin/{user_id}
+    # which can shadow other admin endpoints such as /api/v1/admin/data.
+    app.include_router(frontend_user_management_router, prefix="/api/v1/admin/frontend-users", tags=["frontend-user-management"])
     logger.info("Frontend user management API routes registered (/api/v1/admin/frontend-users)")
 except Exception as e:
     logger.error(f"鍓嶇鐢ㄦ埛绠＄悊API璺敱娉ㄥ唽澶辫触: {e}")
@@ -596,7 +598,8 @@ except Exception as e:
 
 try:
     from backend.api.v1.simple_user_api import router as simple_user_api_router
-    app.include_router(simple_user_api_router, prefix="/api/v1/admin", tags=["simple-user-api"])
+    # Keep simple-user APIs namespaced to avoid route collisions under /api/v1/admin/*
+    app.include_router(simple_user_api_router, prefix="/api/v1/admin/simple-users", tags=["simple-user-api"])
     logger.info("Simple user API routes registered (/api/v1/admin/simple-users)")
 except Exception as e:
     logger.error(f"绠€鍗曠敤鎴稟PI璺敱娉ㄥ唽澶辫触: {e}")

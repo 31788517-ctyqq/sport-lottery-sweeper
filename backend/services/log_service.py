@@ -3,11 +3,15 @@
 处理日志数据的增删改查操作
 """
 from typing import List, Optional, Dict, Any
+import logging
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_
+from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime, timedelta
 from ..models.log_entry import LogEntry
 from ..schemas.log_entry import LogEntryCreate, LogEntryUpdate
+
+logger = logging.getLogger(__name__)
 
 
 class LogService:
@@ -16,13 +20,18 @@ class LogService:
     def __init__(self, db: Session):
         self.db = db
 
-    def create_log_entry(self, log_entry: LogEntryCreate) -> LogEntry:
-        """创建日志条目"""
+    def create_log_entry(self, log_entry: LogEntryCreate) -> Optional[LogEntry]:
+        """创建日志条目（失败时不影响主业务流程）。"""
         db_log_entry = LogEntry(**log_entry.dict())
-        self.db.add(db_log_entry)
-        self.db.commit()
-        self.db.refresh(db_log_entry)
-        return db_log_entry
+        try:
+            self.db.add(db_log_entry)
+            self.db.commit()
+            self.db.refresh(db_log_entry)
+            return db_log_entry
+        except SQLAlchemyError as exc:
+            self.db.rollback()
+            logger.warning("create_log_entry skipped due to DB error: %s", exc)
+            return None
 
     def get_log_entry(self, log_id: int) -> Optional[LogEntry]:
         """根据ID获取日志条目"""
