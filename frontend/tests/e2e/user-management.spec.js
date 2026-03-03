@@ -18,6 +18,12 @@ function buildMockUsers(total = 25) {
 }
 
 async function setupUserListMocks(page) {
+  const corsHeaders = {
+    'access-control-allow-origin': '*',
+    'access-control-allow-methods': 'GET,POST,PUT,PATCH,DELETE,OPTIONS',
+    'access-control-allow-headers': '*'
+  };
+
   const state = {
     users: buildMockUsers(),
     calls: {
@@ -25,9 +31,12 @@ async function setupUserListMocks(page) {
       departments: 0,
       roles: 0,
       statusPatch: 0,
-      detail: 0
+      detail: 0,
+      import: 0,
+      importMethods: []
     }
   };
+  state.lastListParams = [];
 
   await page.route('**/api/**', async (route) => {
     const req = route.request();
@@ -35,9 +44,17 @@ async function setupUserListMocks(page) {
     const path = url.pathname;
     const method = req.method();
 
+    if (method === 'OPTIONS' && path.startsWith('/api/')) {
+      return route.fulfill({ status: 204, headers: corsHeaders });
+    }
+
     if (path.endsWith('/admin/admin-users') || path.endsWith('/admin/admin-users/')) {
       if (method === 'GET') {
         state.calls.list += 1;
+        state.lastListParams.push({
+          skip: Number(url.searchParams.get('skip') || '0'),
+          limit: Number(url.searchParams.get('limit') || '20')
+        });
 
         const size = Number(url.searchParams.get('size') || url.searchParams.get('limit') || '20');
         const skip = Number(url.searchParams.get('skip') || '0');
@@ -128,6 +145,7 @@ async function setupUserListMocks(page) {
       return route.fulfill({
         status: 200,
         contentType: 'application/json',
+        headers: corsHeaders,
         body: JSON.stringify({
           code: 200,
           message: 'ok',
@@ -155,6 +173,59 @@ async function setupUserListMocks(page) {
       });
     }
 
+    if (path.endsWith('/admin/admin-users/import') || path.endsWith('/admin/admin-users/import/')) {
+      state.calls.import += 1;
+      state.calls.importMethods.push(method);
+      if (method !== 'POST') {
+        return route.fulfill({
+          status: 204,
+          headers: corsHeaders
+        });
+      }
+      const importedUser = {
+        id: state.users.length + 1,
+        username: 'import_user',
+        realName: '导入用户',
+        email: 'import_user@example.com',
+        phone: '13900001234',
+        departmentName: '技术部',
+        roleNames: ['operator'],
+        status: 'active',
+        lastLoginTime: null
+      };
+      state.users.unshift(importedUser);
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        headers: corsHeaders,
+        body: JSON.stringify({
+          code: 200,
+          message: 'ok',
+          data: {
+            total_rows: 1,
+            imported_count: 1,
+            skipped_count: 0,
+            default_password_count: 0,
+            errors: []
+          }
+        })
+      });
+    }
+
+    if (path.startsWith('/api/')) {
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        headers: corsHeaders,
+        body: JSON.stringify({
+          code: 200,
+          success: true,
+          message: 'mock default',
+          data: {}
+        })
+      });
+    }
+
     return route.continue();
   });
 
@@ -162,8 +233,15 @@ async function setupUserListMocks(page) {
 }
 
 test.describe('User Management Page', () => {
+  let mockState;
+
   test.beforeEach(async ({ page }) => {
-    await setupUserListMocks(page);
+    mockState = await setupUserListMocks(page);
+    await page.addInitScript(() => {
+      localStorage.setItem('access_token', 'mock-token');
+      localStorage.setItem('token', 'mock-token');
+      localStorage.setItem('admin_token', 'mock-token');
+    });
     await page.goto('/admin/users/list');
     await page.waitForLoadState('networkidle');
     await expect(page.locator('.modern-table')).toBeVisible();
@@ -200,10 +278,35 @@ test.describe('User Management Page', () => {
   });
 
   test('should paginate to next page', async ({ page }) => {
-    const firstRowBefore = await page.locator('.modern-table .el-table__body tbody tr:first-child').innerText();
     await page.locator('.pagination-wrapper .btn-next').click();
     await page.waitForLoadState('networkidle');
-    const firstRowAfter = await page.locator('.modern-table .el-table__body tbody tr:first-child').innerText();
-    expect(firstRowAfter).not.toEqual(firstRowBefore);
+    const lastListCall = mockState.lastListParams[mockState.lastListParams.length - 1];
+    expect(lastListCall.skip).toBeGreaterThanOrEqual(20);
+  });
+
+  test('should import users from csv file', async ({ page }) => {
+    const importRequests = [];
+    page.on('request', (req) => {
+      if (req.url().includes('/admin/admin-users/import')) {
+        importRequests.push(req.method());
+      }
+    });
+
+    const [fileChooser] = await Promise.all([
+      page.waitForEvent('filechooser'),
+      page.getByRole('button', { name: '批量导入' }).click()
+    ]);
+
+    await fileChooser.setFiles({
+      name: 'users.csv',
+      mimeType: 'text/csv',
+      buffer: Buffer.from('username,email,real_name,password,role\nimport_user,import_user@example.com,导入用户,TempPass123,operator\n')
+    });
+    await page.waitForLoadState('networkidle');
+
+    await expect.poll(() => mockState.calls.import, { timeout: 5000 }).toBeGreaterThan(0);
+    expect(mockState.calls.importMethods).toContain('POST');
+    expect(importRequests).toContain('POST');
+    await expect(page.locator('.modern-table .el-table__body')).toContainText('import_user');
   });
 });

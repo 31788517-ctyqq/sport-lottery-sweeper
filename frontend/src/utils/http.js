@@ -55,7 +55,18 @@ http.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
-    
+    const isFormData = typeof FormData !== 'undefined' && config.data instanceof FormData
+    const hasExplicitContentType =
+      !!config.headers['Content-Type'] || !!config.headers['content-type']
+
+    // FormData 由浏览器自动设置 multipart boundary，避免被 application/json 覆盖
+    if (isFormData) {
+      delete config.headers['Content-Type']
+      delete config.headers['content-type']
+    } else if (!hasExplicitContentType) {
+      config.headers['Content-Type'] = 'application/json'
+    }
+
     // 添加时间戳防止缓存
     if (config.method?.toLowerCase() === 'get') {
       config.params = {

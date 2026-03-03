@@ -1,12 +1,13 @@
 """
 后台管理用户管理API端点
 """
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 from io import StringIO
 import csv
+from pydantic import ValidationError
 
 # 简化的导入，避免复杂依赖
 from backend import crud, models, schemas
@@ -16,6 +17,100 @@ from backend.core.security import get_current_active_admin_user
 from backend.utils.response import UnifiedResponse
 
 router = APIRouter(prefix="/admin-users")
+
+DEFAULT_IMPORT_PASSWORD = "TempPass123"
+MAX_IMPORT_ERROR_ROWS = 200
+
+IMPORT_FIELD_ALIASES = {
+    "username": ["username", "用户名", "user_name", "账号"],
+    "email": ["email", "邮箱", "邮箱地址"],
+    "real_name": ["real_name", "realName", "name", "姓名", "真实姓名"],
+    "phone": ["phone", "手机号", "手机", "联系电话"],
+    "department": ["department", "部门", "department_name"],
+    "position": ["position", "职位", "岗位"],
+    "role": ["role", "角色", "角色编码"],
+    "status": ["status", "状态"],
+    "password": ["password", "密码", "初始密码"],
+    "remarks": ["remarks", "remark", "备注"]
+}
+
+ROLE_ALIAS_MAP = {
+    "super_admin": admin_schemas.AdminRoleEnum.SUPER_ADMIN,
+    "admin": admin_schemas.AdminRoleEnum.ADMIN,
+    "moderator": admin_schemas.AdminRoleEnum.MODERATOR,
+    "auditor": admin_schemas.AdminRoleEnum.AUDITOR,
+    "operator": admin_schemas.AdminRoleEnum.OPERATOR,
+    "超级管理员": admin_schemas.AdminRoleEnum.SUPER_ADMIN,
+    "管理员": admin_schemas.AdminRoleEnum.ADMIN,
+    "版主": admin_schemas.AdminRoleEnum.MODERATOR,
+    "审计员": admin_schemas.AdminRoleEnum.AUDITOR,
+    "运营员": admin_schemas.AdminRoleEnum.OPERATOR
+}
+
+STATUS_ALIAS_MAP = {
+    "active": admin_schemas.AdminStatusEnum.ACTIVE,
+    "inactive": admin_schemas.AdminStatusEnum.INACTIVE,
+    "suspended": admin_schemas.AdminStatusEnum.SUSPENDED,
+    "locked": admin_schemas.AdminStatusEnum.LOCKED,
+    "正常": admin_schemas.AdminStatusEnum.ACTIVE,
+    "启用": admin_schemas.AdminStatusEnum.ACTIVE,
+    "禁用": admin_schemas.AdminStatusEnum.INACTIVE,
+    "停用": admin_schemas.AdminStatusEnum.INACTIVE,
+    "暂停": admin_schemas.AdminStatusEnum.SUSPENDED,
+    "锁定": admin_schemas.AdminStatusEnum.LOCKED
+}
+
+
+def _decode_import_file(raw_bytes: bytes) -> str:
+    for encoding in ("utf-8-sig", "utf-8", "gb18030", "gbk"):
+        try:
+            return raw_bytes.decode(encoding)
+        except UnicodeDecodeError:
+            continue
+    raise HTTPException(status_code=400, detail="文件编码不支持，请使用 UTF-8 或 GBK 编码")
+
+
+def _read_cell(row: Dict[str, Any], aliases: List[str]) -> str:
+    for key in aliases:
+        value = row.get(key)
+        if value is not None:
+            text = str(value).strip()
+            if text != "":
+                return text
+    return ""
+
+
+def _parse_role(raw_role: str) -> admin_schemas.AdminRoleEnum:
+    if not raw_role:
+        return admin_schemas.AdminRoleEnum.OPERATOR
+    mapped = ROLE_ALIAS_MAP.get(raw_role) or ROLE_ALIAS_MAP.get(raw_role.lower())
+    if mapped:
+        return mapped
+    raise ValueError(f"未知角色: {raw_role}")
+
+
+def _parse_status(raw_status: str) -> Optional[admin_schemas.AdminStatusEnum]:
+    if not raw_status:
+        return None
+    mapped = STATUS_ALIAS_MAP.get(raw_status) or STATUS_ALIAS_MAP.get(raw_status.lower())
+    if mapped:
+        return mapped
+    raise ValueError(f"未知状态: {raw_status}")
+
+
+def _build_import_row(raw_row: Dict[str, Any]) -> Dict[str, str]:
+    return {
+        "username": _read_cell(raw_row, IMPORT_FIELD_ALIASES["username"]),
+        "email": _read_cell(raw_row, IMPORT_FIELD_ALIASES["email"]),
+        "real_name": _read_cell(raw_row, IMPORT_FIELD_ALIASES["real_name"]),
+        "phone": _read_cell(raw_row, IMPORT_FIELD_ALIASES["phone"]),
+        "department": _read_cell(raw_row, IMPORT_FIELD_ALIASES["department"]),
+        "position": _read_cell(raw_row, IMPORT_FIELD_ALIASES["position"]),
+        "role": _read_cell(raw_row, IMPORT_FIELD_ALIASES["role"]),
+        "status": _read_cell(raw_row, IMPORT_FIELD_ALIASES["status"]),
+        "password": _read_cell(raw_row, IMPORT_FIELD_ALIASES["password"]),
+        "remarks": _read_cell(raw_row, IMPORT_FIELD_ALIASES["remarks"])
+    }
 
 
 @router.get("/", response_model=UnifiedResponse[admin_schemas.AdminUserListResponse])
@@ -267,19 +362,176 @@ async def batch_delete_admin_users(
         raise HTTPException(status_code=500, detail=f"批量删除用户失败: {str(e)}")
 
 
-# 添加导入/导出端点的模拟实现
 @router.post("/import", response_model=UnifiedResponse[dict])
 async def import_admin_users(
-    # 注意：实际的文件上传需要更复杂的处理
+    file: UploadFile = File(..., description="仅支持 CSV 文件"),
     db: AsyncSession = Depends(get_async_db),
     current_admin: models.AdminUser = Depends(get_current_active_admin_user)
 ):
     """
-    导入管理员用户（模拟实现）
+    批量导入管理员用户（CSV）
     """
+    filename = file.filename or ""
+    if not filename.lower().endswith(".csv"):
+        raise HTTPException(status_code=400, detail="仅支持 CSV 文件导入")
+
+    raw_bytes = await file.read()
+    if not raw_bytes:
+        raise HTTPException(status_code=400, detail="上传文件为空")
+
+    content = _decode_import_file(raw_bytes)
+    reader = csv.DictReader(StringIO(content))
+    if not reader.fieldnames:
+        raise HTTPException(status_code=400, detail="CSV 文件缺少表头")
+
+    total_rows = 0
+    imported_count = 0
+    skipped_count = 0
+    default_password_count = 0
+    imported_items: List[Dict[str, Any]] = []
+    errors: List[Dict[str, Any]] = []
+    seen_usernames = set()
+    seen_emails = set()
+
+    for line_no, raw_row in enumerate(reader, start=2):
+        if not raw_row:
+            continue
+
+        has_non_empty_value = any((str(value).strip() != "") for value in raw_row.values() if value is not None)
+        if not has_non_empty_value:
+            continue
+
+        total_rows += 1
+        row_data = _build_import_row(raw_row)
+        username = row_data["username"]
+        email = row_data["email"]
+        real_name = row_data["real_name"]
+
+        if not username or not email or not real_name:
+            skipped_count += 1
+            if len(errors) < MAX_IMPORT_ERROR_ROWS:
+                errors.append({
+                    "line": line_no,
+                    "username": username or None,
+                    "email": email or None,
+                    "reason": "必填字段缺失（username/email/real_name）"
+                })
+            continue
+
+        username_key = username.lower()
+        email_key = email.lower()
+        if username_key in seen_usernames or email_key in seen_emails:
+            skipped_count += 1
+            if len(errors) < MAX_IMPORT_ERROR_ROWS:
+                errors.append({
+                    "line": line_no,
+                    "username": username,
+                    "email": email,
+                    "reason": "导入文件内存在重复的用户名或邮箱"
+                })
+            continue
+        seen_usernames.add(username_key)
+        seen_emails.add(email_key)
+
+        existing_user = await crud.admin_user.get_by_username(db, username)
+        if existing_user:
+            skipped_count += 1
+            if len(errors) < MAX_IMPORT_ERROR_ROWS:
+                errors.append({
+                    "line": line_no,
+                    "username": username,
+                    "email": email,
+                    "reason": "用户名已存在"
+                })
+            continue
+
+        existing_email = await crud.admin_user.get_by_email(db, email)
+        if existing_email:
+            skipped_count += 1
+            if len(errors) < MAX_IMPORT_ERROR_ROWS:
+                errors.append({
+                    "line": line_no,
+                    "username": username,
+                    "email": email,
+                    "reason": "邮箱已存在"
+                })
+            continue
+
+        try:
+            role_value = _parse_role(row_data["role"])
+            status_value = _parse_status(row_data["status"])
+            password_value = row_data["password"] or DEFAULT_IMPORT_PASSWORD
+            if not row_data["password"]:
+                default_password_count += 1
+
+            user_in = admin_schemas.AdminUserCreate(
+                username=username,
+                email=email,
+                real_name=real_name,
+                phone=row_data["phone"] or None,
+                department=row_data["department"] or None,
+                position=row_data["position"] or None,
+                role=role_value,
+                password=password_value,
+                remarks=row_data["remarks"] or None
+            )
+        except (ValueError, ValidationError) as exc:
+            skipped_count += 1
+            if len(errors) < MAX_IMPORT_ERROR_ROWS:
+                errors.append({
+                    "line": line_no,
+                    "username": username,
+                    "email": email,
+                    "reason": str(exc)
+                })
+            continue
+
+        try:
+            created_user = await crud.admin_user.create(db, obj_in=user_in, created_by=current_admin.id)
+            if status_value and status_value != admin_schemas.AdminStatusEnum.INACTIVE:
+                created_user = await crud.admin_user.update_status(db, db_obj=created_user, status=status_value)
+
+            imported_count += 1
+            imported_items.append({
+                "line": line_no,
+                "id": created_user.id,
+                "username": created_user.username,
+                "status": created_user.status.value if hasattr(created_user.status, "value") else str(created_user.status)
+            })
+        except Exception as exc:
+            skipped_count += 1
+            if len(errors) < MAX_IMPORT_ERROR_ROWS:
+                errors.append({
+                    "line": line_no,
+                    "username": username,
+                    "email": email,
+                    "reason": f"写入失败: {str(exc)}"
+                })
+
+    await crud.admin_user.admin_operation_log.create(
+        db,
+        admin_id=current_admin.id,
+        action="IMPORT_USERS",
+        resource_type="ADMIN_USER",
+        resource_name=f"批量导入用户({imported_count})",
+        request_body={
+            "filename": filename,
+            "total_rows": total_rows,
+            "imported_count": imported_count,
+            "skipped_count": skipped_count
+        },
+        ip_address="",
+        user_agent=""
+    )
+
     return UnifiedResponse.success(data={
-        "message": "用户导入功能已收到请求，实际实现需要文件上传处理",
-        "status": "not_implemented"
+        "filename": filename,
+        "total_rows": total_rows,
+        "imported_count": imported_count,
+        "skipped_count": skipped_count,
+        "default_password_count": default_password_count,
+        "imported_items": imported_items,
+        "errors": errors
     })
 
 

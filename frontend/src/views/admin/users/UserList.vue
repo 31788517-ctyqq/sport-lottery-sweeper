@@ -9,7 +9,7 @@
               <el-icon><Plus /></el-icon>
               新增用户
             </el-button>
-            <el-button type="success" @click="handleImport">
+            <el-button type="success" :loading="importing" @click="handleImport">
               <el-icon><Upload /></el-icon>
               批量导入
             </el-button>
@@ -63,17 +63,17 @@
           </el-col>
           <el-col :xs="12" :sm="6" :md="4" :lg="3">
             <el-select
-              v-model="filters.roleId"
+              v-model="filters.roleValue"
               placeholder="角色筛选"
               clearable
               class="role-selector"
             >
               <el-option label="全部角色" value="" />
               <el-option 
-                v-for="role in roles" 
-                :key="role.id"
-                :label="role.name" 
-                :value="role.id" 
+                v-for="role in roleFilterOptions"
+                :key="role.value"
+                :label="role.label"
+                :value="role.value"
               />
             </el-select>
           </el-col>
@@ -142,7 +142,7 @@
           <el-table-column prop="roleNames" label="角色" width="150">
             <template #default="scope">
               <el-tag  
-                v-for="role in scope.row.roleNames" 
+                v-for="role in getDisplayRoleNames(scope.row)" 
                 :key="role"
                 size="small"
                 style="margin-right: 4px; margin-bottom: 2px;"
@@ -204,6 +204,15 @@
       </div>
     </el-card>
 
+    <input
+      ref="importInputRef"
+      class="import-file-input"
+      type="file"
+      accept=".csv,text/csv"
+      style="display: none"
+      @change="handleImportFileChange"
+    />
+
     <!-- 用户详情/编辑对话框 -->
     <UserDetailDialog 
       v-model="showUserDialog"
@@ -216,9 +225,9 @@
     <!-- 批量分配角色对话框 -->
     <BatchAssignRoleDialog
       v-model="showBatchRoleDialog"
-      :user-ids="selectedUsers"
+      :selected-user-ids="selectedUsers"
       :roles="roles"
-      @assigned="handleRolesAssigned"
+      @submit="handleRolesAssigned"
     />
   </div>
 </template>
@@ -229,7 +238,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Upload, Download, Refresh } from '@element-plus/icons-vue'
 import UserDetailDialog from '@/components/admin/UserDetailDialog.vue'
 import BatchAssignRoleDialog from '@/components/admin/BatchAssignRoleDialog.vue'
-import { getUsers, disableUsers, enableUsers, exportUsers } from '@/api/modules/users'
+import { getUsers, disableUsers, enableUsers, exportUsers, batchAssignRoles, importUsers } from '@/api/modules/users'
 import { getDepartments } from '@/api/modules/departments'
 import { getRoles } from '@/api/modules/roles'
 
@@ -243,11 +252,20 @@ const showUserDialog = ref(false)
 const showBatchRoleDialog = ref(false)
 const dialogMode = ref('view') // 'view' | 'edit' | 'create'
 const currentUserId = ref(null)
+const importInputRef = ref(null)
+const importing = ref(false)
+const roleFilterOptions = [
+  { label: '超级管理员', value: 'super_admin' },
+  { label: '管理员', value: 'admin' },
+  { label: '版主', value: 'moderator' },
+  { label: '审计员', value: 'auditor' },
+  { label: '运营员', value: 'operator' }
+]
 
 const filters = reactive({
   status: '',
   departmentId: '',
-  roleId: ''
+  roleValue: ''
 })
 
 const pagination = reactive({
@@ -261,13 +279,14 @@ const pagination = reactive({
 const loadUsers = async () => {
   loading.value = true
   try {
+    const selectedDepartment = departments.value.find((dept) => dept.id === Number(filters.departmentId))
     const params = {
       page: pagination.page,
       size: pagination.size,
       search: searchKeyword.value,
       status: filters.status,
-      departmentId: filters.departmentId,
-      roleId: filters.roleId
+      departmentName: selectedDepartment?.name || '',
+      roleValue: filters.roleValue
     }
     
     const response = await getUsers(params)
@@ -288,9 +307,12 @@ const loadUsers = async () => {
 const loadDepartments = async () => {
   try {
     const response = await getDepartments({ tree: false })
-    if (response && response.data) {
-      departments.value = Array.isArray(response.data) ? response.data : []
-    }
+    const payload = response?.data ?? response
+    const rows = Array.isArray(payload?.data) ? payload.data : Array.isArray(payload) ? payload : []
+    departments.value = rows.map((item) => ({
+      id: Number(item.id),
+      name: item.name || ''
+    }))
   } catch (error) {
     console.error('加载部门列表失败:', error)
   }
@@ -300,9 +322,8 @@ const loadDepartments = async () => {
 const loadRoles = async () => {
   try {
     const response = await getRoles({ status: 'active' })
-    if (response && response.data) {
-      roles.value = Array.isArray(response.data) ? response.data : []
-    }
+    const payload = response?.data ?? response
+    roles.value = Array.isArray(payload) ? payload : []
   } catch (error) {
     console.error('加载角色列表失败:', error)
   }
@@ -319,7 +340,7 @@ const handleReset = () => {
   searchKeyword.value = ''
   filters.status = ''
   filters.departmentId = ''
-  filters.roleId = ''
+  filters.roleValue = ''
   pagination.page = 1
   loadUsers()
 }
@@ -464,16 +485,82 @@ const handleBatchAssignRole = () => {
 
 // 导入用户
 const handleImport = () => {
-  ElMessage.info('批量导入功能开发中...')
+  if (importing.value) return
+  importInputRef.value?.click()
+}
+
+const formatImportErrorMessage = (errors = []) => {
+  if (!Array.isArray(errors) || errors.length === 0) return ''
+  const lines = errors.slice(0, 5).map((item) => {
+    const line = item?.line ?? '-'
+    const reason = item?.reason || item?.error || '未知错误'
+    return `第 ${line} 行: ${reason}`
+  })
+  if (errors.length > 5) {
+    lines.push(`... 其余 ${errors.length - 5} 条错误请查看导入文件`)
+  }
+  return lines.join('\n')
+}
+
+const handleImportFileChange = async (event) => {
+  const file = event?.target?.files?.[0]
+  if (!file) return
+
+  const resetFileInput = () => {
+    if (importInputRef.value) {
+      importInputRef.value.value = ''
+    }
+  }
+
+  if (!file.name.toLowerCase().endsWith('.csv')) {
+    ElMessage.warning('仅支持 CSV 文件导入')
+    resetFileInput()
+    return
+  }
+
+  try {
+    importing.value = true
+    const response = await importUsers(file)
+    const payload = response?.data || {}
+    const totalRows = Number(payload.total_rows || 0)
+    const importedCount = Number(payload.imported_count || 0)
+    const skippedCount = Number(payload.skipped_count || 0)
+    const defaultPasswordCount = Number(payload.default_password_count || 0)
+    const errors = Array.isArray(payload.errors) ? payload.errors : []
+
+    let message = `导入完成：总计 ${totalRows} 行，成功 ${importedCount} 行，跳过 ${skippedCount} 行`
+    if (defaultPasswordCount > 0) {
+      message += `，其中 ${defaultPasswordCount} 行使用默认密码`
+    }
+
+    if (errors.length > 0) {
+      const details = formatImportErrorMessage(errors)
+      await ElMessageBox.alert(`${message}\n\n错误明细:\n${details}`, '导入结果', {
+        confirmButtonText: '知道了',
+        type: 'warning'
+      })
+    } else {
+      ElMessage.success(message)
+    }
+
+    await loadUsers()
+  } catch (error) {
+    console.error('导入失败:', error)
+    ElMessage.error(error?.response?.data?.detail || '导入失败')
+  } finally {
+    importing.value = false
+    resetFileInput()
+  }
 }
 
 // 导出用户
 const handleExport = () => {
+  const selectedDepartment = departments.value.find((dept) => dept.id === Number(filters.departmentId))
   exportUsers({
     search: searchKeyword.value?.trim() || undefined,
     status: filters.status || undefined,
-    department: filters.departmentId || undefined,
-    role: filters.roleId || undefined
+    department: selectedDepartment?.name || undefined,
+    role: filters.roleValue || undefined
   }).catch((error) => {
     console.error('导出失败:', error)
     ElMessage.error('导出失败')
@@ -491,9 +578,17 @@ const handleDialogClosed = () => {
 }
 
 // 角色分配完成回调
-const handleRolesAssigned = () => {
-  selectedUsers.value = []
-  loadUsers()
+const handleRolesAssigned = async (payload) => {
+  try {
+    await batchAssignRoles(payload)
+    ElMessage.success('批量分配角色成功')
+    showBatchRoleDialog.value = false
+    selectedUsers.value = []
+    await loadUsers()
+  } catch (error) {
+    console.error('批量分配角色失败:', error)
+    ElMessage.error('批量分配角色失败')
+  }
 }
 
 // 格式化日期
@@ -522,6 +617,19 @@ const getStatusTagType = (status) => {
   return tagTypeMap[status] || 'info'
 }
 
+const getDisplayRoleNames = (row) => {
+  if (Array.isArray(row.roleNames) && row.roleNames.length > 0) {
+    return row.roleNames
+  }
+  if (row.roleLabel) {
+    return [row.roleLabel]
+  }
+  if (row.role) {
+    return [row.role]
+  }
+  return ['-']
+}
+
 onMounted(() => {
   loadUsers()
   loadDepartments()
@@ -531,14 +639,27 @@ onMounted(() => {
 
 <style scoped>
 .user-list-container {
-  padding: 20px;
-  background: #f5f5f5;
-  min-height: 100vh;
+  --m-bg: #eef1f3;
+  --m-card: #f7f8f9;
+  --m-border: #d8dde2;
+  --m-head: #e8ecef;
+  --m-text: #405063;
+  --m-subtext: #7d8792;
+  padding: 16px;
+  background: radial-gradient(circle at 20% 20%, #f3f6f7 0, var(--m-bg) 48%, #e9edef 100%);
+  min-height: calc(100vh - 110px);
 }
 
 .users-card {
-  border-radius: 8px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  border-radius: 14px;
+  border: 1px solid var(--m-border);
+  box-shadow: 0 6px 18px rgba(101, 114, 130, 0.1);
+  background: var(--m-card);
+}
+
+.users-card :deep(.el-card__header) {
+  background: var(--m-head);
+  border-bottom: 1px solid var(--m-border);
 }
 
 .card-header {
@@ -547,6 +668,7 @@ onMounted(() => {
   align-items: center;
   flex-wrap: wrap;
   gap: 16px;
+  color: var(--m-text);
 }
 
 .header-actions {
@@ -556,9 +678,9 @@ onMounted(() => {
 }
 
 .users-controls {
-  padding: 20px;
-  background: white;
-  border-bottom: 1px solid #ebeef5;
+  padding: 16px;
+  background: #f9fbfc;
+  border-bottom: 1px solid var(--m-border);
 }
 
 .search-input {
@@ -572,16 +694,16 @@ onMounted(() => {
 }
 
 .action-bar {
-  padding: 16px 20px;
-  background: white;
-  border-bottom: 1px solid #ebeef5;
+  padding: 12px 16px;
+  background: #f9fbfc;
+  border-bottom: 1px solid var(--m-border);
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
 }
 
 .action-btn {
-  border-radius: 4px;
+  border-radius: 8px;
 }
 
 .table-wrapper {
@@ -589,7 +711,13 @@ onMounted(() => {
 }
 
 .modern-table {
-  border-radius: 0;
+  border-radius: 0 0 14px 14px;
+}
+
+.modern-table :deep(th.el-table__cell) {
+  background: #edf1f4 !important;
+  color: var(--m-text);
+  font-weight: 600;
 }
 
 .op-actions {
@@ -606,13 +734,13 @@ onMounted(() => {
 .empty-state {
   text-align: center;
   padding: 40px;
-  color: #909399;
+  color: var(--m-subtext);
 }
 
 .pagination-wrapper {
-  padding: 20px;
-  background: white;
-  border-top: 1px solid #ebeef5;
+  padding: 16px;
+  background: #f9fbfc;
+  border-top: 1px solid var(--m-border);
   display: flex;
   justify-content: center;
 }
