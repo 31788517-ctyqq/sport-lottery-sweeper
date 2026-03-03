@@ -1,6 +1,17 @@
 import http from '@/utils/http'
-import { API_ENDPOINTS } from '@/config/api'
 
+export const ROLE_API_CAPABILITIES = Object.freeze({
+  batchDelete: false,
+  copyRole: false,
+  exportRole: false,
+  importRole: false
+})
+
+const unsupportedRoleApi = (action) => {
+  const error = new Error(`角色接口能力不支持: ${action}`)
+  error.code = 'ROLE_API_UNSUPPORTED'
+  return Promise.reject(error)
+}
 /**
  * 角色管理相关API
  */
@@ -32,58 +43,60 @@ export const deleteRole = (id) => {
 
 // 批量删除角色
 export const batchDeleteRoles = (ids) => {
-  return http.delete('/api/admin/roles/batch', { data: { ids } })
+  void ids
+  return unsupportedRoleApi('batchDeleteRoles')
 }
 
 // 更新角色状态
 export const updateRoleStatus = (id, status) => {
-  return http.patch(`/api/admin/roles/${id}/status`, { status })
+  return http.patch(`/api/v1/admin/roles/${id}/status`, { status })
 }
 
 // 获取角色权限
 export const getRolePermissions = (id) => {
-  return http.get(`/api/admin/roles/${id}/permissions`)
+  return http.get(`/api/v1/admin/roles/${id}/permissions`)
 }
 
 // 分配角色权限
 export const assignRolePermissions = (id, permissionIds) => {
-  return http.post(`/api/admin/roles/${id}/permissions`, { permissionIds })
+  const payload = Array.isArray(permissionIds)
+    ? permissionIds
+    : permissionIds?.permissionIds || permissionIds?.permission_ids || permissionIds?.permissions || []
+  return http.post(`/api/v1/admin/roles/${id}/permissions`, payload)
 }
 
 // 获取权限树
 export const getPermissionTree = () => {
-  return http.get('/api/admin/permissions/tree')
+  return http.get('/api/v1/admin/permissions/tree')
 }
 
 // 获取所有权限
 export const getAllPermissions = () => {
-  return http.get('/api/admin/permissions')
+  return http.get('/api/v1/admin/permissions')
 }
 
 // 复制角色
 export const copyRole = (id, data) => {
-  return http.post(`/api/admin/roles/${id}/copy`, data)
+  void id
+  void data
+  return unsupportedRoleApi('copyRole')
 }
 
 // 获取角色统计信息
 export const getRoleStats = () => {
-  return http.get('/api/admin/roles/stats')
+  return http.get('/api/v1/admin/roles/stats')
 }
 
 // 导出角色
 export const exportRoles = (params) => {
-  return http.get('/api/admin/roles/export', { params, responseType: 'blob' })
+  void params
+  return unsupportedRoleApi('exportRoles')
 }
 
 // 导入角色
 export const importRoles = (file) => {
-  const formData = new FormData()
-  formData.append('file', file)
-  return http.post('/api/admin/roles/import', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data'
-    }
-  })
+  void file
+  return unsupportedRoleApi('importRoles')
 }
 
 // 别名导出，以匹配组件中的导入

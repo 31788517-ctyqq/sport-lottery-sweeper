@@ -1,196 +1,135 @@
 <template>
   <el-dialog
-    :title="dialogTitle"
+    class="um-dialog"
     v-model="visible"
-    width="500px"
+    :title="isEdit ? '编辑部门' : '新增部门'"
+    width="560px"
+    :close-on-click-modal="false"
     @close="handleClose"
   >
     <el-form ref="formRef" :model="formData" :rules="rules" label-width="100px">
       <el-form-item label="部门名称" prop="name">
         <el-input v-model="formData.name" placeholder="请输入部门名称" />
       </el-form-item>
-      
-      <el-form-item label="部门编码" prop="code">
-        <el-input v-model="formData.code" placeholder="请输入部门编码" :disabled="isEdit" />
-      </el-form-item>
-      
-      <el-form-item label="上级部门" prop="parentId">
+
+      <el-form-item label="上级部门">
         <el-tree-select
           v-model="formData.parentId"
           :data="departmentTree"
           :props="treeProps"
-          placeholder="请选择上级部门"
+          placeholder="可选"
           check-strictly
           clearable
         />
       </el-form-item>
-      
-      <el-form-item label="部门经理" prop="managerId">
-        <el-select
-          v-model="formData.managerId"
-          placeholder="请选择部门经理"
-          clearable
-          filterable
-        >
+
+      <el-form-item label="部门负责人">
+        <el-select v-model="formData.managerId" placeholder="可选" clearable filterable>
           <el-option
             v-for="user in managers"
             :key="user.id"
-            :label="user.realName"
+            :label="user.realName || user.real_name || user.username"
             :value="user.id"
           />
         </el-select>
       </el-form-item>
-      
-      <el-form-item label="排序" prop="sort">
+
+      <el-form-item label="排序">
         <el-input-number
-          v-model="formData.sort"
+          v-model="formData.sortOrder"
           :min="0"
-          :max="999"
+          :max="9999"
           controls-position="right"
           style="width: 100%"
         />
       </el-form-item>
-      
-      <el-form-item label="描述" prop="description">
-        <el-input
-          v-model="formData.description"
-          type="textarea"
-          :rows="3"
-          placeholder="请输入部门描述"
-        />
-      </el-form-item>
-      
-      <el-form-item label="状态" prop="status">
+
+      <el-form-item label="状态">
         <el-radio-group v-model="formData.status">
-          <el-radio :value="1">启用</el-radio>
-          <el-radio :value="0">禁用</el-radio>
+          <el-radio :value="true">启用</el-radio>
+          <el-radio :value="false">停用</el-radio>
         </el-radio-group>
       </el-form-item>
+
+      <el-form-item label="描述">
+        <el-input v-model="formData.description" type="textarea" :rows="3" placeholder="请输入描述" />
+      </el-form-item>
     </el-form>
-    
+
     <template #footer>
-      <span class="dialog-footer">
-        <el-button @click="handleClose">取消</el-button>
-        <el-button type="primary" @click="handleSubmit" :loading="submitting">
-          确定
-        </el-button>
-      </span>
+      <el-button @click="handleClose">取消</el-button>
+      <el-button type="primary" :loading="submitting" @click="handleSubmit">保存</el-button>
     </template>
   </el-dialog>
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch, nextTick } from 'vue'
-import { ElMessage } from 'element-plus'
+import { computed, reactive, ref, watch } from 'vue'
 
-// Props
 const props = defineProps({
-  modelValue: Boolean,
-  deptData: Object,
-  departmentTree: Array,
-  managers: Array
+  modelValue: { type: Boolean, default: false },
+  deptData: { type: Object, default: () => ({}) },
+  departmentTree: { type: Array, default: () => [] },
+  managers: { type: Array, default: () => [] }
 })
 
-// Emits
 const emit = defineEmits(['update:modelValue', 'submit'])
 
-// 响应式数据
 const visible = ref(false)
 const submitting = ref(false)
-const formRef = ref()
+const formRef = ref(null)
 
 const formData = reactive({
   id: null,
   name: '',
-  code: '',
   parentId: null,
   managerId: null,
-  sort: 0,
-  description: '',
-  status: 1
+  sortOrder: 0,
+  status: true,
+  description: ''
 })
 
-const treeProps = {
-  children: 'children',
-  label: 'name',
-  value: 'id'
-}
+const treeProps = { children: 'children', label: 'name', value: 'id' }
 
 const rules = {
   name: [
     { required: true, message: '请输入部门名称', trigger: 'blur' },
-    { min: 2, max: 50, message: '长度在 2 到 50 个字符', trigger: 'blur' }
-  ],
-  code: [
-    { required: true, message: '请输入部门编码', trigger: 'blur' },
-    { pattern: /^[A-Z0-9_]+$/, message: '只能包含大写字母、数字和下划线', trigger: 'blur' }
-  ],
-  sort: [
-    { required: true, message: '请输入排序值', trigger: 'blur' }
+    { min: 2, max: 50, message: '长度应在 2 到 50 个字符', trigger: 'blur' }
   ]
 }
 
-// 计算属性
 const isEdit = computed(() => !!formData.id)
 
-const dialogTitle = computed(() => {
-  return isEdit.value ? '编辑部门' : '新增部门'
-})
-
-// 监听器
-watch(() => props.modelValue, (val) => {
-  visible.value = val
-  if (val) {
-    resetForm()
-    if (props.deptData) {
-      loadDeptData()
-    }
-  }
-})
-
-watch(visible, (val) => {
-  emit('update:modelValue', val)
-})
-
-// 方法
 const resetForm = () => {
   Object.assign(formData, {
     id: null,
     name: '',
-    code: '',
     parentId: null,
     managerId: null,
-    sort: 0,
-    description: '',
-    status: 1
+    sortOrder: 0,
+    status: true,
+    description: ''
   })
-  nextTick(() => {
-    formRef.value?.clearValidate()
-  })
+  formRef.value?.clearValidate()
 }
 
-const loadDeptData = () => {
+const loadDeptData = (deptData) => {
   Object.assign(formData, {
-    id: props.deptData.id,
-    name: props.deptData.name,
-    code: props.deptData.code,
-    parentId: props.deptData.parentId,
-    managerId: props.deptData.managerId,
-    sort: props.deptData.sort,
-    description: props.deptData.description,
-    status: props.deptData.status
+    id: deptData.id ?? null,
+    name: deptData.name ?? '',
+    parentId: deptData.parentId ?? deptData.parent_id ?? null,
+    managerId: deptData.managerId ?? deptData.leader_id ?? null,
+    sortOrder: deptData.sortOrder ?? deptData.sort_order ?? 0,
+    status: deptData.status === undefined ? true : !!deptData.status,
+    description: deptData.description ?? ''
   })
 }
 
 const handleSubmit = async () => {
   try {
-    await formRef.value.validate()
+    await formRef.value?.validate()
     submitting.value = true
-    
     emit('submit', { ...formData })
-    
-  } catch (error) {
-    console.error('表单验证失败:', error)
   } finally {
     submitting.value = false
   }
@@ -200,16 +139,51 @@ const handleClose = () => {
   visible.value = false
 }
 
-// 暴露方法
-defineExpose({
-  visible
+watch(
+  () => props.modelValue,
+  (val) => {
+    visible.value = val
+    if (val) {
+      resetForm()
+      if (props.deptData && Object.keys(props.deptData).length > 0) {
+        loadDeptData(props.deptData)
+      }
+    }
+  },
+  { immediate: true }
+)
+
+watch(visible, (val) => {
+  emit('update:modelValue', val)
 })
 </script>
 
 <style scoped>
-.dialog-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
+:deep(.um-dialog.el-dialog) {
+  border: 1px solid #ebeef5;
+  border-radius: 4px;
+  box-shadow: none;
+  overflow: hidden;
+}
+
+:deep(.um-dialog .el-dialog__header) {
+  margin-right: 0;
+  padding: 14px 16px;
+  border-bottom: 1px solid #ebeef5;
+}
+
+:deep(.um-dialog .el-dialog__title) {
+  font-size: 16px;
+  font-weight: 600;
+  color: #303133;
+}
+
+:deep(.um-dialog .el-dialog__body) {
+  padding: 16px;
+}
+
+:deep(.um-dialog .el-dialog__footer) {
+  padding: 12px 16px;
+  border-top: 1px solid #ebeef5;
 }
 </style>

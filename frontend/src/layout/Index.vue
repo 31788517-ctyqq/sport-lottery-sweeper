@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <el-container class="admin-layout">
     <!-- 侧边栏 -->
     <el-aside width="200px" class="sidebar">
@@ -80,9 +80,18 @@
           <el-menu-item index="/admin/draw-prediction/model-workbench">模型工坊</el-menu-item>
         </el-sub-menu>
 
+        <!-- 6. 球队联赛管理 -->
+        <el-sub-menu index="/admin/team-league-management">
+          <template #title>
+            <el-icon><Football /></el-icon>
+            <span>球队联赛管理</span>
+          </template>
+          <el-menu-item index="/admin/match-data/leagues">联赛管理</el-menu-item>
+          <el-menu-item index="/admin/data-source/official-info">官方信息管理</el-menu-item>
+          <el-menu-item index="/admin/system/entity-mappings">实体映射管理</el-menu-item>
+        </el-sub-menu>
 
-
-        <!-- 6. AI服务管理 -->
+        <!-- 7. AI服务管理 -->
         <el-sub-menu index="/admin/ai-services">
           <template #title>
             <el-icon><ChatLineRound /></el-icon>
@@ -97,7 +106,7 @@
           <el-menu-item index="/admin/ai-services/config">配置管理</el-menu-item>
         </el-sub-menu>
 
-        <!-- 7. 智能决策 -->
+        <!-- 8. 智能决策 -->
         <el-sub-menu index="/admin/intelligent-decision">
           <template #title>
             <el-icon><Management /></el-icon>

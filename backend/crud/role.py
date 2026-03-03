@@ -118,13 +118,25 @@ class CRUDRole:
         await db.refresh(role)
         return role
 
-    async def count_users(self, db: AsyncSession, *, role_id: int) -> int:
+    async def count_users(
+        self, db: AsyncSession, *, role_id: int, role_name: str | None = None
+    ) -> int:
         """统计使用该角色的用户数量"""
         from backend.models.admin_user import AdminUser
-        result = await db.execute(
-            select(func.count(AdminUser.id)).where(AdminUser.role_id == role_id)
-        )
-        return result.scalar_one()
+
+        if hasattr(AdminUser, "role_id"):
+            result = await db.execute(
+                select(func.count(AdminUser.id)).where(AdminUser.role_id == role_id)
+            )
+            return result.scalar_one()
+
+        if role_name and hasattr(AdminUser, "role"):
+            result = await db.execute(
+                select(func.count(AdminUser.id)).where(AdminUser.role == role_name)
+            )
+            return result.scalar_one()
+
+        return 0
 
 
 crud_role = CRUDRole()

@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 import json
 
 from ....database_async import get_async_db
-from ....models.match import League, Match
+from ....models.match import League, Match, Team
 from ....schemas.match import LeagueCreate, LeagueUpdate, LeagueResponse
 from ....services.match_service import MatchService
 from ...deps import get_current_admin
@@ -250,7 +250,7 @@ async def create_league(
         raise HTTPException(status_code=500, detail=f"创建联赛失败: {str(e)}")
 
 
-@router.put("/{league_id}", response_model=UnifiedResponse)
+@router.put("/{league_id:int}", response_model=UnifiedResponse)
 async def update_league(
     league_id: int,
     request: LeagueUpdateRequest,
@@ -330,7 +330,7 @@ async def update_league(
         raise HTTPException(status_code=500, detail=f"更新联赛失败: {str(e)}")
 
 
-@router.delete("/{league_id}", response_model=UnifiedResponse)
+@router.delete("/{league_id:int}", response_model=UnifiedResponse)
 async def delete_league(
     league_id: int,
     db: AsyncSession = Depends(get_async_db)
@@ -410,19 +410,19 @@ async def get_league_stats(
         from sqlalchemy import select, func, case, distinct
         
         # 获取各种统计信息
+        # Prefer real-time aggregation from core tables, avoid stale denormalized totals.
         stats_query = select(
             func.count(League.id).label('total_leagues'),
             func.count(distinct(League.country)).label('total_countries'),
-            func.sum(League.total_teams).label('total_teams'),
-            func.sum(League.total_matches).label('total_matches'),
-            func.sum(case(
-                (League.is_active == True, 1),
-                else_=0
-            )).label('active_leagues')
+            func.sum(case((League.is_active == True, 1), else_=0)).label('active_leagues')
         )
         
         result = await db.execute(stats_query)
         row = result.fetchone()
+
+        teams_query = select(func.count(Team.id).label('total_teams'))
+        teams_result = await db.execute(teams_query)
+        teams_row = teams_result.fetchone()
         
         # 计算比赛完成率
         matches_stats_query = select(
@@ -441,8 +441,8 @@ async def get_league_stats(
             "totalLeagues": row.total_leagues or 0,
             "totalCountries": row.total_countries or 0,
             "activeLeagues": row.active_leagues or 0,
-            "totalTeams": row.total_teams or 0,
-            "totalMatches": row.total_matches or 0,
+            "totalTeams": teams_row.total_teams or 0,
+            "totalMatches": total_match_records or 0,
             "completionRate": round(completion_rate, 1)
         }
         

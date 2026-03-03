@@ -59,23 +59,6 @@
           />
         </el-form-item>
 
-        <el-form-item prop="captcha">
-          <div class="captcha-container">
-            <el-input 
-              v-model="loginForm.captcha" 
-              name="captcha"
-              placeholder="验证码"
-              size="large"
-              prefix-icon="Key"
-              clearable
-              style="flex: 1; margin-right: 12px;"
-            />
-            <div class="captcha-image" @click="refreshCaptcha" role="button" aria-label="刷新验证码" tabindex="0" @keyup.enter="refreshCaptcha">
-              <canvas ref="captchaCanvas" width="120" height="40" aria-label="验证码图像" role="img"></canvas>
-            </div>
-          </div>
-        </el-form-item>
-
         <el-form-item class="login-options-item">
           <div class="login-options">
             <el-checkbox v-model="loginForm.rememberMe">记住我</el-checkbox>
@@ -117,19 +100,17 @@ import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { ElMessage } from 'element-plus'
-import { User, Lock, Key, Loading } from '@element-plus/icons-vue'
+import { User, Lock, Loading } from '@element-plus/icons-vue'  // 移除了Key图标
 
 const router = useRouter()
 const authStore = useAuthStore()
 const loginFormRef = ref()
-const captchaCanvas = ref()
 const loading = ref(false)
 
 // Login form data
 const loginForm = reactive({
   username: '',
-  password: '',
-  captcha: ''
+  password: ''
 })
 
 // Form validation rules
@@ -141,68 +122,7 @@ const loginRules = {
   password: [
     { required: true, message: '请输入密码', trigger: 'blur' },
     { min: 6, max: 20, message: '密码长度在 6 到 20 个字符', trigger: 'blur' }
-  ],
-  captcha: [
-    { required: true, message: '请输入验证码', trigger: 'blur' },
-    { len: 4, message: '验证码长度为4位', trigger: 'blur' }
   ]
-}
-
-// Generate captcha
-const generateCaptcha = () => {
-  const canvas = captchaCanvas.value
-  if (!canvas) return
-  
-  const ctx = canvas.getContext('2d')
-  const chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789'
-  let captcha = ''
-  
-  // Clear canvas
-  ctx.clearRect(0, 0, canvas.width, canvas.height)
-  
-  // Draw background
-  ctx.fillStyle = '#f8f9fa'
-  ctx.fillRect(0, 0, canvas.width, canvas.height)
-  
-  // Draw random lines
-  for (let i = 0; i < 5; i++) {
-    ctx.strokeStyle = `rgb(${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)})`
-    ctx.beginPath()
-    ctx.moveTo(Math.random() * canvas.width, Math.random() * canvas.height)
-    ctx.lineTo(Math.random() * canvas.width, Math.random() * canvas.height)
-    ctx.stroke()
-  }
-  
-  // Generate captcha text
-  for (let i = 0; i < 4; i++) {
-    const char = chars.charAt(Math.floor(Math.random() * chars.length))
-    captcha += char
-    
-    ctx.font = `${16 + Math.random() * 8}px Arial`
-    ctx.fillStyle = `rgb(${Math.floor(Math.random() * 100)}, ${Math.floor(Math.random() * 100)}, ${Math.floor(Math.random() * 100)})`
-    ctx.textBaseline = 'middle'
-    ctx.save()
-    ctx.translate(30 * i + 15, 20)
-    ctx.rotate((Math.random() - 0.5) * 0.4)
-    ctx.fillText(char, -8, 0)
-    ctx.restore()
-  }
-  
-  // Store captcha for validation (in real app, store in session)
-  canvas.dataset.captcha = captcha.toLowerCase()
-}
-
-// Refresh captcha
-const refreshCaptcha = () => {
-  generateCaptcha()
-}
-
-// Fill demo account
-const fillDemoAccount = (username, password) => {
-  loginForm.username = username
-  loginForm.password = password
-  loginForm.captcha = '' // 清空验证码，让用户重新输入
-  generateCaptcha()
 }
 
 // Handle forgot password
@@ -215,33 +135,7 @@ const handleLogin = async () => {
   if (!loginFormRef.value) return
   
   try {
-    // 如果是自动登录且验证码为空，先填充当前验证码
-    if (loginForm.autoLoginAttempt) {
-      // 获取当前验证码
-      const canvas = captchaCanvas.value;
-      if (canvas && canvas.dataset.captcha) {
-        // 自动填充当前验证码
-        loginForm.captcha = canvas.dataset.captcha.substring(0, 4); // 取前4位作为验证码
-      }
-      // 重置标志
-      loginForm.autoLoginAttempt = false;
-    }
-    
     await loginFormRef.value.validate()
-    
-    // Validate captcha
-    const canvas = captchaCanvas.value
-    if (!canvas || !canvas.dataset.captcha) {
-      ElMessage.error('验证码已过期，请刷新')
-      return
-    }
-    
-    if (loginForm.captcha.toLowerCase() !== canvas.dataset.captcha) {
-      ElMessage.error('验证码错误')
-      generateCaptcha()
-      loginForm.captcha = ''
-      return
-    }
     
     loading.value = true
     
@@ -264,16 +158,10 @@ const handleLogin = async () => {
     } else {
       // 登录失败时，只显示错误信息，不重置表单
       ElMessage.error(result.error || '登录失败')
-      // 重新生成验证码，但不清除用户输入
-      generateCaptcha()
-      loginForm.captcha = '' // 只清除验证码，保留用户名和密码
     }
     
   } catch (error) {
     console.error('Login validation failed:', error)
-    // 发生错误时也不清空表单
-    generateCaptcha()
-    loginForm.captcha = '' // 只清除验证码
   } finally {
     loading.value = false
   }
@@ -281,13 +169,9 @@ const handleLogin = async () => {
 
 // Initialize
 onMounted(() => {
-  generateCaptcha()
-  
   // 如果启用了记住我，且有记住的用户名和密码，则自动登录
   if (loginForm.rememberMe && loginForm.username && loginForm.password) {
-    // 设置标志表示这是自动登录尝试
-    loginForm.autoLoginAttempt = true;
-    // 延迟执行自动登录，确保验证码已生成
+    // 延迟执行自动登录，确保页面已准备就绪
     setTimeout(() => {
       handleLogin()
     }, 500)
@@ -411,23 +295,6 @@ onMounted(() => {
   margin-bottom: 16px;
 }
 
-.captcha-container {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.captcha-image {
-  cursor: pointer;
-  border: 1px solid #e5e7eb;
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.captcha-image canvas {
-  display: block;
-}
-
 :deep(.el-form-item) {
   margin-bottom: 16px;
 }
@@ -510,10 +377,6 @@ onMounted(() => {
   .login-btn {
     height: 38px;
     font-size: 14px;
-  }
-  .captcha-container {
-    flex-direction: column;
-    gap: 10px;
   }
 }
 </style>

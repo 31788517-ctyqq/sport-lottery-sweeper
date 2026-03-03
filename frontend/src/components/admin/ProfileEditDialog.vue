@@ -1,5 +1,6 @@
 <template>
   <el-dialog
+    class="um-dialog"
     title="编辑个人信息"
     v-model="visible"
     width="500px"
@@ -223,6 +224,34 @@ defineExpose({
 </script>
 
 <style scoped>
+:deep(.um-dialog.el-dialog) {
+  border: 1px solid #ebeef5;
+  border-radius: 4px;
+  box-shadow: none;
+  overflow: hidden;
+}
+
+:deep(.um-dialog .el-dialog__header) {
+  margin-right: 0;
+  padding: 14px 16px;
+  border-bottom: 1px solid #ebeef5;
+}
+
+:deep(.um-dialog .el-dialog__title) {
+  font-size: 16px;
+  font-weight: 600;
+  color: #303133;
+}
+
+:deep(.um-dialog .el-dialog__body) {
+  padding: 16px;
+}
+
+:deep(.um-dialog .el-dialog__footer) {
+  padding: 12px 16px;
+  border-top: 1px solid #ebeef5;
+}
+
 .avatar-upload {
   display: flex;
   align-items: center;

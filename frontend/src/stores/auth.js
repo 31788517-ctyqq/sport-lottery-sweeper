@@ -168,8 +168,17 @@ export const useAuthStore = defineStore('auth', () => {
 
   // 初始化认证状态
   const initializeAuth = async () => {
-    if (token.value) {
-      await fetchUserInfo()
+    // 从localStorage中同步token到store状态
+    const storedToken = localStorage.getItem('access_token') || localStorage.getItem('token');
+    const storedRefreshToken = localStorage.getItem('refresh_token');
+    
+    if (storedToken) {
+      token.value = storedToken;
+      if (storedRefreshToken) {
+        refreshToken.value = storedRefreshToken;
+      }
+      // 尝试获取用户信息
+      await fetchUserInfo();
     }
   }
 

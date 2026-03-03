@@ -217,6 +217,8 @@ const timelineChartRef = ref(null)
 let distributionChart = null
 let timelineChart = null
 
+const isChartContainerReady = (el) => !!el && el.clientWidth > 0 && el.clientHeight > 0
+
 const buildDistributionOption = () => {
   const [nameKey, valueKey] = sentimentDistributionData.columns || []
   const rows = sentimentDistributionData.rows || []
@@ -262,24 +264,36 @@ const buildTimelineOption = () => {
 }
 
 const renderDistributionChart = () => {
-  if (!distributionChartRef.value) return
-  if (!distributionChart) distributionChart = echarts.init(distributionChartRef.value)
+  const chartEl = distributionChartRef.value
+  if (!isChartContainerReady(chartEl)) return false
+  if (!distributionChart) distributionChart = echarts.init(chartEl)
   distributionChart.setOption(buildDistributionOption())
+  return true
 }
 
 const renderTimelineChart = () => {
-  if (!timelineChartRef.value) return
-  if (!timelineChart) timelineChart = echarts.init(timelineChartRef.value)
+  const chartEl = timelineChartRef.value
+  if (!isChartContainerReady(chartEl)) return false
+  if (!timelineChart) timelineChart = echarts.init(chartEl)
   timelineChart.setOption(buildTimelineOption())
+  return true
+}
+
+const scheduleRender = (renderFn, retries = 6) => {
+  const success = renderFn()
+  if (success || retries <= 0) return
+  window.setTimeout(() => {
+    scheduleRender(renderFn, retries - 1)
+  }, 120)
 }
 
 const renderActiveChart = () => {
   if (activeTab.value === 'distribution') {
-    renderDistributionChart()
+    scheduleRender(renderDistributionChart)
     return
   }
   if (activeTab.value === 'timeline') {
-    renderTimelineChart()
+    scheduleRender(renderTimelineChart)
   }
 }
 
@@ -358,8 +372,7 @@ watch(activeTab, () => {
 
 onMounted(() => {
   nextTick(() => {
-    renderDistributionChart()
-    renderTimelineChart()
+    renderActiveChart()
   })
   window.addEventListener('resize', handleChartResize)
 })

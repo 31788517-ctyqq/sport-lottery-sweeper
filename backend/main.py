@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-体育彩票扫盘系统 - 主应用入口
-真实数据库版本
-"""
+浣撹偛褰╃エ鎵洏绯荤粺 - 涓诲簲鐢ㄥ叆鍙?鐪熷疄鏁版嵁搴撶増鏈?"""
 
 import warnings
-# 忽略 Pydantic v2 的 protected_namespaces 警告
+# 蹇界暐 Pydantic v2 鐨?protected_namespaces 璀﹀憡
 warnings.filterwarnings("ignore", category=UserWarning, message=".*Field name.*shadows an attribute in parent.*")
 warnings.filterwarnings("ignore", category=UserWarning, message=".*protected_namespaces.*")
 
@@ -22,14 +20,14 @@ from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 
-# 获取项目根目录
+# Get project root directory
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, project_root)
 
-# 导入日志配置（但不在这里调用setup_logging，避免重复初始化）
+# Import logging setup helper
 from backend.utils.logging_config import setup_logging
 
-# 获取logger实例（注意：此时日志系统还未完全初始化，但logging模块本身可用）
+# Module logger
 logger = logging.getLogger(__name__)
 
 from fastapi import FastAPI, Depends, HTTPException
@@ -45,34 +43,33 @@ import asyncio
 from backend.api.dependencies import get_current_active_user, get_current_active_admin_user
 from backend.models.user import User
 
-# 导入数据库相关模块
+# Database references
 from backend.database import engine, DATABASE_URL, get_db
 from backend.models.base import Base
 from backend.config import settings
 
-# AI_WORKING: coder1 @2026-02-10 - 添加数据库路径日志
-logger.info(f"数据库连接URL: {DATABASE_URL}")
+# AI_WORKING: coder1 @2026-02-10 - 娣诲姞鏁版嵁搴撹矾寰勬棩蹇?logger.info(f"鏁版嵁搴撹繛鎺RL: {DATABASE_URL}")
 
-# 导入LLM Provider相关的必要模型
+# LLM provider model
 from backend.models.llm_provider import LLMProvider
 
-# 导入日志中间件
+# 瀵煎叆鏃ュ織涓棿浠?
 from backend.core.logging_middleware import LoggingMiddleware
 
-# 导入监控和限流中间件
+# 瀵煎叆鐩戞帶鍜岄檺娴佷腑闂翠欢
 from backend.core.monitoring_middleware import MonitoringMiddleware
 from backend.core.rate_limit_middleware import RateLimitMiddleware
 
-# 导入性能优化中间件
+# 瀵煎叆鎬ц兘浼樺寲涓棿浠?
 from backend.core.performance_middleware import PerformanceMiddleware
 
-# 导入安全头中间件
+# 瀵煎叆瀹夊叏澶翠腑闂翠欢
 from backend.middleware import SecurityHeadersMiddleware
 
-# 导入Null安全中间件
+# 瀵煎叆Null瀹夊叏涓棿浠?
 from backend.middleware.null_safety_middleware import add_null_safety_middleware
 
-# 导入数据库工具
+# 瀵煎叆鏁版嵁搴撳伐鍏?
 from backend.database_utils import (
     authenticate_user, get_user_by_id, 
     get_dashboard_stats, get_intelligence_screening_list
@@ -80,29 +77,36 @@ from backend.database_utils import (
 
 from contextlib import asynccontextmanager
 
-# 全局变量声明
+# 鍏ㄥ眬鍙橀噺澹版槑
 llm_service = None
 collaborative_agents = None
 communication_hub = None
 
 def init_llm_service():
-    """初始化LLM服务"""
+    """鍒濆鍖朙LM鏈嶅姟"""
     global llm_service
     try:
         from backend.services.llm_service import LLMService
         llm_service = LLMService()
         
-        # 从环境变量获取API密钥
+        # 浠庣幆澧冨彉閲忚幏鍙朅PI瀵嗛挜
         import os
         api_keys = {
             'openai': os.getenv('OPENAI_API_KEY'),
             'gemini': os.getenv('GEMINI_API_KEY'),
             'qwen': os.getenv('QWEN_API_KEY'),
+            'zhipuai': os.getenv('ZHIPUAI_API_KEY') or os.getenv('ZHIPU_API_KEY') or os.getenv('BIGMODEL_API_KEY'),
         }
-        logger.info(f"LLM key presence: openai={bool(api_keys['openai'])}, gemini={bool(api_keys['gemini'])}, qwen={bool(api_keys['qwen'])}")
+        logger.info(
+            "LLM key presence: openai=%s, gemini=%s, qwen=%s, zhipuai=%s",
+            bool(api_keys['openai']),
+            bool(api_keys['gemini']),
+            bool(api_keys['qwen']),
+            bool(api_keys['zhipuai']),
+        )
 
         
-        # 注册可用的提供商
+        # 娉ㄥ唽鍙敤鐨勬彁渚涘晢
         if api_keys['openai']:
             llm_service.register_provider('openai', api_keys['openai'])
             logger.info("OpenAI provider registered")
@@ -114,17 +118,18 @@ def init_llm_service():
         if api_keys['qwen']:
             llm_service.register_provider('qwen', api_keys['qwen'])
             logger.info("Qwen provider registered")
-        
-        # 从数据库加载已配置的提供商（简化版本，避免阻塞）
+
+        if api_keys['zhipuai']:
+            llm_service.register_provider('zhipuai', api_keys['zhipuai'])
+            logger.info("ZhipuAI provider registered")
+
+        # Defer DB provider loading to runtime to keep startup stable.
         try:
-            # 使用简单的懒加载方式，避免启动时阻塞
-            # 将数据库加载推迟到第一次实际需要时进行
-            logger.info("LLM提供商数据库加载已推迟到运行时（避免启动阻塞）")
+            logger.info("LLM provider DB loading deferred to runtime")
         except Exception as db_error:
-            logger.warning(f"从数据库加载LLM提供商失败: {db_error}")
-            # 继续运行，至少环境变量中的提供商已注册
-        
-        # 设置默认提供商
+            logger.warning(f"Failed to defer LLM provider DB loading: {db_error}")
+
+        # Set default provider.
         if llm_service.providers:
             llm_service.set_default_provider(next(iter(llm_service.providers)))
             logger.info(f"Default LLM provider: {llm_service.default_provider}")
@@ -134,7 +139,7 @@ def init_llm_service():
         llm_service = None
 
 def sync_data_source_to_crawler_config():
-    """同步数据源配置到爬虫配置，确保两个系统的一致性"""
+    """Sync data source configuration to crawler config records."""
     try:
         from sqlalchemy.orm import sessionmaker
         from backend.database import engine
@@ -146,85 +151,83 @@ def sync_data_source_to_crawler_config():
         db = SessionLocal()
         
         try:
-            # 获取所有启用的数据源
+            # Query all enabled data sources.
             data_sources = db.query(DataSource).filter(DataSource.status == True).all()
             
             for source in data_sources:
-                # 检查是否已存在对应的爬虫配置
+                # Check whether crawler config already exists for this source.
                 existing_config = db.query(CrawlerConfig).filter(
                     CrawlerConfig.source_id == source.id
                 ).first()
                 
                 if not existing_config:
-                    # 根据数据源创建爬虫配置
+                    # Create crawler config from data source when missing.
                     create_crawler_config_from_data_source(db, source)
                     
             db.commit()
-            logger.info(f"同步了 {len(data_sources)} 个数据源到爬虫配置")
+            logger.info(f"Synced {len(data_sources)} data sources to crawler config")
         finally:
             db.close()
     except Exception as e:
-        logger.error(f"同步数据源到爬虫配置失败: {e}")
+        logger.error(f"鍚屾鏁版嵁婧愬埌鐖櫕閰嶇疆澶辫触: {e}")
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """应用生命周期管理"""
+    """Application lifecycle manager."""
     logger.info("Application starting up...")
     
-    # 初始化日志系统（这是正确的调用位置）
+    # Initialize logging once during startup.
     from backend.utils.logging_config import setup_logging
     setup_logging()
     
-    # AI_WORKING: coder1 @2026-02-10 - 添加数据库路径日志
+    # Log database path for startup diagnostics.
     from backend.database import DATABASE_URL, DATABASE_PATH
     logger.info(f"Database URL: {DATABASE_URL}")
     logger.info(f"Database PATH: {DATABASE_PATH}")
     logger.info(f"Database PATH absolute: {DATABASE_PATH.absolute()}")
     # AI_DONE: coder1 @2026-02-10
     
-    # 初始化数据库 - 只创建不存在的表，不删除现有表
+    # Initialize DB metadata
     from backend.database import engine, Base
     Base.metadata.create_all(bind=engine, checkfirst=True)
     
-    # 暂时禁用启动时的数据源同步，避免ORM冲突
+    # 鏆傛椂绂佺敤鍚姩鏃剁殑鏁版嵁婧愬悓姝ワ紝閬垮厤ORM鍐茬獊
     # sync_data_source_to_crawler_config()
     
-    # 初始化各种服务
-    # initialize_services()
+    # 鍒濆鍖栧悇绉嶆湇鍔?    # initialize_services()
     # ???LLM??
-    init_llm_service()  # 暂时注释掉未定义的函数调用
-    
+    init_llm_service()  # 鏆傛椂娉ㄩ噴鎺夋湭瀹氫箟鐨勫嚱鏁拌皟鐢?    
     yield
     
-    # 应用关闭时的清理
+    # 搴旂敤鍏抽棴鏃剁殑娓呯悊
     logger.info("Application shutting down...")
 
-# 新增：API重定向中间件（临时方案）
+# 鏂板锛欰PI閲嶅畾鍚戜腑闂翠欢锛堜复鏃舵柟妗堬級
 class APIMigrationMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
-        """将旧版API路径重定向到新版API路径"""
+        """灏嗘棫鐗圓PI璺緞閲嶅畾鍚戝埌鏂扮増API璺緞"""
         old_path = request.url.path
         
-        # 识别需要重定向的旧路径
+        # 璇嗗埆闇€瑕侀噸瀹氬悜鐨勬棫璺緞
         if old_path.startswith("/api/admin/v1/"):
             new_path = old_path.replace("/api/admin/v1/", "/api/v1/admin/", 1)
             request.scope["path"] = new_path
-            logger.info(f"API路径重定向: {old_path} -> {new_path}")
+            logger.info(f"API璺緞閲嶅畾鍚? {old_path} -> {new_path}")
         elif old_path == "/api/admin/v1":
             new_path = "/api/v1/admin"
             request.scope["path"] = new_path
-            logger.info(f"API路径重定向: {old_path} -> {new_path}")
+            logger.info(f"API璺緞閲嶅畾鍚? {old_path} -> {new_path}")
         elif old_path.startswith("/api/admin/crawler"):
             new_path = old_path.replace("/admin/crawler", "/v1/admin")
             request.scope["path"] = new_path
-            logger.info(f"API路径重定向: {old_path} -> {new_path}")
+            logger.info(f"API璺緞閲嶅畾鍚? {old_path} -> {new_path}")
         
-        # 处理任务管理相关路径
+        # 澶勭悊浠诲姟绠＄悊鐩稿叧璺緞
         elif old_path.startswith("/api/admin/tasks"):
             new_path = old_path.replace("/api/admin/tasks", "/api/v1/admin/tasks")
             request.scope["path"] = new_path
-            logger.info(f"API路径重定向: {old_path} -> {new_path}")
+            logger.info(f"API璺緞閲嶅畾鍚? {old_path} -> {new_path}")
             
         elif old_path == "/api/admin/sources" or old_path.startswith("/api/admin/sources/"):
             new_path = old_path.replace("/api/admin/sources", "/api/v1/admin/crawler/sources", 1)
@@ -248,6 +251,11 @@ class APIMigrationMiddleware(BaseHTTPMiddleware):
             logger.info(f"API path redirected: {old_path} -> {new_path}")
         elif old_path == "/api/multi-strategy" or old_path.startswith("/api/multi-strategy/"):
             new_path = old_path.replace("/api/multi-strategy", "/api/v1/multi-strategy", 1)
+            request.scope["path"] = new_path
+            logger.info(f"API path redirected: {old_path} -> {new_path}")
+
+        elif old_path == "/api/llm" or old_path.startswith("/api/llm/"):
+            new_path = old_path.replace("/api/llm", "/api/v1/llm", 1)
             request.scope["path"] = new_path
             logger.info(f"API path redirected: {old_path} -> {new_path}")
 
@@ -298,11 +306,11 @@ def load_rate_limit_defaults() -> List[str]:
         return []
     return [item.strip() for item in raw_limits.split(",") if item.strip()]
 
-# 创建FastAPI应用实例
+# Initialize FastAPI app
 app = FastAPI(
     lifespan=lifespan,
-    title="体育彩票扫盘系统",
-    description="提供体育赛事数据采集与分析服务",
+    title="足彩扫盘系统 API",
+    description="Provide sports match data collection and analysis services.",
     version="1.0.0"
 )
 
@@ -321,10 +329,10 @@ if default_rate_limits:
 else:
     logger.warning("Global rate limits disabled (API_DEFAULT_RATE_LIMITS not set)")
 
-# 添加API迁移中间件（放在其他中间件之前）
+# 娣诲姞API杩佺Щ涓棿浠讹紙鏀惧湪鍏朵粬涓棿浠朵箣鍓嶏級
 app.add_middleware(APIMigrationMiddleware)
 
-# 添加中间件
+# Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=load_cors_origins(),
@@ -333,7 +341,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 注册性能中间件
+# Optional performance middleware toggle
 ENABLE_PERFORMANCE_MIDDLEWARE = os.getenv("ENABLE_PERFORMANCE_MIDDLEWARE", "0").strip().lower() in {
     "1",
     "true",
@@ -346,168 +354,167 @@ if ENABLE_PERFORMANCE_MIDDLEWARE:
 else:
     logger.warning("PerformanceMiddleware disabled by default for stability")
 
-# 注册安全头中间件
+# 娉ㄥ唽瀹夊叏澶翠腑闂翠欢
 app.add_middleware(SecurityHeadersMiddleware)
 
-# 添加null safety中间件
-# add_null_safety_middleware(app)
+# 娣诲姞null safety涓棿浠?# add_null_safety_middleware(app)
 
-# 添加异常处理器
+# Register exception handlers
 from backend.exceptions import setup_exception_handlers
 setup_exception_handlers(app)
 
-logger.info("Application starting up...")  # 添加启动日志
+logger.info("Application starting up...")  # 娣诲姞鍚姩鏃ュ織
 
-# 强制启用完整API模式，注册所有路由
+# Force full API mode for route registration
 import os
 os.environ['FULL_API_MODE'] = 'true'
 
-# AI_WORKING: coder1 @2026-01-29 - 替换print为logging，统一日志记录
-# 导入API v1路由 - 启用完整API模式
+# AI_WORKING: coder1 @2026-01-29 - 鏇挎崲print涓簂ogging锛岀粺涓€鏃ュ織璁板綍
+# 瀵煎叆API v1璺敱 - 鍚敤瀹屾暣API妯″紡
 logger.info("Registering API routes...")
-# ===== /api/v1 路由 =====
+# ===== /api/v1 璺敱 =====
 try:
     from backend.api.v1 import router as api_v1_router
     app.include_router(api_v1_router, prefix="/api/v1")
     logger.info("API v1 routes registered successfully")
 except Exception as e:
-    logger.error(f"API v1 路由注册失败: {e}")
+    logger.error(f"API v1 璺敱娉ㄥ唽澶辫触: {e}")
     import traceback
-    logger.error(f"详细堆栈: {traceback.format_exc()}")
-    # 即使API路由注册失败，也继续运行基本服务
+    logger.error(f"璇︾粏鍫嗘爤: {traceback.format_exc()}")
+    # 鍗充娇API璺敱娉ㄥ唽澶辫触锛屼篃缁х画杩愯鍩烘湰鏈嶅姟
 
-# 注册实体映射和官方信息管理API路由
+# 娉ㄥ唽瀹炰綋鏄犲皠鍜屽畼鏂逛俊鎭鐞咥PI璺敱
 try:
     from backend.api.v1.admin.entity_mapping import router as entity_mapping_router
     app.include_router(entity_mapping_router, prefix="/api/v1", tags=["entity-mapping"])
     logger.info("Entity mapping API routes registered (/api/v1/entity-mapping)")
 except Exception as e:
-    logger.error(f"实体映射API路由注册失败: {e}")
+    logger.error(f"瀹炰綋鏄犲皠API璺敱娉ㄥ唽澶辫触: {e}")
     import traceback
-    logger.error(f"详细堆栈: {traceback.format_exc()}")
+    logger.error(f"璇︾粏鍫嗘爤: {traceback.format_exc()}")
     
-# 注册数据源管理路由（已通过admin路由注册，此处注释避免重复）
+# 娉ㄥ唽鏁版嵁婧愮鐞嗚矾鐢憋紙宸查€氳繃admin璺敱娉ㄥ唽锛屾澶勬敞閲婇伩鍏嶉噸澶嶏級
 # try:
 #     from backend.api.v1.admin.data_source import router as data_source_router
 #     app.include_router(data_source_router, prefix="/api/v1/admin", tags=["data-sources"])
 #     logger.info("Data source management routes registered (/api/v1/admin/data-sources)")
 # except Exception as e:
-#     logger.error(f"数据源管理路由注册失败: {e}")
+#     logger.error(f"鏁版嵁婧愮鐞嗚矾鐢辨敞鍐屽け璐? {e}")
 #     import traceback
-#     logger.error(f"详细堆栈: {traceback.format_exc()}")
+#     logger.error(f"璇︾粏鍫嗘爤: {traceback.format_exc()}")
     
-# 注册爬虫监控API路由
+# 娉ㄥ唽鐖櫕鐩戞帶API璺敱
 try:
     from backend.api.v1.crawler_monitor import router as crawler_monitor_router
-    # 统一使用 /api/v1/admin 作为管理类API的基础前缀
+    # 缁熶竴浣跨敤 /api/v1/admin 浣滀负绠＄悊绫籄PI鐨勫熀纭€鍓嶇紑
     app.include_router(crawler_monitor_router, prefix="/api/v1/admin", tags=["crawler-monitor"])
     logger.info("Crawler monitoring API routes registered (/api/v1/admin/crawler/monitor)")
 except Exception as e:
-    logger.error(f"爬虫监控API路由注册失败: {e}")
+    logger.error(f"鐖櫕鐩戞帶API璺敱娉ㄥ唽澶辫触: {e}")
     import traceback
-    logger.error(f"详细堆栈: {traceback.format_exc()}")
+    logger.error(f"璇︾粏鍫嗘爤: {traceback.format_exc()}")
     
-# 注册请求头管理API路由
+# 娉ㄥ唽璇锋眰澶寸鐞咥PI璺敱
 try:
     from backend.api.v1.admin.headers_management import router as headers_router
     app.include_router(headers_router, prefix="/api/v1/admin", tags=["admin-headers"])
     logger.info("Request header management API routes registered (/api/v1/admin/headers)")
 except Exception as e:
-    logger.error(f"请求头管理API路由注册失败: {e}")
+    logger.error(f"璇锋眰澶寸鐞咥PI璺敱娉ㄥ唽澶辫触: {e}")
     import traceback
-    logger.error(f"详细堆栈: {traceback.format_exc()}")
+    logger.error(f"璇︾粏鍫嗘爤: {traceback.format_exc()}")
     
-# 注册IP池管理API路由
+# 娉ㄥ唽IP姹犵鐞咥PI璺敱
 try:
     from backend.api.v1.ip_pool_adapter import router as ip_pool_router
-    # 为IP池管理API统一使用/admin前缀，保持与其他管理API一致
+        # Register IP pool API under admin prefix
     app.include_router(ip_pool_router, prefix="/api/v1/admin", tags=["ip-pool"])
     logger.info("IP pool management API routes registered (/api/v1/admin/ip-pools)")
 except Exception as e:
-    logger.error(f"IP池管理API路由注册失败: {e}")
+    logger.error(f"IP姹犵鐞咥PI璺敱娉ㄥ唽澶辫触: {e}")
     import traceback
-    logger.error(f"详细堆栈: {traceback.format_exc()}")
+    logger.error(f"璇︾粏鍫嗘爤: {traceback.format_exc()}")
 
-# 注册任务管理API路由
+# 娉ㄥ唽浠诲姟绠＄悊API璺敱
 try:
     from backend.api.v1.admin.task_management import router as task_router
     app.include_router(task_router, prefix="/api/v1/admin/tasks", tags=["admin-tasks"])
     logger.info("Task management API routes registered (/api/v1/admin/tasks)")
 except Exception as e:
-    logger.error(f"任务管理API路由注册失败: {e}")
+    logger.error(f"浠诲姟绠＄悊API璺敱娉ㄥ唽澶辫触: {e}")
     import traceback
-    logger.error(f"详细堆栈: {traceback.format_exc()}")
+    logger.error(f"璇︾粏鍫嗘爤: {traceback.format_exc()}")
 
-# 注册用户画像API路由
+# 娉ㄥ唽鐢ㄦ埛鐢诲儚API璺敱
 try:
     from backend.api.v1.user_profiles import router as user_profiles_router
     app.include_router(user_profiles_router, prefix="/api/v1/admin", tags=["user-profiles"])
     logger.info("User profile API routes registered (/api/v1/admin/user-profiles)")
 except Exception as e:
-    logger.error(f"用户画像API路由注册失败: {e}")
+    logger.error(f"鐢ㄦ埛鐢诲儚API璺敱娉ㄥ唽澶辫触: {e}")
     import traceback
-    logger.error(f"详细堆栈: {traceback.format_exc()}")
+    logger.error(f"璇︾粏鍫嗘爤: {traceback.format_exc()}")
 
-# 注册角色管理API路由
+# 娉ㄥ唽瑙掕壊绠＄悊API璺敱
 try:
     from backend.api.v1.roles import router as roles_router
     app.include_router(roles_router, prefix="/api/v1/admin", tags=["roles"])
     logger.info("Role management API routes registered (/api/v1/admin/roles)")
 except Exception as e:
-    logger.error(f"角色管理API路由注册失败: {e}")
+    logger.error(f"瑙掕壊绠＄悊API璺敱娉ㄥ唽澶辫触: {e}")
     import traceback
-    logger.error(f"详细堆栈: {traceback.format_exc()}")
+    logger.error(f"璇︾粏鍫嗘爤: {traceback.format_exc()}")
 
-# 注册权限管理API路由
+# 娉ㄥ唽鏉冮檺绠＄悊API璺敱
 try:
     from backend.api.v1.permissions import router as permissions_router
     app.include_router(permissions_router, prefix="/api/v1/admin", tags=["permissions"])
     logger.info("Permission management API routes registered (/api/v1/admin/permissions)")
 except Exception as e:
-    logger.error(f"权限管理API路由注册失败: {e}")
+    logger.error(f"鏉冮檺绠＄悊API璺敱娉ㄥ唽澶辫触: {e}")
     import traceback
-    logger.error(f"详细堆栈: {traceback.format_exc()}")
+    logger.error(f"璇︾粏鍫嗘爤: {traceback.format_exc()}")
 
-# 注册爬虫任务管理API路由
+# 娉ㄥ唽鐖櫕浠诲姟绠＄悊API璺敱
 try:
     from backend.api.v1.admin.crawler_tasks import router as crawler_tasks_router
     app.include_router(crawler_tasks_router, prefix="/api/v1/admin", tags=["crawler-tasks"])
     logger.info("Crawler task management API routes registered (/api/v1/admin/crawler/tasks)")
 except Exception as e:
-    logger.error(f"爬虫任务管理API路由注册失败: {e}")
+    logger.error(f"鐖櫕浠诲姟绠＄悊API璺敱娉ㄥ唽澶辫触: {e}")
     import traceback
-    logger.error(f"详细堆栈: {traceback.format_exc()}")
+    logger.error(f"璇︾粏鍫嗘爤: {traceback.format_exc()}")
 
-# 注册任务监控API路由
+# 娉ㄥ唽浠诲姟鐩戞帶API璺敱
 try:
     from backend.api.v1.task_monitor import router as task_monitor_router
     app.include_router(task_monitor_router, prefix="/api/v1", tags=["task-monitor"])
     logger.info("Task monitoring API routes registered (/api/v1/task-monitor)")
 except Exception as e:
-    logger.error(f"任务监控API路由注册失败: {e}")
+    logger.error(f"浠诲姟鐩戞帶API璺敱娉ㄥ唽澶辫触: {e}")
     import traceback
-    logger.error(f"详细堆栈: {traceback.format_exc()}")
+    logger.error(f"璇︾粏鍫嗘爤: {traceback.format_exc()}")
 
-# 注册日志API路由
+# 娉ㄥ唽鏃ュ織API璺敱
 try:
     from backend.api.v1.admin.logs import router as logs_router
-    # 将logs路由注册到/api/v1/admin/system路径下，这样API端点将是/api/v1/admin/system/logs/db/security
+    # 灏唋ogs璺敱娉ㄥ唽鍒?api/v1/admin/system璺緞涓嬶紝杩欐牱API绔偣灏嗘槸/api/v1/admin/system/logs/db/security
     app.include_router(logs_router, prefix="/api/v1/admin/system", tags=["system-logs"])
     logger.info("Log API routes registered (/api/v1/admin/system/logs)")
 except Exception as e:
-    logger.error(f"日志API路由注册失败: {e}")
+    logger.error(f"鏃ュ織API璺敱娉ㄥ唽澶辫触: {e}")
     import traceback
-    logger.error(f"详细堆栈: {traceback.format_exc()}")
+    logger.error(f"璇︾粏鍫嗘爤: {traceback.format_exc()}")
 
-# 注册爬虫相关API路由（全部迁移到FastAPI）
+# Register monitoring module route
 try:
     from backend.api.v1.admin.crawler_sources import router as crawler_sources_router
     app.include_router(crawler_sources_router, prefix="/api/v1/admin", tags=["crawler-sources"])
     logger.info("Crawler data source API routes registered (/api/v1/admin/crawler/sources)")
 except Exception as e:
-    logger.error(f"爬虫数据源API路由注册失败: {e}")
+    logger.error(f"鐖櫕鏁版嵁婧怉PI璺敱娉ㄥ唽澶辫触: {e}")
     import traceback
-    logger.error(f"详细堆栈: {traceback.format_exc()}")
+    logger.error(f"璇︾粏鍫嗘爤: {traceback.format_exc()}")
 
 
 try:
@@ -515,9 +522,9 @@ try:
     app.include_router(data_source_100qiu_router, prefix="/api/v1/data-source-100qiu", tags=["data-source-100qiu"])
     logger.info("100qiu data source API routes registered (/api/v1/data-source-100qiu)")
 except Exception as e:
-    logger.error(f"100qiu数据源API路由注册失败: {e}")
+    logger.error(f"100qiu鏁版嵁婧怉PI璺敱娉ㄥ唽澶辫触: {e}")
     import traceback
-    logger.error(f"详细堆栈: {traceback.format_exc()}")
+    logger.error(f"璇︾粏鍫嗘爤: {traceback.format_exc()}")
 
 
 try:
@@ -525,160 +532,175 @@ try:
     app.include_router(crawler_configs_router, prefix="/api/v1/admin", tags=["crawler-configs"])
     logger.info("Crawler config API routes registered (/api/v1/admin/crawler/config)")
 except Exception as e:
-    logger.error(f"爬虫配置API路由注册失败: {e}")
+    logger.error(f"鐖櫕閰嶇疆API璺敱娉ㄥ唽澶辫触: {e}")
     import traceback
-    logger.error(f"详细堆栈: {traceback.format_exc()}")
+    logger.error(f"璇︾粏鍫嗘爤: {traceback.format_exc()}")
 
 try:
     from backend.api.v1.admin.crawler_intelligence import router as crawler_intel_router
     app.include_router(crawler_intel_router, prefix="/api/v1/admin", tags=["crawler-intelligence"])
     logger.info("Crawler intelligence API routes registered (/api/v1/admin/crawler/intelligence)")
 except Exception as e:
-    logger.error(f"爬虫情报API路由注册失败: {e}")
+    logger.error(f"鐖櫕鎯呮姤API璺敱娉ㄥ唽澶辫触: {e}")
     import traceback
-    logger.error(f"详细堆栈: {traceback.format_exc()}")
+    logger.error(f"璇︾粏鍫嗘爤: {traceback.format_exc()}")
 
-# 注册用户管理API路由
+# 娉ㄥ唽鐢ㄦ埛绠＄悊API璺敱
 try:
     from backend.api.v1.admin_user_management import router as admin_user_management_router
     app.include_router(admin_user_management_router, prefix="/api/v1/admin", tags=["admin-user-management"])
     logger.info("Admin user management API routes registered (/api/v1/admin/admin-users)")
 except Exception as e:
-    logger.error(f"管理员用户管理API路由注册失败: {e}")
+    logger.error(f"绠＄悊鍛樼敤鎴风鐞咥PI璺敱娉ㄥ唽澶辫触: {e}")
     import traceback
-    logger.error(f"详细堆栈: {traceback.format_exc()}")
+    logger.error(f"璇︾粏鍫嗘爤: {traceback.format_exc()}")
 
-# 注册部门管理API路由
+# 娉ㄥ唽閮ㄩ棬绠＄悊API璺敱
 try:
     from backend.api.v1.departments import router as departments_router
     app.include_router(departments_router, prefix="/api/v1/admin", tags=["departments"])
     logger.info("Department management API routes registered (/api/v1/admin/departments)")
 except Exception as e:
-    logger.error(f"部门管理API路由注册失败: {e}")
+    logger.error(f"閮ㄩ棬绠＄悊API璺敱娉ㄥ唽澶辫触: {e}")
     import traceback
-    logger.error(f"详细堆栈: {traceback.format_exc()}")
+    logger.error(f"璇︾粏鍫嗘爤: {traceback.format_exc()}")
 
 try:
     from backend.api.v1.users import router as users_router
     app.include_router(users_router, prefix="/api/v1/admin", tags=["users"])
     logger.info("Regular user management API routes registered (/api/v1/admin/users)")
 except Exception as e:
-    logger.error(f"普通用户管理API路由注册失败: {e}")
+    logger.error(f"鏅€氱敤鎴风鐞咥PI璺敱娉ㄥ唽澶辫触: {e}")
     import traceback
-    logger.error(f"详细堆栈: {traceback.format_exc()}")
+    logger.error(f"璇︾粏鍫嗘爤: {traceback.format_exc()}")
 
 try:
     from backend.api.v1.frontend_user_management import router as frontend_user_management_router
     app.include_router(frontend_user_management_router, prefix="/api/v1/admin", tags=["frontend-user-management"])
     logger.info("Frontend user management API routes registered (/api/v1/admin/frontend-users)")
 except Exception as e:
-    logger.error(f"前端用户管理API路由注册失败: {e}")
+    logger.error(f"鍓嶇鐢ㄦ埛绠＄悊API璺敱娉ㄥ唽澶辫触: {e}")
     import traceback
-    logger.error(f"详细堆栈: {traceback.format_exc()}")
+    logger.error(f"璇︾粏鍫嗘爤: {traceback.format_exc()}")
 
 try:
     from backend.api.v1.simple_user_api import router as simple_user_api_router
     app.include_router(simple_user_api_router, prefix="/api/v1/admin", tags=["simple-user-api"])
     logger.info("Simple user API routes registered (/api/v1/admin/simple-users)")
 except Exception as e:
-    logger.error(f"简单用户API路由注册失败: {e}")
+    logger.error(f"绠€鍗曠敤鎴稟PI璺敱娉ㄥ唽澶辫触: {e}")
     import traceback
-    logger.error(f"详细堆栈: {traceback.format_exc()}")
+    logger.error(f"璇︾粏鍫嗘爤: {traceback.format_exc()}")
 
 try:
     from backend.api.v1.draw_prediction import router as draw_prediction_router
     app.include_router(draw_prediction_router, prefix="/api/v1", tags=["draw-prediction"])
     logger.info("Draw prediction API routes registered (/api/v1/draw-prediction)")
 except Exception as e:
-    logger.error(f"平局预测API路由注册失败: {e}")
+    logger.error(f"骞冲眬棰勬祴API璺敱娉ㄥ唽澶辫触: {e}")
     import traceback
-    logger.error(f"详细堆栈: {traceback.format_exc()}")
+    logger.error(f"璇︾粏鍫嗘爤: {traceback.format_exc()}")
 
 try:
     from backend.api.v1.admin.lottery_schedule import router as admin_lottery_schedule_router
     app.include_router(admin_lottery_schedule_router, prefix="/api/v1/admin/lottery-schedules", tags=["admin-lottery-schedules"])
     logger.info("Admin lottery schedule API routes registered (/api/v1/admin/lottery-schedules)")
 except Exception as e:
-    logger.error(f"北单赛程API路由注册失败: {e}")
+    logger.error(f"鍖楀崟璧涚▼API璺敱娉ㄥ唽澶辫触: {e}")
     import traceback
-    logger.error(f"详细堆栈: {traceback.format_exc()}")
+    logger.error(f"璇︾粏鍫嗘爤: {traceback.format_exc()}")
 
 try:
     from backend.api.v1.data_center_adapter import router as data_center_adapter_router
     app.include_router(data_center_adapter_router, prefix="/api/v1", tags=["data-center-adapter"])
     logger.info("Data center adapter API routes registered (/api/v1/stats/data-center)")
 except Exception as e:
-    logger.error(f"数据中心适配API路由注册失败: {e}")
+    logger.error(f"鏁版嵁涓績閫傞厤API璺敱娉ㄥ唽澶辫触: {e}")
     import traceback
-    logger.error(f"详细堆栈: {traceback.format_exc()}")
+    logger.error(f"璇︾粏鍫嗘爤: {traceback.format_exc()}")
+
+try:
+    from backend.api.v1.llm import router as llm_router
+    app.include_router(llm_router, prefix="/api/v1", tags=["llm"])
+    logger.info("LLM chat API routes registered (/api/v1/llm/chat)")
+except Exception as e:
+    logger.error(f"LLM chat API route registration failed: {e}")
+    import traceback
+    logger.error(f"Details: {traceback.format_exc()}")
 
 try:
     from backend.api.v1.llm_providers import router as llm_providers_router
     app.include_router(llm_providers_router, prefix="/api/v1", tags=["llm-providers"])
     logger.info("LLM providers API routes registered (/api/v1/llm-providers)")
 except Exception as e:
-    logger.error(f"LLM供应商API路由注册失败: {e}")
+    logger.error(f"LLM渚涘簲鍟咥PI璺敱娉ㄥ唽澶辫触: {e}")
     import traceback
-    logger.error(f"详细堆栈: {traceback.format_exc()}")
+    logger.error(f"璇︾粏鍫嗘爤: {traceback.format_exc()}")
 
 try:
     from backend.api.v1.admin.intelligence_collection import router as admin_intelligence_collection_router
     app.include_router(admin_intelligence_collection_router, prefix="/api/v1/admin", tags=["intelligence-collection"])
     logger.info("Admin intelligence collection API routes registered (/api/v1/admin/intelligence/collection)")
 except Exception as e:
-    logger.error(f"情报采集API路由注册失败: {e}")
+    logger.error(f"鎯呮姤閲囬泦API璺敱娉ㄥ唽澶辫触: {e}")
     import traceback
-    logger.error(f"详细堆栈: {traceback.format_exc()}")
+    logger.error(f"璇︾粏鍫嗘爤: {traceback.format_exc()}")
 
-# 注册北单过滤API路由 - 直接导入
+try:
+    from backend.api.v1.admin.league_management import router as admin_league_management_router
+    app.include_router(admin_league_management_router, prefix="/api/v1/admin/leagues", tags=["admin-leagues"])
+    logger.info("Admin league management API routes registered (/api/v1/admin/leagues)")
+except Exception as e:
+    logger.error(f"League management API route registration failed: {e}")
+    import traceback
+    logger.error(f"Details: {traceback.format_exc()}")
+
+# 娉ㄥ唽鍖楀崟杩囨护API璺敱 - 鐩存帴瀵煎叆
 try:
     from backend.app.api_v1.endpoints.beidan_filter_api import router as beidan_filter_router
     app.include_router(beidan_filter_router, prefix="/api/v1/beidan-filter", tags=["beidan-filter"])
     logger.info("Beidan filter API routes registered (/api/v1/beidan-filter)")
 except Exception as e:
-    logger.error(f"北单过滤API路由注册失败: {e}")
+    logger.error(f"鍖楀崟杩囨护API璺敱娉ㄥ唽澶辫触: {e}")
     import traceback
-    logger.error(f"详细堆栈: {traceback.format_exc()}")
+    logger.error(f"璇︾粏鍫嗘爤: {traceback.format_exc()}")
 
-# 注册北单投注模拟API路由
+# 娉ㄥ唽鍖楀崟鎶曟敞妯℃嫙API璺敱
 try:
     from backend.app.api_v1.endpoints.beidan_betting_simulator_api import router as beidan_betting_router
     app.include_router(beidan_betting_router, prefix="/api/v1/beidan-betting", tags=["beidan-betting"])
     logger.info("Beidan betting simulator API routes registered (/api/v1/beidan-betting)")
 except Exception as e:
-    logger.error(f"北单投注模拟API路由注册失败: {e}")
+    logger.error(f"鍖楀崟鎶曟敞妯℃嫙API璺敱娉ㄥ唽澶辫触: {e}")
     import traceback
-    logger.error(f"详细堆栈: {traceback.format_exc()}")
+    logger.error(f"璇︾粏鍫嗘爤: {traceback.format_exc()}")
 
-# 注册多策略筛选API路由
+# 娉ㄥ唽澶氱瓥鐣ョ瓫閫堿PI璺敱
 try:
     from backend.app.api_v1.endpoints.multi_strategy_api import router as multi_strategy_router
     app.include_router(multi_strategy_router, prefix="/api/v1", tags=["multi-strategy"])
     logger.info("Multi strategy API routes registered (/api/v1/multi-strategy)")
 except Exception as e:
-    logger.error(f"多策略API路由注册失败: {e}")
+    logger.error(f"澶氱瓥鐣PI璺敱娉ㄥ唽澶辫触: {e}")
     import traceback
-    logger.error(f"详细堆栈: {traceback.format_exc()}")
+    logger.error(f"璇︾粏鍫嗘爤: {traceback.format_exc()}")
 
-# 注册admin登录端点 - 注意这里不需要重复注册，因为auth模块已经处理了登录
-# 登录API应通过auth模块注册，而不是在admin模块中重复注册
-# 如果需要admin特定的登录功能，请确保不要与auth模块冲突
+# 娉ㄥ唽admin鐧诲綍绔偣 - 娉ㄦ剰杩欓噷涓嶉渶瑕侀噸澶嶆敞鍐岋紝鍥犱负auth妯″潡宸茬粡澶勭悊浜嗙櫥褰?# 鐧诲綍API搴旈€氳繃auth妯″潡娉ㄥ唽锛岃€屼笉鏄湪admin妯″潡涓噸澶嶆敞鍐?# 濡傛灉闇€瑕乤dmin鐗瑰畾鐨勭櫥褰曞姛鑳斤紝璇风‘淇濅笉瑕佷笌auth妯″潡鍐茬獊
 
-# 注册异常处理器
+# Register exception handlers
 try:
     from backend.exceptions import setup_exception_handlers
     setup_exception_handlers(app)
     logger.info("Exception handlers registered")
 except Exception as e:
-    logger.error(f"异常处理器注册失败: {e}")
+    logger.error(f"Exception handler registration failed: {e}")
 
 
-
-# 基础路由
+# 鍩虹璺敱
 @app.get("/")
 async def root():
     logger.info("Root endpoint accessed")
-    return {"message": "体育彩票扫盘系统 API", "version": "1.0.0"}
+    return {"message": "浣撹偛褰╃エ鎵洏绯荤粺 API", "version": "1.0.0"}
 
 @app.get("/health")
 @app.get("/health/live")
@@ -691,9 +713,9 @@ async def health_live():
 @app.get("/api/v1/health/ready")
 async def health_ready():
     logger.debug("Health ready check accessed")
-    # 检查数据库连接
+    # 妫€鏌ユ暟鎹簱杩炴帴
     try:
-        # 使用绝对路径导入，避免相对导入问题
+                # Use absolute import path for readiness check
         import sys
         import os
         sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -706,7 +728,7 @@ async def health_ready():
         logger.error(f"Database connection error: {str(e)}")
         db_status = f"error: {str(e)}"
     
-    # 检查AI服务状态
+        # AI service readiness
     ai_status = "available" if llm_service and llm_service.providers else "unavailable"
     providers_count = len(llm_service.providers) if llm_service else 0
     agents_status = "available" if collaborative_agents else "unavailable"
@@ -724,7 +746,7 @@ async def health_ready():
 
 
 
-# ===== /api/v1 路由 =====
+# ===== /api/v1 璺敱 =====
 from fastapi import Body
 import jwt
 from datetime import datetime as dt, timezone, timedelta
@@ -734,7 +756,7 @@ ALGORITHM = settings.ALGORITHM
 ACCESS_TOKEN_EXPIRE_MINUTES = settings.ACCESS_TOKEN_EXPIRE_MINUTES
 
 def create_access_token(data: dict):
-    """创建JWT访问令牌"""
+    """鍒涘缓JWT璁块棶浠ょ墝"""
     to_encode = data.copy()
     expire = dt.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire, "iat": dt.now(timezone.utc), "type": "access"})
@@ -748,16 +770,16 @@ async def register(
     confirmPassword: str = Body(...),
     captcha: Optional[str] = Body(None)
 ):
-    """用户注册接口（暂未实现，返回演示数据）"""
+    """User registration endpoint (/api/v1)."""
     if password != confirmPassword:
         logger.warning(f"Registration failed: passwords do not match for email {email}")
-        raise HTTPException(status_code=400, detail="密码不匹配")
+        raise HTTPException(status_code=400, detail="Passwords do not match")
     
     logger.info(f"User registration attempted for email: {email}")
-    # TODO: 实现真实用户的注册逻辑
+    # TODO: 瀹炵幇鐪熷疄鐢ㄦ埛鐨勬敞鍐岄€昏緫
     return {
         "code": 200,
-        "message": "注册成功",
+        "message": "娉ㄥ唽鎴愬姛",
         "data": {
             "access_token": "demo-jwt-token",
             "token_type": "bearer",
@@ -785,7 +807,7 @@ async def login_v1(
     password: str = Body(...),
     db=Depends(get_db),
 ):
-    """用户登录接口 (/api/v1) - 真实数据库验证"""
+    """User login endpoint (/api/v1)."""
     logger.info(f"Login attempt for username: {username}")
     ip_address = request.client.host if request.client else None
     user_agent = request.headers.get("user-agent")
@@ -801,11 +823,11 @@ async def login_v1(
                 ip_address=ip_address,
                 user_agent=user_agent,
                 success=False,
-                failure_reason="用户名或密码错误",
+                failure_reason="鐢ㄦ埛鍚嶆垨瀵嗙爜閿欒",
             )
         except Exception as log_error:
             logger.warning(f"Login failure log error: {log_error}")
-        raise HTTPException(status_code=401, detail="用户名或密码错误")
+        raise HTTPException(status_code=401, detail="鐢ㄦ埛鍚嶆垨瀵嗙爜閿欒")
 
     logger.info(f"User logged in successfully: {user['username']} (ID: {user['id']})")
     try:
@@ -821,7 +843,7 @@ async def login_v1(
     except Exception as log_error:
         logger.warning(f"Login success log error: {log_error}")
 
-    # 创建JWT令牌
+    # 鍒涘缓JWT浠ょ墝
     access_token = create_access_token({
         "sub": user["username"],
         "user_id": user["id"],
@@ -832,7 +854,7 @@ async def login_v1(
 
     return {
         "code": 200,
-        "message": "登录成功",
+        "message": "鐧诲綍鎴愬姛",
         "data": {
             "access_token": access_token,
             "refresh_token": f"refresh-{access_token}",
@@ -850,9 +872,9 @@ async def login_v1(
 
 @app.post("/api/v1/auth/refresh")
 async def refresh_v1(refresh_token: str = Body(..., embed=True)):
-    """刷新访问令牌 (/api/v1)"""
+    """鍒锋柊璁块棶浠ょ墝 (/api/v1)"""
     if not refresh_token or not refresh_token.startswith("refresh-"):
-        raise HTTPException(status_code=401, detail="刷新令牌无效")
+        raise HTTPException(status_code=401, detail="鍒锋柊浠ょ墝鏃犳晥")
     access_token = refresh_token.replace("refresh-", "", 1)
     return {
         "code": 200,
@@ -867,10 +889,9 @@ async def refresh_v1(refresh_token: str = Body(..., embed=True)):
 
 @app.get("/api/v1/auth/me")
 async def get_current_user_v1():
-    """获取当前用户信息 (/api/v1) - 需要JWT验证"""
-    # TODO: 添加JWT验证中间件
-    logger.info("Current user info requested")
-    # 暂时返回演示数据
+    """鑾峰彇褰撳墠鐢ㄦ埛淇℃伅 (/api/v1) - 闇€瑕丣WT楠岃瘉"""
+    # TODO: 娣诲姞JWT楠岃瘉涓棿浠?    logger.info("Current user info requested")
+    # 鏆傛椂杩斿洖婕旂ず鏁版嵁
     return {
         "code": 200,
         "message": "success",
@@ -878,8 +899,8 @@ async def get_current_user_v1():
             "userId": 1,
             "username": "admin",
             "email": "admin@example.com",
-            "firstName": "系统",
-            "lastName": "管理员",
+            "firstName": "绯荤粺",
+            "lastName": "Admin",
             "nickname": "Admin",
             "avatar": None,
             "roles": ["admin"],
@@ -892,26 +913,26 @@ async def get_current_user_v1():
         }
     }
 
-# ===== 兼容前端旧路径、新增仪表板、情报模块接口 =====
+# ===== 鍏煎鍓嶇鏃ц矾寰勩€佹柊澧炰华琛ㄦ澘銆佹儏鎶ユā鍧楁帴鍙?=====
 
-# 部门管理兼容路由 - 直接返回404提示使用新API
+# 閮ㄩ棬绠＄悊鍏煎璺敱 - 鐩存帴杩斿洖404鎻愮ず浣跨敤鏂癆PI
 @app.get("/admin/departments")
 async def departments_not_found():
-    """旧的部门列表请求 - 返回404提示使用新API"""
+    """鏃х殑閮ㄩ棬鍒楄〃璇锋眰 - 杩斿洖404鎻愮ず浣跨敤鏂癆PI"""
     from fastapi.responses import JSONResponse
     return JSONResponse(
         status_code=404,
         content={
             "code": 404,
-            "message": "接口已迁移",
-            "detail": "请使用新的API路径: /api/v1/admin/departments"
+            "message": "API migrated",
+            "detail": "璇蜂娇鐢ㄦ柊鐨凙PI璺緞: /api/v1/admin/departments"
         }
     )
 
-# 部门管理兼容路由 - 用于用户部门管理页面
+# 閮ㄩ棬绠＄悊鍏煎璺敱 - 鐢ㄤ簬鐢ㄦ埛閮ㄩ棬绠＄悊椤甸潰
 @app.get("/admin/users/departments")
 async def user_departments_page():
-    """用户部门管理页面 - 返回兼容信息"""
+    """鐢ㄦ埛閮ㄩ棬绠＄悊椤甸潰 - 杩斿洖鍏煎淇℃伅"""
     from fastapi.responses import JSONResponse
     return JSONResponse(
         status_code=200,
@@ -919,30 +940,30 @@ async def user_departments_page():
             "code": 200,
             "message": "success",
             "data": {
-                "title": "用户部门管理",
-                "description": "部门管理页面，使用API: /api/v1/admin/departments"
+                "title": "鐢ㄦ埛閮ㄩ棬绠＄悊",
+                "description": "閮ㄩ棬绠＄悊椤甸潰锛屼娇鐢ˋPI: /api/v1/admin/departments"
             }
         }
     )
 
 @app.get("/admin/roles")
 async def roles_not_found():
-    """旧的roles请求 - 返回404提示使用新API"""
+    """鏃х殑roles璇锋眰 - 杩斿洖404鎻愮ず浣跨敤鏂癆PI"""
     from fastapi.responses import JSONResponse
     return JSONResponse(
         status_code=404,
         content={
             "code": 404,
-            "message": "接口已迁移", 
-            "detail": "请使用新的API路径: /api/v1/admin/roles"
+            "message": "API migrated",
+            "detail": "璇蜂娇鐢ㄦ柊鐨凙PI璺緞: /api/v1/admin/roles"
         }
     )
 
 @app.get("/api/auth/login")
 async def login_compat_get():
-    """兼容前端错误的GET请求 - 返回提示信息"""
+    """鍏煎鍓嶇閿欒鐨凣ET璇锋眰 - 杩斿洖鎻愮ず淇℃伅"""
     logger.warning("GET request made to login endpoint (should be POST)")
-    return {"code": 405, "message": "此接口仅支持POST方法", "detail": "请使用POST方法访问登录接口"}
+    return {"code": 405, "message": "姝ゆ帴鍙ｄ粎鏀寔POST鏂规硶", "detail": "璇蜂娇鐢≒OST鏂规硶璁块棶鐧诲綍鎺ュ彛"}
 
 @app.post("/api/auth/login")
 @limiter.limit(LOGIN_RATE_LIMIT)
@@ -951,16 +972,16 @@ async def login_compat(
     username: str = Body(...),
     password: str = Body(...)
 ):
-    """兼容前端登录接口 - 真实数据库验证"""
+    """Compatibility login endpoint for legacy frontend clients."""
     logger.info(f"Compatibility login attempt for username: {username}")
     user = authenticate_user(username, password)
     if not user:
         logger.warning(f"Compatibility login failed: invalid credentials for username {username}")
-        raise HTTPException(401, "用户名或密码错误")
+        raise HTTPException(401, "鐢ㄦ埛鍚嶆垨瀵嗙爜閿欒")
     
     logger.info(f"User logged in successfully via compatibility endpoint: {user['username']} (ID: {user['id']})")
     
-    # 创建JWT令牌
+    # 鍒涘缓JWT浠ょ墝
     access_token = create_access_token({
         "sub": user["username"],
         "user_id": user["id"],
@@ -971,7 +992,7 @@ async def login_compat(
     
     return {
         "code": 200,
-        "message": "登录成功",
+        "message": "鐧诲綍鎴愬姛",
         "data": {
             "access_token": access_token,
             "refresh_token": f"refresh-{access_token}",
@@ -989,9 +1010,9 @@ async def login_compat(
 
 @app.get("/api/auth/profile")
 async def get_profile_compat():
-    """兼容前端获取用户信息接口"""
+    """鍏煎鍓嶇鑾峰彇鐢ㄦ埛淇℃伅鎺ュ彛"""
     logger.info("Profile info requested via compatibility endpoint")
-    # TODO: 从JWT中提取用户ID并查询数据库
+    # TODO: 浠嶫WT涓彁鍙栫敤鎴稩D骞舵煡璇㈡暟鎹簱
     return {
         "code": 200,
         "message": "success",
@@ -999,8 +1020,8 @@ async def get_profile_compat():
             "userId": 1,
             "username": "admin",
             "email": "admin@example.com",
-            "firstName": "系统",
-            "lastName": "管理员",
+            "firstName": "绯荤粺",
+            "lastName": "Admin",
             "nickname": "Admin",
             "avatar": None,
             "roles": ["admin"],
@@ -1013,13 +1034,17 @@ async def get_profile_compat():
         }
     }
 
-@app.get("/api/dashboard/summary")
+@app.get(
+    "/api/dashboard/summary",
+    summary="仪表盘汇总",
+    description="获取仪表盘统计信息（仅管理员）",
+)
 @limiter.limit(DASHBOARD_RATE_LIMIT)
 async def dashboard_summary(
     request: Request,
     current_user: User = Depends(get_current_active_admin_user)
 ):
-    """仪表板统计数据 - 真实数据库查询 (Admin only)"""
+    """浠〃鏉跨粺璁℃暟鎹?- 鐪熷疄鏁版嵁搴撴煡璇?(Admin only)"""
     try:
         logger.info(f"Dashboard summary requested by admin user: {current_user.username} (ID: {current_user.id})")
         stats = get_dashboard_stats()
@@ -1029,15 +1054,19 @@ async def dashboard_summary(
         }
     except Exception as e:
         logger.error(f"Failed to get dashboard data: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"获取仪表板数据失败: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"鑾峰彇浠〃鏉挎暟鎹け璐? {str(e)}")
 
-@app.get("/api/intelligence/screening/list")
+@app.get(
+    "/api/intelligence/screening/list",
+    summary="智能筛选列表",
+    description="获取智能筛选结果列表（仅管理员）",
+)
 @limiter.limit(INTELLIGENCE_RATE_LIMIT)
 async def screening_list(
     request: Request,
     current_user: User = Depends(get_current_active_admin_user)
 ):
-    """情报筛选列表 - 真实数据库查询 (Admin only)"""
+    """鎯呮姤绛涢€夊垪琛?- 鐪熷疄鏁版嵁搴撴煡璇?(Admin only)"""
     try:
         logger.info(f"Intelligence screening list requested by admin user: {current_user.username} (ID: {current_user.id})")
         result = get_intelligence_screening_list()
@@ -1047,7 +1076,7 @@ async def screening_list(
         }
     except Exception as e:
         logger.error(f"Failed to get intelligence screening list: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"获取情报筛选列表失败: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"鑾峰彇鎯呮姤绛涢€夊垪琛ㄥけ璐? {str(e)}")
 
 @app.get("/api/stats/data-center")
 @limiter.limit(STATS_RATE_LIMIT)
@@ -1055,7 +1084,7 @@ async def get_data_center_stats(
     request: Request,
     current_user: User = Depends(get_current_active_admin_user)
 ):
-    """数据中心统计信息 (Admin only)"""
+    """鏁版嵁涓績缁熻淇℃伅 (Admin only)"""
     logger.info(f"Data center stats requested by admin user: {current_user.username} (ID: {current_user.id})")
     return {
         "code": 200,
@@ -1087,15 +1116,15 @@ async def get_data_list(
     start_date: str = Query(None),
     end_date: str = Query(None)
 ):
-    """获取数据列表"""
+    """鑾峰彇鏁版嵁鍒楄〃"""
     logger.info(f"Data list requested: page={page}, size={size}")
-    # 模拟数据
+    # 妯℃嫙鏁版嵁
     items = [
         {
             "id": i,
             "type": "matches",
-            "sourceName": "官方API",
-            "title": f"比赛数据 {i}",
+            "sourceName": "瀹樻柟API",
+            "title": f"姣旇禌鏁版嵁 {i}",
             "status": "normal",
             "quality": 95,
             "recordCount": 100 + i,
@@ -1104,8 +1133,7 @@ async def get_data_list(
         }
         for i in range(1, 101)
     ]
-    # 简单分页
-    start = (page - 1) * size
+    # 绠€鍗曞垎椤?    start = (page - 1) * size
     end = start + size
     paginated_items = items[start:end]
     return {
@@ -1123,38 +1151,38 @@ if __name__ == "__main__":
     import argparse
     import socket
     
-    # 创建数据库表
+    # 鍒涘缓鏁版嵁搴撹〃
     logger.info("Creating database tables...")
     Base.metadata.create_all(bind=engine)
     
-    # 强制创建LLM Provider表（确保表存在）
+    # 寮哄埗鍒涘缓LLM Provider琛紙纭繚琛ㄥ瓨鍦級
     from backend.models.llm_provider import LLMProvider
     LLMProvider.__table__.create(bind=engine, checkfirst=True)
     logger.info("Database tables created successfully")
     
-    parser = argparse.ArgumentParser(description='启动API服务')
-    parser.add_argument('--port', type=int, default=8000, help='服务端口，默认8000（与前端代理一致）')
+    parser = argparse.ArgumentParser(description='鍚姩API鏈嶅姟')
+    parser.add_argument('--port', type=int, default=8000, help='鏈嶅姟绔彛锛岄粯璁?000锛堜笌鍓嶇浠ｇ悊涓€鑷达級')
     args = parser.parse_args()
     
-    # 检查端口占用
+# Check port availability before startup.
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.bind(("0.0.0.0", args.port))
         sock.close()
     except OSError as e:
         if "10013" in str(e) or "Address already in use" in str(e):
-            logger.error(f"❌ 端口{args.port}被占用，请先释放端口后重试")
-            logger.info("💡 可使用: netstat -ano | findstr :%d", args.port)
-            logger.info("💡 然后: taskkill /F /PID <进程ID>")
+            logger.error(f"Port {args.port} is already in use. Please free it before restart.")
+            logger.info("馃挕 鍙娇鐢? netstat -ano | findstr :%d", args.port)
+            logger.info("馃挕 鐒跺悗: taskkill /F /PID <杩涚▼ID>")
             exit(1)
         else:
             raise
     
-    # 启动应用
-    logger.info("🚀 启动体育彩票扫盘系统...")
-    logger.info(f"📍 服务地址: http://localhost:%d", args.port)
-    logger.info(f"📚 API文档: http://localhost:%d/docs", args.port)
-    logger.info(f"📊 健康检查: http://localhost:%d/health/live", args.port)
+    # 鍚姩搴旂敤
+    logger.info("馃殌 鍚姩浣撹偛褰╃エ鎵洏绯荤粺...")
+    logger.info(f"馃搷 鏈嶅姟鍦板潃: http://localhost:%d", args.port)
+    logger.info(f"馃摎 API鏂囨。: http://localhost:%d/docs", args.port)
+    logger.info(f"馃搳 鍋ュ悍妫€鏌? http://localhost:%d/health/live", args.port)
     
     try:
         uvicorn.run(
@@ -1165,10 +1193,12 @@ if __name__ == "__main__":
         )
     except OSError as e:
         if "10013" in str(e):
-            logger.error("❌ 端口%d被占用，请先释放端口后重试", args.port)
-            logger.info("💡 可使用: netstat -ano | findstr :%d", args.port)
-            logger.info("💡 然后: taskkill /F /PID <进程ID>")
+            logger.error("Port %d is already in use. Please free it before restart.", args.port)
+            logger.info("馃挕 鍙娇鐢? netstat -ano | findstr :%d", args.port)
+            logger.info("馃挕 鐒跺悗: taskkill /F /PID <杩涚▼ID>")
         else:
             raise
     
-    logger.info("👋 应用服务已停止")
+    logger.info("Application service stopped")
+
+

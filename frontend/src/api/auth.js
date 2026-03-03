@@ -58,12 +58,16 @@ const authAPI = USE_MOCK ? {
     }
   },
   
-logout: () => {
-    return request.post('/api/logout')
+  logout: () => {
+    // Backend may not expose a dedicated logout endpoint; keep a harmless request.
+    return request.post('/api/v1/auth/logout')
   },
 
   getUserInfo: (userId) => {
-    return request.get(`/api/users/${userId}`)
+    if (userId === 'me' || userId === undefined || userId === null) {
+      return request.get('/api/v1/admin/admin-users/current-user')
+    }
+    return request.get(`/api/v1/admin/admin-users/${userId}`)
   },
 
   refreshToken: (refreshToken) => {
@@ -74,26 +78,29 @@ logout: () => {
 // 用户管理API (保持原有代码)
 const userAPI = {
   getUserInfo: (userId) => {
-    return request.get(`/api/users/${userId}`)
+    if (userId === 'me' || userId === undefined || userId === null) {
+      return request.get('/api/v1/admin/admin-users/current-user')
+    }
+    return request.get(`/api/v1/admin/admin-users/${userId}`)
   },
   updateUserInfo: (userId, userData) => {
-    return request.put(`/api/users/${userId}`, userData)
+    return request.put(`/api/v1/admin/admin-users/${userId}`, userData)
   },
   getUsers: (params) => {
-    return request.get('/api/users/', { params })
+    return request.get('/api/v1/admin/admin-users/', { params })
   }
 }
 
 // 管理员用户API (保持原有代码)
 const adminAPI = {
   createAdmin: (adminData) => {
-    return request.post('/api/users/admin', adminData)
+    return request.post('/api/v1/admin/admin-users/', adminData)
   },
   getAdmins: (params) => {
-    return request.get('/api/users/admin', { params })
+    return request.get('/api/v1/admin/admin-users/', { params })
   },
   getAdminInfo: (adminId) => {
-    return request.get(`/api/users/admin/${adminId}`)
+    return request.get(`/api/v1/admin/admin-users/${adminId}`)
   }
 }
 

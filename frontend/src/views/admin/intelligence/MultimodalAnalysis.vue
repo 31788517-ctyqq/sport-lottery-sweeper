@@ -258,6 +258,18 @@ const fusionConfidence = ref(89)
 const reliabilityScore = ref(9.2)
 const updateFrequency = ref(12)
 
+const buildInlinePlaceholder = (width, height, text) =>
+  `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+      <rect width="100%" height="100%" fill="#eef1f6"/>
+      <rect x="8" y="8" width="${width - 16}" height="${height - 16}" rx="8" ry="8" fill="#dfe6ef"/>
+      <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#94a3b8" font-size="16" font-family="Arial,sans-serif">${text}</text>
+    </svg>`
+  )}`
+
+const imageThumbPlaceholder = buildInlinePlaceholder(150, 150, 'IMAGE')
+const imagePreviewPlaceholder = buildInlinePlaceholder(600, 400, 'PREVIEW')
+
 // Media sources data
 const mediaSources = ref([
   { id: 1, name: '社交媒体监测', type: '文本', status: '活跃', lastUpdate: '2024-01-15 10:30', dataCount: 420 },
@@ -269,10 +281,10 @@ const mediaSources = ref([
 
 // Media gallery data
 const mediaGallery = ref([
-  { id: 1, title: '训练场照片', type: 'image', thumbnail: 'https://via.placeholder.com/150', date: '2024-01-15', url: 'https://via.placeholder.com/600x400', source: '官方媒体', content: '球队在训练场上的表现', analysisResult: '积极情绪' },
+  { id: 1, title: '训练场照片', type: 'image', thumbnail: imageThumbPlaceholder, date: '2024-01-15', url: imagePreviewPlaceholder, source: '官方媒体', content: '球队在训练场上的表现', analysisResult: '积极情绪' },
   { id: 2, title: '赛后采访', type: 'video', date: '2024-01-14', url: '#', source: '体育频道', content: '主教练赛后采访', analysisResult: '信心满满' },
   { id: 3, title: '专家分析', type: '文本', date: '2024-01-14', url: '#', source: '体育报纸', content: '对下周比赛的专业分析文章', analysisResult: '看好主队' },
-  { id: 4, title: '球迷活动', type: 'image', thumbnail: 'https://via.placeholder.com/150', date: '2024-01-13', url: 'https://via.placeholder.com/600x400', source: '社交媒体', content: '球迷助威活动', analysisResult: '热情高涨' }
+  { id: 4, title: '球迷活动', type: 'image', thumbnail: imageThumbPlaceholder, date: '2024-01-13', url: imagePreviewPlaceholder, source: '社交媒体', content: '球迷助威活动', analysisResult: '热情高涨' }
 ])
 
 // Selected media for preview

@@ -1,627 +1,603 @@
-<template>
-  <div class="department-management-container">
-    <el-row :gutter="20">
-      <!-- 部门树 -->
-      <el-col :xs="24" :lg="8">
-        <el-card class="dept-tree-card">
+﻿<template>
+  <div class="department-management-container morandi-page um-page">
+    <el-row :gutter="16">
+      <el-col :xs="24" :lg="9">
+        <el-card class="morandi-card dept-tree-card">
           <template #header>
             <div class="card-header">
-              <h3>组织架构</h3>
+              <span>组织架构</span>
               <div class="header-actions">
-                <el-button type="primary" size="small" @click="handleCreateDept">
-                  <el-icon><Plus /></el-icon>
-                  新增部门
-                </el-button>
-                <el-button @click="refreshData">
-                  <el-icon><Refresh /></el-icon>
-                  刷新
-                </el-button>
+                <el-button type="primary" size="small" @click="handleCreateDept">新增部门</el-button>
+                <el-button size="small" :loading="loadingDepts" @click="refreshData">刷新</el-button>
               </div>
             </div>
           </template>
-          
+
           <div class="dept-tree-container">
             <el-tree
-              ref="deptTreeRef"
+              v-loading="loadingDepts"
               :data="departmentTree"
               node-key="id"
               :props="treeProps"
               :expand-on-click-node="false"
               :highlight-current="true"
-              class="modern-tree"
               @node-click="handleNodeClick"
             >
-              <template #default="{ node, data }">
+              <template #default="{ data }">
                 <div class="tree-node">
-                  <span class="node-content">
-                    <span class="node-icon">
-                      <el-icon v-if="data.children && data.children.length > 0"><FolderOpened /></el-icon>
-                      <el-icon v-else><Document /></el-icon>
-                    </span>
-                    <span class="node-label">{{ node.label }}</span>
-                  </span>
-                  <span class="node-meta">
-                    <span class="user-count" v-if="data.userCount !== undefined">
-                      {{ data.userCount }}人
-                    </span>
-                    <span class="node-actions" v-if="!data.isSystem">
-                      <el-button 
-                        type="primary" 
-                        size="small" 
-                        text
-                        @click.stop="handleEditDept(data)"
-                      >
-                        编辑
-                      </el-button>
-                      <el-button 
-                        type="danger" 
-                        size="small" 
-                        text
-                        @click.stop="handleDeleteDept(data)"
-                      >
-                        删除
-                      </el-button>
-                    </span>
-                  </span>
+                  <div class="tree-node-left">
+                    <span>{{ data.name }}</span>
+                    <el-tag size="small" type="info">{{ data.userCount || 0 }}人</el-tag>
+                  </div>
+                  <div class="tree-node-actions">
+                    <el-button type="primary" size="small" text @click.stop="handleEditDept(data)">编辑</el-button>
+                    <el-button type="danger" size="small" text @click.stop="handleDeleteDept(data)">删除</el-button>
+                  </div>
                 </div>
               </template>
             </el-tree>
           </div>
         </el-card>
       </el-col>
-      
-      <!-- 部门详情 -->
-      <el-col :xs="24" :lg="16">
-        <el-card class="dept-detail-card">
+
+      <el-col :xs="24" :lg="15">
+        <el-card class="morandi-card dept-detail-card">
           <template #header>
-            <div class="card-header" v-if="selectedDept">
-              <h3>部门详情 - {{ selectedDept.name }}</h3>
-              <div class="header-actions">
-                <el-button type="primary" @click="handleSaveDept" :loading="saving">
-                  保存修改
-                </el-button>
-                <el-button @click="handleResetDept">
-                  重置
-                </el-button>
+            <div class="card-header">
+              <span v-if="selectedDept">部门详情 - {{ selectedDept.name }}</span>
+              <span v-else>部门详情</span>
+              <div v-if="selectedDept" class="header-actions">
+                <el-button type="primary" :loading="saving" @click="handleSaveDept">保存</el-button>
+                <el-button @click="handleResetDept">重置</el-button>
               </div>
             </div>
-            <div v-else class="card-header">
-              <h3>部门详情</h3>
-              <span class="tip-text">请选择左侧部门查看详情</span>
-            </div>
           </template>
-          
-          <div v-if="selectedDept" class="dept-detail-content">
-            <!-- 基本信息 -->
-            <div class="detail-section">
-              <h4>基本信息</h4>
-              <el-form 
-                ref="deptFormRef"
-                :model="selectedDept" 
-                :rules="deptRules"
-                label-width="100px"
-                class="detail-form"
-              >
+
+          <template v-if="selectedDept">
+            <div class="dept-detail-content">
+              <el-form ref="deptFormRef" :model="selectedDept" :rules="deptRules" label-width="100px" class="form-panel">
                 <el-form-item label="部门名称" prop="name">
-                  <el-input 
-                    v-model="selectedDept.name" 
-                    placeholder="请输入部门名称"
-                    :disabled="selectedDept.isSystem"
-                  />
+                  <el-input v-model="selectedDept.name" placeholder="请输入部门名称" />
                 </el-form-item>
-                
-                <el-form-item label="部门编码" prop="code">
-                  <el-input 
-                    v-model="selectedDept.code" 
-                    placeholder="请输入部门编码"
-                    :disabled="selectedDept.isSystem"
-                  />
-                </el-form-item>
-                
                 <el-form-item label="上级部门">
                   <el-tree-select
                     v-model="selectedDept.parentId"
                     :data="departmentOptions"
                     :props="treeSelectProps"
-                    placeholder="请选择上级部门"
+                    placeholder="可选"
                     check-strictly
-                    :disabled="selectedDept.isSystem || isCircularReference"
                     clearable
                   />
                 </el-form-item>
-                
-                <el-form-item label="部门描述">
-                  <el-input
-                    v-model="selectedDept.description"
-                    type="textarea"
-                    :rows="3"
-                    placeholder="请输入部门描述"
-                  />
-                </el-form-item>
-                
                 <el-form-item label="部门负责人">
-                  <el-select
-                    v-model="selectedDept.managerId"
-                    placeholder="请选择负责人"
-                    clearable
-                    filterable
-                  >
+                  <el-select v-model="selectedDept.managerId" placeholder="可选" clearable filterable>
                     <el-option
-                      v-for="user in deptUsers"
+                      v-for="user in managerUsers"
                       :key="user.id"
                       :label="user.realName || user.username"
                       :value="user.id"
                     />
                   </el-select>
                 </el-form-item>
-                
-                <el-form-item label="排序序号">
+                <el-form-item label="排序">
                   <el-input-number
                     v-model="selectedDept.sortOrder"
                     :min="0"
-                    :max="999"
+                    :max="9999"
                     controls-position="right"
                     style="width: 100%"
                   />
                 </el-form-item>
-                
                 <el-form-item label="状态">
                   <el-radio-group v-model="selectedDept.status">
-                    <el-radio value="active">正常</el-radio>
-                    <el-radio value="inactive">停用</el-radio>
+                    <el-radio :value="true">启用</el-radio>
+                    <el-radio :value="false">停用</el-radio>
                   </el-radio-group>
                 </el-form-item>
+                <el-form-item label="描述">
+                  <el-input v-model="selectedDept.description" type="textarea" :rows="3" placeholder="请输入部门描述" />
+                </el-form-item>
               </el-form>
-            </div>
-            
-            <!-- 部门成员 -->
-            <div class="detail-section">
-              <div class="section-header">
-                <h4>部门成员 ({{ deptUsers.length }})</h4>
-                <el-button type="primary" size="small" @click="handleAddMembers">
-                  添加成员
-                </el-button>
+
+              <div class="section-title">
+                <span>部门成员（{{ deptUsers.length }}）</span>
+                <el-button type="primary" size="small" @click="handleAddMembers">添加成员</el-button>
               </div>
-              
-              <div class="member-list">
-                <div 
-                  v-for="user in deptUsers" 
-                  :key="user.id"
-                  class="member-item"
-                >
-                  <div class="member-info">
-                    <el-avatar :size="32" :src="user.avatar">
-                      {{ (user.realName || user.username).charAt(0).toUpperCase() }}
-                    </el-avatar>
-                    <div class="member-details">
-                      <div class="member-name">{{ user.realName || user.username }}</div>
-                      <div class="member-role">{{ user.roleNames?.join(', ') || '无角色' }}</div>
-                    </div>
-                  </div>
-                  <div class="member-actions">
-                    <el-button 
-                      type="danger" 
-                      size="small" 
-                      text
-                      @click="handleRemoveMember(user)"
-                    >
-                      移除
-                    </el-button>
-                  </div>
-                </div>
-                
-                <div v-if="deptUsers.length === 0" class="empty-members">
-                  <el-empty description="暂无成员" :image-size="60" />
-                </div>
+
+              <el-table v-loading="loadingMembers" :data="deptUsers" size="small" max-height="320">
+                <el-table-column prop="realName" label="姓名" min-width="120" />
+                <el-table-column prop="username" label="用户名" min-width="120" />
+                <el-table-column prop="email" label="邮箱" min-width="180" />
+                <el-table-column prop="phone" label="手机号" min-width="120" />
+                <el-table-column label="操作" width="100">
+                  <template #default="{ row }">
+                    <el-button type="danger" size="small" text @click="handleRemoveMember(row)">移除</el-button>
+                  </template>
+                </el-table-column>
+              </el-table>
+
+              <div class="section-title">
+                <span>子部门（{{ childDepts.length }}）</span>
               </div>
-            </div>
-            
-            <!-- 子部门 -->
-            <div class="detail-section" v-if="childDepts.length > 0">
-              <h4>子部门 ({{ childDepts.length }})</h4>
-              <div class="child-dept-list">
-                <el-tag 
-                  v-for="dept in childDepts" 
+              <div class="child-tags">
+                <el-tag
+                  v-for="dept in childDepts"
                   :key="dept.id"
-                  class="child-dept-tag"
-                  @click="handleNodeClick(null, dept)"
-                  style="cursor: pointer; margin: 2px;"
+                  class="child-tag"
+                  @click="setSelectedDeptById(dept.id)"
                 >
                   {{ dept.name }}
                 </el-tag>
+                <span v-if="childDepts.length === 0" class="empty-tip">暂无子部门</span>
               </div>
             </div>
-          </div>
-          
-          <div v-else class="no-selection">
-            <el-empty description="请选择一个部门查看详情" />
-          </div>
+          </template>
+
+          <el-empty v-else description="请在左侧选择一个部门查看详情" />
         </el-card>
       </el-col>
     </el-row>
-    
-    <!-- 部门编辑对话框 -->
+
     <DeptEditDialog
       v-model="showDeptDialog"
       :dept-data="currentDept"
-      :department-tree="departmentTree"
-      :managers="users"
+      :department-tree="departmentOptions"
+      :managers="managerUsers"
       @submit="handleDeptSubmit"
     />
-    
-    <!-- 添加成员对话框 -->
+
     <AddMembersDialog
       v-model="showAddMembersDialog"
-      :department-id="selectedDept?.id"
-      :exclude-user-ids="deptUsers.map(u => u.id)"
+      :department-id="selectedDeptId"
+      :exclude-user-ids="deptUsers.map((user) => user.id)"
       @submit="handleMembersSubmit"
     />
   </div>
 </template>
-
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Refresh, FolderOpened, Document } from '@element-plus/icons-vue'
-import DeptEditDialog from '@/components/admin/DeptEditDialog.vue'
+
 import AddMembersDialog from '@/components/admin/AddMembersDialog.vue'
-import { getDepartments, createDepartment, updateDepartment, deleteDepartment } from '@/api/modules/departments'
+import DeptEditDialog from '@/components/admin/DeptEditDialog.vue'
+import {
+  addDepartmentMembers,
+  createDepartment,
+  deleteDepartment,
+  getDepartmentMembers,
+  getDepartmentStats,
+  getDepartments,
+  removeDepartmentMember,
+  updateDepartment
+} from '@/api/modules/departments'
 import { getUsers } from '@/api/modules/users'
 
-const departmentTree = ref([])
-const departments = ref([])
-const users = ref([])
-const selectedDept = ref(null)
+const loadingDepts = ref(false)
+const loadingMembers = ref(false)
 const saving = ref(false)
+
+const departmentTree = ref([])
+const flatDepartments = ref([])
+const managerUsers = ref([])
+const deptUsers = ref([])
+
+const selectedDeptId = ref(null)
+const selectedDept = ref(null)
+const selectedDeptOrigin = ref(null)
+
 const showDeptDialog = ref(false)
-const deptDialogMode = ref('create')
 const currentDept = ref({})
 const showAddMembersDialog = ref(false)
 
-const treeProps = {
-  children: 'children',
-  label: 'name'
-}
-
-const treeSelectProps = {
-  children: 'children',
-  label: 'name',
-  value: 'id'
-}
-
-// 表单引用
 const deptFormRef = ref(null)
 
-// 部门表单验证规则
+const treeProps = { children: 'children', label: 'name' }
+const treeSelectProps = { children: 'children', label: 'name', value: 'id' }
+
 const deptRules = {
   name: [
     { required: true, message: '请输入部门名称', trigger: 'blur' },
-    { min: 2, max: 50, message: '长度在 2 到 50 个字符', trigger: 'blur' }
-  ],
-  code: [
-    { required: true, message: '请输入部门编码', trigger: 'blur' },
-    { pattern: /^[A-Za-z0-9_-]+$/, message: '只能包含字母、数字、下划线和横线', trigger: 'blur' }
+    { min: 2, max: 50, message: '长度应在 2 到 50 个字符之间', trigger: 'blur' }
   ]
 }
 
-// 计算属性
-const departmentOptions = computed(() => {
-  return buildDepartmentOptions(departments.value)
+const normalizeStatus = (value) => {
+  if (typeof value === 'boolean') return value
+  if (typeof value === 'number') return value === 1
+  if (typeof value === 'string') {
+    const lowered = value.toLowerCase()
+    return lowered === 'active' || lowered === 'true' || lowered === '1'
+  }
+  return true
+}
+
+const normalizeDepartmentNode = (node) => ({
+  id: Number(node.id),
+  name: node.name || '',
+  parentId: node.parentId ?? node.parent_id ?? null,
+  managerId: node.managerId ?? node.leader_id ?? null,
+  sortOrder: Number(node.sortOrder ?? node.sort_order ?? 0),
+  description: node.description || '',
+  status: normalizeStatus(node.status),
+  userCount: Number(node.userCount ?? node.user_count ?? 0),
+  children: Array.isArray(node.children) ? node.children.map(normalizeDepartmentNode) : []
 })
 
-const deptUsers = computed(() => {
-  if (!selectedDept.value) return []
-  return users.value.filter(
-    (user) =>
-      user.departmentId === selectedDept.value.id ||
-      user.department_id === selectedDept.value.id ||
-      user.department === selectedDept.value.name
-  )
+const flattenTree = (nodes, acc = []) => {
+  nodes.forEach((node) => {
+    acc.push(node)
+    if (node.children?.length) flattenTree(node.children, acc)
+  })
+  return acc
+}
+
+const cloneDepartment = (dept) => JSON.parse(JSON.stringify(dept))
+
+const selectedDeptDescendantIds = computed(() => {
+  const ids = new Set()
+  if (!selectedDeptId.value) return ids
+
+  const walk = (parentId) => {
+    flatDepartments.value.forEach((node) => {
+      if (node.parentId === parentId && !ids.has(node.id)) {
+        ids.add(node.id)
+        walk(node.id)
+      }
+    })
+  }
+
+  walk(selectedDeptId.value)
+  return ids
+})
+
+const departmentOptions = computed(() => {
+  const mapTreeOptions = (nodes) =>
+    nodes.map((node) => ({
+      ...node,
+      disabled: node.id === selectedDeptId.value || selectedDeptDescendantIds.value.has(node.id),
+      children: node.children?.length ? mapTreeOptions(node.children) : []
+    }))
+
+  return mapTreeOptions(departmentTree.value)
 })
 
 const childDepts = computed(() => {
-  if (!selectedDept.value) return []
-  return departments.value.filter(dept => dept.parentId === selectedDept.value.id)
+  if (!selectedDeptId.value) return []
+  return flatDepartments.value.filter((dept) => dept.parentId === selectedDeptId.value)
 })
 
 const isCircularReference = computed(() => {
   if (!selectedDept.value || !selectedDept.value.parentId) return false
-  
-  // 检查是否形成循环引用
-  let currentParentId = selectedDept.value.parentId
-  while (currentParentId) {
-    if (currentParentId === selectedDept.value.id) {
-      return true
-    }
-    const parent = departments.value.find(d => d.id === currentParentId)
-    currentParentId = parent?.parentId
+  let parentId = selectedDept.value.parentId
+  while (parentId) {
+    if (parentId === selectedDeptId.value) return true
+    const parent = flatDepartments.value.find((dept) => dept.id === parentId)
+    parentId = parent?.parentId
   }
   return false
 })
 
-// 构建部门选项（扁平化树结构）
-const buildDepartmentOptions = (depts, level = 0, result = []) => {
-  depts.forEach(dept => {
-    if (!dept.isSystem) {
-      result.push({
-        ...dept,
-        disabled: level > 0 && dept.id === selectedDept.value?.id
-      })
-    }
-    if (dept.children && dept.children.length > 0) {
-      buildDepartmentOptions(dept.children, level + 1, result)
-    }
-  })
-  return result
-}
+const normalizeUser = (row) => ({
+  ...row,
+  id: Number(row.id),
+  realName: row.realName || row.real_name || row.username || `用户${row.id}`,
+  username: row.username || '',
+  email: row.email || '',
+  phone: row.phone || ''
+})
 
-const normalizeDepartment = (dept) => {
-  if (!dept) return null
-  const statusRaw = dept.status
-  const isActive =
-    statusRaw === true ||
-    statusRaw === 'active' ||
-    statusRaw === 1 ||
-    statusRaw === '1'
-  return {
-    ...dept,
-    parentId: dept.parentId ?? dept.parent_id ?? null,
-    managerId: dept.managerId ?? dept.leader_id ?? null,
-    sortOrder: dept.sortOrder ?? dept.sort_order ?? 0,
-    status: isActive ? 'active' : 'inactive',
-    userCount: dept.userCount ?? dept.user_count ?? 0,
-    children: Array.isArray(dept.children) ? dept.children.map(normalizeDepartment) : []
-  }
-}
-
-const toDepartmentPayload = (dept) => ({
+const deptToPayload = (dept) => ({
   name: dept.name,
   parent_id: dept.parentId ?? null,
   description: dept.description || '',
   leader_id: dept.managerId ?? null,
-  sort_order: dept.sortOrder ?? 0,
-  status: dept.status === 'active'
+  sort_order: Number(dept.sortOrder || 0),
+  status: !!dept.status
 })
 
-// 加载部门列表
-const loadDepartments = async () => {
-  try {
-    const response = await getDepartments({ tree: true })
-    const payload = response?.data ?? response
-    const rows = Array.isArray(payload?.data) ? payload.data : Array.isArray(payload) ? payload : []
-    if (rows) {
-      departmentTree.value = rows.map(normalizeDepartment)
-      departments.value = flattenDepartments(departmentTree.value)
-    }
-  } catch (error) {
-    console.error('加载部门列表失败:', error)
-    ElMessage.error('加载部门列表失败')
-  }
+const parseDepartmentRows = (response) => {
+  const payload = response?.data ?? response
+  if (Array.isArray(payload?.data)) return payload.data
+  if (Array.isArray(payload)) return payload
+  return []
 }
 
-// 扁平化部门树
-const flattenDepartments = (tree, result = []) => {
-  tree.forEach(node => {
-    result.push(node)
-    if (node.children && node.children.length > 0) {
-      flattenDepartments(node.children, result)
+const parseDepartmentStats = (response) => {
+  const payload = response?.data ?? response
+  const stats = payload?.data ?? payload ?? {}
+  return stats?.department_user_counts || stats?.departmentUserCounts || {}
+}
+
+const applyDepartmentUserCounts = (nodes, countsMap) =>
+  nodes.map((node) => {
+    const countValue = countsMap?.[node.id] ?? countsMap?.[String(node.id)]
+    const nextNode = {
+      ...node,
+      userCount: Number.isFinite(Number(countValue)) ? Number(countValue) : Number(node.userCount || 0)
     }
+
+    if (Array.isArray(node.children) && node.children.length) {
+      nextNode.children = applyDepartmentUserCounts(node.children, countsMap)
+    }
+
+    return nextNode
   })
-  return result
+
+const parseMemberRows = (response) => {
+  const payload = response?.data ?? response
+  if (Array.isArray(payload?.data)) return payload.data
+  if (Array.isArray(payload?.items)) return payload.items
+  if (Array.isArray(payload)) return payload
+  return []
 }
 
-// 加载用户列表
-const loadUsers = async () => {
+const loadDepartments = async (keepSelection = true) => {
+  loadingDepts.value = true
   try {
-    const response = await getUsers({ skip: 0, limit: 100, status: 'active' })
-    const payload = response?.data ?? response
-    users.value = Array.isArray(payload?.items) ? payload.items : []
-  } catch (error) {
-    console.error('加载用户列表失败:', error)
-  }
-}
+    const [response, statsResponse] = await Promise.all([
+      getDepartments({ tree: true }),
+      getDepartmentStats().catch((error) => {
+        console.warn('加载部门人数统计失败，使用默认值:', error)
+        return null
+      })
+    ])
+    const rawRows = parseDepartmentRows(response).map(normalizeDepartmentNode)
+    const countMap = parseDepartmentStats(statsResponse)
+    const rows = applyDepartmentUserCounts(rawRows, countMap)
+    departmentTree.value = rows
+    flatDepartments.value = flattenTree(rows, [])
 
-// 节点点击
-const handleNodeClick = (data, node) => {
-  const dept = node || departments.value.find(d => d.id === data.id)
-  if (dept) {
-    selectedDept.value = { ...dept }
-  }
-}
-
-// 新建部门
-const handleCreateDept = () => {
-  deptDialogMode.value = 'create'
-  currentDept.value = {
-    parentId: selectedDept.value?.id || null,
-    sortOrder: 0,
-    status: 'active'
-  }
-  showDeptDialog.value = true
-}
-
-// 编辑部门
-const handleEditDept = (dept) => {
-  deptDialogMode.value = 'edit'
-  currentDept.value = { ...dept }
-  showDeptDialog.value = true
-}
-
-// 删除部门
-const handleDeleteDept = async (dept) => {
-  try {
-    // 检查是否有子部门
-    const hasChildren = departments.value.some(d => d.parentId === dept.id)
-    if (hasChildren) {
-      ElMessage.warning('该部门下有子部门，无法删除')
-      return
-    }
-    
-    // 检查是否有用户
-    const hasUsers = users.value.some(
-      (u) => u.departmentId === dept.id || u.department_id === dept.id || u.department === dept.name
-    )
-    if (hasUsers) {
-      ElMessage.warning('该部门下有用户，无法删除')
-      return
-    }
-    
-    await ElMessageBox.confirm(
-      `确定要删除部门 "${dept.name}" 吗？此操作不可恢复。`,
-      '确认删除',
-      {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }
-    )
-    
-    await deleteDepartment(dept.id)
-    ElMessage.success('删除成功')
-    loadDepartments()
-    if (selectedDept.value?.id === dept.id) {
+    if (flatDepartments.value.length === 0) {
+      selectedDeptId.value = null
       selectedDept.value = null
+      selectedDeptOrigin.value = null
+      deptUsers.value = []
+      return
     }
+
+    const targetId =
+      keepSelection && selectedDeptId.value && flatDepartments.value.some((dept) => dept.id === selectedDeptId.value)
+        ? selectedDeptId.value
+        : flatDepartments.value[0].id
+    await setSelectedDeptById(targetId)
   } catch (error) {
-    if (error !== 'cancel') {
-      console.error('删除失败:', error)
-      ElMessage.error('删除失败')
-    }
+    console.error('鍔犺浇閮ㄩ棬澶辫触:', error)
+    ElMessage.error('加载部门失败，请检查接口状态')
+    departmentTree.value = []
+    flatDepartments.value = []
+    selectedDeptId.value = null
+    selectedDept.value = null
+    selectedDeptOrigin.value = null
+    deptUsers.value = []
+  } finally {
+    loadingDepts.value = false
   }
 }
 
-// 保存部门
-const handleSaveDept = async () => {
-  if (!selectedDept.value) return
-  
+const loadManagerUsers = async () => {
   try {
-    await deptFormRef.value.validate()
-    saving.value = true
-    
-    if (selectedDept.value.id) {
-      await updateDepartment(selectedDept.value.id, toDepartmentPayload(selectedDept.value))
-    } else {
-      await createDepartment(toDepartmentPayload(selectedDept.value))
+    const pageSize = 100
+    let page = 1
+    let pages = 1
+    const allRows = []
+
+    while (page <= pages) {
+      const response = await getUsers({ page, size: pageSize, status: 'active' })
+      const payload = response?.data ?? response
+      const rows = Array.isArray(payload?.items) ? payload.items : []
+      allRows.push(...rows)
+      pages = Number(payload?.pages || 1)
+      page += 1
     }
-    
-    ElMessage.success('保存成功')
-    loadDepartments()
+
+    managerUsers.value = allRows.map(normalizeUser)
   } catch (error) {
-    if (error !== false) { // 不是表单验证错误
-      console.error('保存失败:', error)
-      ElMessage.error('保存失败')
+    console.error('加载用户失败:', error)
+    managerUsers.value = []
+  }
+}
+
+const loadDeptMembers = async () => {
+  if (!selectedDeptId.value) {
+    deptUsers.value = []
+    return
+  }
+  loadingMembers.value = true
+  try {
+    const response = await getDepartmentMembers(selectedDeptId.value, { skip: 0, limit: 500 })
+    deptUsers.value = parseMemberRows(response).map(normalizeUser)
+  } catch (error) {
+    console.error('鍔犺浇閮ㄩ棬鎴愬憳澶辫触:', error)
+    ElMessage.error('鍔犺浇閮ㄩ棬鎴愬憳澶辫触')
+    deptUsers.value = []
+  } finally {
+    loadingMembers.value = false
+  }
+}
+
+const setSelectedDeptById = async (deptId) => {
+  const target = flatDepartments.value.find((dept) => dept.id === Number(deptId))
+  if (!target) return
+  selectedDeptId.value = target.id
+  selectedDept.value = cloneDepartment(target)
+  selectedDeptOrigin.value = cloneDepartment(target)
+  await loadDeptMembers()
+}
+
+const handleNodeClick = async (node) => {
+  await setSelectedDeptById(node.id)
+}
+
+const handleCreateDept = () => {
+  currentDept.value = {
+    parentId: selectedDeptId.value ?? null,
+    managerId: null,
+    sortOrder: 0,
+    status: true,
+    description: ''
+  }
+  showDeptDialog.value = true
+}
+
+const handleEditDept = (dept) => {
+  currentDept.value = cloneDepartment(dept)
+  showDeptDialog.value = true
+}
+
+const handleDeptSubmit = async (formData) => {
+  try {
+    if (formData.id) {
+      await updateDepartment(formData.id, deptToPayload(formData))
+      ElMessage.success('閮ㄩ棬鏇存柊鎴愬姛')
+      showDeptDialog.value = false
+      await loadDepartments(true)
+      return
+    }
+
+    await createDepartment(deptToPayload(formData))
+    ElMessage.success('閮ㄩ棬鍒涘缓鎴愬姛')
+    showDeptDialog.value = false
+    await loadDepartments(false)
+  } catch (error) {
+    console.error('淇濆瓨閮ㄩ棬澶辫触:', error)
+    ElMessage.error('淇濆瓨閮ㄩ棬澶辫触')
+  }
+}
+
+const handleSaveDept = async () => {
+  if (!selectedDept.value || !selectedDeptId.value) return
+  if (isCircularReference.value) {
+    ElMessage.warning('上级部门设置会形成循环，请修改后再保存')
+    return
+  }
+  try {
+    await deptFormRef.value?.validate()
+    saving.value = true
+    await updateDepartment(selectedDeptId.value, deptToPayload(selectedDept.value))
+    ElMessage.success('淇濆瓨鎴愬姛')
+    await loadDepartments(true)
+  } catch (error) {
+    if (error !== false) {
+      console.error('淇濆瓨澶辫触:', error)
+      ElMessage.error('淇濆瓨澶辫触')
     }
   } finally {
     saving.value = false
   }
 }
 
-// 重置部门
 const handleResetDept = () => {
-  if (selectedDept.value) {
-    const original = departments.value.find(d => d.id === selectedDept.value.id)
-    if (original) {
-      selectedDept.value = { ...original }
+  if (!selectedDeptOrigin.value) return
+  selectedDept.value = cloneDepartment(selectedDeptOrigin.value)
+}
+
+const handleDeleteDept = async (dept) => {
+  try {
+    await ElMessageBox.confirm(`确定删除部门“${dept.name}”？此操作不可恢复。`, '删除确认', {
+      type: 'warning'
+    })
+    await deleteDepartment(dept.id)
+    ElMessage.success('鍒犻櫎鎴愬姛')
+
+    if (selectedDeptId.value === dept.id) {
+      selectedDeptId.value = null
+      selectedDept.value = null
+      selectedDeptOrigin.value = null
+      deptUsers.value = []
+    }
+    await loadDepartments(false)
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('鍒犻櫎澶辫触:', error)
+      ElMessage.error('鍒犻櫎澶辫触')
     }
   }
 }
 
-// 添加成员
 const handleAddMembers = () => {
+  if (!selectedDeptId.value) {
+    ElMessage.warning('璇峰厛閫夋嫨閮ㄩ棬')
+    return
+  }
   showAddMembersDialog.value = true
 }
 
-// 移除成员
-const handleRemoveMember = async (user) => {
+const handleMembersSubmit = async ({ userIds }) => {
+  if (!selectedDeptId.value || !Array.isArray(userIds) || !userIds.length) return
   try {
-    await ElMessageBox.confirm(
-      `确定要将用户 "${user.realName || user.username}" 从部门中移除吗？`,
-      '确认移除',
-      {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }
-    )
-    
-    // TODO: 调用API将用户从部门移除
-    ElMessage.success('移除成功')
-    loadUsers()
+    await addDepartmentMembers(selectedDeptId.value, userIds)
+    ElMessage.success('鎴愬憳娣诲姞鎴愬姛')
+    showAddMembersDialog.value = false
+    await loadDeptMembers()
+    await loadDepartments(true)
+  } catch (error) {
+    console.error('娣诲姞鎴愬憳澶辫触:', error)
+    ElMessage.error('娣诲姞鎴愬憳澶辫触')
+  }
+}
+
+const handleRemoveMember = async (user) => {
+  if (!selectedDeptId.value) return
+  try {
+    await ElMessageBox.confirm(`确定将“${user.realName || user.username}”移出该部门吗？`, '移除确认', {
+      type: 'warning'
+    })
+    await removeDepartmentMember(selectedDeptId.value, user.id)
+    ElMessage.success('绉婚櫎鎴愬姛')
+    await loadDeptMembers()
+    await loadDepartments(true)
   } catch (error) {
     if (error !== 'cancel') {
-      console.error('移除失败:', error)
-      ElMessage.error('移除失败')
+      console.error('绉婚櫎澶辫触:', error)
+      ElMessage.error('绉婚櫎澶辫触')
     }
   }
 }
 
-// 部门弹窗提交
-const handleDeptSubmit = async (formData) => {
-  try {
-    const payload = {
-      ...formData,
-      sortOrder: formData.sort ?? formData.sortOrder ?? 0
-    }
-    if (payload.id) {
-      await updateDepartment(payload.id, toDepartmentPayload(payload))
-      ElMessage.success('部门更新成功')
-    } else {
-      await createDepartment(toDepartmentPayload(payload))
-      ElMessage.success('部门创建成功')
-    }
-    showDeptDialog.value = false
-    currentDept.value = {}
-    await loadDepartments()
-  } catch (error) {
-    console.error('部门保存失败:', error)
-    ElMessage.error('部门保存失败')
-  }
+const refreshData = async () => {
+  await Promise.all([loadDepartments(true), loadManagerUsers()])
 }
 
-// 成员弹窗提交
-const handleMembersSubmit = async ({ userIds }) => {
-  if (!selectedDept.value) return
-  users.value = users.value.map((u) =>
-    userIds.includes(u.id)
-      ? { ...u, departmentId: selectedDept.value.id, department: selectedDept.value.name }
-      : u
-  )
-  showAddMembersDialog.value = false
-  ElMessage.success('成员添加成功')
-}
-
-// 刷新数据
-const refreshData = () => {
-  loadDepartments()
-  loadUsers()
-}
-
-onMounted(() => {
-  loadDepartments()
-  loadUsers()
+onMounted(async () => {
+  await Promise.all([loadDepartments(false), loadManagerUsers()])
 })
 </script>
 
 <style scoped>
-.department-management-container {
-  padding: 20px;
-  background: #f5f5f5;
-  min-height: 100vh;
+.morandi-page {
+  --m-bg: #f5f7fa;
+  --m-card: #ffffff;
+  --m-border: #ebeef5;
+  --m-head: #ffffff;
+  --m-text: #303133;
+  --m-subtext: #909399;
 }
 
-.dept-tree-card,
-.dept-detail-card {
-  border-radius: 8px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-  height: fit-content;
+.department-management-container {
+  min-height: calc(100vh - 110px);
+  padding: 20px;
+  background: var(--m-bg);
+}
+
+.morandi-card {
+  border: 1px solid var(--m-border);
+  border-radius: 4px;
+  box-shadow: none;
+  background: var(--m-card);
+}
+
+.morandi-card :deep(.el-card__header) {
+  background: var(--m-head);
+  border-bottom: 1px solid var(--m-border);
 }
 
 .card-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 16px;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--m-text);
+  font-weight: 600;
 }
 
 .header-actions {
@@ -629,164 +605,80 @@ onMounted(() => {
   gap: 8px;
 }
 
-.tip-text {
-  color: #909399;
-  font-size: 14px;
-}
-
-.dept-tree-container {
-  max-height: 600px;
-  overflow-y: auto;
-}
-
-.modern-tree {
-  background: transparent;
-}
-
 .tree-node {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 12px;
+  padding-right: 6px;
+}
+
+.tree-node-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.tree-node-left > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tree-node-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.tree-node-actions :deep(.el-button + .el-button) {
+  margin-left: 0;
+}
+
+.dept-tree-container :deep(.el-tree-node) {
+  width: 100%;
+}
+
+.dept-tree-container :deep(.el-tree-node__content) {
+  min-height: 40px;
   padding: 4px 0;
 }
 
-.node-content {
-  display: flex;
-  align-items: center;
-  flex: 1;
+.form-panel {
+  padding: 12px 0;
 }
 
-.node-icon {
+.section-title {
+  margin: 14px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--m-text);
+  font-weight: 600;
+}
+
+.child-tags {
+  min-height: 36px;
+}
+
+.child-tag {
   margin-right: 8px;
-  color: #409eff;
+  margin-bottom: 8px;
+  cursor: pointer;
 }
 
-.node-label {
-  font-weight: 500;
+.empty-tip {
+  color: var(--m-subtext);
 }
 
-.node-meta {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.user-count {
-  font-size: 12px;
-  color: #909399;
-  background: #f5f5f5;
-  padding: 2px 6px;
-  border-radius: 4px;
-}
-
-.node-actions {
-  display: flex;
-  gap: 4px;
-}
-
-.detail-section {
-  margin-bottom: 32px;
-}
-
-.detail-section h4 {
-  margin: 0 0 16px 0;
-  color: #303133;
-  font-size: 16px;
-  border-bottom: 2px solid #409eff;
-  padding-bottom: 8px;
-}
-
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-}
-
-.detail-form {
-  background: #fafafa;
-  padding: 20px;
-  border-radius: 6px;
-}
-
-.member-list {
-  border: 1px solid #ebeef5;
-  border-radius: 6px;
-  overflow: hidden;
-}
-
-.member-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.member-item:last-child {
-  border-bottom: none;
-}
-
-.member-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.member-details {
-  flex: 1;
-}
-
-.member-name {
-  font-weight: 500;
-  color: #303133;
-  margin-bottom: 2px;
-}
-
-.member-role {
-  font-size: 12px;
-  color: #909399;
-}
-
-.empty-members {
-  padding: 40px;
-  text-align: center;
-}
-
-.child-dept-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.child-dept-tag {
-  margin: 2px;
-}
-
-.no-selection {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 400px;
-}
-
-@media (max-width: 768px) {
+@media (max-width: 992px) {
   .department-management-container {
-    padding: 10px;
-  }
-  
-  .card-header {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .header-actions {
-    justify-content: center;
-  }
-  
-  .detail-form {
-    padding: 16px;
+    padding: 12px;
   }
 }
 </style>
+
+

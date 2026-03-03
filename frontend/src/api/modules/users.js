@@ -89,8 +89,10 @@ const compactParams = (obj = {}) =>
 const normalizeListParams = (params = {}) => {
   const hasPage = Number.isFinite(Number(params.page))
   const hasSize = Number.isFinite(Number(params.size))
-  const skip = hasPage && hasSize ? (Math.max(1, Number(params.page)) - 1) * Math.max(1, Number(params.size)) : params.skip
-  const limit = hasSize ? Math.max(1, Number(params.size)) : params.limit
+  const normalizedSize = hasSize ? Math.max(1, Number(params.size)) : Number(params.limit || 20)
+  // Backend constraint: limit <= 100
+  const limit = Math.min(100, normalizedSize)
+  const skip = hasPage ? (Math.max(1, Number(params.page)) - 1) * limit : params.skip
 
   return compactParams({
     skip,

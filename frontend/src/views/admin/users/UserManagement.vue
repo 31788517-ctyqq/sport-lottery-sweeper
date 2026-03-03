@@ -1,5 +1,5 @@
 <template>
-  <div class="user-management-container">
+  <div class="user-management-container um-page">
     <!-- AI_WORKING: coder1 @2026-01-26T08:55:00Z - 替换el-card为BaseCard，应用标准化头部样式 -->
     <BaseCard class="user-management-card" icon="el-icon-user" title="用户管理">
     <!-- AI_DONE: coder1 @2026-01-26T08:55:00Z -->
@@ -104,6 +104,7 @@
 
     <!-- 用户编辑对话框 -->
     <el-dialog 
+      class="um-dialog"
       :title="dialogTitle" 
       v-model="dialogVisible" 
       width="500px"
@@ -473,30 +474,84 @@ export default {
 
 <style scoped>
 .user-management-container {
-  padding: 20px;
+  padding: 16px;
+  background: #f5f7fa;
+  min-height: 100%;
 }
 
 .user-management-card {
   min-height: 600px;
+  border-radius: 4px;
+}
+
+.user-management-container :deep(.el-table th.el-table__cell) {
+  background: #fafafa;
+  color: #606266;
+  font-weight: 600;
 }
 
 /* AI_WORKING: coder1 @2026-01-26T08:59:00Z - 移除不再使用的card-header样式 */
 /* AI_DONE: coder1 @2026-01-26T08:59:00Z */
 
 .search-section {
-  margin-bottom: 20px;
+  margin-bottom: 12px;
+  padding: 14px 16px;
+  background: #fff;
+  border: 1px solid #ebeef5;
+  border-radius: 4px;
 }
 
 .operation-section {
-  margin-bottom: 20px;
+  margin-bottom: 12px;
+  padding: 12px 16px;
+  background: #fff;
+  border: 1px solid #ebeef5;
+  border-radius: 4px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
 }
 
 .pagination-section {
-  margin-top: 20px;
-  text-align: right;
+  margin-top: 12px;
+  padding: 12px 16px;
+  background: #fff;
+  border: 1px solid #ebeef5;
+  border-radius: 4px;
+  display: flex;
+  justify-content: flex-end;
 }
 
 .dialog-footer {
   text-align: right;
+}
+
+:deep(.um-dialog.el-dialog) {
+  border: 1px solid #ebeef5;
+  border-radius: 4px;
+  box-shadow: none;
+  overflow: hidden;
+}
+
+:deep(.um-dialog .el-dialog__header) {
+  margin-right: 0;
+  padding: 14px 16px;
+  border-bottom: 1px solid #ebeef5;
+}
+
+:deep(.um-dialog .el-dialog__title) {
+  font-size: 16px;
+  font-weight: 600;
+  color: #303133;
+}
+
+:deep(.um-dialog .el-dialog__body) {
+  padding: 16px;
+}
+
+:deep(.um-dialog .el-dialog__footer) {
+  padding: 12px 16px;
+  border-top: 1px solid #ebeef5;
 }
 </style>

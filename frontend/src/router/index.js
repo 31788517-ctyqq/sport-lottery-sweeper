@@ -12,6 +12,7 @@ import authRoutes from './modules/auth-routes.js' // AI_WORKING: coder1 @1770224
 import reportRoutes from './modules/report-routes.js' // AI_WORKING: coder1 @1770224919 - 导入报告生成模块路由
 import frontendRoutes from './modules/frontend-routes.js' // AI_WORKING: coder1 @1770224919 - 导入前台用户页面模块路由
 import MobileBeidanFilter from '@/views/admin/MobileBeidanFilter.vue'
+import { useAuthStore } from '@/stores/auth'  // 导入认证store
 
 const routes = [
   // 认证路由 (已移至 modules/auth-routes.js)
@@ -41,6 +42,16 @@ const routes = [
       ...crawlerRoutes,
       // 4. 比赛数据管理 (已移至 modules/match-routes.js)
       ...matchRoutes,
+      {
+        path: 'team-league-management',
+        name: 'TeamLeagueManagement',
+        redirect: '/admin/match-data/leagues',
+        meta: {
+          title: '球队联赛管理',
+          icon: 'Football',
+          roles: ['admin', 'manager']
+        }
+      },
       // 5. 平局预测管理 (已移至 modules/draw-prediction-routes.js)
       ...drawPredictionRoutes,
       // 6. 情报分析 (已移至 modules/intelligence-routes.js)
@@ -266,6 +277,38 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes
+})
+
+// 全局前置守卫 - 检查认证状态
+router.beforeEach((to, from, next) => {
+  // 检查localStorage中的token
+  const token = localStorage.getItem('access_token') || localStorage.getItem('token');
+  
+  // 检查是否需要认证的路由
+  const requiresAuth = to.matched.some(record => record.meta?.roles);
+  
+  // 如果是公共路由（如登录页），直接允许访问
+  if (to.path === '/login' || to.name === 'Login') {
+    // 如果用户已登录，重定向到仪表盘
+    if (token) {
+      next({ path: '/admin/dashboard' });
+    } else {
+      next(); // 允许访问登录页
+    }
+  } else {
+    // 对于需要认证的路由
+    if (requiresAuth && !token) {
+      // 需要认证但没有token，重定向到登录页
+      next({
+        path: '/login',
+        query: { redirect: to.fullPath }, // 保存原始访问路径
+        replace: true
+      });
+    } else {
+      // 有token或不需要认证，允许访问
+      next();
+    }
+  }
 })
 
 export default router

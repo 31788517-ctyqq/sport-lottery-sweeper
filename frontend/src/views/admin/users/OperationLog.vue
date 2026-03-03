@@ -1,5 +1,5 @@
 ﻿<template>
-  <div class="operation-log-container">
+  <div class="operation-log-container um-page">
     <el-card class="logs-card">
       <template #header>
         <div class="card-header">
@@ -93,7 +93,6 @@
           style="width: 100%"
           v-loading="loading"
           height="calc(100vh - 420px)"
-          :header-cell-style="{ background: '#f5f7fa', color: '#606266' }"
           class="modern-table"
         >
           <el-table-column prop="createdAt" label="操作时间" width="180">
@@ -152,7 +151,7 @@
 
     <LogDetailDialog v-model="showDetailDialog" :log-data="currentLog" />
 
-    <el-dialog v-model="showCleanupDialog" title="清理操作日志" width="500px">
+    <el-dialog class="um-dialog" v-model="showCleanupDialog" title="清理操作日志" width="500px">
       <el-form :model="cleanupForm" label-width="100px">
         <el-form-item label="清理条件">
           <el-radio-group v-model="cleanupForm.condition">
@@ -236,12 +235,24 @@ const buildParams = () => {
   return params
 }
 
+const toLowerText = (value) => (typeof value === 'string' ? value.toLowerCase() : value)
+
+const normalizeLogRow = (row = {}) => ({
+  ...row,
+  module: toLowerText(row.module),
+  action: toLowerText(row.action),
+  resource: toLowerText(row.resource),
+  result: toLowerText(row.result),
+  ipAddress: row.ipAddress || row.ip_address || '-',
+  userAgent: row.userAgent || row.user_agent || ''
+})
+
 const loadLogs = async () => {
   loading.value = true
   try {
     const response = await getOperationLogs(buildParams())
     if (response && response.data) {
-      tableData.value = response.data.items || []
+      tableData.value = Array.isArray(response.data.items) ? response.data.items.map(normalizeLogRow) : []
       pagination.total = response.data.total || 0
       pagination.pages = response.data.pages || 0
     }
@@ -388,11 +399,11 @@ const formatDate = (date) => {
 
 const getBrowserInfo = (userAgent) => {
   if (!userAgent) return '-'
-  if (userAgent.includes('Chrome')) return 'Chrome'
-  if (userAgent.includes('Firefox')) return 'Firefox'
-  if (userAgent.includes('Safari')) return 'Safari'
-  if (userAgent.includes('Edge')) return 'Edge'
-  return 'Unknown'
+  if (userAgent.includes('Chrome')) return 'chrome'
+  if (userAgent.includes('Firefox')) return 'firefox'
+  if (userAgent.includes('Safari')) return 'safari'
+  if (userAgent.includes('Edge')) return 'edge'
+  return 'unknown'
 }
 
 onMounted(() => {
@@ -406,14 +417,27 @@ onUnmounted(() => {
 
 <style scoped>
 .operation-log-container {
+  --m-bg: #f5f7fa;
+  --m-card: #ffffff;
+  --m-border: #ebeef5;
+  --m-head: #ffffff;
+  --m-text: #303133;
+  --m-subtext: #909399;
   padding: 20px;
-  background: #f5f5f5;
-  min-height: 100vh;
+  background: var(--m-bg);
+  min-height: calc(100vh - 110px);
 }
 
 .logs-card {
-  border-radius: 8px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  border: 1px solid var(--m-border);
+  box-shadow: none;
+  background: var(--m-card);
+}
+
+.logs-card :deep(.el-card__header) {
+  background: var(--m-head);
+  border-bottom: 1px solid var(--m-border);
 }
 
 .card-header {
@@ -422,6 +446,11 @@ onUnmounted(() => {
   align-items: center;
   flex-wrap: wrap;
   gap: 16px;
+  color: var(--m-text);
+}
+
+.card-header h3 {
+  margin: 0;
 }
 
 .header-actions {
@@ -430,9 +459,9 @@ onUnmounted(() => {
 }
 
 .logs-controls {
-  padding: 20px;
-  background: white;
-  border-bottom: 1px solid #ebeef5;
+  padding: 16px;
+  background: #ffffff;
+  border-bottom: 1px solid var(--m-border);
 }
 
 .search-input,
@@ -445,7 +474,7 @@ onUnmounted(() => {
 }
 
 .action-btn {
-  border-radius: 4px;
+  border-radius: 8px;
 }
 
 .user-info {
@@ -485,13 +514,13 @@ onUnmounted(() => {
 .empty-state {
   text-align: center;
   padding: 40px;
-  color: #909399;
+  color: var(--m-subtext);
 }
 
 .pagination-wrapper {
-  padding: 20px;
-  background: white;
-  border-top: 1px solid #ebeef5;
+  padding: 16px;
+  background: #ffffff;
+  border-top: 1px solid var(--m-border);
   display: flex;
   justify-content: center;
 }
@@ -500,5 +529,33 @@ onUnmounted(() => {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
+}
+
+:deep(.um-dialog.el-dialog) {
+  border: 1px solid var(--m-border);
+  border-radius: 4px;
+  box-shadow: none;
+  overflow: hidden;
+}
+
+:deep(.um-dialog .el-dialog__header) {
+  margin-right: 0;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--m-border);
+}
+
+:deep(.um-dialog .el-dialog__title) {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--m-text);
+}
+
+:deep(.um-dialog .el-dialog__body) {
+  padding: 16px;
+}
+
+:deep(.um-dialog .el-dialog__footer) {
+  padding: 12px 16px;
+  border-top: 1px solid var(--m-border);
 }
 </style>

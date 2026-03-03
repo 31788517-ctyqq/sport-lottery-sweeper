@@ -35,6 +35,7 @@
                   <div class="assistant-details">
                     <span class="assistant-name">{{ assistant.name }}</span>
                     <span class="assistant-desc">{{ assistant.description }}</span>
+                    <span v-if="assistant.model" class="assistant-model">{{ assistant.model }}</span>
                   </div>
                 </div>
                 <el-tag size="small" :type="getAssistantStatusTag(assistant.status)">
@@ -52,6 +53,7 @@
                 <div class="current-assistant-info">
                   <i :class="currentAssistant.icon" class="assistant-icon" />
                   <span>{{ currentAssistant.name }}</span>
+                  <el-tag v-if="currentAssistant.model" size="small" type="info">{{ currentAssistant.model }}</el-tag>
                 </div>
                 <div class="conversation-actions">
                   <el-button size="small" @click="clearCurrentConversation">清空对话</el-button>
@@ -137,6 +139,8 @@ const assistants = ref([
     description: '专业体育赛事分析',
     icon: 'el-icon-football',
     status: 'online',
+    provider: 'zhipuai',
+    model: 'glm-4',
     conversation: [
       { 
         sender: 'ai', 
@@ -151,6 +155,8 @@ const assistants = ref([
     description: '赔率分析与计算',
     icon: 'el-icon-wallet',
     status: 'online',
+    provider: 'zhipuai',
+    model: 'glm-4',
     conversation: [
       { 
         sender: 'ai', 
@@ -165,6 +171,8 @@ const assistants = ref([
     description: '数据分析与洞察',
     icon: 'el-icon-data-analysis',
     status: 'online',
+    provider: 'zhipuai',
+    model: 'glm-4',
     conversation: [
       { 
         sender: 'ai', 
@@ -179,7 +187,25 @@ const assistants = ref([
     description: '投注策略制定',
     icon: 'el-icon-guide',
     status: 'offline',
+    provider: 'zhipuai',
+    model: 'glm-4',
     conversation: []
+  },
+  {
+    id: 5,
+    name: 'MY_ZP_BIGMODLE 助手',
+    description: '智谱大模型服务接入',
+    icon: 'el-icon-cpu',
+    status: 'online',
+    provider: 'zhipuai',
+    model: 'MY_ZP_BIGMODLE',
+    conversation: [
+      {
+        sender: 'ai',
+        text: '您好！我是 MY_ZP_BIGMODLE 助手，当前通过智谱AI服务提供对话能力。请告诉我您的问题。',
+        timestamp: new Date().toLocaleString('zh-CN')
+      }
+    ]
   }
 ])
 
@@ -222,10 +248,11 @@ const sendMessage = async () => {
   isLoading.value = true
   
   try {
-    // 调用后端LLM API - 使用智谱AI模型 (MY_ZP_BIGMODLE)
+    // 调用后端LLM API，根据当前助手动态选择 provider / model
     const response = await axios.post(API_ENDPOINTS.LLM.CHAT, {
       user_input: inputCopy,
-      provider: 'zhipuai', // 使用智谱AI提供商
+      provider: currentAssistant.value.provider || 'zhipuai',
+      model: currentAssistant.value.model || undefined,
       user_id: `assistant_${currentAssistant.value.id}`
     })
     
@@ -402,6 +429,13 @@ const clearInput = () => {
 .assistant-desc {
   font-size: 12px;
   color: #909399;
+}
+
+.assistant-model {
+  margin-top: 4px;
+  font-size: 11px;
+  color: #607d8b;
+  word-break: break-all;
 }
 
 .conversation-container {

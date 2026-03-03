@@ -1,8 +1,8 @@
 <template>
-  <div class="user-profile-container">
-    <el-row :gutter="20">
+  <div class="user-profile-container morandi-page um-page">
+    <el-row :gutter="16">
       <el-col :xs="24" :lg="16">
-        <el-card class="profile-card">
+        <el-card class="morandi-card">
           <template #header>
             <div class="card-header">
               <h3>个人信息</h3>
@@ -15,7 +15,7 @@
 
           <div class="profile-content">
             <div class="avatar-section" v-if="privacySettings.showProfile">
-              <el-avatar :size="100" :src="userProfile.avatar" class="user-avatar">
+              <el-avatar :size="96" :src="userProfile.avatar" class="user-avatar">
                 {{ (userProfile.realName || userProfile.username || 'U').charAt(0).toUpperCase() }}
               </el-avatar>
               <div class="avatar-actions">
@@ -31,22 +31,18 @@
                 <el-descriptions-item label="用户名">{{ userProfile.username || '-' }}</el-descriptions-item>
                 <el-descriptions-item label="姓名">{{ userProfile.realName || '-' }}</el-descriptions-item>
                 <el-descriptions-item label="邮箱">
-                  {{ privacySettings.showEmail ? (userProfile.email || '-') : '已隐藏' }}
+                  {{ privacySettings.showEmail ? userProfile.email || '-' : '已隐藏' }}
                 </el-descriptions-item>
                 <el-descriptions-item label="手机号">
-                  {{ privacySettings.showPhone ? (userProfile.phone || '-') : '已隐藏' }}
+                  {{ privacySettings.showPhone ? userProfile.phone || '-' : '已隐藏' }}
                 </el-descriptions-item>
                 <el-descriptions-item label="部门">{{ userProfile.departmentName || '-' }}</el-descriptions-item>
                 <el-descriptions-item label="职位">{{ userProfile.position || '-' }}</el-descriptions-item>
                 <el-descriptions-item label="角色">
-                  <el-tag
-                    v-for="role in (userProfile.roleNames || [])"
-                    :key="role"
-                    size="small"
-                    style="margin-right: 8px;"
-                  >
+                  <el-tag v-for="role in userProfile.roleNames || []" :key="role" size="small" class="mr-8">
                     {{ role }}
                   </el-tag>
+                  <span v-if="!userProfile.roleNames || userProfile.roleNames.length === 0">-</span>
                 </el-descriptions-item>
                 <el-descriptions-item label="状态">
                   <el-tag :type="getStatusTagType(userProfile.status)">
@@ -54,13 +50,15 @@
                   </el-tag>
                 </el-descriptions-item>
                 <el-descriptions-item label="注册时间">{{ formatDate(userProfile.createdAt) }}</el-descriptions-item>
-                <el-descriptions-item label="最后登录">{{ formatDate(userProfile.lastLoginTime) || '从未登录' }}</el-descriptions-item>
+                <el-descriptions-item label="最后登录">
+                  {{ formatDate(userProfile.lastLoginTime) || '从未登录' }}
+                </el-descriptions-item>
               </el-descriptions>
             </div>
           </div>
         </el-card>
 
-        <el-card class="security-card">
+        <el-card class="morandi-card">
           <template #header>
             <div class="card-header">
               <h3>安全设置</h3>
@@ -105,7 +103,7 @@
               </el-form-item>
 
               <el-form-item>
-                <el-button type="primary" @click="handleChangePassword" :loading="changingPassword">
+                <el-button type="primary" :loading="changingPassword" @click="handleChangePassword">
                   修改密码
                 </el-button>
                 <el-button @click="resetSecurityForm">重置</el-button>
@@ -118,7 +116,7 @@
               <div class="option-item">
                 <div class="option-info">
                   <div class="option-title">双重认证 (2FA)</div>
-                  <div class="option-desc">为账号增加额外安全保护。</div>
+                  <div class="option-desc">为账号增加额外安全保护</div>
                 </div>
                 <el-switch
                   v-model="securitySettings.twoFactorEnabled"
@@ -131,7 +129,7 @@
               <div class="option-item">
                 <div class="option-info">
                   <div class="option-title">登录通知</div>
-                  <div class="option-desc">新设备登录时发送提醒。</div>
+                  <div class="option-desc">新设备登录时发送提醒</div>
                 </div>
                 <el-switch
                   v-model="securitySettings.loginNotification"
@@ -144,7 +142,7 @@
               <div class="option-item">
                 <div class="option-info">
                   <div class="option-title">会话管理</div>
-                  <div class="option-desc">查看并管理当前登录会话。</div>
+                  <div class="option-desc">查看并管理当前登录会话</div>
                 </div>
                 <el-button @click="showSessionsDialog = true">查看会话</el-button>
               </div>
@@ -154,7 +152,7 @@
       </el-col>
 
       <el-col :xs="24" :lg="8">
-        <el-card class="quick-actions-card">
+        <el-card class="morandi-card">
           <template #header>
             <h4>快捷操作</h4>
           </template>
@@ -175,7 +173,7 @@
           </div>
         </el-card>
 
-        <el-card class="login-history-card">
+        <el-card class="morandi-card">
           <template #header>
             <div class="card-header">
               <h4>最近登录</h4>
@@ -186,13 +184,13 @@
           <div class="login-history">
             <div
               v-for="log in loginHistory"
-              :key="log.id"
+              :key="log.id || `${log.loginTime}-${log.ip}`"
               class="login-item"
             >
               <div class="login-info">
                 <div class="login-time">{{ formatDate(log.loginTime) }}</div>
-                <div class="login-location">{{ log.location }} | {{ log.ip }}</div>
-                <div class="login-device">{{ log.device }} | {{ log.browser }}</div>
+                <div class="login-location">{{ log.location || '-' }} | {{ log.ip || '-' }}</div>
+                <div class="login-device">{{ log.device || '-' }} | {{ log.browser || '-' }}</div>
               </div>
               <div class="login-status">
                 <el-tag :type="log.success ? 'success' : 'danger'" size="small">
@@ -200,14 +198,13 @@
                 </el-tag>
               </div>
             </div>
-
             <div v-if="loginHistory.length === 0" class="empty-history">
               <el-empty description="暂无登录记录" :image-size="60" />
             </div>
           </div>
         </el-card>
 
-        <el-card class="stats-card">
+        <el-card class="morandi-card">
           <template #header>
             <div class="card-header">
               <h4>数据统计</h4>
@@ -246,6 +243,7 @@
     />
 
     <el-dialog
+      class="um-dialog"
       v-model="showPrivacyDialog"
       title="隐私设置"
       width="480px"
@@ -304,12 +302,10 @@ const showPrivacyDialog = ref(false)
 const securityFormRef = ref(null)
 
 const securityRules = {
-  oldPassword: [
-    { required: true, message: '请输入原密码', trigger: 'blur' }
-  ],
+  oldPassword: [{ required: true, message: '请输入原密码', trigger: 'blur' }],
   newPassword: [
     { required: true, message: '请输入新密码', trigger: 'blur' },
-    { min: 8, message: '密码长度不能小于8位', trigger: 'blur' },
+    { min: 8, message: '密码长度不能小于 8 位', trigger: 'blur' },
     { pattern: /^(?=.*[a-zA-Z])(?=.*\d)/, message: '密码必须包含字母和数字', trigger: 'blur' }
   ],
   confirmPassword: [
@@ -328,9 +324,16 @@ const securityRules = {
 }
 
 const normalizeUserProfile = (raw) => {
-  const preferences = raw?.preferences && typeof raw.preferences === 'string'
-    ? (() => { try { return JSON.parse(raw.preferences) } catch { return {} } })()
-    : (raw?.preferences || {})
+  const preferences =
+    raw?.preferences && typeof raw.preferences === 'string'
+      ? (() => {
+          try {
+            return JSON.parse(raw.preferences)
+          } catch {
+            return {}
+          }
+        })()
+      : raw?.preferences || {}
 
   return {
     ...raw,
@@ -569,72 +572,85 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.user-profile-container {
-  padding: 20px;
-  background: #f5f5f5;
-  min-height: 100vh;
+.morandi-page {
+  --m-bg: #f5f7fa;
+  --m-card: #ffffff;
+  --m-border: #ebeef5;
+  --m-head: #ffffff;
+  --m-text: #303133;
+  --m-subtext: #909399;
 }
 
-.profile-card,
-.security-card,
-.quick-actions-card,
-.login-history-card,
-.stats-card {
-  border-radius: 8px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-  margin-bottom: 20px;
+.user-profile-container {
+  padding: 20px;
+  background: var(--m-bg);
+  min-height: calc(100vh - 110px);
+}
+
+.morandi-card {
+  border-radius: 4px;
+  border: 1px solid var(--m-border);
+  box-shadow: none;
+  margin-bottom: 16px;
+  background: var(--m-card);
+}
+
+.morandi-card :deep(.el-card__header) {
+  background: var(--m-head);
+  border-bottom: 1px solid var(--m-border);
 }
 
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 10px;
 }
 
 .card-header h3,
 .card-header h4 {
   margin: 0;
-  color: #303133;
+  color: var(--m-text);
 }
 
 .profile-content {
-  padding: 20px 0;
+  padding: 8px 0;
 }
 
 .avatar-section {
   text-align: center;
-  margin-bottom: 32px;
+  margin-bottom: 24px;
 }
 
 .user-avatar {
   display: block;
-  margin: 0 auto 16px;
-  border: 4px solid #fff;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  margin: 0 auto 12px;
+  border: 3px solid #ffffff;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
 }
 
 .avatar-actions {
-  margin-top: 16px;
+  margin-top: 10px;
 }
 
 .info-section {
-  margin-top: 24px;
+  margin-top: 16px;
 }
 
 .security-content {
-  padding: 20px 0;
+  padding: 8px 0;
 }
 
 .security-options {
-  margin-top: 24px;
+  margin-top: 20px;
 }
 
 .option-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 0;
-  border-bottom: 1px solid #f0f0f0;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--m-border);
 }
 
 .option-item:last-child {
@@ -646,14 +662,14 @@ onMounted(() => {
 }
 
 .option-title {
-  font-weight: 500;
-  color: #303133;
+  font-weight: 600;
+  color: var(--m-text);
   margin-bottom: 4px;
 }
 
 .option-desc {
   font-size: 12px;
-  color: #909399;
+  color: var(--m-subtext);
 }
 
 .quick-actions {
@@ -664,68 +680,103 @@ onMounted(() => {
 
 .action-btn {
   width: 100%;
-  justify-content: flex-start;
 }
 
 .login-history {
-  max-height: 300px;
-  overflow-y: auto;
+  max-height: 360px;
+  overflow: auto;
 }
 
 .login-item {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  padding: 12px 0;
-  border-bottom: 1px solid #f0f0f0;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px dashed var(--m-border);
 }
 
 .login-item:last-child {
   border-bottom: none;
 }
 
-.login-info {
-  flex: 1;
-}
-
 .login-time {
-  font-weight: 500;
-  color: #303133;
-  margin-bottom: 4px;
+  font-weight: 600;
+  color: var(--m-text);
 }
 
 .login-location,
 .login-device {
+  color: var(--m-subtext);
   font-size: 12px;
-  color: #909399;
-  margin-bottom: 2px;
+  margin-top: 2px;
 }
 
 .empty-history {
-  padding: 20px;
-  text-align: center;
+  padding: 12px 0;
 }
 
 .stats-content {
   display: flex;
-  justify-content: space-around;
-  text-align: center;
+  gap: 12px;
 }
 
 .stat-item {
   flex: 1;
+  padding: 12px;
+  border: 1px solid var(--m-border);
+  border-radius: 4px;
+  background: #ffffff;
 }
 
 .stat-value {
-  font-size: 24px;
-  font-weight: bold;
+  font-size: 22px;
+  font-weight: 700;
   color: #409eff;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .stat-label {
   font-size: 12px;
-  color: #909399;
+  color: var(--m-subtext);
+}
+
+.mr-8 {
+  margin-right: 8px;
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+:deep(.um-dialog.el-dialog) {
+  border: 1px solid var(--m-border);
+  border-radius: 4px;
+  box-shadow: none;
+  overflow: hidden;
+}
+
+:deep(.um-dialog .el-dialog__header) {
+  margin-right: 0;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--m-border);
+}
+
+:deep(.um-dialog .el-dialog__title) {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--m-text);
+}
+
+:deep(.um-dialog .el-dialog__body) {
+  padding: 16px;
+}
+
+:deep(.um-dialog .el-dialog__footer) {
+  padding: 12px 16px;
+  border-top: 1px solid var(--m-border);
 }
 
 @media (max-width: 768px) {
@@ -742,12 +793,11 @@ onMounted(() => {
   .option-item {
     flex-direction: column;
     align-items: flex-start;
-    gap: 12px;
+    gap: 10px;
   }
 
   .stats-content {
     flex-direction: column;
-    gap: 16px;
   }
 }
 </style>

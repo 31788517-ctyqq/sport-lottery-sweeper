@@ -19,6 +19,8 @@ import { createPermissionDirective } from '@/composables/usePermissions'
 import './styles/index.css'
 // Light theme for buttons, cards, tables
 import './styles/light-theme.scss'
+// Unified spacing and control rhythm for Admin > Users module
+import './styles/user-management-unified.css'
 
 // Create Vue application
 const app = createApp(App)
@@ -33,6 +35,17 @@ app.use(pinia)
 // Initialize user store from localStorage
 useUserStore().initializeFromStorage()
 // AI_DONE: coder1 @2026-01-28T03:30:00Z
+
+// AI_WORKING: coder2 @2026-03-02T23:30:00Z - 添加认证存储初始化，确保token状态正确加载
+// 将认证store初始化移到下一个tick，避免在应用初始化期间产生冲突
+setTimeout(() => {
+  import('@/stores/auth').then(({ useAuthStore }) => {
+    const authStore = useAuthStore();
+    // 异步初始化认证状态
+    authStore.initializeAuth();
+  });
+}, 0);
+// AI_DONE: coder2 @2026-03-02T23:30:00Z
 
 app.use(router)
 app.use(ElementPlus)

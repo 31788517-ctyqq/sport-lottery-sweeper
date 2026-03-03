@@ -1,39 +1,39 @@
-<template>
-  <el-dialog v-model="visible" title="日志详情" width="720px">
+﻿<template>
+  <el-dialog class="um-dialog" v-model="visible" title="鏃ュ織璇︽儏" width="720px">
     <div v-if="log" class="detail">
       <el-descriptions :column="2" border>
-        <el-descriptions-item label="时间">{{ formatDate(log.timestamp) }}</el-descriptions-item>
-        <el-descriptions-item label="级别">
+        <el-descriptions-item label="鏃堕棿">{{ formatDate(log.timestamp) }}</el-descriptions-item>
+        <el-descriptions-item label="绾у埆">
           <el-tag :type="getLevelTagType(log.level)">{{ log.level || '-' }}</el-tag>
         </el-descriptions-item>
 
-        <el-descriptions-item label="类型">{{ log.log_type || '-' }}</el-descriptions-item>
-        <el-descriptions-item label="模块">{{ log.module || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="绫诲瀷">{{ log.log_type || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="妯″潡">{{ log.module || '-' }}</el-descriptions-item>
 
-        <el-descriptions-item label="用户ID">{{ log.user_id ?? '-' }}</el-descriptions-item>
+        <el-descriptions-item label="鐢ㄦ埛ID">{{ log.user_id ?? '-' }}</el-descriptions-item>
         <el-descriptions-item label="IP">{{ log.ip_address || '-' }}</el-descriptions-item>
 
-        <el-descriptions-item label="请求路径" :span="2">{{ log.request_path || '-' }}</el-descriptions-item>
-        <el-descriptions-item label="响应状态">{{ log.response_status ?? '-' }}</el-descriptions-item>
-        <el-descriptions-item label="耗时(ms)">{{ log.duration_ms ?? '-' }}</el-descriptions-item>
+        <el-descriptions-item label="璇锋眰璺緞" :span="2">{{ log.request_path || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="鍝嶅簲鐘舵€?">{{ log.response_status ?? '-' }}</el-descriptions-item>
+        <el-descriptions-item label="鑰楁椂(ms)">{{ log.duration_ms ?? '-' }}</el-descriptions-item>
 
-        <el-descriptions-item label="会话ID" :span="2">{{ log.session_id || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="浼氳瘽ID" :span="2">{{ log.session_id || '-' }}</el-descriptions-item>
         <el-descriptions-item label="UA" :span="2">{{ log.user_agent || '-' }}</el-descriptions-item>
 
-        <el-descriptions-item label="消息" :span="2">
+        <el-descriptions-item label="娑堟伅" :span="2">
           <div class="message">{{ log.message || '-' }}</div>
         </el-descriptions-item>
       </el-descriptions>
 
       <div v-if="extraPretty" class="extra">
-        <div class="extra-title">额外数据</div>
+        <div class="extra-title">棰濆鏁版嵁</div>
         <pre class="extra-pre">{{ extraPretty }}</pre>
       </div>
     </div>
 
     <template #footer>
       <span class="footer">
-        <el-button @click="visible = false">关闭</el-button>
+        <el-button @click="visible = false">鍏抽棴</el-button>
       </span>
     </template>
   </el-dialog>
@@ -132,4 +132,5 @@ const extraPretty = computed(() => {
   justify-content: flex-end;
 }
 </style>
+
 

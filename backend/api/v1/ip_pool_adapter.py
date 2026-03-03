@@ -1015,7 +1015,11 @@ async def test_ip_pool_connection(pool_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/ip-pools/source-addresses")
+@router.get(
+    "/ip-pools/source-addresses",
+    summary="获取 IP 来源地址配置",
+    description="获取 IP 抓取来源地址配置及每个来源当前的 IP 统计信息。",
+)
 async def get_source_addresses(db: Session = Depends(get_db)):
     """
     鑾峰彇鈥淚P鑾峰彇鍦板潃鈥濋厤缃紝骞堕檮甯︽瘡涓湴鍧€褰撳墠鎶撳彇鍒扮殑IP鏁伴噺銆?    """
@@ -1064,7 +1068,11 @@ async def get_source_addresses(db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/ip-pools/source-addresses")
+@router.post(
+    "/ip-pools/source-addresses",
+    summary="新增 IP 来源地址",
+    description="新增一个 IP 抓取来源地址。",
+)
 async def add_source_address(
     source: str = Body(..., embed=True),
     enabled: bool = Body(True, embed=True),
@@ -1088,7 +1096,11 @@ async def add_source_address(
     return {"code": 200, "data": {"source": source, "enabled": enabled}, "message": "鑾峰彇鍦板潃鏂板鎴愬姛"}
 
 
-@router.put("/ip-pools/source-addresses")
+@router.put(
+    "/ip-pools/source-addresses",
+    summary="更新 IP 来源地址",
+    description="编辑 IP 抓取来源地址，可选同步更新已有 IP 记录的来源字段。",
+)
 async def update_source_address(
     old_source: str = Body(..., embed=True),
     new_source: str = Body(..., embed=True),
@@ -1138,7 +1150,11 @@ async def update_source_address(
     }
 
 
-@router.delete("/ip-pools/source-addresses")
+@router.delete(
+    "/ip-pools/source-addresses",
+    summary="删除 IP 来源地址",
+    description="删除 IP 抓取来源地址配置，可选同时删除该来源已采集的 IP。",
+)
 async def delete_source_address(
     source: str = Body(..., embed=True),
     delete_related_ips: bool = Body(False, embed=True),

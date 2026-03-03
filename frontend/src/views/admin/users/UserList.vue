@@ -1,5 +1,5 @@
 ﻿<template>
-  <div class="user-list-container">
+  <div class="user-list-container um-page">
     <el-card class="users-card">
       <template #header>
         <div class="card-header">
@@ -96,22 +96,22 @@
       <div class="action-bar">
         <div class="bulk-actions">
           <el-button 
-            v-if="selectedUsers.length > 0"
             type="danger" 
+            :disabled="selectedUsers.length === 0"
             @click="handleBatchDisable"
           >
             批量禁用 ({{ selectedUsers.length }})
           </el-button>
           <el-button 
-            v-if="selectedUsers.length > 0"
             type="warning" 
+            :disabled="selectedUsers.length === 0"
             @click="handleBatchEnable"
           >
             批量启用 ({{ selectedUsers.length }})
           </el-button>
           <el-button 
-            v-if="selectedUsers.length > 0"
             type="primary" 
+            :disabled="selectedUsers.length === 0"
             @click="handleBatchAssignRole"
           >
             批量分配角色
@@ -121,9 +121,9 @@
           <div class="density-switch">
             <span class="density-label">表格密度</span>
             <el-radio-group v-model="tableDensity" size="small" @change="handleDensityChange">
-              <el-radio-button label="small">紧凑</el-radio-button>
-              <el-radio-button label="default">标准</el-radio-button>
-              <el-radio-button label="large">宽松</el-radio-button>
+              <el-radio-button value="small">紧凑</el-radio-button>
+              <el-radio-button value="default">标准</el-radio-button>
+              <el-radio-button value="large">宽松</el-radio-button>
             </el-radio-group>
           </div>
           <el-popover placement="bottom-end" trigger="click" width="220">
@@ -139,7 +139,7 @@
                 <el-checkbox
                   v-for="column in allColumns"
                   :key="column.key"
-                  :label="column.key"
+                  :value="column.key"
                 >
                   {{ column.label }}
                 </el-checkbox>
@@ -158,10 +158,9 @@
           :data="tableData" 
           stripe 
           style="width: 100%" 
-          v-loading="loading"
+          v-loading="loading && tableData.length === 0"
           :size="tableDensity"
           height="calc(100vh - 380px)"
-          :header-cell-style="{background: '#f5f7fa', color: '#606266'}"
           class="modern-table"
           @selection-change="handleSelectionChange"
         >
@@ -199,7 +198,7 @@
               {{ formatDate(scope.row.lastLoginTime) || '-' }}
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="260" fixed="right">
+          <el-table-column label="操作" width="300" fixed="right">
             <template #default="scope">
               <div class="op-actions">
                 <el-button type="primary" size="small" @click="handleView(scope.row.id)">
@@ -957,21 +956,21 @@ onMounted(async () => {
 
 <style scoped>
 .user-list-container {
-  --m-bg: #eef1f3;
-  --m-card: #f7f8f9;
-  --m-border: #d8dde2;
-  --m-head: #e8ecef;
-  --m-text: #405063;
-  --m-subtext: #7d8792;
-  padding: 16px;
-  background: radial-gradient(circle at 20% 20%, #f3f6f7 0, var(--m-bg) 48%, #e9edef 100%);
+  --m-bg: #f5f7fa;
+  --m-card: #ffffff;
+  --m-border: #ebeef5;
+  --m-head: #ffffff;
+  --m-text: #303133;
+  --m-subtext: #909399;
+  padding: 20px;
+  background: var(--m-bg);
   min-height: calc(100vh - 110px);
 }
 
 .users-card {
-  border-radius: 14px;
+  border-radius: 4px;
   border: 1px solid var(--m-border);
-  box-shadow: 0 6px 18px rgba(101, 114, 130, 0.1);
+  box-shadow: none;
   background: var(--m-card);
 }
 
@@ -997,7 +996,7 @@ onMounted(async () => {
 
 .users-controls {
   padding: 16px;
-  background: #f9fbfc;
+  background: #ffffff;
   border-bottom: 1px solid var(--m-border);
 }
 
@@ -1013,7 +1012,7 @@ onMounted(async () => {
 
 .action-bar {
   padding: 12px 16px;
-  background: #f9fbfc;
+  background: #ffffff;
   border-bottom: 1px solid var(--m-border);
   display: flex;
   gap: 12px;
@@ -1073,13 +1072,31 @@ onMounted(async () => {
 }
 
 .modern-table {
-  border-radius: 0 0 14px 14px;
+  border-radius: 0 0 4px 4px;
 }
 
 .modern-table :deep(th.el-table__cell) {
-  background: #edf1f4 !important;
-  color: var(--m-text);
+  background: #fafafa !important;
+  color: #1f2937 !important;
   font-weight: 600;
+}
+
+.modern-table :deep(th.el-table__cell .cell) {
+  color: #1f2937 !important;
+}
+
+/* Override global user-management.css white header text */
+.user-list-container .modern-table :deep(.el-table__header-wrapper th .cell),
+.user-list-container .modern-table :deep(.el-table__fixed-header-wrapper th .cell) {
+  color: #1f2937 !important;
+}
+
+.modern-table :deep(td.el-table__cell) {
+  color: #1f2937 !important;
+}
+
+.modern-table :deep(td.el-table__cell .cell) {
+  color: #1f2937 !important;
 }
 
 .op-actions {
@@ -1089,8 +1106,23 @@ onMounted(async () => {
   gap: 8px;
 }
 
+.op-actions :deep(.el-button) {
+  min-width: 72px !important;
+  padding: 0 10px !important;
+}
+
 .op-actions .el-button + .el-button {
   margin-left: 0;
+}
+
+.bulk-actions :deep(.el-button.is-disabled),
+.bulk-actions :deep(.el-button.is-disabled:hover),
+.bulk-actions :deep(.el-button.is-disabled:focus) {
+  background-color: #e5e7eb !important;
+  border-color: #9ca3af !important;
+  color: #374151 !important;
+  opacity: 1;
+  cursor: not-allowed;
 }
 
 .table-empty-state {
@@ -1099,7 +1131,7 @@ onMounted(async () => {
 
 .pagination-wrapper {
   padding: 16px;
-  background: #f9fbfc;
+  background: #ffffff;
   border-top: 1px solid var(--m-border);
   display: flex;
   justify-content: center;

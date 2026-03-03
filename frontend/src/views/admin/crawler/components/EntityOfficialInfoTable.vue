@@ -21,7 +21,7 @@
       >
         <template #default="{ row }">
           <div v-if="row.official_info && row.official_info[col]" class="url-cell">
-            <el-link :href="row.official_info[col]" target="_blank" :underline="false">
+            <el-link :href="row.official_info[col]" target="_blank" underline="never">
               {{ getDomain(row.official_info[col]) }}
             </el-link>
             <div class="status-indicator verified">已配置</div>

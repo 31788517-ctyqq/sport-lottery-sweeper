@@ -1,10 +1,10 @@
 ﻿<template>
-  <div class="role-permission-container">
+  <div class="role-permission-container um-page">
     <!-- 角色等级说明 -->
     <el-card class="role-level-guide" style="margin-bottom: 20px;">
       <template #header>
         <div class="card-header">
-          <h3>📋 角色等级体系</h3>
+              <h3>角色等级体系</h3>
         </div>
       </template>
       <div class="role-levels-grid">
@@ -27,6 +27,20 @@
               <el-button type="primary" size="small" @click="handleCreateRole">
                 <el-icon><Plus /></el-icon>
                 新建角色
+              </el-button>
+              <el-button
+                v-if="roleApiCapabilities.exportRole"
+                size="small"
+                @click="handleExportRoles"
+              >
+                导出角色
+              </el-button>
+              <el-button
+                v-if="roleApiCapabilities.importRole"
+                size="small"
+                @click="handleImportRoles"
+              >
+                导入角色
               </el-button>
             </div>
           </template>
@@ -55,23 +69,22 @@
               <div class="role-info">
                 <div class="role-name">
                   {{ role.name }}
-                  <el-tag v-if="role.is_system" size="small" type="info" style="margin-left: 8px;">系统</el-tag>
-                  <el-tag 
-                    v-if="role.level" 
-                    :class="['level-tag', `level-${role.level}`]"
-                    style="margin-left: 4px;"
-                  >
-                    {{ getRoleLevelName(role.level) }}
-                  </el-tag>
                 </div>
                 <div class="role-desc">{{ role.description || '-' }}</div>
               </div>
               <div class="role-actions">
-                <el-button type="primary" size="small" text @click.stop="handleEditRole(role)">编辑</el-button>
+                <el-button
+                  type="warning"
+                  size="small"
+                  class="role-action-btn"
+                  @click.stop="handleEditRole(role)"
+                >
+                  编辑
+                </el-button>
                 <el-button
                   type="danger"
                   size="small"
-                  text
+                  class="role-action-btn"
                   @click.stop="handleDeleteRole(role)"
                   :disabled="role.is_system || role.name === '超级管理员'"
                 >
@@ -152,7 +165,14 @@ import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Search } from '@element-plus/icons-vue'
 import RoleEditDialog from '@/components/admin/RoleEditDialog.vue'
-import { getRoles, createRole, updateRole, deleteRole } from '@/api/modules/roles'
+import {
+  getRoles,
+  createRole,
+  updateRole,
+  deleteRole,
+  assignRolePermissions,
+  ROLE_API_CAPABILITIES
+} from '@/api/modules/roles'
 import { getPermissions } from '@/api/modules/permissions'
 
 // 角色等级配置
@@ -178,6 +198,7 @@ const treeProps = {
   children: 'children',
   label: 'name'
 }
+const roleApiCapabilities = ROLE_API_CAPABILITIES
 
 const filteredRoles = computed(() => {
   if (!roleSearchKeyword.value) return roles.value
@@ -189,11 +210,6 @@ const filteredRoles = computed(() => {
 })
 
 const normalizePermissions = (input) => (input || []).map((p) => (typeof p === 'object' ? p.id : p))
-
-const getRoleLevelName = (level) => {
-  const levelObj = roleLevels.find(l => l.value === level)
-  return levelObj ? `${levelObj.name} (L${level})` : `L${level}`
-}
 
 const loadRoles = async () => {
   try {
@@ -282,13 +298,7 @@ const handleSavePermissions = async () => {
     const checkedKeys = permissionTreeRef.value.getCheckedKeys()
     const halfCheckedKeys = permissionTreeRef.value.getHalfCheckedKeys()
     const allCheckedKeys = [...checkedKeys, ...halfCheckedKeys]
-    await updateRole(selectedRole.value.id, {
-      name: selectedRole.value.name,
-      description: selectedRole.value.description,
-      level: selectedRole.value.level,
-      is_system: selectedRole.value.is_system,
-      permissions: allCheckedKeys
-    })
+    await assignRolePermissions(selectedRole.value.id, allCheckedKeys)
     ElMessage.success('权限保存成功')
     await loadRoles()
   } catch (error) {
@@ -331,6 +341,14 @@ const handleRoleSubmit = async (formData) => {
   }
 }
 
+const handleExportRoles = () => {
+  ElMessage.info('当前环境未开放角色导出能力')
+}
+
+const handleImportRoles = () => {
+  ElMessage.info('当前环境未开放角色导入能力')
+}
+
 onMounted(() => {
   loadRoles()
   loadPermissions()
@@ -339,14 +357,27 @@ onMounted(() => {
 
 <style scoped>
 .role-permission-container {
+  --m-bg: #f5f7fa;
+  --m-card: #ffffff;
+  --m-border: #ebeef5;
+  --m-head: #ffffff;
+  --m-text: #303133;
+  --m-subtext: #909399;
   padding: 20px;
-  background: #f5f5f5;
-  min-height: 100vh;
+  background: var(--m-bg);
+  min-height: calc(100vh - 110px);
 }
 
 .role-level-guide {
-  border-radius: 8px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  border: 1px solid var(--m-border);
+  box-shadow: none;
+  background: var(--m-card);
+}
+
+.role-level-guide :deep(.el-card__header) {
+  background: var(--m-head);
+  border-bottom: 1px solid var(--m-border);
 }
 
 .role-levels-grid {
@@ -360,9 +391,9 @@ onMounted(() => {
   align-items: center;
   gap: 12px;
   padding: 12px;
-  border: 1px solid #ebeef5;
-  border-radius: 6px;
-  background: #fafafa;
+  border: 1px solid var(--m-border);
+  border-radius: 4px;
+  background: #ffffff;
 }
 
 .level-badge {
@@ -378,24 +409,24 @@ onMounted(() => {
 }
 
 .level-badge.level-5 {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #5e6f7f 0%, #758a9b 100%);
 }
 
 .level-badge.level-4 {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  background: linear-gradient(135deg, #7d8e9f 0%, #8ea0b2 100%);
 }
 
 .level-badge.level-3 {
-  background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+  background: linear-gradient(135deg, #8f9daa 0%, #a5b3bf 100%);
 }
 
 .level-badge.level-2 {
-  background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);
+  background: linear-gradient(135deg, #8fa1b3 0%, #aab8c5 100%);
 }
 
 .level-badge.level-1 {
-  background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
-  color: #333;
+  background: linear-gradient(135deg, #b7c3cc 0%, #c7d1d8 100%);
+  color: #2f3e4d;
 }
 
 .level-info {
@@ -405,49 +436,28 @@ onMounted(() => {
 .level-name {
   font-weight: 600;
   font-size: 14px;
-  color: #303133;
+  color: var(--m-text);
   margin-bottom: 4px;
 }
 
 .level-desc {
   font-size: 12px;
-  color: #909399;
-}
-
-.level-tag {
-  font-weight: 600;
-}
-
-.level-tag.level-5 {
-  background-color: #667eea;
-  color: white;
-}
-
-.level-tag.level-4 {
-  background-color: #f5576c;
-  color: white;
-}
-
-.level-tag.level-3 {
-  background-color: #fa709a;
-  color: white;
-}
-
-.level-tag.level-2 {
-  background-color: #30cfd0;
-  color: white;
-}
-
-.level-tag.level-1 {
-  background-color: #a8edea;
-  color: #333;
+  color: var(--m-subtext);
 }
 
 .roles-card,
 .permissions-card {
-  border-radius: 8px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  border: 1px solid var(--m-border);
+  box-shadow: none;
   height: fit-content;
+  background: var(--m-card);
+}
+
+.roles-card :deep(.el-card__header),
+.permissions-card :deep(.el-card__header) {
+  background: var(--m-head);
+  border-bottom: 1px solid var(--m-border);
 }
 
 .card-header {
@@ -460,6 +470,7 @@ onMounted(() => {
 
 .card-header h3 {
   margin: 0;
+  color: var(--m-text);
 }
 
 .header-actions {
@@ -468,7 +479,7 @@ onMounted(() => {
 }
 
 .tip-text {
-  color: #909399;
+  color: var(--m-subtext);
   font-size: 14px;
 }
 
@@ -490,7 +501,7 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 12px 16px;
-  border: 1px solid #ebeef5;
+  border: 1px solid var(--m-border);
   border-radius: 6px;
   margin-bottom: 8px;
   cursor: pointer;
@@ -498,8 +509,8 @@ onMounted(() => {
 }
 
 .role-item:hover {
-  border-color: #409eff;
-  background-color: #f0f9ff;
+  border-color: #c6e2ff;
+  background-color: #f5faff;
 }
 
 .role-item.active {
@@ -516,7 +527,7 @@ onMounted(() => {
 .role-name {
   font-weight: 600;
   margin-bottom: 4px;
-  color: #303133;
+  color: var(--m-text);
   display: flex;
   align-items: center;
   flex-wrap: wrap;
@@ -525,7 +536,7 @@ onMounted(() => {
 
 .role-desc {
   font-size: 12px;
-  color: #909399;
+  color: var(--m-subtext);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -533,9 +544,30 @@ onMounted(() => {
 
 .role-actions {
   display: flex;
-  gap: 4px;
+  gap: 8px;
   margin-left: 8px;
   flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.role-action-btn {
+  min-width: 66px;
+  height: 30px !important;
+  padding: 0 10px !important;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.role-action-btn.is-disabled,
+.role-action-btn.is-disabled:hover,
+.role-action-btn.is-disabled:focus {
+  background: #e5e7eb !important;
+  border-color: #d1d5db !important;
+  color: #6b7280 !important;
+  opacity: 1 !important;
+  box-shadow: none !important;
+  cursor: not-allowed !important;
 }
 
 .permissions-content {
@@ -544,11 +576,12 @@ onMounted(() => {
 }
 
 .permission-tree {
-  border: 1px solid #ebeef5;
-  border-radius: 6px;
+  border: 1px solid var(--m-border);
+  border-radius: 4px;
   padding: 12px;
   max-height: 420px;
   overflow: auto;
+  background: #ffffff;
 }
 
 .tree-node {
@@ -563,13 +596,13 @@ onMounted(() => {
 }
 
 .node-desc {
-  color: #909399;
+  color: var(--m-subtext);
   font-size: 12px;
 }
 
 .permission-help {
   border: 1px dashed #dcdfe6;
-  border-radius: 6px;
+  border-radius: 4px;
   padding: 12px;
   background: #fafafa;
 }
@@ -581,7 +614,7 @@ onMounted(() => {
 .permission-help ul {
   margin: 0;
   padding-left: 18px;
-  color: #606266;
+  color: var(--m-text);
 }
 
 .no-selection {
@@ -592,7 +625,7 @@ onMounted(() => {
 
 @media (max-width: 1200px) {
   .role-permission-container {
-    padding: 10px;
+    padding: 12px;
   }
 
   .role-levels-grid {

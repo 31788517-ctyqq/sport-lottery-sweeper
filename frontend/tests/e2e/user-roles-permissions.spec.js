@@ -10,7 +10,7 @@ async function setupRolePageMocks(page) {
       { id: 1, name: '用户管理', description: '管理用户', parentId: null, children: [] },
       { id: 2, name: '角色权限', description: '管理角色权限', parentId: null, children: [] }
     ],
-    calls: { roleList: 0, permissionList: 0, createRole: 0, updateRole: 0 }
+    calls: { roleList: 0, permissionList: 0, createRole: 0, updateRole: 0, assignPermissions: 0 }
   };
 
   await page.route('**/api/**', async (route) => {
@@ -72,11 +72,33 @@ async function setupRolePageMocks(page) {
       });
     }
 
+    if (/\/admin\/roles\/\d+\/permissions$/.test(path) && method === 'POST') {
+      state.calls.assignPermissions += 1;
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ code: 200, data: true })
+      });
+    }
+
     if (/\/admin\/roles\/\d+$/.test(path) && method === 'DELETE') {
       return route.fulfill({
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({ code: 200, data: true })
+      });
+    }
+
+    if (path.startsWith('/api/')) {
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          code: 200,
+          success: true,
+          message: 'mock default',
+          data: {}
+        })
       });
     }
 
@@ -89,6 +111,10 @@ async function setupRolePageMocks(page) {
 test.describe('User Roles & Permissions Page', () => {
   test('should load roles and permission tree from data layer', async ({ page }) => {
     const state = await setupRolePageMocks(page);
+    await page.addInitScript(() => {
+      localStorage.setItem('access_token', 'mock-token');
+      localStorage.setItem('token', 'mock-token');
+    });
 
     await page.goto('/admin/users/roles');
     await page.waitForLoadState('networkidle');
@@ -104,6 +130,10 @@ test.describe('User Roles & Permissions Page', () => {
 
   test('should create role and save permissions', async ({ page }) => {
     const state = await setupRolePageMocks(page);
+    await page.addInitScript(() => {
+      localStorage.setItem('access_token', 'mock-token');
+      localStorage.setItem('token', 'mock-token');
+    });
 
     await page.goto('/admin/users/roles');
     await page.waitForLoadState('networkidle');
@@ -122,6 +152,6 @@ test.describe('User Roles & Permissions Page', () => {
     await page.locator('.permissions-card .el-button--primary').click();
     await page.waitForLoadState('networkidle');
 
-    expect(state.calls.updateRole).toBeGreaterThan(0);
+    expect(state.calls.assignPermissions).toBeGreaterThan(0);
   });
 });

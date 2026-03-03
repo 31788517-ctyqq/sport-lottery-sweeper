@@ -1,0 +1,319 @@
+/* Unified UI baseline for Admin > Users (6 menu pages) */
+
+.um-page {
+  --um-page-title-size: 20px;
+  --um-page-title-line-height: 28px;
+  --um-card-title-size: 16px;
+  --um-card-title-line-height: 24px;
+  --um-body-font-size: 14px;
+  --um-body-line-height: 22px;
+  --um-help-font-size: 12px;
+  --um-help-line-height: 18px;
+
+  --um-control-height: 36px;
+  --um-control-height-small: 30px;
+  --um-control-radius: 6px;
+  --um-form-item-gap: 16px;
+  --um-section-gap: 16px;
+
+  --um-primary: #6b879f;
+  --um-primary-hover: #5d788f;
+  --um-success: #7fa38f;
+  --um-success-hover: #70937f;
+  --um-danger: #c38a8a;
+  --um-danger-hover: #b27a7a;
+
+  --um-head-bg: #edf2f7;
+  --um-head-border: #e2e8f0;
+  --um-card-border: #e5e7eb;
+  --um-table-head-bg: #f8fafc;
+  --um-row-hover: #f5f7fa;
+
+  --um-text-main: #334155;
+  --um-text-sub: #64748b;
+  --um-text-weak: #94a3b8;
+}
+
+/* Typography */
+.um-page {
+  font-size: var(--um-body-font-size);
+  color: var(--um-text-main);
+}
+
+.um-page .page-title,
+.um-page .module-title,
+.um-page .section-title {
+  font-size: var(--um-page-title-size);
+  line-height: var(--um-page-title-line-height);
+  font-weight: 600;
+  color: var(--um-text-main);
+}
+
+.um-page .subtitle,
+.um-page .help-text,
+.um-page .meta,
+.um-page .muted-text {
+  font-size: var(--um-help-font-size);
+  line-height: var(--um-help-line-height);
+  color: var(--um-text-sub);
+}
+
+/* Buttons */
+.um-page .el-button,
+.um-dialog .el-button {
+  height: var(--um-control-height);
+  min-width: 88px;
+  padding: 0 14px;
+  border-radius: var(--um-control-radius);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.um-page .el-button > span,
+.um-dialog .el-button > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.um-page .el-button--small,
+.um-dialog .el-button--small {
+  height: var(--um-control-height-small);
+  min-width: 72px;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.um-page .el-button--primary,
+.um-dialog .el-button--primary {
+  background-color: var(--um-primary);
+  border-color: var(--um-primary);
+  color: #fff;
+}
+
+.um-page .el-button--primary:hover,
+.um-page .el-button--primary:focus,
+.um-dialog .el-button--primary:hover,
+.um-dialog .el-button--primary:focus {
+  background-color: var(--um-primary-hover);
+  border-color: var(--um-primary-hover);
+}
+
+.um-page .el-button--success,
+.um-dialog .el-button--success {
+  background-color: var(--um-success);
+  border-color: var(--um-success);
+}
+
+.um-page .el-button--success:hover,
+.um-page .el-button--success:focus,
+.um-dialog .el-button--success:hover,
+.um-dialog .el-button--success:focus {
+  background-color: var(--um-success-hover);
+  border-color: var(--um-success-hover);
+}
+
+.um-page .el-button--danger,
+.um-dialog .el-button--danger {
+  background-color: var(--um-danger);
+  border-color: var(--um-danger);
+}
+
+.um-page .el-button--danger:hover,
+.um-page .el-button--danger:focus,
+.um-dialog .el-button--danger:hover,
+.um-dialog .el-button--danger:focus {
+  background-color: var(--um-danger-hover);
+  border-color: var(--um-danger-hover);
+}
+
+/* Inputs/selectors */
+.um-page .el-input__wrapper,
+.um-page .el-select__wrapper,
+.um-page .el-date-editor.el-input__wrapper,
+.um-dialog .el-input__wrapper,
+.um-dialog .el-select__wrapper,
+.um-dialog .el-date-editor.el-input__wrapper {
+  min-height: var(--um-control-height);
+  border-radius: var(--um-control-radius);
+}
+
+.um-page .el-input-number,
+.um-dialog .el-input-number {
+  width: 100%;
+}
+
+.um-page .el-textarea__inner,
+.um-dialog .el-textarea__inner {
+  border-radius: var(--um-control-radius);
+  line-height: 1.5;
+}
+
+/* Form rhythm */
+.um-page .el-form-item,
+.um-dialog .el-form-item {
+  margin-bottom: var(--um-form-item-gap);
+}
+
+.um-page .el-form-item__label,
+.um-dialog .el-form-item__label {
+  min-height: var(--um-control-height);
+  line-height: var(--um-control-height);
+  color: var(--um-text-sub);
+  font-size: 13px;
+  font-weight: 500;
+  padding-right: 10px;
+}
+
+.um-page .el-form-item__content,
+.um-dialog .el-form-item__content {
+  min-height: var(--um-control-height);
+}
+
+/* Card rhythm */
+.um-page .el-card,
+.um-page .morandi-card,
+.um-page .users-card,
+.um-page .logs-card,
+.um-page .roles-card {
+  border: 1px solid var(--um-card-border);
+  border-radius: 6px;
+  box-shadow: none;
+}
+
+.um-page .el-card__header {
+  min-height: 52px;
+  box-sizing: border-box;
+  background: var(--um-head-bg) !important;
+  border-bottom: 1px solid var(--um-head-border) !important;
+  color: var(--um-text-main) !important;
+  padding: 14px 16px;
+}
+
+.um-page .el-card__body {
+  padding: 16px;
+}
+
+.um-page .card-header h2,
+.um-page .card-header h3,
+.um-page .card-header h4,
+.um-page .card-header .title {
+  margin: 0;
+  font-size: var(--um-card-title-size);
+  line-height: var(--um-card-title-line-height);
+  font-weight: 600;
+  color: var(--um-text-main);
+}
+
+/* Dialog shell baseline */
+.um-dialog.el-dialog {
+  border: 1px solid #ebeef5;
+  border-radius: 6px;
+  box-shadow: none;
+  overflow: hidden;
+}
+
+.um-dialog .el-dialog__header {
+  margin-right: 0;
+  padding: 14px 16px;
+  border-bottom: 1px solid #ebeef5;
+}
+
+.um-dialog .el-dialog__title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #303133;
+}
+
+.um-dialog .el-dialog__body {
+  padding: 16px;
+}
+
+.um-dialog .el-dialog__footer {
+  padding: 12px 16px;
+  border-top: 1px solid #ebeef5;
+}
+
+/* Table spacing and colors */
+.um-page .el-table {
+  color: var(--um-text-main);
+}
+
+.um-page .el-table th.el-table__cell {
+  height: 44px;
+  background: var(--um-table-head-bg) !important;
+  color: #475569 !important;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 11px 12px;
+}
+
+.um-page .el-table td.el-table__cell {
+  color: var(--um-text-main);
+  font-size: 13px;
+  padding: 10px 12px;
+}
+
+.um-page .el-table .cell {
+  line-height: 22px;
+}
+
+.um-page .el-table__body .el-table__row > td.el-table__cell {
+  min-height: 46px;
+}
+
+/* Operation logs uses denser rows */
+.um-page.operation-log-container .el-table__body .el-table__row > td.el-table__cell {
+  min-height: 40px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.um-page .el-table__row:hover > td.el-table__cell {
+  background: var(--um-row-hover) !important;
+}
+
+.um-page .el-table .cell .el-button + .el-button {
+  margin-left: 8px;
+}
+
+/* Avoid washed-out table text under global loading mask styles */
+.um-page .el-loading-mask {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  background-color: rgba(255, 255, 255, 0.58) !important;
+}
+
+.um-page .el-loading-spinner .el-loading-text {
+  color: #334155 !important;
+  font-weight: 600;
+}
+
+/* Section/pagination spacing */
+.um-page .users-controls,
+.um-page .action-bar,
+.um-page .search-section,
+.um-page .operation-section,
+.um-page .logs-controls {
+  margin-bottom: 12px;
+  border-radius: 6px;
+}
+
+.um-page .pagination-wrapper,
+.um-page .pagination-section,
+.um-page .pagination-container {
+  min-height: 48px;
+  margin-top: 12px;
+  border-radius: 6px;
+}
+
+.um-page .el-tag + .el-tag,
+.um-dialog .el-tag + .el-tag {
+  margin-left: 6px;
+}
+
+.um-page .el-form-item .el-tag,
+.um-dialog .el-form-item .el-tag {
+  margin-bottom: 6px;
+}

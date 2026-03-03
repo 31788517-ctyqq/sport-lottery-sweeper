@@ -1,5 +1,6 @@
 ﻿<template>
   <el-dialog
+    class="um-dialog"
     :title="dialogTitle"
     v-model="visible"
     width="650px"
@@ -30,7 +31,7 @@
       </el-form-item>
 
       <el-form-item label="系统内置角色" prop="is_system">
-        <el-checkbox v-model="formData.is_system" label="是否为系统内置角色（勾选后无法删除）" />
+        <el-checkbox v-model="formData.is_system">是否为系统内置角色（勾选后无法删除）</el-checkbox>
       </el-form-item>
 
       <el-form-item label="权限配置" prop="permissions">
@@ -180,6 +181,34 @@ const handleClose = () => {
 </script>
 
 <style scoped>
+:deep(.um-dialog.el-dialog) {
+  border: 1px solid #ebeef5;
+  border-radius: 4px;
+  box-shadow: none;
+  overflow: hidden;
+}
+
+:deep(.um-dialog .el-dialog__header) {
+  margin-right: 0;
+  padding: 14px 16px;
+  border-bottom: 1px solid #ebeef5;
+}
+
+:deep(.um-dialog .el-dialog__title) {
+  font-size: 16px;
+  font-weight: 600;
+  color: #303133;
+}
+
+:deep(.um-dialog .el-dialog__body) {
+  padding: 16px;
+}
+
+:deep(.um-dialog .el-dialog__footer) {
+  padding: 12px 16px;
+  border-top: 1px solid #ebeef5;
+}
+
 .permission-tree-container {
   border: 1px solid var(--el-border-color-light);
   border-radius: 4px;

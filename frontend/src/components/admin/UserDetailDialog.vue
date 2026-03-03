@@ -1,23 +1,18 @@
 <template>
   <el-dialog
+    class="um-dialog"
     v-model="visible"
-    :title="getDialogTitle()"
-    width="800px"
+    :title="dialogTitle"
+    width="840px"
     :close-on-click-modal="false"
     @close="handleClose"
   >
-    <el-form 
-      ref="formRef"
-      :model="userData" 
-      :rules="formRules"
-      label-width="100px"
-      class="user-form"
-    >
-      <el-row :gutter="20">
+    <el-form ref="formRef" :model="userData" :rules="formRules" label-width="100px" class="user-form">
+      <el-row :gutter="16">
         <el-col :span="12">
           <el-form-item label="用户名" prop="username">
-            <el-input 
-              v-model="userData.username" 
+            <el-input
+              v-model="userData.username"
               placeholder="请输入用户名"
               :disabled="mode === 'view' || mode === 'edit'"
             />
@@ -25,50 +20,49 @@
         </el-col>
         <el-col :span="12">
           <el-form-item label="姓名" prop="realName">
-            <el-input 
-              v-model="userData.realName" 
-              placeholder="请输入姓名"
-              :disabled="mode === 'view'"
-            />
+            <el-input v-model="userData.realName" placeholder="请输入姓名" :disabled="mode === 'view'" />
           </el-form-item>
         </el-col>
       </el-row>
-      
-      <el-row :gutter="20">
+
+      <el-row :gutter="16">
         <el-col :span="12">
           <el-form-item label="邮箱" prop="email">
-            <el-input 
-              v-model="userData.email" 
-              placeholder="请输入邮箱"
-              :disabled="mode === 'view'"
-            />
+            <el-input v-model="userData.email" placeholder="请输入邮箱" :disabled="mode === 'view'" />
           </el-form-item>
         </el-col>
         <el-col :span="12">
           <el-form-item label="手机号" prop="phone">
-            <el-input 
-              v-model="userData.phone" 
-              placeholder="请输入手机号"
-              :disabled="mode === 'view'"
-            />
+            <el-input v-model="userData.phone" placeholder="请输入手机号" :disabled="mode === 'view'" />
           </el-form-item>
         </el-col>
       </el-row>
-      
-      <el-row :gutter="20">
+
+      <el-row :gutter="16">
         <el-col :span="12">
           <el-form-item label="部门" prop="departmentId">
             <el-tree-select
               v-model="userData.departmentId"
               :data="departmentOptions"
               :props="treeProps"
-              placeholder="请选择部门"
+              placeholder="可选"
               check-strictly
-              :disabled="mode === 'view'"
+              clearable
               style="width: 100%"
+              :disabled="mode === 'view'"
             />
           </el-form-item>
         </el-col>
+        <el-col :span="12">
+          <el-form-item label="角色" prop="role">
+            <el-select v-model="userData.role" placeholder="请选择角色" :disabled="mode === 'view'" style="width: 100%">
+              <el-option v-for="item in roleOptions" :key="item.value" :label="item.label" :value="item.value" />
+            </el-select>
+          </el-form-item>
+        </el-col>
+      </el-row>
+
+      <el-row :gutter="16">
         <el-col :span="12">
           <el-form-item label="状态" prop="status">
             <el-radio-group v-model="userData.status" :disabled="mode === 'view'">
@@ -78,25 +72,33 @@
           </el-form-item>
         </el-col>
       </el-row>
-      
-      <el-form-item label="角色" prop="roleIds" v-if="mode !== 'create'">
-        <el-select
-          v-model="userData.roleIds"
-          multiple
-          placeholder="请选择角色"
-          :disabled="mode === 'view'"
-          style="width: 100%"
-        >
-          <el-option 
-            v-for="role in roleOptions" 
-            :key="role.id"
-            :label="role.name" 
-            :value="role.id" 
-          />
-        </el-select>
-      </el-form-item>
-      
-      <el-form-item label="备注" v-if="mode !== 'create'">
+
+      <el-row v-if="mode === 'create'" :gutter="16">
+        <el-col :span="12">
+          <el-form-item label="登录密码" prop="password">
+            <el-input
+              v-model="userData.password"
+              type="password"
+              show-password
+              autocomplete="new-password"
+              placeholder="请输入登录密码"
+            />
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item label="确认密码" prop="confirmPassword">
+            <el-input
+              v-model="userData.confirmPassword"
+              type="password"
+              show-password
+              autocomplete="new-password"
+              placeholder="请再次输入密码"
+            />
+          </el-form-item>
+        </el-col>
+      </el-row>
+
+      <el-form-item v-if="mode !== 'create'" label="备注" prop="remark">
         <el-input
           v-model="userData.remark"
           type="textarea"
@@ -105,12 +107,11 @@
           :disabled="mode === 'view'"
         />
       </el-form-item>
-      
-      <!-- 查看模式下显示更多信息 -->
+
       <template v-if="mode === 'view'">
-        <el-row :gutter="20">
+        <el-row :gutter="16">
           <el-col :span="12">
-            <el-form-item label="注册时间">
+            <el-form-item label="创建时间">
               <span>{{ formatDate(userData.createdAt) }}</span>
             </el-form-item>
           </el-col>
@@ -120,64 +121,49 @@
             </el-form-item>
           </el-col>
         </el-row>
-        
-        <el-form-item label="角色">
-          <el-tag 
-            v-for="role in userData.roleNames" 
-            :key="role"
-            size="small"
-            style="margin-right: 8px; margin-bottom: 4px;"
-          >
-            {{ role }}
-          </el-tag>
+        <el-form-item label="角色标签">
+          <el-tag v-for="role in displayRoleNames" :key="role" size="small" class="mr-8">{{ role }}</el-tag>
         </el-form-item>
       </template>
     </el-form>
-    
+
     <template #footer>
       <span class="dialog-footer">
-        <el-button @click="handleClose">
-          {{ mode === 'view' ? '关闭' : '取消' }}
-        </el-button>
-        <el-button 
-          v-if="mode === 'view'"
-          type="primary" 
-          @click="handleEdit"
-        >
-          编辑
-        </el-button>
-        <el-button 
+        <el-button @click="handleClose">{{ mode === 'view' ? '关闭' : '取消' }}</el-button>
+        <el-button
           v-if="mode === 'edit'"
-          type="primary" 
+          type="primary"
+          :loading="saving || loading"
+          :disabled="loading"
           @click="handleSave"
-          :loading="saving"
         >
           保存
         </el-button>
-        <el-button 
-          v-if="mode === 'create'"
-          type="primary" 
-          @click="handleCreate"
-          :loading="creating"
-        >
-          创建
-        </el-button>
+        <el-button v-if="mode === 'create'" type="primary" :loading="creating" @click="handleCreate">创建</el-button>
       </span>
     </template>
   </el-dialog>
 </template>
 
 <script setup>
-import { ref, reactive, watch, nextTick } from 'vue'
+import { computed, nextTick, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getDepartments } from '@/api/modules/departments'
 import { getRoles } from '@/api/modules/roles'
-import { getUserDetail, createUser, updateUser } from '@/api/modules/users'
+import { createUser, getUserDetail, updateUser } from '@/api/modules/users'
+
+const ROLE_OPTIONS_FALLBACK = [
+  { label: '超级管理员', value: 'super_admin' },
+  { label: '管理员', value: 'admin' },
+  { label: '版主', value: 'moderator' },
+  { label: '审计员', value: 'auditor' },
+  { label: '运营员', value: 'operator' }
+]
 
 const props = defineProps({
-  modelValue: Boolean,
-  mode: String, // 'view' | 'edit' | 'create'
-  userId: [String, Number]
+  modelValue: { type: Boolean, default: false },
+  mode: { type: String, default: 'view' },
+  userId: { type: [Number, String], default: null }
 })
 
 const emit = defineEmits(['update:modelValue', 'saved', 'closed'])
@@ -185,6 +171,7 @@ const emit = defineEmits(['update:modelValue', 'saved', 'closed'])
 const visible = ref(false)
 const saving = ref(false)
 const creating = ref(false)
+const loading = ref(false)
 const formRef = ref(null)
 
 const userData = reactive({
@@ -192,178 +179,217 @@ const userData = reactive({
   realName: '',
   email: '',
   phone: '',
-  departmentId: '',
+  departmentId: null,
+  departmentName: '',
   status: 'active',
-  roleIds: [],
+  role: 'operator',
+  roleNames: [],
   remark: '',
+  password: '',
+  confirmPassword: '',
   createdAt: '',
-  lastLoginTime: '',
-  roleNames: []
+  lastLoginTime: ''
 })
 
 const departmentOptions = ref([])
-const roleOptions = ref([])
+const roleOptions = ref([...ROLE_OPTIONS_FALLBACK])
+const departmentLookup = ref(new Map())
 
-const treeProps = {
-  children: 'children',
-  label: 'name',
-  value: 'id'
+const treeProps = { children: 'children', label: 'name', value: 'id' }
+
+const mode = computed(() => props.mode)
+const dialogTitle = computed(() => {
+  if (mode.value === 'create') return '新增用户'
+  if (mode.value === 'edit') return '编辑用户'
+  return '用户详情'
+})
+
+const displayRoleNames = computed(() => {
+  if (Array.isArray(userData.roleNames) && userData.roleNames.length > 0) return userData.roleNames
+  const matched = roleOptions.value.find((item) => item.value === userData.role)
+  return matched ? [matched.label] : userData.role ? [userData.role] : ['-']
+})
+
+const validatePassword = (_rule, value, callback) => {
+  if (mode.value !== 'create') return callback()
+  if (!value) return callback(new Error('请输入密码'))
+  if (value.length < 8) return callback(new Error('密码长度至少 8 位'))
+  if (!/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d).+$/.test(value)) {
+    return callback(new Error('密码需包含大小写字母和数字'))
+  }
+  callback()
+}
+
+const validateUsername = (_rule, value, callback) => {
+  // Username is immutable in edit mode, only validate strictly on create.
+  if (mode.value !== 'create') return callback()
+  if (!value) return callback(new Error('请输入用户名'))
+  if (String(value).length < 3 || String(value).length > 20) {
+    return callback(new Error('长度在 3 到 20 个字符'))
+  }
+  callback()
+}
+
+const validateConfirmPassword = (_rule, value, callback) => {
+  if (mode.value !== 'create') return callback()
+  if (!value) return callback(new Error('请确认密码'))
+  if (value !== userData.password) return callback(new Error('两次密码输入不一致'))
+  callback()
 }
 
 const formRules = {
-  username: [
-    { required: true, message: '请输入用户名', trigger: 'blur' },
-    { min: 3, max: 20, message: '长度在 3 到 20 个字符', trigger: 'blur' },
-    { pattern: /^[a-zA-Z0-9_]+$/, message: '只能包含字母、数字和下划线', trigger: 'blur' }
-  ],
-  realName: [
-    { required: true, message: '请输入姓名', trigger: 'blur' },
-    { min: 2, max: 10, message: '长度在 2 到 10 个字符', trigger: 'blur' }
-  ],
+  username: [{ validator: validateUsername, trigger: 'blur' }],
+  realName: [{ required: true, message: '请输入姓名', trigger: 'blur' }],
   email: [
     { required: true, message: '请输入邮箱', trigger: 'blur' },
-    { type: 'email', message: '请输入正确的邮箱格式', trigger: 'blur' }
+    { type: 'email', message: '邮箱格式不正确', trigger: 'blur' }
   ],
-  phone: [
-    { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号格式', trigger: 'blur' }
-  ],
-  departmentId: [
-    { required: true, message: '请选择部门', trigger: 'change' }
-  ]
+  phone: [{ pattern: /^1[3-9]\d{9}$/, message: '手机号格式不正确', trigger: 'blur' }],
+  role: [{ required: true, message: '请选择角色', trigger: 'change' }],
+  password: [{ validator: validatePassword, trigger: 'blur' }],
+  confirmPassword: [{ validator: validateConfirmPassword, trigger: 'blur' }]
 }
 
-// 监听显示状态
-watch(() => props.modelValue, (val) => {
-  visible.value = val
-  if (val) {
-    loadOptions()
-    if (props.mode === 'edit' || props.mode === 'view') {
-      loadUserData()
-    } else {
-      resetForm()
-    }
-  }
-})
-
-// 监听弹窗关闭
-watch(() => visible.value, (val) => {
-  if (!val) {
-    emit('update:modelValue', false)
-  }
-})
-
-// 加载选项数据
-const loadOptions = async () => {
-  try {
-    // 加载部门选项
-    const deptResponse = await getDepartments({ tree: false })
-    if (deptResponse && deptResponse.data) {
-      departmentOptions.value = Array.isArray(deptResponse.data) ? deptResponse.data : []
-    }
-    
-    // 加载角色选项
-    const roleResponse = await getRoles({ status: 'active' })
-    if (roleResponse && roleResponse.data) {
-      roleOptions.value = Array.isArray(roleResponse.data) ? roleResponse.data : []
-    }
-  } catch (error) {
-    console.error('加载选项失败:', error)
-  }
-}
-
-// 加载用户数据
-const loadUserData = async () => {
-  if (!props.userId) return
-  
-  try {
-    const response = await getUserDetail(props.userId)
-    const payload = response?.data ?? response
-    if (payload) {
-      Object.assign(userData, payload)
-    }
-  } catch (error) {
-    console.error('加载用户数据失败:', error)
-    ElMessage.error('加载用户数据失败')
-  }
-}
-
-// 重置表单
 const resetForm = () => {
   Object.assign(userData, {
     username: '',
     realName: '',
     email: '',
     phone: '',
-    departmentId: '',
+    departmentId: null,
+    departmentName: '',
     status: 'active',
-    roleIds: [],
+    role: 'operator',
+    roleNames: [],
     remark: '',
+    password: '',
+    confirmPassword: '',
     createdAt: '',
-    lastLoginTime: '',
-    roleNames: []
+    lastLoginTime: ''
   })
-  nextTick(() => {
-    formRef.value?.clearValidate()
+  nextTick(() => formRef.value?.clearValidate())
+}
+
+const normalizeDepartmentNode = (node) => ({
+  id: Number(node.id),
+  name: node.name || '',
+  children: Array.isArray(node.children) ? node.children.map(normalizeDepartmentNode) : []
+})
+
+const buildDepartmentLookup = (nodes, map = new Map()) => {
+  nodes.forEach((node) => {
+    map.set(node.id, node.name)
+    if (node.children?.length) buildDepartmentLookup(node.children, map)
   })
+  return map
 }
 
-// 获取对话框标题
-const getDialogTitle = () => {
-  const titles = {
-    view: '用户详情',
-    edit: '编辑用户',
-    create: '创建用户'
-  }
-  return titles[props.mode] || '用户'
-}
-
-// 关闭对话框
-const handleClose = () => {
-  visible.value = false
-  emit('closed')
-}
-
-// 编辑用户
-const handleEdit = () => {
-  emit('update:modelValue', false)
-  // 触发父组件切换到编辑模式
-  setTimeout(() => {
-    emit('update:modelValue', true)
-  }, 100)
-}
-
-// 保存用户
-const handleSave = async () => {
+const loadDepartments = async () => {
   try {
-    await formRef.value.validate()
-    saving.value = true
-    
-    await updateUser(props.userId, userData)
-    ElMessage.success('保存成功')
-    visible.value = false
-    emit('saved')
+    const response = await getDepartments({ tree: true })
+    const payload = response?.data ?? response
+    const rows = Array.isArray(payload?.data) ? payload.data : Array.isArray(payload) ? payload : []
+    const normalized = rows.map(normalizeDepartmentNode)
+    departmentOptions.value = normalized
+    departmentLookup.value = buildDepartmentLookup(normalized)
   } catch (error) {
-    if (error !== false) { // 不是表单验证错误
-      console.error('保存失败:', error)
-      ElMessage.error('保存失败')
-    }
-  } finally {
-    saving.value = false
+    console.error('加载部门失败:', error)
+    departmentOptions.value = []
+    departmentLookup.value = new Map()
   }
 }
 
-// 创建用户
+const loadRoles = async () => {
+  try {
+    const response = await getRoles({})
+    const payload = response?.data ?? response
+    const rows = Array.isArray(payload) ? payload : []
+    if (!rows.length) {
+      roleOptions.value = [...ROLE_OPTIONS_FALLBACK]
+      return
+    }
+    roleOptions.value = rows.map((item) => ({
+      label: item.display_name || item.name || item.code || item.role || '未知角色',
+      value: item.role || item.code || item.name
+    }))
+  } catch (error) {
+    console.error('加载角色失败:', error)
+    roleOptions.value = [...ROLE_OPTIONS_FALLBACK]
+  }
+}
+
+const loadUser = async () => {
+  if (!props.userId || mode.value === 'create') return
+  loading.value = true
+  try {
+    const response = await getUserDetail(props.userId)
+    const row = response?.data || {}
+    userData.username = row.username || ''
+    userData.realName = row.realName || ''
+    userData.email = row.email || ''
+    userData.phone = row.phone || ''
+    userData.departmentId = row.departmentId ? Number(row.departmentId) : null
+    userData.departmentName = row.departmentName || ''
+    userData.status = row.status || 'active'
+    userData.role = row.role || 'operator'
+    userData.roleNames = Array.isArray(row.roleNames) ? row.roleNames : []
+    userData.remark = row.remark || row.remarks || ''
+    userData.createdAt = row.createdAt || ''
+    userData.lastLoginTime = row.lastLoginTime || ''
+  } catch (error) {
+    console.error('加载用户详情失败:', error)
+    ElMessage.error('加载用户详情失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+const formatDate = (value) => {
+  if (!value) return '-'
+  return new Date(value).toLocaleString('zh-CN')
+}
+
+const createPayload = () => {
+  const departmentName =
+    userData.departmentName || (userData.departmentId ? departmentLookup.value.get(Number(userData.departmentId)) : '')
+
+  return {
+    username: userData.username,
+    password: userData.password,
+    realName: userData.realName,
+    email: userData.email,
+    phone: userData.phone || null,
+    departmentName: departmentName || null,
+    role: userData.role,
+    status: userData.status
+  }
+}
+
+const updatePayload = () => {
+  const departmentName =
+    userData.departmentName || (userData.departmentId ? departmentLookup.value.get(Number(userData.departmentId)) : '')
+
+  return {
+    realName: userData.realName,
+    email: userData.email,
+    phone: userData.phone || null,
+    departmentName: departmentName || null,
+    role: userData.role,
+    status: userData.status,
+    remark: userData.remark || null
+  }
+}
+
 const handleCreate = async () => {
   try {
-    await formRef.value.validate()
+    await formRef.value?.validate()
     creating.value = true
-    
-    await createUser(userData)
+    await createUser(createPayload())
     ElMessage.success('创建成功')
-    visible.value = false
     emit('saved')
+    visible.value = false
   } catch (error) {
-    if (error !== false) { // 不是表单验证错误
+    if (error !== false) {
       console.error('创建失败:', error)
       ElMessage.error('创建失败')
     }
@@ -372,22 +398,93 @@ const handleCreate = async () => {
   }
 }
 
-// 格式化日期
-const formatDate = (date) => {
-  if (!date) return '-'
-  return new Date(date).toLocaleString('zh-CN')
+const handleSave = async () => {
+  try {
+    if (loading.value) return
+    await formRef.value?.validate()
+    saving.value = true
+    await updateUser(props.userId, updatePayload())
+    ElMessage.success('保存成功')
+    emit('saved')
+    visible.value = false
+  } catch (error) {
+    if (error !== false) {
+      console.error('保存失败:', error)
+      ElMessage.error('保存失败')
+    }
+  } finally {
+    saving.value = false
+  }
 }
+
+const handleClose = () => {
+  visible.value = false
+}
+
+const initializeDialog = async () => {
+  resetForm()
+  await Promise.all([loadDepartments(), loadRoles()])
+  await loadUser()
+}
+
+watch(
+  () => props.modelValue,
+  async (val) => {
+    visible.value = val
+    if (val) {
+      await initializeDialog()
+    }
+  },
+  { immediate: true }
+)
+
+watch(visible, (val) => {
+  emit('update:modelValue', val)
+  if (!val) emit('closed')
+})
 </script>
 
 <style scoped>
+
+:deep(.um-dialog.el-dialog) {
+  border: 1px solid #ebeef5;
+  border-radius: 4px;
+  box-shadow: none;
+  overflow: hidden;
+}
+
+:deep(.um-dialog .el-dialog__header) {
+  margin-right: 0;
+  padding: 14px 16px;
+  border-bottom: 1px solid #ebeef5;
+}
+
+:deep(.um-dialog .el-dialog__title) {
+  font-size: 16px;
+  font-weight: 600;
+  color: #303133;
+}
+
+:deep(.um-dialog .el-dialog__body) {
+  padding: 16px;
+}
+
+:deep(.um-dialog .el-dialog__footer) {
+  padding: 12px 16px;
+  border-top: 1px solid #ebeef5;
+}
+
 .user-form {
-  max-height: 500px;
-  overflow-y: auto;
+  padding-right: 6px;
 }
 
 .dialog-footer {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
+}
+
+.mr-8 {
+  margin-right: 8px;
 }
 </style>

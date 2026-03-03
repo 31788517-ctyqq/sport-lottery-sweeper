@@ -1,5 +1,5 @@
 <template>
-  <div class="backend-users-container">
+  <div class="backend-users-container um-page">
     <el-card>
       <template #header>
         <div class="card-header">
@@ -136,7 +136,29 @@ const getRoleText = (role) => {
 
 <style scoped>
 .backend-users-container {
-  padding: 20px;
+  padding: 16px;
+  background: #f5f7fa;
+  min-height: 100%;
+}
+
+.backend-users-container :deep(.el-card) {
+  border-radius: 4px;
+  border: 1px solid #ebeef5;
+  box-shadow: none;
+}
+
+.backend-users-container :deep(.el-card__header) {
+  padding: 14px 16px;
+}
+
+.backend-users-container :deep(.el-card__body) {
+  padding: 0 16px 16px;
+}
+
+.backend-users-container :deep(.el-table th.el-table__cell) {
+  background: #fafafa;
+  color: #606266;
+  font-weight: 600;
 }
 
 .card-header {
@@ -146,7 +168,9 @@ const getRoleText = (role) => {
 }
 
 .pagination-container {
-  margin-top: 20px;
+  margin-top: 16px;
+  padding: 12px 0 0;
+  border-top: 1px solid #ebeef5;
   display: flex;
   justify-content: center;
 }

@@ -1,5 +1,5 @@
 <template>
-  <div class="frontend-users-container">
+  <div class="frontend-users-container um-page">
     <el-card class="users-card">
       <template #header>
         <div class="card-header">
@@ -519,19 +519,29 @@ export default {
 
 <style scoped>
 .frontend-users-container {
-  padding: 20px;
-  background: #f5f5f5;
-  min-height: 100vh;
+  padding: 16px;
+  background: #f5f7fa;
+  min-height: 100%;
 }
 
 .users-card {
-  border-radius: 8px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  border: 1px solid #ebeef5;
+  box-shadow: none;
+}
+
+.frontend-users-container :deep(.el-card__header) {
+  padding: 14px 16px;
+}
+
+.frontend-users-container :deep(.el-card__body) {
+  padding: 0;
 }
 
 .users-controls {
-  padding: 20px;
+  padding: 14px 16px;
   background: white;
+  border-top: 1px solid #ebeef5;
   border-bottom: 1px solid #ebeef5;
 }
 
@@ -545,11 +555,12 @@ export default {
 }
 
 .action-bar {
-  padding: 16px 20px;
+  padding: 12px 16px;
   background: white;
   border-bottom: 1px solid #ebeef5;
   display: flex;
   gap: 12px;
+  align-items: center;
 }
 
 .action-btn {
@@ -564,6 +575,12 @@ export default {
   border-radius: 0;
 }
 
+.frontend-users-container :deep(.el-table th.el-table__cell) {
+  background: #fafafa !important;
+  color: #606266 !important;
+  font-weight: 600;
+}
+
 .empty-state {
   text-align: center;
   padding: 40px;
@@ -571,7 +588,7 @@ export default {
 }
 
 .pagination-wrapper {
-  padding: 20px;
+  padding: 12px 16px;
   background: white;
   border-top: 1px solid #ebeef5;
   display: flex;
@@ -593,13 +610,14 @@ export default {
 
 .dialog-content {
   background: white;
-  border-radius: 8px;
+  border-radius: 4px;
+  border: 1px solid #ebeef5;
   width: 500px;
   max-width: 90%;
 }
 
 .dialog-header {
-  padding: 20px;
+  padding: 14px 16px;
   border-bottom: 1px solid #ebeef5;
   display: flex;
   justify-content: space-between;
@@ -622,31 +640,34 @@ export default {
 }
 
 .dialog-body {
-  padding: 20px;
+  padding: 16px;
 }
 
 .form-group {
-  margin-bottom: 15px;
+  margin-bottom: 16px;
 }
 
 .form-group label {
   display: block;
-  margin-bottom: 5px;
-  font-weight: 600;
+  margin-bottom: 6px;
+  font-weight: 500;
   color: #606266;
+  line-height: 1.4;
 }
 
 .form-group input,
 .form-group select {
   width: 100%;
-  padding: 8px 12px;
+  height: 34px;
+  padding: 0 12px;
+  line-height: 34px;
   border: 1px solid #dcdfe6;
   border-radius: 4px;
   font-size: 14px;
 }
 
 .dialog-footer {
-  padding: 15px 20px;
+  padding: 12px 16px;
   border-top: 1px solid #ebeef5;
   display: flex;
   justify-content: flex-end;
@@ -655,11 +676,16 @@ export default {
 
 .btn-primary,
 .btn-secondary {
-  padding: 8px 20px;
+  height: 34px;
+  padding: 0 16px;
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 13px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .btn-primary {

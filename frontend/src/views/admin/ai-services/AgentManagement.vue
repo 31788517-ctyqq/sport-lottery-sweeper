@@ -74,7 +74,7 @@
                 <span>待处理任务</span>
               </div>
               <div class="monitor-value">{{ pendingTasksCount }}</div>
-              <el-button size="mini" type="primary" @click="viewTaskQueue">查看队列</el-button>
+              <el-button size="small" type="primary" @click="viewTaskQueue">查看队列</el-button>
             </el-card>
           </el-col>
           <el-col :span="6">
@@ -84,7 +84,7 @@
                 <span>智能体协作</span>
               </div>
               <div class="monitor-value">{{ collaborationScore }}%</div>
-              <el-button size="mini" @click="optimizeCollaboration">优化协作</el-button>
+              <el-button size="small" @click="optimizeCollaboration">优化协作</el-button>
             </el-card>
           </el-col>
         </el-row>
@@ -407,7 +407,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import AgentWorkflowVisualization from '@/components/visualization/AgentWorkflowVisualization.vue'
 
@@ -480,6 +480,8 @@ const workflowDialogVisible = ref(false)
 
 // 批量操作数据
 const selectedAgents = ref([])
+const hasStoppedAgents = computed(() => selectedAgents.value.some(agent => agent.status !== 'running'))
+const hasRunningAgents = computed(() => selectedAgents.value.some(agent => agent.status === 'running'))
 
 // 智能体数据
 const agents = ref([
@@ -724,6 +726,70 @@ const resetFilters = () => {
   typeFilter.value = ''
   statusFilter.value = ''
   applyFilters()
+}
+
+const handleSelectionChange = (selection) => {
+  selectedAgents.value = selection
+}
+
+const startSelected = async () => {
+  const stoppedAgents = selectedAgents.value.filter(agent => agent.status !== 'running')
+  if (stoppedAgents.length === 0) return
+  stoppedAgents.forEach(agent => {
+    agent.status = 'running'
+    agent.lastUpdated = new Date().toISOString().slice(0, 19).replace('T', ' ')
+  })
+  applyFilters()
+  ElMessage.success(`已启动 ${stoppedAgents.length} 个智能体`)
+}
+
+const stopSelected = async () => {
+  const runningAgents = selectedAgents.value.filter(agent => agent.status === 'running')
+  if (runningAgents.length === 0) return
+  runningAgents.forEach(agent => {
+    agent.status = 'stopped'
+    agent.lastUpdated = new Date().toISOString().slice(0, 19).replace('T', ' ')
+  })
+  applyFilters()
+  ElMessage.success(`已停止 ${runningAgents.length} 个智能体`)
+}
+
+const restartSelected = async () => {
+  const runningAgents = selectedAgents.value.filter(agent => agent.status === 'running')
+  if (runningAgents.length === 0) return
+  runningAgents.forEach(agent => {
+    agent.lastUpdated = new Date().toISOString().slice(0, 19).replace('T', ' ')
+  })
+  applyFilters()
+  ElMessage.success(`已重启 ${runningAgents.length} 个智能体`)
+}
+
+const deleteSelected = async () => {
+  if (selectedAgents.value.length === 0) return
+  try {
+    await ElMessageBox.confirm(
+      `确定删除已选择的 ${selectedAgents.value.length} 个智能体吗？`,
+      '确认删除',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+    const selectedIds = new Set(selectedAgents.value.map(agent => agent.id))
+    agents.value = agents.value.filter(agent => !selectedIds.has(agent.id))
+    selectedAgents.value = []
+    applyFilters()
+    ElMessage.success('批量删除成功')
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('批量删除失败')
+    }
+  }
+}
+
+const clearSelection = () => {
+  selectedAgents.value = []
 }
 
 const applyFilters = () => {

@@ -85,6 +85,19 @@ async function setupDepartmentMocks(page) {
       return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ code: 200, data: true }) });
     }
 
+    if (path.startsWith('/api/')) {
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          code: 200,
+          success: true,
+          message: 'mock default',
+          data: {}
+        })
+      });
+    }
+
     return route.continue();
   });
 
@@ -94,13 +107,17 @@ async function setupDepartmentMocks(page) {
 test.describe('User Departments Page', () => {
   test('should load department tree and user data', async ({ page }) => {
     const state = await setupDepartmentMocks(page);
+    await page.addInitScript(() => {
+      localStorage.setItem('access_token', 'mock-token');
+      localStorage.setItem('token', 'mock-token');
+    });
 
     await page.goto('/admin/users/departments');
     await page.waitForLoadState('networkidle');
 
     await expect(page.locator('.dept-tree-card')).toBeVisible();
     await expect(page.locator('.dept-detail-card')).toBeVisible();
-    await expect(page.getByText('总部')).toBeVisible();
+    await expect(page.locator('.dept-tree-container .el-tree-node__content').first()).toContainText('总部');
 
     expect(state.calls.deptList).toBeGreaterThan(0);
     expect(state.calls.userList).toBeGreaterThan(0);
@@ -108,6 +125,10 @@ test.describe('User Departments Page', () => {
 
   test('should handle create dialog and detail interaction logic', async ({ page }) => {
     const state = await setupDepartmentMocks(page);
+    await page.addInitScript(() => {
+      localStorage.setItem('access_token', 'mock-token');
+      localStorage.setItem('token', 'mock-token');
+    });
 
     await page.goto('/admin/users/departments');
     await page.waitForLoadState('networkidle');
@@ -115,7 +136,7 @@ test.describe('User Departments Page', () => {
     await page.getByRole('button', { name: '新增部门' }).click();
     await expect(page.locator('.el-dialog')).toBeVisible();
 
-    await page.locator('.el-dialog .dialog-footer .el-button').first().click();
+    await page.locator('.el-dialog__footer .el-button').first().click();
 
     await page.locator('.dept-tree-container .el-tree-node__content').first().click();
     await expect(page.locator('.dept-detail-content')).toBeVisible();
