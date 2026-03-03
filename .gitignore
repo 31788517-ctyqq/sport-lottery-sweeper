@@ -60,3 +60,9 @@ config/*/settings.toml
 # Sensitive key material
 .ssh/
 *.pem
+frontend/dev-dist/
+frontend/artifacts/
+frontend/playwright-report/
+frontend/tmp_edit_dialog.png
+uploads/avatars/
+data/*.bak_*
