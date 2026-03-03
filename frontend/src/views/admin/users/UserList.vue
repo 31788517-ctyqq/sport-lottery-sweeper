@@ -77,7 +77,7 @@
               />
             </el-select>
           </el-col>
-          <el-col :xs="24" :sm="24" :md="8" :lg="8">
+          <el-col :xs="24" :sm="24" :md="9" :lg="9">
             <el-button type="primary" @click="handleSearch" class="action-btn">
               查询
             </el-button>
@@ -94,27 +94,62 @@
 
       <!-- 操作按钮区域 -->
       <div class="action-bar">
-        <el-button 
-          v-if="selectedUsers.length > 0"
-          type="danger" 
-          @click="handleBatchDisable"
-        >
-          批量禁用 ({{ selectedUsers.length }})
-        </el-button>
-        <el-button 
-          v-if="selectedUsers.length > 0"
-          type="warning" 
-          @click="handleBatchEnable"
-        >
-          批量启用 ({{ selectedUsers.length }})
-        </el-button>
-        <el-button 
-          v-if="selectedUsers.length > 0"
-          type="primary" 
-          @click="handleBatchAssignRole"
-        >
-          批量分配角色
-        </el-button>
+        <div class="bulk-actions">
+          <el-button 
+            v-if="selectedUsers.length > 0"
+            type="danger" 
+            @click="handleBatchDisable"
+          >
+            批量禁用 ({{ selectedUsers.length }})
+          </el-button>
+          <el-button 
+            v-if="selectedUsers.length > 0"
+            type="warning" 
+            @click="handleBatchEnable"
+          >
+            批量启用 ({{ selectedUsers.length }})
+          </el-button>
+          <el-button 
+            v-if="selectedUsers.length > 0"
+            type="primary" 
+            @click="handleBatchAssignRole"
+          >
+            批量分配角色
+          </el-button>
+        </div>
+        <div class="view-actions">
+          <div class="density-switch">
+            <span class="density-label">表格密度</span>
+            <el-radio-group v-model="tableDensity" size="small" @change="handleDensityChange">
+              <el-radio-button label="small">紧凑</el-radio-button>
+              <el-radio-button label="default">标准</el-radio-button>
+              <el-radio-button label="large">宽松</el-radio-button>
+            </el-radio-group>
+          </div>
+          <el-popover placement="bottom-end" trigger="click" width="220">
+            <template #reference>
+              <el-button class="column-config-trigger" size="small">
+                <el-icon><SetUp /></el-icon>
+                列显示配置
+              </el-button>
+            </template>
+            <div class="column-config-popover">
+              <div class="column-config-title">显示列</div>
+              <el-checkbox-group v-model="visibleColumnKeys" @change="handleVisibleColumnsChange">
+                <el-checkbox
+                  v-for="column in allColumns"
+                  :key="column.key"
+                  :label="column.key"
+                >
+                  {{ column.label }}
+                </el-checkbox>
+              </el-checkbox-group>
+              <div class="column-config-actions">
+                <el-button text size="small" @click="resetColumnVisibility">恢复默认</el-button>
+              </div>
+            </div>
+          </el-popover>
+        </div>
       </div>
 
       <!-- 表格区域 -->
@@ -124,22 +159,23 @@
           stripe 
           style="width: 100%" 
           v-loading="loading"
+          :size="tableDensity"
           height="calc(100vh - 380px)"
           :header-cell-style="{background: '#f5f7fa', color: '#606266'}"
           class="modern-table"
           @selection-change="handleSelectionChange"
         >
           <el-table-column type="selection" width="55" />
-          <el-table-column prop="username" label="用户名" width="120" />
-          <el-table-column prop="realName" label="姓名" width="100" />
-          <el-table-column prop="email" label="邮箱" width="180" />
-          <el-table-column prop="phone" label="手机号" width="130" />
-          <el-table-column prop="departmentName" label="部门" width="120">
+          <el-table-column v-if="isColumnVisible('username')" prop="username" label="用户名" width="120" />
+          <el-table-column v-if="isColumnVisible('realName')" prop="realName" label="姓名" width="100" />
+          <el-table-column v-if="isColumnVisible('email')" prop="email" label="邮箱" width="180" />
+          <el-table-column v-if="isColumnVisible('phone')" prop="phone" label="手机号" width="130" />
+          <el-table-column v-if="isColumnVisible('departmentName')" prop="departmentName" label="部门" width="120">
             <template #default="scope">
               {{ scope.row.departmentName || '-' }}
             </template>
           </el-table-column>
-          <el-table-column prop="roleNames" label="角色" width="150">
+          <el-table-column v-if="isColumnVisible('roleNames')" prop="roleNames" label="角色" width="150">
             <template #default="scope">
               <el-tag  
                 v-for="role in getDisplayRoleNames(scope.row)" 
@@ -151,14 +187,14 @@
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="status" label="状态" width="80">
+          <el-table-column v-if="isColumnVisible('status')" prop="status" label="状态" width="80">
             <template #default="{ row }">
               <el-tag :type="getStatusTagType(row.status)" size="small">
                 {{ getStatusText(row.status) }}
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="lastLoginTime" label="最后登录" width="160">
+          <el-table-column v-if="isColumnVisible('lastLoginTime')" prop="lastLoginTime" label="最后登录" width="160">
             <template #default="scope">
               {{ formatDate(scope.row.lastLoginTime) || '-' }}
             </template>
@@ -183,11 +219,21 @@
               </div>
             </template>
           </el-table-column>
+          <template #empty>
+            <div class="table-empty-state">
+              <el-empty :description="emptyState.description">
+                <el-button
+                  v-if="emptyState.actionText"
+                  type="primary"
+                  link
+                  @click="handleEmptyAction"
+                >
+                  {{ emptyState.actionText }}
+                </el-button>
+              </el-empty>
+            </div>
+          </template>
         </el-table>
-        
-        <div v-if="tableData.length === 0" class="empty-state">
-          <el-empty description="暂无用户数据" />
-        </div>
       </div>
 
       <!-- 分页 -->
@@ -233,19 +279,54 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Upload, Download, Refresh } from '@element-plus/icons-vue'
+import { Plus, Upload, Download, Refresh, SetUp } from '@element-plus/icons-vue'
 import UserDetailDialog from '@/components/admin/UserDetailDialog.vue'
 import BatchAssignRoleDialog from '@/components/admin/BatchAssignRoleDialog.vue'
 import { getUsers, disableUsers, enableUsers, exportUsers, batchAssignRoles, importUsers } from '@/api/modules/users'
 import { getDepartments } from '@/api/modules/departments'
 import { getRoles } from '@/api/modules/roles'
 
+const USER_LIST_VIEW_STATE_KEY = 'admin_user_list_view_state_v1'
+const SEARCH_DEBOUNCE_MS = 450
+const DEFAULT_VISIBLE_COLUMNS = ['username', 'realName', 'email', 'phone', 'departmentName', 'roleNames', 'status', 'lastLoginTime']
+const ROLE_VALUE_ALIAS_MAP = Object.freeze({
+  super_admin: 'super_admin',
+  admin: 'admin',
+  moderator: 'moderator',
+  auditor: 'auditor',
+  operator: 'operator',
+  '超级管理员': 'super_admin',
+  '管理员': 'admin',
+  '版主': 'moderator',
+  '审计员': 'auditor',
+  '运营员': 'operator'
+})
+const ROLE_LABEL_FALLBACK = Object.freeze({
+  super_admin: '超级管理员',
+  admin: '管理员',
+  moderator: '版主',
+  auditor: '审计员',
+  operator: '运营员'
+})
+
+const allColumns = [
+  { key: 'username', label: '用户名' },
+  { key: 'realName', label: '姓名' },
+  { key: 'email', label: '邮箱' },
+  { key: 'phone', label: '手机号' },
+  { key: 'departmentName', label: '部门' },
+  { key: 'roleNames', label: '角色' },
+  { key: 'status', label: '状态' },
+  { key: 'lastLoginTime', label: '最后登录' }
+]
+
 const tableData = ref([])
 const departments = ref([])
 const roles = ref([])
 const loading = ref(false)
+const loadError = ref('')
 const searchKeyword = ref('')
 const selectedUsers = ref([])
 const showUserDialog = ref(false)
@@ -254,13 +335,9 @@ const dialogMode = ref('view') // 'view' | 'edit' | 'create'
 const currentUserId = ref(null)
 const importInputRef = ref(null)
 const importing = ref(false)
-const roleFilterOptions = [
-  { label: '超级管理员', value: 'super_admin' },
-  { label: '管理员', value: 'admin' },
-  { label: '版主', value: 'moderator' },
-  { label: '审计员', value: 'auditor' },
-  { label: '运营员', value: 'operator' }
-]
+const tableDensity = ref('default')
+const visibleColumnKeys = ref([...DEFAULT_VISIBLE_COLUMNS])
+let searchDebounceTimer = null
 
 const filters = reactive({
   status: '',
@@ -275,15 +352,186 @@ const pagination = reactive({
   pages: 0
 })
 
+const normalizeRoleValue = (roleRecord) => {
+  const raw = roleRecord?.value ?? roleRecord?.role ?? roleRecord?.code ?? roleRecord?.key ?? roleRecord?.name ?? roleRecord?.label
+  if (raw === undefined || raw === null) return ''
+  const token = String(raw).trim()
+  if (!token) return ''
+  return ROLE_VALUE_ALIAS_MAP[token] || ROLE_VALUE_ALIAS_MAP[token.toLowerCase()] || token.toLowerCase()
+}
+
+const normalizeRoleLabel = (roleRecord, normalizedValue) => {
+  const raw = roleRecord?.label ?? roleRecord?.display_name ?? roleRecord?.displayName ?? roleRecord?.name_cn ?? roleRecord?.name
+  const token = String(raw || '').trim()
+  if (token) {
+    const alias = ROLE_LABEL_FALLBACK[token.toLowerCase()]
+    return alias || token
+  }
+  return ROLE_LABEL_FALLBACK[normalizedValue] || normalizedValue || '-'
+}
+
+const roleFilterOptions = computed(() => {
+  const options = []
+  const seen = new Set()
+
+  for (const role of roles.value) {
+    const value = normalizeRoleValue(role)
+    if (!value || seen.has(value)) continue
+    seen.add(value)
+    options.push({
+      value,
+      label: normalizeRoleLabel(role, value)
+    })
+  }
+
+  // 兜底：角色接口异常时，至少支持按当前列表角色筛选
+  if (options.length === 0) {
+    for (const user of tableData.value) {
+      const value = normalizeRoleValue({ value: user.role })
+      if (!value || seen.has(value)) continue
+      seen.add(value)
+      options.push({
+        value,
+        label: user.roleLabel || ROLE_LABEL_FALLBACK[value] || value
+      })
+    }
+  }
+
+  return options
+})
+
+const hasActiveFilters = computed(() =>
+  Boolean(searchKeyword.value.trim() || filters.status || filters.departmentId || filters.roleValue)
+)
+
+const emptyState = computed(() => {
+  if (loadError.value) {
+    return {
+      description: `加载失败：${loadError.value}`,
+      actionText: '重新加载',
+      action: 'retry'
+    }
+  }
+  if (hasActiveFilters.value) {
+    return {
+      description: '未找到匹配用户，请调整筛选条件后重试',
+      actionText: '清空筛选',
+      action: 'reset'
+    }
+  }
+  return {
+    description: '暂无用户数据，可先新增用户或导入 CSV',
+    actionText: '刷新数据',
+    action: 'refresh'
+  }
+})
+
+const isColumnVisible = (columnKey) => visibleColumnKeys.value.includes(columnKey)
+
+const persistViewState = () => {
+  if (typeof window === 'undefined') return
+  const state = {
+    searchKeyword: searchKeyword.value,
+    filters: {
+      status: filters.status,
+      departmentId: filters.departmentId,
+      roleValue: filters.roleValue
+    },
+    pagination: {
+      page: pagination.page,
+      size: pagination.size
+    },
+    tableDensity: tableDensity.value,
+    visibleColumnKeys: visibleColumnKeys.value
+  }
+  window.localStorage.setItem(USER_LIST_VIEW_STATE_KEY, JSON.stringify(state))
+}
+
+const restoreViewState = () => {
+  if (typeof window === 'undefined') return
+  const raw = window.localStorage.getItem(USER_LIST_VIEW_STATE_KEY)
+  if (!raw) return
+
+  try {
+    const state = JSON.parse(raw)
+    if (typeof state.searchKeyword === 'string') searchKeyword.value = state.searchKeyword
+    if (state.filters && typeof state.filters === 'object') {
+      filters.status = typeof state.filters.status === 'string' ? state.filters.status : ''
+      filters.departmentId = typeof state.filters.departmentId === 'string' ? state.filters.departmentId : ''
+      filters.roleValue = typeof state.filters.roleValue === 'string' ? state.filters.roleValue : ''
+    }
+    if (state.pagination && typeof state.pagination === 'object') {
+      pagination.page = Number.isFinite(Number(state.pagination.page)) ? Math.max(1, Number(state.pagination.page)) : 1
+      pagination.size = Number.isFinite(Number(state.pagination.size)) ? Math.max(1, Number(state.pagination.size)) : 20
+    }
+    if (['small', 'default', 'large'].includes(state.tableDensity)) {
+      tableDensity.value = state.tableDensity
+    }
+    if (Array.isArray(state.visibleColumnKeys)) {
+      const validKeys = state.visibleColumnKeys.filter((key) => allColumns.some((column) => column.key === key))
+      visibleColumnKeys.value = validKeys.length > 0 ? [...new Set(validKeys)] : [...DEFAULT_VISIBLE_COLUMNS]
+    }
+  } catch (error) {
+    console.warn('恢复用户列表状态失败，已忽略:', error)
+  }
+}
+
+const clearSearchDebounce = () => {
+  if (searchDebounceTimer) {
+    clearTimeout(searchDebounceTimer)
+    searchDebounceTimer = null
+  }
+}
+
+const queueDebouncedSearch = () => {
+  clearSearchDebounce()
+  searchDebounceTimer = setTimeout(() => {
+    pagination.page = 1
+    persistViewState()
+    loadUsers()
+  }, SEARCH_DEBOUNCE_MS)
+}
+
+const handleVisibleColumnsChange = (keys) => {
+  if (!Array.isArray(keys) || keys.length === 0) {
+    visibleColumnKeys.value = ['username']
+  } else {
+    visibleColumnKeys.value = [...new Set(keys)]
+  }
+  persistViewState()
+}
+
+const resetColumnVisibility = () => {
+  visibleColumnKeys.value = [...DEFAULT_VISIBLE_COLUMNS]
+  persistViewState()
+}
+
+const handleDensityChange = () => {
+  persistViewState()
+}
+
+const handleEmptyAction = () => {
+  if (emptyState.value.action === 'retry') {
+    loadUsers()
+    return
+  }
+  if (emptyState.value.action === 'reset') {
+    handleReset()
+    return
+  }
+  refreshData()
+}
+
 // 加载用户列表
-const loadUsers = async () => {
+const loadUsers = async ({ allowRoleFallback = true } = {}) => {
   loading.value = true
+  loadError.value = ''
   try {
     const selectedDepartment = departments.value.find((dept) => dept.id === Number(filters.departmentId))
     const params = {
       page: pagination.page,
       size: pagination.size,
-      search: searchKeyword.value,
+      search: searchKeyword.value?.trim() || '',
       status: filters.status,
       departmentName: selectedDepartment?.name || '',
       roleValue: filters.roleValue
@@ -294,10 +542,25 @@ const loadUsers = async () => {
       tableData.value = response.data.items || []
       pagination.total = response.data.total || 0
       pagination.pages = response.data.pages || 0
+      persistViewState()
     }
   } catch (error) {
+    const statusCode = Number(error?.response?.status || 0)
+    if (allowRoleFallback && statusCode === 422 && filters.roleValue) {
+      const invalidRole = filters.roleValue
+      filters.roleValue = ''
+      persistViewState()
+      ElMessage.warning(`角色筛选值 "${invalidRole}" 与当前接口不兼容，已自动清空`)
+      await loadUsers({ allowRoleFallback: false })
+      return
+    }
+
+    tableData.value = []
+    pagination.total = 0
+    pagination.pages = 0
+    loadError.value = error?.response?.data?.detail || error?.message || '请求失败'
     console.error('加载用户列表失败:', error)
-    ElMessage.error('加载用户列表失败')
+    ElMessage.error('加载用户列表失败，请稍后重试')
   } finally {
     loading.value = false
   }
@@ -323,7 +586,19 @@ const loadRoles = async () => {
   try {
     const response = await getRoles({ status: 'active' })
     const payload = response?.data ?? response
-    roles.value = Array.isArray(payload) ? payload : []
+    const rows = Array.isArray(payload?.items)
+      ? payload.items
+      : Array.isArray(payload?.data)
+        ? payload.data
+        : Array.isArray(payload)
+          ? payload
+          : []
+    roles.value = rows
+
+    if (filters.roleValue && !roleFilterOptions.value.some((item) => item.value === filters.roleValue)) {
+      filters.roleValue = ''
+      persistViewState()
+    }
   } catch (error) {
     console.error('加载角色列表失败:', error)
   }
@@ -331,17 +606,21 @@ const loadRoles = async () => {
 
 // 搜索
 const handleSearch = () => {
+  clearSearchDebounce()
   pagination.page = 1
+  persistViewState()
   loadUsers()
 }
 
 // 重置
 const handleReset = () => {
+  clearSearchDebounce()
   searchKeyword.value = ''
   filters.status = ''
   filters.departmentId = ''
   filters.roleValue = ''
   pagination.page = 1
+  persistViewState()
   loadUsers()
 }
 
@@ -354,12 +633,14 @@ const handleSelectionChange = (selection) => {
 const handleSizeChange = (size) => {
   pagination.size = size
   pagination.page = 1
+  persistViewState()
   loadUsers()
 }
 
 // 分页
 const handlePageChange = (page) => {
   pagination.page = page
+  persistViewState()
   loadUsers()
 }
 
@@ -630,10 +911,47 @@ const getDisplayRoleNames = (row) => {
   return ['-']
 }
 
-onMounted(() => {
-  loadUsers()
-  loadDepartments()
-  loadRoles()
+restoreViewState()
+
+watch(searchKeyword, () => {
+  persistViewState()
+  queueDebouncedSearch()
+})
+
+watch(
+  () => [filters.status, filters.departmentId, filters.roleValue],
+  () => {
+    persistViewState()
+  }
+)
+
+watch(
+  () => [pagination.page, pagination.size],
+  () => {
+    persistViewState()
+  }
+)
+
+watch(tableDensity, () => {
+  persistViewState()
+})
+
+watch(
+  () => visibleColumnKeys.value,
+  () => {
+    persistViewState()
+  },
+  { deep: true }
+)
+
+onBeforeUnmount(() => {
+  clearSearchDebounce()
+})
+
+onMounted(async () => {
+  await loadDepartments()
+  await loadRoles()
+  await loadUsers()
 })
 </script>
 
@@ -700,6 +1018,50 @@ onMounted(() => {
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
+  align-items: center;
+}
+
+.bulk-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.view-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.density-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.density-label {
+  font-size: 12px;
+  color: var(--m-subtext);
+}
+
+.column-config-popover {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.column-config-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--m-text);
+}
+
+.column-config-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 4px;
 }
 
 .action-btn {
@@ -731,10 +1093,8 @@ onMounted(() => {
   margin-left: 0;
 }
 
-.empty-state {
-  text-align: center;
-  padding: 40px;
-  color: var(--m-subtext);
+.table-empty-state {
+  padding: 28px 0;
 }
 
 .pagination-wrapper {
@@ -761,6 +1121,12 @@ onMounted(() => {
   
   .users-controls .el-col {
     margin-bottom: 10px;
+  }
+
+  .view-actions {
+    margin-left: 0;
+    width: 100%;
+    justify-content: space-between;
   }
 }
 </style>

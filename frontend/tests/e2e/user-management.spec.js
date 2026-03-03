@@ -309,4 +309,35 @@ test.describe('User Management Page', () => {
     expect(importRequests).toContain('POST');
     await expect(page.locator('.modern-table .el-table__body')).toContainText('import_user');
   });
+
+  test('should debounce search and persist list state', async ({ page }) => {
+    const beforeCalls = mockState.calls.list;
+
+    await page.locator('.search-input input').fill('user_2');
+    await expect.poll(() => mockState.calls.list, { timeout: 5000 }).toBeGreaterThan(beforeCalls);
+    await expect(page.locator('.modern-table .el-table__body')).toContainText('user_2');
+
+    const state = await page.evaluate(() => JSON.parse(localStorage.getItem('admin_user_list_view_state_v1') || '{}'));
+    expect(state.searchKeyword).toBe('user_2');
+
+    await page.reload();
+    await page.waitForLoadState('networkidle');
+    await expect(page.locator('.search-input input')).toHaveValue('user_2');
+  });
+
+  test('should support density switch and column visibility config', async ({ page }) => {
+    await page.locator('.density-switch .el-radio-button__inner', { hasText: '紧凑' }).click();
+    await expect.poll(async () => {
+      const state = await page.evaluate(() => JSON.parse(localStorage.getItem('admin_user_list_view_state_v1') || '{}'));
+      return state.tableDensity;
+    }).toBe('small');
+
+    await page.locator('.column-config-trigger').click();
+    await page.locator('.column-config-popover .el-checkbox', { hasText: '邮箱' }).click();
+
+    await expect(page.locator('.modern-table .el-table__header-wrapper')).not.toContainText('邮箱');
+
+    const state = await page.evaluate(() => JSON.parse(localStorage.getItem('admin_user_list_view_state_v1') || '{}'));
+    expect(state.visibleColumnKeys).not.toContain('email');
+  });
 });
