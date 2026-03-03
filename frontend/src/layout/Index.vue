@@ -48,13 +48,12 @@
             <el-icon><SetUp /></el-icon>
             <span>数据源管理</span>
           </template>
+          <el-menu-item index="/admin/data-source/overview">运行总览</el-menu-item>
+          <el-menu-item index="/admin/data-source/tasks">任务中心</el-menu-item>
+          <el-menu-item index="/admin/data-source/assets">数据资产中心</el-menu-item>
           <el-menu-item index="/admin/data-source/config">数据源配置</el-menu-item>
-          <el-menu-item index="/admin/data-source/task-console">任务控制台</el-menu-item>
-          <el-menu-item index="/admin/data-source/monitor">爬虫监控</el-menu-item>
-          <el-menu-item index="/admin/data-source/data-center">数据中心</el-menu-item>
           <el-menu-item index="/admin/data-source/ip-pool">IP池管理</el-menu-item>
           <el-menu-item index="/admin/data-source/headers">请求头管理</el-menu-item>
-          <el-menu-item index="/admin/data-source/task-monitor">任务执行监控</el-menu-item>
         </el-sub-menu>
 
         <!-- 4. 比赛数据管理 -->
@@ -340,15 +339,14 @@ onBeforeUnmount(() => {
   justify-content: center;
 }
 
-/* 椤堕儴瀵艰埅鏍?- 骞插噣鐜颁唬 */
+/* 顶部导航栏 */
 .header {
   background: #ffffff;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 24px;
-  border-bottom: 1px solid #e5e7eb; /* 缁嗙伆绾夸唬鏇垮帤閲嶉槾褰?*/
-  /* 鍘绘帀 box-shadow锛屽噺灏戣瑙夊帇杩?*/
+  border-bottom: 1px solid #e5e7eb;
   z-index: 10;
 }
 
@@ -405,11 +403,10 @@ onBeforeUnmount(() => {
 }
 
 
-/* 涓诲唴瀹瑰尯 - 杞荤泩鑳屾櫙锛岄€傚綋鐣欑櫧 */
+/* 主内容区 */
 .main {
   background: #f9fafb;
   padding: 24px;
   min-height: calc(100vh - 60px);
 }
 </style>
-

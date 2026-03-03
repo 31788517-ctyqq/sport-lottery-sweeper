@@ -1,0 +1,15 @@
+<template>
+  <div class="task-execution-monitor-page">
+    <TaskCenterExecutionTab />
+  </div>
+</template>
+
+<script setup>
+import TaskCenterExecutionTab from './components/TaskCenterExecutionTab.vue'
+</script>
+
+<style scoped>
+.task-execution-monitor-page {
+  padding: 20px;
+}
+</style>

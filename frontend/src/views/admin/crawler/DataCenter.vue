@@ -1,38 +1,38 @@
-<template>
+﻿<template>
   <div class="data-center">
-    <!-- 面包屑导航 -->
+    <!-- Breadcrumb -->
     <el-breadcrumb separator="/" class="breadcrumb">
-      <el-breadcrumb-item :to="{ path: '/admin' }">首页</el-breadcrumb-item>
-      <el-breadcrumb-item :to="{ path: '/admin/data-source' }">数据源管理</el-breadcrumb-item>
-      <el-breadcrumb-item>数据中心</el-breadcrumb-item>
+      <el-breadcrumb-item :to="{ path: '/admin' }">{{ T.breadcrumbHome }}</el-breadcrumb-item>
+      <el-breadcrumb-item :to="{ path: '/admin/data-source' }">{{ T.breadcrumbDataSource }}</el-breadcrumb-item>
+      <el-breadcrumb-item>{{ T.breadcrumbDataCenter }}</el-breadcrumb-item>
     </el-breadcrumb>
 
-    <!-- 页面标题和操作栏 -->
+    <!-- Page Header -->
     <div class="page-header">
       <div class="header-left">
-        <h2>数据中心</h2>
-        <p class="subtitle">全面的数据统计与分析平台</p>
+        <h2>{{ T.pageTitle }}</h2>
+        <p class="subtitle">{{ T.pageSubtitle }}</p>
       </div>
       <div class="header-right">
         <el-button type="primary" @click="handleRefresh">
           <el-icon><Refresh /></el-icon>
-          刷新数据
+          {{ T.refreshData }}
         </el-button>
         <el-button type="success" @click="handleExport">
           <el-icon><Download /></el-icon>
-          导出数据
+          {{ T.exportData }}
         </el-button>
       </div>
     </div>
 
-    <!-- 统计卡片区域 -->
+    <!-- Stats Cards -->
     <div class="stats-section">
       <el-row :gutter="20">
         <el-col :xs="12" :sm="6" :lg="3">
           <el-card class="stat-card primary">
             <div class="stat-content">
               <div class="stat-number">{{ stats.totalMatches }}</div>
-              <div class="stat-label">总比赛数</div>
+              <div class="stat-label">{{ T.statTotalMatches }}</div>
               <div class="stat-trend positive">
                 <el-icon><ArrowUp /></el-icon>
                 {{ stats.matchGrowth }}%
@@ -44,7 +44,7 @@
           <el-card class="stat-card success">
             <div class="stat-content">
               <div class="stat-number">{{ stats.activeSources }}</div>
-              <div class="stat-label">活跃数据源</div>
+              <div class="stat-label">{{ T.statActiveSources }}</div>
               <div class="stat-trend positive">
                 <el-icon><ArrowUp /></el-icon>
                 {{ stats.sourceGrowth }}%
@@ -56,7 +56,7 @@
           <el-card class="stat-card warning">
             <div class="stat-content">
               <div class="stat-number">{{ stats.dataQuality }}%</div>
-              <div class="stat-label">数据质量</div>
+              <div class="stat-label">{{ T.statDataQuality }}</div>
               <div class="stat-trend" :class="stats.qualityTrend === 'up' ? 'positive' : 'negative'">
                 <el-icon><ArrowUp v-if="stats.qualityTrend === 'up'" /><ArrowDown v-else /></el-icon>
                 {{ Math.abs(stats.qualityChange) }}%
@@ -68,7 +68,7 @@
           <el-card class="stat-card danger">
             <div class="stat-content">
               <div class="stat-number">{{ stats.errorRate }}%</div>
-              <div class="stat-label">错误率</div>
+              <div class="stat-label">{{ T.statErrorRate }}</div>
               <div class="stat-trend negative">
                 <el-icon><ArrowDown /></el-icon>
                 {{ stats.errorImprovement }}%
@@ -80,7 +80,7 @@
           <el-card class="stat-card info">
             <div class="stat-content">
               <div class="stat-number">{{ stats.avgResponseTime }}ms</div>
-              <div class="stat-label">平均响应时间</div>
+              <div class="stat-label">{{ T.statAvgResponse }}</div>
               <div class="stat-trend positive">
                 <el-icon><ArrowDown /></el-icon>
                 {{ stats.responseImprovement }}%
@@ -92,7 +92,7 @@
           <el-card class="stat-card purple">
             <div class="stat-content">
               <div class="stat-number">{{ stats.storageUsed }}GB</div>
-              <div class="stat-label">存储使用量</div>
+              <div class="stat-label">{{ T.statStorageUsed }}</div>
               <div class="stat-trend" :class="stats.storageTrend === 'up' ? 'warning' : 'positive'">
                 <el-icon><ArrowUp v-if="stats.storageTrend === 'up'" /><ArrowDown v-else /></el-icon>
                 {{ Math.abs(stats.storageChange) }}%
@@ -103,77 +103,77 @@
       </el-row>
     </div>
 
-    <!-- 筛选和搜索区域 -->
+    <!-- Filters -->
     <div class="filter-section">
       <el-card>
         <el-form :model="filters" :inline="true" class="filter-form">
-          <el-form-item label="数据类型">
-            <el-select v-model="filters.dataType" placeholder="选择数据类型" clearable>
-              <el-option label="比赛数据" value="matches" />
-              <el-option label="赔率数据" value="odds" />
-              <el-option label="事件数据" value="events" />
-              <el-option label="统计数据" value="statistics" />
+          <el-form-item :label="T.filterDataType">
+            <el-select v-model="filters.dataType" :placeholder="T.placeholderSelectDataType" clearable>
+              <el-option :label="T.optionMatchData" value="matches" />
+              <el-option :label="T.optionOddsData" value="odds" />
+              <el-option :label="T.optionEventData" value="events" />
+              <el-option :label="T.optionStatData" value="statistics" />
             </el-select>
           </el-form-item>
-          <el-form-item label="数据源">
-            <el-select v-model="filters.sourceId" placeholder="选择数据源" clearable>
+          <el-form-item :label="T.filterSource">
+            <el-select v-model="filters.sourceId" :placeholder="T.placeholderSelectSource" clearable>
               <el-option v-for="source in sources" :key="source.id" :label="source.name" :value="source.id" />
             </el-select>
           </el-form-item>
-          <el-form-item label="日期范围">
+          <el-form-item :label="T.filterDateRange">
             <el-date-picker
               v-model="filters.dateRange"
               type="daterange"
-              range-separator="至"
-              start-placeholder="开始日期"
-              end-placeholder="结束日期"
+              :range-separator="T.rangeSeparator"
+              :start-placeholder="T.startDate"
+              :end-placeholder="T.endDate"
               format="YYYY-MM-DD"
               value-format="YYYY-MM-DD"
             />
           </el-form-item>
-          <el-form-item label="状态">
-            <el-select v-model="filters.status" placeholder="选择状态" clearable>
-              <el-option label="正常" value="normal" />
-              <el-option label="异常" value="error" />
-              <el-option label="警告" value="warning" />
+          <el-form-item :label="T.filterStatus">
+            <el-select v-model="filters.status" :placeholder="T.placeholderSelectStatus" clearable>
+              <el-option :label="T.statusNormal" value="normal" />
+              <el-option :label="T.statusError" value="error" />
+              <el-option :label="T.statusWarning" value="warning" />
             </el-select>
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" @click="handleSearch">搜索</el-button>
-            <el-button @click="handleReset">重置</el-button>
+            <el-button type="primary" @click="handleSearch">{{ T.search }}</el-button>
+            <el-button @click="handleReset">{{ T.reset }}</el-button>
           </el-form-item>
         </el-form>
       </el-card>
     </div>
 
-    <!-- 视图切换和内容区域 -->
+    <!-- Content -->
     <div class="content-section">
       <el-card>
         <template #header>
           <div class="card-header">
             <div class="header-tabs">
               <el-radio-group v-model="viewMode" size="large">
-                <el-radio-button value="table">数据表格</el-radio-button>
-                <el-radio-button value="chart">图表分析</el-radio-button>
-                <el-radio-button value="dashboard">实时监控</el-radio-button>
+                <el-radio-button value="table">{{ T.viewTable }}</el-radio-button>
+                <el-radio-button value="chart">{{ T.viewChart }}</el-radio-button>
+                <el-radio-button value="dashboard">{{ T.viewDashboard }}</el-radio-button>
               </el-radio-group>
             </div>
             <div class="header-actions">
               <el-button-group>
                 <el-button :type="showChart ? 'primary' : ''" @click="toggleChart">
                   <el-icon><TrendCharts /></el-icon>
-                  图表
+                  {{ T.chart }}
                 </el-button>
                 <el-button :type="showHeatmap ? 'primary' : ''" @click="toggleHeatmap">
                   <el-icon><Grid /></el-icon>
-                  热力图
+                  {{ T.heatmap }}
                 </el-button>
               </el-button-group>
             </div>
           </div>
         </template>
 
-        <!-- 表格视图 -->
+        <!-- Table View -->
         <div v-show="viewMode === 'table'" class="table-view">
           <el-table
             :data="filteredData"
@@ -185,40 +185,40 @@
           >
             <el-table-column type="selection" width="55" />
             <el-table-column prop="id" label="ID" width="80" />
-            <el-table-column prop="type" label="类型" width="100">
+            <el-table-column prop="type" :label="T.columnType" width="100">
               <template #default="scope">
                 <el-tag :type="getTypeColor(scope.row.type)">{{ getTypeText(scope.row.type) }}</el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="sourceName" label="数据源" width="120" />
-            <el-table-column prop="title" label="标题" min-width="200" show-overflow-tooltip />
-            <el-table-column prop="status" label="状态" width="100">
+            <el-table-column prop="sourceName" :label="T.columnSource" width="120" />
+            <el-table-column prop="title" :label="T.columnTitle" min-width="200" show-overflow-tooltip />
+            <el-table-column prop="status" :label="T.columnStatus" width="100">
               <template #default="scope">
                 <el-tag :type="getStatusColor(scope.row.status)">{{ getStatusText(scope.row.status) }}</el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="quality" label="质量" width="120">
+            <el-table-column prop="quality" :label="T.columnQuality" width="120">
               <template #default="scope">
                 <el-progress :percentage="scope.row.quality" :color="getQualityColor(scope.row.quality)" />
               </template>
             </el-table-column>
-            <el-table-column prop="recordCount" label="记录数" width="100" />
-            <el-table-column prop="createdAt" label="创建时间" width="170" />
-            <el-table-column prop="updatedAt" label="更新时间" width="170" />
-            <el-table-column label="操作" width="200" fixed="right">
+            <el-table-column prop="recordCount" :label="T.columnRecordCount" width="100" />
+            <el-table-column prop="createdAt" :label="T.columnCreatedAt" width="170" />
+            <el-table-column prop="updatedAt" :label="T.columnUpdatedAt" width="170" />
+            <el-table-column :label="T.columnActions" width="200" fixed="right">
               <template #default="scope">
-                <el-button size="small" @click="viewDetails(scope.row)">详情</el-button>
-                <el-button size="small" type="primary" @click="viewOdds(scope.row)">赔率</el-button>
+                <el-button size="small" @click="viewDetails(scope.row)">{{ T.actionDetail }}</el-button>
+                <el-button size="small" type="primary" @click="viewOdds(scope.row)">{{ T.actionOdds }}</el-button>
                 <el-dropdown @command="handleCommand($event, scope.row)">
                   <el-button size="small">
-                    更多<el-icon class="el-icon--right"><arrow-down /></el-icon>
+                    {{ T.actionMore }}<el-icon class="el-icon--right"><arrow-down /></el-icon>
                   </el-button>
                   <template #dropdown>
                     <el-dropdown-menu>
-                      <el-dropdown-item command="analyze">数据分析</el-dropdown-item>
-                      <el-dropdown-item command="export">导出数据</el-dropdown-item>
-                      <el-dropdown-item command="refresh" divided>刷新</el-dropdown-item>
-                      <el-dropdown-item command="delete" divided class="text-danger">删除</el-dropdown-item>
+                      <el-dropdown-item command="analyze">{{ T.actionAnalyze }}</el-dropdown-item>
+                      <el-dropdown-item command="export">{{ T.actionExportItem }}</el-dropdown-item>
+                      <el-dropdown-item command="refresh" divided>{{ T.actionRefresh }}</el-dropdown-item>
+                      <el-dropdown-item command="delete" divided class="text-danger">{{ T.actionDelete }}</el-dropdown-item>
                     </el-dropdown-menu>
                   </template>
                 </el-dropdown>
@@ -226,7 +226,7 @@
             </el-table-column>
           </el-table>
 
-          <!-- 分页 -->
+          <!-- Pagination -->
           <div class="pagination-wrapper">
             <el-pagination
               v-model:current-page="pagination.page"
@@ -240,7 +240,7 @@
           </div>
         </div>
 
-        <!-- 图表视图 -->
+        <!-- Chart View -->
         <div v-show="viewMode === 'chart'" class="chart-view">
           <div class="chart-container">
             <div ref="mainChart" class="main-chart"></div>
@@ -251,7 +251,7 @@
           </div>
         </div>
 
-        <!-- 实时监控视图 -->
+        <!-- Dashboard View -->
         <div v-show="viewMode === 'dashboard'" class="dashboard-view">
           <el-row :gutter="20">
             <el-col :span="16">
@@ -259,21 +259,21 @@
             </el-col>
             <el-col :span="8">
               <el-card class="realtime-stats">
-                <template #header>实时统计</template>
+                <template #header>{{ T.realtimeStatsTitle }}</template>
                 <div class="realtime-item">
-                  <span class="label">当前抓取速度:</span>
+                  <span class="label">{{ T.realtimeCurrentSpeed }}</span>
                   <span class="value">{{ realtimeStats.currentSpeed }}/s</span>
                 </div>
                 <div class="realtime-item">
-                  <span class="label">队列长度:</span>
+                  <span class="label">{{ T.realtimeQueueLength }}</span>
                   <span class="value">{{ realtimeStats.queueLength }}</span>
                 </div>
                 <div class="realtime-item">
-                  <span class="label">成功率:</span>
+                  <span class="label">{{ T.realtimeSuccessRate }}</span>
                   <span class="value">{{ realtimeStats.successRate }}%</span>
                 </div>
                 <div class="realtime-item">
-                  <span class="label">活跃连接:</span>
+                  <span class="label">{{ T.realtimeActiveConnections }}</span>
                   <span class="value">{{ realtimeStats.activeConnections }}</span>
                 </div>
               </el-card>
@@ -283,61 +283,61 @@
       </el-card>
     </div>
 
-    <!-- 详情抽屉 -->
+    <!-- Detail Drawer -->
     <el-drawer
       v-model="detailVisible"
-      title="数据详情"
+      :title="T.drawerDataDetail"
       size="60%"
       direction="rtl"
     >
       <MatchDetail v-if="selectedItem" :match-data="selectedItem" />
     </el-drawer>
 
-    <!-- 赔率详情抽屉 -->
+    <!-- Odds Drawer -->
     <el-drawer
       v-model="oddsVisible"
-      title="赔率详情"
+      :title="T.drawerOddsDetail"
       size="50%"
       direction="rtl"
     >
       <OddsDetail v-if="selectedItem" :odds-data="selectedItem" />
     </el-drawer>
 
-    <!-- 导出对话框 -->
+    <!-- Export Dialog -->
     <el-dialog
       v-model="exportVisible"
-      title="导出数据"
+      :title="T.exportDialogTitle"
       width="500px"
     >
       <el-form :model="exportForm" label-width="100px">
-        <el-form-item label="导出格式">
+        <el-form-item :label="T.exportFormat">
           <el-radio-group v-model="exportForm.format">
             <el-radio value="excel">Excel</el-radio>
             <el-radio value="csv">CSV</el-radio>
             <el-radio value="json">JSON</el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item label="导出范围">
+        <el-form-item :label="T.exportScope">
           <el-checkbox-group v-model="exportForm.scope">
-            <el-checkbox value="current">当前页</el-checkbox>
-            <el-checkbox value="selected">选中项</el-checkbox>
-            <el-checkbox value="all">全部数据</el-checkbox>
+            <el-checkbox value="current">{{ T.exportCurrentPage }}</el-checkbox>
+            <el-checkbox value="selected">{{ T.exportSelectedPage }}</el-checkbox>
+            <el-checkbox value="all">{{ T.exportAllData }}</el-checkbox>
           </el-checkbox-group>
         </el-form-item>
-        <el-form-item label="日期范围">
+        <el-form-item :label="T.exportDateRange">
           <el-date-picker
             v-model="exportForm.dateRange"
             type="daterange"
-            range-separator="至"
-            start-placeholder="开始日期"
-            end-placeholder="结束日期"
+            :range-separator="T.rangeSeparator"
+            :start-placeholder="T.startDate"
+            :end-placeholder="T.endDate"
           />
         </el-form-item>
       </el-form>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="exportVisible = false">取消</el-button>
-          <el-button type="primary" @click="confirmExport">确定导出</el-button>
+          <el-button @click="exportVisible = false">{{ T.cancel }}</el-button>
+          <el-button type="primary" @click="confirmExport">{{ T.confirmExport }}</el-button>
         </span>
       </template>
     </el-dialog>
@@ -345,19 +345,47 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed, nextTick } from 'vue'
+import { ref, reactive, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { 
-  Refresh, Download, ArrowUp, ArrowDown, 
-  TrendCharts, Grid 
+import {
+  Refresh,
+  Download,
+  ArrowUp,
+  ArrowDown,
+  TrendCharts,
+  Grid
 } from '@element-plus/icons-vue'
 import * as echarts from 'echarts'
 import MatchDetail from '@/components/MatchDetail.vue'
 import OddsDetail from '@/components/OddsDetail.vue'
-import { getSummaryStats } from '@/api/modules/stats'
-import { getDataList, exportData } from '@/api/data'
+import {
+  getSummaryStats,
+  getDataCenterTrend,
+  getDataCenterSourceDistribution,
+  getDataCenterRealtime
+} from '@/api/modules/stats'
+import {
+  getDataCenterTableData,
+  exportDataCenterTable,
+  getDataCenterSourceOptions
+} from '@/api/modules/data-center'
+import { DATA_CENTER_TEXT as T } from './constants/monitorText'
 
-// 响应式数据
+const REALTIME_REFRESH_MS = 10000
+const TREND_DAYS = 7
+const REALTIME_POINTS = 20
+const REALTIME_INTERVAL_MINUTES = 5
+
+const unwrapPayload = (response) => {
+  if (!response || typeof response !== 'object' || Array.isArray(response)) {
+    return response
+  }
+  if (Object.prototype.hasOwnProperty.call(response, 'data')) {
+    return response.data
+  }
+  return response
+}
+
 const loading = ref(false)
 const viewMode = ref('table')
 const detailVisible = ref(false)
@@ -371,7 +399,6 @@ const pieChart = ref(null)
 const trendChart = ref(null)
 const realtimeChart = ref(null)
 
-// 统计数据
 const stats = reactive({
   totalMatches: 0,
   activeSources: 0,
@@ -389,7 +416,6 @@ const stats = reactive({
   storageChange: 0
 })
 
-// 筛选条件
 const filters = reactive({
   dataType: '',
   sourceId: '',
@@ -397,64 +423,133 @@ const filters = reactive({
   status: ''
 })
 
-// 分页
 const pagination = reactive({
   page: 1,
   size: 20,
   total: 0
 })
 
-// 数据源列表
-const sources = ref([
-  { id: 1, name: '官方API' },
-  { id: 2, name: '第三方爬虫' },
-  { id: 3, name: '合作伙伴' },
-  { id: 4, name: '历史数据' }
-])
+const fallbackSources = [
+  { id: 1, name: T.sourceOfficial },
+  { id: 2, name: T.sourceCrawler }
+]
+const sources = ref([])
 
-// 表格数据
 const tableData = ref([])
 const filteredData = ref([])
 
-// 实时统计数据
-const realtimeStats = reactive({
-  currentSpeed: 156,
-  queueLength: 23,
-  successRate: 98.7,
-  activeConnections: 8
+const chartData = reactive({
+  trendLabels: [],
+  matchSeries: [],
+  oddsSeries: [],
+  spSeries: [],
+  qualitySeries: [],
+  sourceDistribution: [],
+  realtimeLabels: [],
+  realtimeSpeed: []
 })
 
-// 导出表单
+const realtimeStats = reactive({
+  currentSpeed: 0,
+  queueLength: 0,
+  successRate: 0,
+  activeConnections: 0
+})
+
 const exportForm = reactive({
   format: 'excel',
   scope: ['current'],
   dateRange: []
 })
 
-// 选中的项目
 const selectedRows = ref([])
+const realtimeTimer = ref(null)
 
-// 初始化数据
-onMounted(() => {
-  loadStats()
-  loadTableData()
-  initCharts()
-  startRealtimeUpdate()
+onMounted(async () => {
+  await initializePage()
 })
 
-// 加载统计数据
+onUnmounted(() => {
+  stopRealtimeUpdate()
+  disposeCharts()
+})
+
+watch(
+  () => viewMode.value,
+  (mode) => {
+    nextTick(() => {
+      if (mode === 'chart') {
+        initMainChart()
+        initPieChart()
+        initTrendChart()
+      } else if (mode === 'dashboard') {
+        initRealtimeChart()
+      }
+    })
+  }
+)
+
+const initializePage = async () => {
+  await Promise.all([
+    loadSourceOptions(),
+    loadStats(),
+    loadTableData(),
+    loadChartData(),
+    loadRealtimeData()
+  ])
+
+  initCharts()
+  startRealtimeUpdate()
+}
+
 const loadStats = async () => {
   try {
     const res = await getSummaryStats()
-    // 假设API返回字段与stats对象匹配，或进行映射
-    Object.assign(stats, res.data || res)
+    const payload = unwrapPayload(res) || {}
+
+    Object.assign(stats, {
+      totalMatches: Number(payload.totalMatches || 0),
+      activeSources: Number(payload.activeSources || 0),
+      dataQuality: Number(payload.dataQuality || 0),
+      errorRate: Number(payload.errorRate || 0),
+      avgResponseTime: Number(payload.avgResponseTime || 0),
+      storageUsed: Number(payload.storageUsed || 0),
+      matchGrowth: Number(payload.matchGrowth || 0),
+      sourceGrowth: Number(payload.sourceGrowth || 0),
+      qualityTrend: payload.qualityTrend || 'up',
+      qualityChange: Number(payload.qualityChange || 0),
+      errorImprovement: Number(payload.errorImprovement || 0),
+      responseImprovement: Number(payload.responseImprovement || 0),
+      storageTrend: payload.storageTrend || 'up',
+      storageChange: Number(payload.storageChange || 0)
+    })
   } catch (error) {
-    ElMessage.error('加载统计数据失败')
+    ElMessage.error(T.toastLoadStatsFailed)
     console.error('Error loading stats:', error)
   }
 }
 
-// 加载表格数据
+const loadSourceOptions = async () => {
+  try {
+    const res = await getDataCenterSourceOptions({ page: 1, size: 100 })
+    const payload = unwrapPayload(res) || {}
+    const items = Array.isArray(payload.items) ? payload.items : []
+    sources.value = items
+      .filter((item) => item && item.id != null)
+      .map((item) => ({
+        id: item.id,
+        name: item.name || `${T.sourcePrefix}${item.id}`
+      }))
+
+    if (!sources.value.length) {
+      sources.value = [...fallbackSources]
+    }
+  } catch (error) {
+    sources.value = [...fallbackSources]
+    console.warn('Failed to load source options, fallback to defaults:', error)
+  }
+}
+
 const loadTableData = async () => {
   loading.value = true
   try {
@@ -462,8 +557,7 @@ const loadTableData = async () => {
       page: pagination.page,
       size: pagination.size
     }
-    
-    // 添加筛选条件
+
     if (filters.dataType) {
       params.type = filters.dataType
     }
@@ -477,118 +571,156 @@ const loadTableData = async () => {
       params.start_date = filters.dateRange[0]
       params.end_date = filters.dateRange[1]
     }
-    
-    const res = await getDataList(params)
-    tableData.value = res.data?.items || res.items || []
-    pagination.total = res.data?.total || res.total || 0
+
+    const res = await getDataCenterTableData(params)
+    const payload = unwrapPayload(res) || {}
+    tableData.value = Array.isArray(payload.items) ? payload.items : []
+    pagination.total = Number(payload.total || 0)
     applyFilters()
   } catch (error) {
-    ElMessage.error('加载数据失败')
+    ElMessage.error(T.toastLoadDataFailed)
     console.error('Error loading table data:', error)
   } finally {
     loading.value = false
   }
 }
 
-// 应用筛选
 const applyFilters = () => {
-  let filtered = [...tableData.value]
-  
-  if (filters.dataType) {
-    filtered = filtered.filter(item => item.type === filters.dataType)
+  filteredData.value = [...tableData.value]
+}
+
+const loadChartData = async () => {
+  await Promise.all([loadTrendData(), loadSourceDistribution()])
+  nextTick(() => {
+    initMainChart()
+    initPieChart()
+    initTrendChart()
+  })
+}
+
+const loadTrendData = async () => {
+  try {
+    const res = await getDataCenterTrend({ days: TREND_DAYS })
+    const payload = unwrapPayload(res) || {}
+
+    chartData.trendLabels = Array.isArray(payload.labels) ? payload.labels : []
+    chartData.matchSeries = Array.isArray(payload.matches) ? payload.matches.map((n) => Number(n || 0)) : []
+    chartData.oddsSeries = Array.isArray(payload.odds) ? payload.odds.map((n) => Number(n || 0)) : []
+    chartData.spSeries = Array.isArray(payload.spRecords) ? payload.spRecords.map((n) => Number(n || 0)) : []
+    chartData.qualitySeries = Array.isArray(payload.quality) ? payload.quality.map((n) => Number(n || 0)) : []
+  } catch (error) {
+    console.error('Error loading trend data:', error)
+    chartData.trendLabels = []
+    chartData.matchSeries = []
+    chartData.oddsSeries = []
+    chartData.spSeries = []
+    chartData.qualitySeries = []
   }
-  
-  if (filters.sourceId) {
-    const sourceName = sources.value.find(s => s.id == filters.sourceId)?.name
-    filtered = filtered.filter(item => item.sourceName === sourceName)
+}
+
+const loadSourceDistribution = async () => {
+  try {
+    const res = await getDataCenterSourceDistribution()
+    const payload = unwrapPayload(res) || {}
+    const items = Array.isArray(payload.items) ? payload.items : []
+
+    chartData.sourceDistribution = items.map((item) => ({
+      name: item.name || T.sourceUnknown,
+      value: Number(item.value || 0)
+    }))
+  } catch (error) {
+    console.error('Error loading source distribution:', error)
+    chartData.sourceDistribution = []
   }
-  
-  if (filters.status) {
-    filtered = filtered.filter(item => item.status === filters.status)
-  }
-  
-  if (filters.dateRange && filters.dateRange.length === 2) {
-    const startDate = new Date(filters.dateRange[0])
-    const endDate = new Date(filters.dateRange[1])
-    filtered = filtered.filter(item => {
-      const itemDate = new Date(item.createdAt)
-      return itemDate >= startDate && itemDate <= endDate
+}
+
+const loadRealtimeData = async () => {
+  try {
+    const res = await getDataCenterRealtime({
+      points: REALTIME_POINTS,
+      interval_minutes: REALTIME_INTERVAL_MINUTES
     })
+    const payload = unwrapPayload(res) || {}
+
+    const snapshot = payload.snapshot || {}
+    const history = payload.history || {}
+
+    realtimeStats.currentSpeed = Number(snapshot.currentSpeed || 0)
+    realtimeStats.queueLength = Number(snapshot.queueLength || 0)
+    realtimeStats.successRate = Number(snapshot.successRate || 0)
+    realtimeStats.activeConnections = Number(snapshot.activeConnections || 0)
+
+    chartData.realtimeLabels = Array.isArray(history.labels) ? history.labels : []
+    chartData.realtimeSpeed = Array.isArray(history.speed)
+      ? history.speed.map((n) => Number(n || 0))
+      : []
+
+    updateRealtimeChart()
+  } catch (error) {
+    console.error('Error loading realtime data:', error)
   }
-  
-  filteredData.value = filtered
 }
 
-// 搜索
-const handleSearch = () => {
-  applyFilters()
+const handleSearch = async () => {
+  pagination.page = 1
+  await loadTableData()
 }
 
-// 重置筛选
-const handleReset = () => {
-  Object.keys(filters).forEach(key => {
+const handleReset = async () => {
+  Object.keys(filters).forEach((key) => {
     filters[key] = key === 'dateRange' ? [] : ''
   })
-  applyFilters()
+  pagination.page = 1
+  await loadTableData()
 }
 
-// 刷新数据
-const handleRefresh = () => {
-  loadStats()
-  loadTableData()
-  ElMessage.success('数据已刷新')
+const handleRefresh = async () => {
+  await Promise.all([loadStats(), loadTableData(), loadChartData(), loadRealtimeData()])
+  ElMessage.success(T.toastDataRefreshed)
 }
 
-// 导出数据
 const handleExport = () => {
   exportVisible.value = true
 }
 
-// 确认导出
 const confirmExport = async () => {
   try {
-    ElMessage.info('正在导出数据...')
-    
-    // 准备导出参数
+    ElMessage.info(T.toastExportCreating)
+
     const exportParams = {
       format: exportForm.format,
       scope: exportForm.scope,
       dateRange: exportForm.dateRange
     }
-    
-    // 这里应该调用实际的导出API
-    // TODO: 实现实际的导出API调用
-    console.log('导出参数:', exportParams)
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    ElMessage.success('导出成功')
+
+    const res = await exportDataCenterTable(exportParams)
+    const payload = unwrapPayload(res) || {}
+    const fileName = payload.fileName || 'data_export'
+    ElMessage.success(`${T.toastExportCreated}: ${fileName}`)
     exportVisible.value = false
   } catch (error) {
-    ElMessage.error('导出失败')
-    console.error('导出失败:', error)
+    ElMessage.error(T.toastExportFailed)
+    console.error('Export failed:', error)
   }
 }
 
-// 查看详情
 const viewDetails = (row) => {
   selectedItem.value = row
   detailVisible.value = true
 }
 
-// 查看赔率
 const viewOdds = (row) => {
   selectedItem.value = row
   oddsVisible.value = true
 }
 
-// 下拉菜单命令
 const handleCommand = (command, row) => {
   switch (command) {
     case 'analyze':
-      ElMessage.info('打开数据分析')
+      ElMessage.info(T.toastOpenAnalyze)
       break
     case 'export':
-      ElMessage.info('导出单项数据')
+      ElMessage.info(T.toastExportSingle)
       break
     case 'refresh':
       refreshItem(row)
@@ -596,70 +728,76 @@ const handleCommand = (command, row) => {
     case 'delete':
       deleteItem(row)
       break
+    default:
+      break
   }
 }
 
-// 刷新单项
 const refreshItem = async (row) => {
   try {
-    await ElMessageBox.confirm(`确定要刷新 "${row.title}" 吗？`, '确认刷新', {
+    await ElMessageBox.confirm(
+      `${T.confirmRefreshQuestionStart}"${row.title}"${T.confirmRefreshQuestionEnd}`,
+      T.confirmRefreshTitle,
+      {
       type: 'warning'
-    })
-    ElMessage.success('刷新任务已提交')
+      }
+    )
+    ElMessage.success(T.toastRefreshSubmitted)
   } catch {
-    // 用户取消
+    // no-op
   }
 }
 
-// 删除单项
 const deleteItem = async (row) => {
   try {
-    await ElMessageBox.confirm(`确定要删除 "${row.title}" 吗？此操作不可恢复。`, '确认删除', {
+    await ElMessageBox.confirm(
+      `${T.confirmDeleteQuestionStart}"${row.title}"${T.confirmDeleteQuestionEnd}`,
+      T.confirmDeleteTitle,
+      {
       type: 'error'
-    })
-    const index = tableData.value.findIndex(item => item.id === row.id)
+      }
+    )
+    const index = tableData.value.findIndex((item) => item.id === row.id)
     if (index > -1) {
       tableData.value.splice(index, 1)
       applyFilters()
-      ElMessage.success('删除成功')
+      ElMessage.success(T.toastDeleteSuccess)
     }
   } catch {
-    // 用户取消
+    // no-op
   }
 }
 
-// 表格选择变化
 const handleSelectionChange = (selection) => {
   selectedRows.value = selection
 }
 
-// 分页大小变化
-const handleSizeChange = (size) => {
+const handleSizeChange = async (size) => {
   pagination.size = size
   pagination.page = 1
+  await loadTableData()
 }
 
-// 页码变化
-const handleCurrentChange = (page) => {
+const handleCurrentChange = async (page) => {
   pagination.page = page
+  await loadTableData()
 }
 
-// 切换图表显示
 const toggleChart = () => {
   showChart.value = !showChart.value
   if (showChart.value) {
     nextTick(() => {
       initMainChart()
+      initPieChart()
+      initTrendChart()
     })
   }
 }
 
-// 切换热力图显示
 const toggleHeatmap = () => {
   showHeatmap.value = !showHeatmap.value
 }
 
-// 初始化图表
 const initCharts = () => {
   nextTick(() => {
     initMainChart()
@@ -669,59 +807,89 @@ const initCharts = () => {
   })
 }
 
-// 初始化主图表
+const getChartInstance = (domRef) => {
+  if (!domRef) return null
+  if (!domRef.clientWidth || !domRef.clientHeight) return null
+  const existing = echarts.getInstanceByDom(domRef)
+  return existing || echarts.init(domRef)
+}
+
+const disposeCharts = () => {
+  ;[mainChart.value, pieChart.value, trendChart.value, realtimeChart.value].forEach((domRef) => {
+    if (!domRef) return
+    const chart = echarts.getInstanceByDom(domRef)
+    if (chart) {
+      chart.dispose()
+    }
+  })
+}
+
 const initMainChart = () => {
   if (!mainChart.value) return
-  
-  const chart = echarts.init(mainChart.value)
-  const option = {
+
+  const labels = chartData.trendLabels.length ? chartData.trendLabels : ['--']
+  const matchSeries = chartData.matchSeries.length ? chartData.matchSeries : [0]
+  const oddsSeries = chartData.oddsSeries.length ? chartData.oddsSeries : [0]
+  const spSeries = chartData.spSeries.length ? chartData.spSeries : [0]
+
+  const chart = getChartInstance(mainChart.value)
+  if (!chart) return
+
+  chart.setOption({
     title: {
-      text: '数据趋势分析',
+      text: T.chartTrendTitle,
       left: 'center'
     },
     tooltip: {
       trigger: 'axis'
     },
     legend: {
-      data: ['比赛数据', '赔率数据', '事件数据'],
+      data: [T.chartLegendMatches, T.chartLegendOdds, T.chartLegendSp],
       top: '10%'
     },
     xAxis: {
       type: 'category',
-      data: ['1月', '2月', '3月', '4月', '5月', '6月']
+      data: labels
     },
     yAxis: {
       type: 'value'
     },
     series: [
       {
-        name: '比赛数据',
+        name: T.chartLegendMatches,
         type: 'line',
-        data: [120, 132, 101, 134, 90, 230]
+        smooth: true,
+        data: matchSeries
       },
       {
-        name: '赔率数据',
+        name: T.chartLegendOdds,
         type: 'line',
-        data: [220, 182, 191, 234, 290, 330]
+        smooth: true,
+        data: oddsSeries
       },
       {
-        name: '事件数据',
+        name: T.chartLegendSp,
         type: 'line',
-        data: [150, 232, 201, 154, 190, 330]
+        smooth: true,
+        data: spSeries
       }
     ]
-  }
-  chart.setOption(option)
+  })
 }
 
-// 初始化饼图
 const initPieChart = () => {
   if (!pieChart.value) return
-  
-  const chart = echarts.init(pieChart.value)
-  const option = {
+
+  const chart = getChartInstance(pieChart.value)
+  if (!chart) return
+
+  const pieItems = chartData.sourceDistribution.length
+    ? chartData.sourceDistribution
+    : [{ name: T.chartPieNoData, value: 1 }]
+
+  chart.setOption({
     title: {
-      text: '数据源分布',
+      text: T.chartPieTitle,
       left: 'center'
     },
     tooltip: {
@@ -731,12 +899,7 @@ const initPieChart = () => {
       {
         type: 'pie',
         radius: '50%',
-        data: [
-          { value: 1048, name: '官方API' },
-          { value: 735, name: '第三方爬虫' },
-          { value: 580, name: '合作伙伴' },
-          { value: 484, name: '历史数据' }
-        ],
+        data: pieItems,
         emphasis: {
           itemStyle: {
             shadowBlur: 10,
@@ -746,18 +909,21 @@ const initPieChart = () => {
         }
       }
     ]
-  }
-  chart.setOption(option)
+  })
 }
 
-// 初始化趋势图
 const initTrendChart = () => {
   if (!trendChart.value) return
-  
-  const chart = echarts.init(trendChart.value)
-  const option = {
+
+  const chart = getChartInstance(trendChart.value)
+  if (!chart) return
+
+  const labels = chartData.trendLabels.length ? chartData.trendLabels : ['--']
+  const quality = chartData.qualitySeries.length ? chartData.qualitySeries : [0]
+
+  chart.setOption({
     title: {
-      text: '质量趋势',
+      text: T.chartQualityTitle,
       left: 'center'
     },
     tooltip: {
@@ -765,18 +931,18 @@ const initTrendChart = () => {
     },
     xAxis: {
       type: 'category',
-      data: ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
+      data: labels
     },
     yAxis: {
       type: 'value',
-      min: 80,
+      min: 0,
       max: 100
     },
     series: [
       {
         type: 'line',
         smooth: true,
-        data: [94, 96, 93, 95, 97, 94, 96],
+        data: quality,
         areaStyle: {
           color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
             { offset: 0, color: 'rgba(54, 162, 235, 0.3)' },
@@ -785,18 +951,18 @@ const initTrendChart = () => {
         }
       }
     ]
-  }
-  chart.setOption(option)
+  })
 }
 
-// 初始化实时图表
 const initRealtimeChart = () => {
   if (!realtimeChart.value) return
-  
-  const chart = echarts.init(realtimeChart.value)
-  const option = {
+
+  const chart = getChartInstance(realtimeChart.value)
+  if (!chart) return
+
+  chart.setOption({
     title: {
-      text: '实时数据抓取监控',
+      text: T.chartRealtimeTitle,
       left: 'center'
     },
     tooltip: {
@@ -805,45 +971,53 @@ const initRealtimeChart = () => {
     xAxis: {
       type: 'category',
       boundaryGap: false,
-      data: Array.from({ length: 20 }, (_, i) => `${i * 5}s`)
+      data: chartData.realtimeLabels.length ? chartData.realtimeLabels : ['--']
     },
     yAxis: {
       type: 'value'
     },
     series: [
       {
-        name: '抓取速度',
+        name: T.chartRealtimeSpeed,
         type: 'line',
         smooth: true,
-        data: Array.from({ length: 20 }, () => Math.floor(Math.random() * 100) + 100)
+        data: chartData.realtimeSpeed.length ? chartData.realtimeSpeed : [0]
       }
     ]
-  }
-  chart.setOption(option)
+  })
 }
 
-// 开始实时更新
-const startRealtimeUpdate = () => {
-  setInterval(() => {
-    // 更新实时统计数据
-    realtimeStats.currentSpeed = Math.floor(Math.random() * 50) + 150
-    realtimeStats.queueLength = Math.floor(Math.random() * 20) + 15
-    realtimeStats.successRate = (Math.random() * 2 + 97).toFixed(1)
-    
-    // 更新实时图表
-    if (realtimeChart.value) {
-      const chart = echarts.getInstanceByDom(realtimeChart.value)
-      if (chart) {
-        const option = chart.getOption()
-        const newData = Array.from({ length: 20 }, () => Math.floor(Math.random() * 100) + 100)
-        option.series[0].data = newData
-        chart.setOption(option)
+const updateRealtimeChart = () => {
+  if (!realtimeChart.value) return
+  const chart = echarts.getInstanceByDom(realtimeChart.value)
+  if (!chart) return
+
+  chart.setOption({
+    xAxis: {
+      data: chartData.realtimeLabels.length ? chartData.realtimeLabels : ['--']
+    },
+    series: [
+      {
+        data: chartData.realtimeSpeed.length ? chartData.realtimeSpeed : [0]
       }
-    }
-  }, 3000)
+    ]
+  })
 }
 
-// 获取类型颜色
+const startRealtimeUpdate = () => {
+  stopRealtimeUpdate()
+  realtimeTimer.value = setInterval(() => {
+    loadRealtimeData()
+  }, REALTIME_REFRESH_MS)
+}
+
+const stopRealtimeUpdate = () => {
+  if (realtimeTimer.value) {
+    clearInterval(realtimeTimer.value)
+    realtimeTimer.value = null
+  }
+}
+
 const getTypeColor = (type) => {
   const colors = {
     matches: 'primary',
@@ -854,18 +1028,11 @@ const getTypeColor = (type) => {
   return colors[type] || 'info'
 }
 
-// 获取类型文本
 const getTypeText = (type) => {
-  const texts = {
-    matches: '比赛',
-    odds: '赔率',
-    events: '事件',
-    statistics: '统计'
-  }
+  const texts = T.typeTextMap
   return texts[type] || type
 }
 
-// 获取状态颜色
 const getStatusColor = (status) => {
   const colors = {
     normal: 'success',
@@ -875,17 +1042,11 @@ const getStatusColor = (status) => {
   return colors[status] || 'info'
 }
 
-// 获取状态文本
 const getStatusText = (status) => {
-  const texts = {
-    normal: '正常',
-    error: '异常',
-    warning: '警告'
-  }
+  const texts = T.statusTextMap
   return texts[status] || status
 }
 
-// 获取质量颜色
 const getQualityColor = (quality) => {
   if (quality >= 90) return '#67C23A'
   if (quality >= 70) return '#E6A23C'
@@ -1004,7 +1165,7 @@ const getQualityColor = (quality) => {
         }
       }
 
-      // 使用 CSS 变量动态设置强调色
+      // Dynamic card accent colors via CSS variables
       &.primary { --card-accent-color: #409EFF; }
       &.success { --card-accent-color: #67C23A; }
       &.warning { --card-accent-color: #E6A23C; }
@@ -1053,7 +1214,7 @@ const getQualityColor = (quality) => {
         border-top: 1px solid var(--color-border-lighter);
       }
 
-      // 优化表格样式
+      // Table style optimization
       .el-table {
         border-radius: var(--border-radius-base);
         overflow: hidden;
@@ -1159,7 +1320,7 @@ const getQualityColor = (quality) => {
   }
 }
 
-// 响应式设计
+// Responsive layout
 @media (max-width: 768px) {
   .data-center {
     padding: var(--spacing-md);
@@ -1212,3 +1373,4 @@ const getQualityColor = (quality) => {
   }
 }
 </style>
+

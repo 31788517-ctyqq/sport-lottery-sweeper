@@ -12,6 +12,32 @@ export const statsAPI = {
     return client.get('/api/v1/stats/data-center');
   },
 
+  /**
+   * 获取数据中心趋势图数据
+   * @param {Object} params
+   * @returns {Promise<Object>}
+   */
+  getDataCenterTrend(params = {}) {
+    return client.get('/api/v1/stats/data-center/trend', { params });
+  },
+
+  /**
+   * 获取数据源分布数据
+   * @returns {Promise<Object>}
+   */
+  getDataCenterSourceDistribution() {
+    return client.get('/api/v1/stats/data-center/source-distribution');
+  },
+
+  /**
+   * 获取数据中心实时监控数据
+   * @param {Object} params
+   * @returns {Promise<Object>}
+   */
+  getDataCenterRealtime(params = {}) {
+    return client.get('/api/v1/stats/data-center/realtime', { params });
+  },
+
 
   /**
    * 获取比赛相关的图表数据
@@ -41,4 +67,12 @@ export const statsAPI = {
   },
 };
 
-export const { getSummaryStats, getMatchChartStats, getIntelligenceChartStats, getUserBehaviorStats } = statsAPI;
+export const {
+  getSummaryStats,
+  getDataCenterTrend,
+  getDataCenterSourceDistribution,
+  getDataCenterRealtime,
+  getMatchChartStats,
+  getIntelligenceChartStats,
+  getUserBehaviorStats
+} = statsAPI;

@@ -233,8 +233,8 @@ class APIMigrationMiddleware(BaseHTTPMiddleware):
             new_path = old_path.replace("/api/admin/sources", "/api/v1/admin/crawler/sources", 1)
             request.scope["path"] = new_path
             logger.info(f"API path redirected: {old_path} -> {new_path}")
-        elif old_path == "/api/v1/admin/data" or old_path.startswith("/api/v1/admin/data/"):
-            new_path = old_path.replace("/api/v1/admin/data", "/api/admin/data", 1)
+        elif old_path == "/api/admin/data" or old_path.startswith("/api/admin/data/"):
+            new_path = old_path.replace("/api/admin/data", "/api/v1/admin/data", 1)
             request.scope["path"] = new_path
             logger.info(f"API path redirected: {old_path} -> {new_path}")
         elif old_path == "/api/admin/ip-pools" or old_path.startswith("/api/admin/ip-pools/"):
@@ -1116,15 +1116,15 @@ async def get_data_list(
     start_date: str = Query(None),
     end_date: str = Query(None)
 ):
-    """鑾峰彇鏁版嵁鍒楄〃"""
+    """获取数据列表"""
     logger.info(f"Data list requested: page={page}, size={size}")
-    # 妯℃嫙鏁版嵁
+    # 模拟数据
     items = [
         {
             "id": i,
             "type": "matches",
-            "sourceName": "瀹樻柟API",
-            "title": f"姣旇禌鏁版嵁 {i}",
+            "sourceName": "官方API",
+            "title": f"比赛数据 {i}",
             "status": "normal",
             "quality": 95,
             "recordCount": 100 + i,
@@ -1133,7 +1133,8 @@ async def get_data_list(
         }
         for i in range(1, 101)
     ]
-    # 绠€鍗曞垎椤?    start = (page - 1) * size
+    # 简单分页
+    start = (page - 1) * size
     end = start + size
     paginated_items = items[start:end]
     return {

@@ -1,16 +1,45 @@
-// 爬虫管理模块路由
+// 数据源管理路由
 const crawlerRoutes = [
-  // 嵌套在/admin下的爬虫管理子路由
   {
     path: 'data-source',
     name: 'DataSourceManagement',
-    redirect: '/admin/data-source/config',
+    redirect: '/admin/data-source/overview',
     meta: {
       title: '数据源管理',
       icon: 'SetUp',
       roles: ['admin', 'manager']
     },
     children: [
+      {
+        path: 'overview',
+        name: 'DataSourceOverview',
+        component: () => import('@/views/admin/crawler/SystemMonitor.vue'),
+        meta: {
+          title: '运行总览',
+          icon: 'monitor',
+          roles: ['admin', 'manager']
+        }
+      },
+      {
+        path: 'tasks',
+        name: 'DataSourceTasks',
+        component: () => import('@/views/admin/crawler/TaskConsole.vue'),
+        meta: {
+          title: '任务中心',
+          icon: 'console',
+          roles: ['admin', 'manager']
+        }
+      },
+      {
+        path: 'assets',
+        name: 'DataSourceAssets',
+        component: () => import('@/views/admin/crawler/DataCenter.vue'),
+        meta: {
+          title: '数据资产中心',
+          icon: 'data-analysis',
+          roles: ['admin', 'manager']
+        }
+      },
       {
         path: 'config',
         name: 'DataSourceConfig',
@@ -23,33 +52,23 @@ const crawlerRoutes = [
       },
       {
         path: 'monitor',
-        name: 'DataSourceMonitor',
-        component: () => import('@/views/admin/crawler/SystemMonitor.vue'),
-        meta: {
-          title: '爬虫监控',
-          icon: 'monitor',
-          roles: ['admin', 'manager']
-        }
+        name: 'DataSourceMonitorLegacy',
+        redirect: '/admin/data-source/overview'
       },
       {
         path: 'task-console',
-        name: 'TaskConsole',
-        component: () => import('@/views/admin/crawler/TaskConsole.vue'),
-        meta: {
-          title: '任务控制台',
-          icon: 'console',
-          roles: ['admin', 'manager']
-        }
+        name: 'TaskConsoleLegacy',
+        redirect: '/admin/data-source/tasks'
+      },
+      {
+        path: 'task-monitor',
+        name: 'TaskExecutionMonitorLegacy',
+        redirect: '/admin/data-source/tasks'
       },
       {
         path: 'data-center',
-        name: 'DataCenter',
-        component: () => import('@/views/admin/crawler/DataCenter.vue'),
-        meta: {
-          title: '数据中心',
-          icon: 'data-analysis',
-          roles: ['admin', 'manager']
-        }
+        name: 'DataCenterLegacy',
+        redirect: '/admin/data-source/assets'
       },
       {
         path: 'ip-pool',
@@ -68,16 +87,6 @@ const crawlerRoutes = [
         meta: {
           title: '请求头管理',
           icon: 'tickets',
-          roles: ['admin', 'manager']
-        }
-      },
-      {
-        path: 'task-monitor',
-        name: 'TaskExecutionMonitor',
-        component: () => import('@/views/admin/crawler/TaskExecutionMonitor.vue'),
-        meta: {
-          title: '任务执行监控',
-          icon: 'monitor',
           roles: ['admin', 'manager']
         }
       },

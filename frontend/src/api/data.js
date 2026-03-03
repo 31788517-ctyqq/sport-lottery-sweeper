@@ -34,3 +34,12 @@ export function exportData(params) {
     data: params
   })
 }
+
+// 获取数据源选项（用于筛选下拉）
+export function getDataSourceOptions(params) {
+  return request({
+    url: '/api/v1/admin/sources',
+    method: 'get',
+    params
+  })
+}

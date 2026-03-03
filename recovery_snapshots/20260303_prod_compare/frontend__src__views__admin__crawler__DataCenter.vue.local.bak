@@ -1,0 +1,1214 @@
+<template>
+  <div class="data-center">
+    <!-- 面包屑导航 -->
+    <el-breadcrumb separator="/" class="breadcrumb">
+      <el-breadcrumb-item :to="{ path: '/admin' }">首页</el-breadcrumb-item>
+      <el-breadcrumb-item :to="{ path: '/admin/data-source' }">数据源管理</el-breadcrumb-item>
+      <el-breadcrumb-item>数据中心</el-breadcrumb-item>
+    </el-breadcrumb>
+
+    <!-- 页面标题和操作栏 -->
+    <div class="page-header">
+      <div class="header-left">
+        <h2>数据中心</h2>
+        <p class="subtitle">全面的数据统计与分析平台</p>
+      </div>
+      <div class="header-right">
+        <el-button type="primary" @click="handleRefresh">
+          <el-icon><Refresh /></el-icon>
+          刷新数据
+        </el-button>
+        <el-button type="success" @click="handleExport">
+          <el-icon><Download /></el-icon>
+          导出数据
+        </el-button>
+      </div>
+    </div>
+
+    <!-- 统计卡片区域 -->
+    <div class="stats-section">
+      <el-row :gutter="20">
+        <el-col :xs="12" :sm="6" :lg="3">
+          <el-card class="stat-card primary">
+            <div class="stat-content">
+              <div class="stat-number">{{ stats.totalMatches }}</div>
+              <div class="stat-label">总比赛数</div>
+              <div class="stat-trend positive">
+                <el-icon><ArrowUp /></el-icon>
+                {{ stats.matchGrowth }}%
+              </div>
+            </div>
+          </el-card>
+        </el-col>
+        <el-col :xs="12" :sm="6" :lg="3">
+          <el-card class="stat-card success">
+            <div class="stat-content">
+              <div class="stat-number">{{ stats.activeSources }}</div>
+              <div class="stat-label">活跃数据源</div>
+              <div class="stat-trend positive">
+                <el-icon><ArrowUp /></el-icon>
+                {{ stats.sourceGrowth }}%
+              </div>
+            </div>
+          </el-card>
+        </el-col>
+        <el-col :xs="12" :sm="6" :lg="3">
+          <el-card class="stat-card warning">
+            <div class="stat-content">
+              <div class="stat-number">{{ stats.dataQuality }}%</div>
+              <div class="stat-label">数据质量</div>
+              <div class="stat-trend" :class="stats.qualityTrend === 'up' ? 'positive' : 'negative'">
+                <el-icon><ArrowUp v-if="stats.qualityTrend === 'up'" /><ArrowDown v-else /></el-icon>
+                {{ Math.abs(stats.qualityChange) }}%
+              </div>
+            </div>
+          </el-card>
+        </el-col>
+        <el-col :xs="12" :sm="6" :lg="3">
+          <el-card class="stat-card danger">
+            <div class="stat-content">
+              <div class="stat-number">{{ stats.errorRate }}%</div>
+              <div class="stat-label">错误率</div>
+              <div class="stat-trend negative">
+                <el-icon><ArrowDown /></el-icon>
+                {{ stats.errorImprovement }}%
+              </div>
+            </div>
+          </el-card>
+        </el-col>
+        <el-col :xs="12" :sm="6" :lg="3">
+          <el-card class="stat-card info">
+            <div class="stat-content">
+              <div class="stat-number">{{ stats.avgResponseTime }}ms</div>
+              <div class="stat-label">平均响应时间</div>
+              <div class="stat-trend positive">
+                <el-icon><ArrowDown /></el-icon>
+                {{ stats.responseImprovement }}%
+              </div>
+            </div>
+          </el-card>
+        </el-col>
+        <el-col :xs="12" :sm="6" :lg="3">
+          <el-card class="stat-card purple">
+            <div class="stat-content">
+              <div class="stat-number">{{ stats.storageUsed }}GB</div>
+              <div class="stat-label">存储使用量</div>
+              <div class="stat-trend" :class="stats.storageTrend === 'up' ? 'warning' : 'positive'">
+                <el-icon><ArrowUp v-if="stats.storageTrend === 'up'" /><ArrowDown v-else /></el-icon>
+                {{ Math.abs(stats.storageChange) }}%
+              </div>
+            </div>
+          </el-card>
+        </el-col>
+      </el-row>
+    </div>
+
+    <!-- 筛选和搜索区域 -->
+    <div class="filter-section">
+      <el-card>
+        <el-form :model="filters" :inline="true" class="filter-form">
+          <el-form-item label="数据类型">
+            <el-select v-model="filters.dataType" placeholder="选择数据类型" clearable>
+              <el-option label="比赛数据" value="matches" />
+              <el-option label="赔率数据" value="odds" />
+              <el-option label="事件数据" value="events" />
+              <el-option label="统计数据" value="statistics" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="数据源">
+            <el-select v-model="filters.sourceId" placeholder="选择数据源" clearable>
+              <el-option v-for="source in sources" :key="source.id" :label="source.name" :value="source.id" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="日期范围">
+            <el-date-picker
+              v-model="filters.dateRange"
+              type="daterange"
+              range-separator="至"
+              start-placeholder="开始日期"
+              end-placeholder="结束日期"
+              format="YYYY-MM-DD"
+              value-format="YYYY-MM-DD"
+            />
+          </el-form-item>
+          <el-form-item label="状态">
+            <el-select v-model="filters.status" placeholder="选择状态" clearable>
+              <el-option label="正常" value="normal" />
+              <el-option label="异常" value="error" />
+              <el-option label="警告" value="warning" />
+            </el-select>
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" @click="handleSearch">搜索</el-button>
+            <el-button @click="handleReset">重置</el-button>
+          </el-form-item>
+        </el-form>
+      </el-card>
+    </div>
+
+    <!-- 视图切换和内容区域 -->
+    <div class="content-section">
+      <el-card>
+        <template #header>
+          <div class="card-header">
+            <div class="header-tabs">
+              <el-radio-group v-model="viewMode" size="large">
+                <el-radio-button value="table">数据表格</el-radio-button>
+                <el-radio-button value="chart">图表分析</el-radio-button>
+                <el-radio-button value="dashboard">实时监控</el-radio-button>
+              </el-radio-group>
+            </div>
+            <div class="header-actions">
+              <el-button-group>
+                <el-button :type="showChart ? 'primary' : ''" @click="toggleChart">
+                  <el-icon><TrendCharts /></el-icon>
+                  图表
+                </el-button>
+                <el-button :type="showHeatmap ? 'primary' : ''" @click="toggleHeatmap">
+                  <el-icon><Grid /></el-icon>
+                  热力图
+                </el-button>
+              </el-button-group>
+            </div>
+          </div>
+        </template>
+
+        <!-- 表格视图 -->
+        <div v-show="viewMode === 'table'" class="table-view">
+          <el-table
+            :data="filteredData"
+            v-loading="loading"
+            style="width: 100%"
+            @selection-change="handleSelectionChange"
+            stripe
+            border
+          >
+            <el-table-column type="selection" width="55" />
+            <el-table-column prop="id" label="ID" width="80" />
+            <el-table-column prop="type" label="类型" width="100">
+              <template #default="scope">
+                <el-tag :type="getTypeColor(scope.row.type)">{{ getTypeText(scope.row.type) }}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="sourceName" label="数据源" width="120" />
+            <el-table-column prop="title" label="标题" min-width="200" show-overflow-tooltip />
+            <el-table-column prop="status" label="状态" width="100">
+              <template #default="scope">
+                <el-tag :type="getStatusColor(scope.row.status)">{{ getStatusText(scope.row.status) }}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="quality" label="质量" width="120">
+              <template #default="scope">
+                <el-progress :percentage="scope.row.quality" :color="getQualityColor(scope.row.quality)" />
+              </template>
+            </el-table-column>
+            <el-table-column prop="recordCount" label="记录数" width="100" />
+            <el-table-column prop="createdAt" label="创建时间" width="170" />
+            <el-table-column prop="updatedAt" label="更新时间" width="170" />
+            <el-table-column label="操作" width="200" fixed="right">
+              <template #default="scope">
+                <el-button size="small" @click="viewDetails(scope.row)">详情</el-button>
+                <el-button size="small" type="primary" @click="viewOdds(scope.row)">赔率</el-button>
+                <el-dropdown @command="handleCommand($event, scope.row)">
+                  <el-button size="small">
+                    更多<el-icon class="el-icon--right"><arrow-down /></el-icon>
+                  </el-button>
+                  <template #dropdown>
+                    <el-dropdown-menu>
+                      <el-dropdown-item command="analyze">数据分析</el-dropdown-item>
+                      <el-dropdown-item command="export">导出数据</el-dropdown-item>
+                      <el-dropdown-item command="refresh" divided>刷新</el-dropdown-item>
+                      <el-dropdown-item command="delete" divided class="text-danger">删除</el-dropdown-item>
+                    </el-dropdown-menu>
+                  </template>
+                </el-dropdown>
+              </template>
+            </el-table-column>
+          </el-table>
+
+          <!-- 分页 -->
+          <div class="pagination-wrapper">
+            <el-pagination
+              v-model:current-page="pagination.page"
+              v-model:page-size="pagination.size"
+              :total="pagination.total"
+              :page-sizes="[10, 20, 50, 100]"
+              layout="total, sizes, prev, pager, next, jumper"
+              @size-change="handleSizeChange"
+              @current-change="handleCurrentChange"
+            />
+          </div>
+        </div>
+
+        <!-- 图表视图 -->
+        <div v-show="viewMode === 'chart'" class="chart-view">
+          <div class="chart-container">
+            <div ref="mainChart" class="main-chart"></div>
+            <div class="chart-sidebar">
+              <div ref="pieChart" class="side-chart"></div>
+              <div ref="trendChart" class="side-chart"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 实时监控视图 -->
+        <div v-show="viewMode === 'dashboard'" class="dashboard-view">
+          <el-row :gutter="20">
+            <el-col :span="16">
+              <div ref="realtimeChart" class="realtime-chart"></div>
+            </el-col>
+            <el-col :span="8">
+              <el-card class="realtime-stats">
+                <template #header>实时统计</template>
+                <div class="realtime-item">
+                  <span class="label">当前抓取速度:</span>
+                  <span class="value">{{ realtimeStats.currentSpeed }}/s</span>
+                </div>
+                <div class="realtime-item">
+                  <span class="label">队列长度:</span>
+                  <span class="value">{{ realtimeStats.queueLength }}</span>
+                </div>
+                <div class="realtime-item">
+                  <span class="label">成功率:</span>
+                  <span class="value">{{ realtimeStats.successRate }}%</span>
+                </div>
+                <div class="realtime-item">
+                  <span class="label">活跃连接:</span>
+                  <span class="value">{{ realtimeStats.activeConnections }}</span>
+                </div>
+              </el-card>
+            </el-col>
+          </el-row>
+        </div>
+      </el-card>
+    </div>
+
+    <!-- 详情抽屉 -->
+    <el-drawer
+      v-model="detailVisible"
+      title="数据详情"
+      size="60%"
+      direction="rtl"
+    >
+      <MatchDetail v-if="selectedItem" :match-data="selectedItem" />
+    </el-drawer>
+
+    <!-- 赔率详情抽屉 -->
+    <el-drawer
+      v-model="oddsVisible"
+      title="赔率详情"
+      size="50%"
+      direction="rtl"
+    >
+      <OddsDetail v-if="selectedItem" :odds-data="selectedItem" />
+    </el-drawer>
+
+    <!-- 导出对话框 -->
+    <el-dialog
+      v-model="exportVisible"
+      title="导出数据"
+      width="500px"
+    >
+      <el-form :model="exportForm" label-width="100px">
+        <el-form-item label="导出格式">
+          <el-radio-group v-model="exportForm.format">
+            <el-radio value="excel">Excel</el-radio>
+            <el-radio value="csv">CSV</el-radio>
+            <el-radio value="json">JSON</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item label="导出范围">
+          <el-checkbox-group v-model="exportForm.scope">
+            <el-checkbox value="current">当前页</el-checkbox>
+            <el-checkbox value="selected">选中项</el-checkbox>
+            <el-checkbox value="all">全部数据</el-checkbox>
+          </el-checkbox-group>
+        </el-form-item>
+        <el-form-item label="日期范围">
+          <el-date-picker
+            v-model="exportForm.dateRange"
+            type="daterange"
+            range-separator="至"
+            start-placeholder="开始日期"
+            end-placeholder="结束日期"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="exportVisible = false">取消</el-button>
+          <el-button type="primary" @click="confirmExport">确定导出</el-button>
+        </span>
+      </template>
+    </el-dialog>
+  </div>
+</template>
+
+<script setup>
+import { ref, reactive, onMounted, computed, nextTick } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { 
+  Refresh, Download, ArrowUp, ArrowDown, 
+  TrendCharts, Grid 
+} from '@element-plus/icons-vue'
+import * as echarts from 'echarts'
+import MatchDetail from '@/components/MatchDetail.vue'
+import OddsDetail from '@/components/OddsDetail.vue'
+import { getSummaryStats } from '@/api/modules/stats'
+import { getDataList, exportData } from '@/api/data'
+
+// 响应式数据
+const loading = ref(false)
+const viewMode = ref('table')
+const detailVisible = ref(false)
+const oddsVisible = ref(false)
+const exportVisible = ref(false)
+const showChart = ref(true)
+const showHeatmap = ref(false)
+const selectedItem = ref(null)
+const mainChart = ref(null)
+const pieChart = ref(null)
+const trendChart = ref(null)
+const realtimeChart = ref(null)
+
+// 统计数据
+const stats = reactive({
+  totalMatches: 0,
+  activeSources: 0,
+  dataQuality: 0,
+  errorRate: 0,
+  avgResponseTime: 0,
+  storageUsed: 0,
+  matchGrowth: 0,
+  sourceGrowth: 0,
+  qualityTrend: 'up',
+  qualityChange: 0,
+  errorImprovement: 0,
+  responseImprovement: 0,
+  storageTrend: 'up',
+  storageChange: 0
+})
+
+// 筛选条件
+const filters = reactive({
+  dataType: '',
+  sourceId: '',
+  dateRange: [],
+  status: ''
+})
+
+// 分页
+const pagination = reactive({
+  page: 1,
+  size: 20,
+  total: 0
+})
+
+// 数据源列表
+const sources = ref([
+  { id: 1, name: '官方API' },
+  { id: 2, name: '第三方爬虫' },
+  { id: 3, name: '合作伙伴' },
+  { id: 4, name: '历史数据' }
+])
+
+// 表格数据
+const tableData = ref([])
+const filteredData = ref([])
+
+// 实时统计数据
+const realtimeStats = reactive({
+  currentSpeed: 156,
+  queueLength: 23,
+  successRate: 98.7,
+  activeConnections: 8
+})
+
+// 导出表单
+const exportForm = reactive({
+  format: 'excel',
+  scope: ['current'],
+  dateRange: []
+})
+
+// 选中的项目
+const selectedRows = ref([])
+
+// 初始化数据
+onMounted(() => {
+  loadStats()
+  loadTableData()
+  initCharts()
+  startRealtimeUpdate()
+})
+
+// 加载统计数据
+const loadStats = async () => {
+  try {
+    const res = await getSummaryStats()
+    // 假设API返回字段与stats对象匹配，或进行映射
+    Object.assign(stats, res.data || res)
+  } catch (error) {
+    ElMessage.error('加载统计数据失败')
+    console.error('Error loading stats:', error)
+  }
+}
+
+// 加载表格数据
+const loadTableData = async () => {
+  loading.value = true
+  try {
+    const params = {
+      page: pagination.page,
+      size: pagination.size
+    }
+    
+    // 添加筛选条件
+    if (filters.dataType) {
+      params.type = filters.dataType
+    }
+    if (filters.sourceId) {
+      params.source_id = filters.sourceId
+    }
+    if (filters.status) {
+      params.status = filters.status
+    }
+    if (filters.dateRange && filters.dateRange.length === 2) {
+      params.start_date = filters.dateRange[0]
+      params.end_date = filters.dateRange[1]
+    }
+    
+    const res = await getDataList(params)
+    tableData.value = res.data?.items || res.items || []
+    pagination.total = res.data?.total || res.total || 0
+    applyFilters()
+  } catch (error) {
+    ElMessage.error('加载数据失败')
+    console.error('Error loading table data:', error)
+  } finally {
+    loading.value = false
+  }
+}
+
+// 应用筛选
+const applyFilters = () => {
+  let filtered = [...tableData.value]
+  
+  if (filters.dataType) {
+    filtered = filtered.filter(item => item.type === filters.dataType)
+  }
+  
+  if (filters.sourceId) {
+    const sourceName = sources.value.find(s => s.id == filters.sourceId)?.name
+    filtered = filtered.filter(item => item.sourceName === sourceName)
+  }
+  
+  if (filters.status) {
+    filtered = filtered.filter(item => item.status === filters.status)
+  }
+  
+  if (filters.dateRange && filters.dateRange.length === 2) {
+    const startDate = new Date(filters.dateRange[0])
+    const endDate = new Date(filters.dateRange[1])
+    filtered = filtered.filter(item => {
+      const itemDate = new Date(item.createdAt)
+      return itemDate >= startDate && itemDate <= endDate
+    })
+  }
+  
+  filteredData.value = filtered
+}
+
+// 搜索
+const handleSearch = () => {
+  applyFilters()
+}
+
+// 重置筛选
+const handleReset = () => {
+  Object.keys(filters).forEach(key => {
+    filters[key] = key === 'dateRange' ? [] : ''
+  })
+  applyFilters()
+}
+
+// 刷新数据
+const handleRefresh = () => {
+  loadStats()
+  loadTableData()
+  ElMessage.success('数据已刷新')
+}
+
+// 导出数据
+const handleExport = () => {
+  exportVisible.value = true
+}
+
+// 确认导出
+const confirmExport = async () => {
+  try {
+    ElMessage.info('正在导出数据...')
+    
+    // 准备导出参数
+    const exportParams = {
+      format: exportForm.format,
+      scope: exportForm.scope,
+      dateRange: exportForm.dateRange
+    }
+    
+    // 这里应该调用实际的导出API
+    // TODO: 实现实际的导出API调用
+    console.log('导出参数:', exportParams)
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    
+    ElMessage.success('导出成功')
+    exportVisible.value = false
+  } catch (error) {
+    ElMessage.error('导出失败')
+    console.error('导出失败:', error)
+  }
+}
+
+// 查看详情
+const viewDetails = (row) => {
+  selectedItem.value = row
+  detailVisible.value = true
+}
+
+// 查看赔率
+const viewOdds = (row) => {
+  selectedItem.value = row
+  oddsVisible.value = true
+}
+
+// 下拉菜单命令
+const handleCommand = (command, row) => {
+  switch (command) {
+    case 'analyze':
+      ElMessage.info('打开数据分析')
+      break
+    case 'export':
+      ElMessage.info('导出单项数据')
+      break
+    case 'refresh':
+      refreshItem(row)
+      break
+    case 'delete':
+      deleteItem(row)
+      break
+  }
+}
+
+// 刷新单项
+const refreshItem = async (row) => {
+  try {
+    await ElMessageBox.confirm(`确定要刷新 "${row.title}" 吗？`, '确认刷新', {
+      type: 'warning'
+    })
+    ElMessage.success('刷新任务已提交')
+  } catch {
+    // 用户取消
+  }
+}
+
+// 删除单项
+const deleteItem = async (row) => {
+  try {
+    await ElMessageBox.confirm(`确定要删除 "${row.title}" 吗？此操作不可恢复。`, '确认删除', {
+      type: 'error'
+    })
+    const index = tableData.value.findIndex(item => item.id === row.id)
+    if (index > -1) {
+      tableData.value.splice(index, 1)
+      applyFilters()
+      ElMessage.success('删除成功')
+    }
+  } catch {
+    // 用户取消
+  }
+}
+
+// 表格选择变化
+const handleSelectionChange = (selection) => {
+  selectedRows.value = selection
+}
+
+// 分页大小变化
+const handleSizeChange = (size) => {
+  pagination.size = size
+  pagination.page = 1
+}
+
+// 页码变化
+const handleCurrentChange = (page) => {
+  pagination.page = page
+}
+
+// 切换图表显示
+const toggleChart = () => {
+  showChart.value = !showChart.value
+  if (showChart.value) {
+    nextTick(() => {
+      initMainChart()
+    })
+  }
+}
+
+// 切换热力图显示
+const toggleHeatmap = () => {
+  showHeatmap.value = !showHeatmap.value
+}
+
+// 初始化图表
+const initCharts = () => {
+  nextTick(() => {
+    initMainChart()
+    initPieChart()
+    initTrendChart()
+    initRealtimeChart()
+  })
+}
+
+// 初始化主图表
+const initMainChart = () => {
+  if (!mainChart.value) return
+  
+  const chart = echarts.init(mainChart.value)
+  const option = {
+    title: {
+      text: '数据趋势分析',
+      left: 'center'
+    },
+    tooltip: {
+      trigger: 'axis'
+    },
+    legend: {
+      data: ['比赛数据', '赔率数据', '事件数据'],
+      top: '10%'
+    },
+    xAxis: {
+      type: 'category',
+      data: ['1月', '2月', '3月', '4月', '5月', '6月']
+    },
+    yAxis: {
+      type: 'value'
+    },
+    series: [
+      {
+        name: '比赛数据',
+        type: 'line',
+        data: [120, 132, 101, 134, 90, 230]
+      },
+      {
+        name: '赔率数据',
+        type: 'line',
+        data: [220, 182, 191, 234, 290, 330]
+      },
+      {
+        name: '事件数据',
+        type: 'line',
+        data: [150, 232, 201, 154, 190, 330]
+      }
+    ]
+  }
+  chart.setOption(option)
+}
+
+// 初始化饼图
+const initPieChart = () => {
+  if (!pieChart.value) return
+  
+  const chart = echarts.init(pieChart.value)
+  const option = {
+    title: {
+      text: '数据源分布',
+      left: 'center'
+    },
+    tooltip: {
+      trigger: 'item'
+    },
+    series: [
+      {
+        type: 'pie',
+        radius: '50%',
+        data: [
+          { value: 1048, name: '官方API' },
+          { value: 735, name: '第三方爬虫' },
+          { value: 580, name: '合作伙伴' },
+          { value: 484, name: '历史数据' }
+        ],
+        emphasis: {
+          itemStyle: {
+            shadowBlur: 10,
+            shadowOffsetX: 0,
+            shadowColor: 'rgba(0, 0, 0, 0.5)'
+          }
+        }
+      }
+    ]
+  }
+  chart.setOption(option)
+}
+
+// 初始化趋势图
+const initTrendChart = () => {
+  if (!trendChart.value) return
+  
+  const chart = echarts.init(trendChart.value)
+  const option = {
+    title: {
+      text: '质量趋势',
+      left: 'center'
+    },
+    tooltip: {
+      trigger: 'axis'
+    },
+    xAxis: {
+      type: 'category',
+      data: ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
+    },
+    yAxis: {
+      type: 'value',
+      min: 80,
+      max: 100
+    },
+    series: [
+      {
+        type: 'line',
+        smooth: true,
+        data: [94, 96, 93, 95, 97, 94, 96],
+        areaStyle: {
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: 'rgba(54, 162, 235, 0.3)' },
+            { offset: 1, color: 'rgba(54, 162, 235, 0.1)' }
+          ])
+        }
+      }
+    ]
+  }
+  chart.setOption(option)
+}
+
+// 初始化实时图表
+const initRealtimeChart = () => {
+  if (!realtimeChart.value) return
+  
+  const chart = echarts.init(realtimeChart.value)
+  const option = {
+    title: {
+      text: '实时数据抓取监控',
+      left: 'center'
+    },
+    tooltip: {
+      trigger: 'axis'
+    },
+    xAxis: {
+      type: 'category',
+      boundaryGap: false,
+      data: Array.from({ length: 20 }, (_, i) => `${i * 5}s`)
+    },
+    yAxis: {
+      type: 'value'
+    },
+    series: [
+      {
+        name: '抓取速度',
+        type: 'line',
+        smooth: true,
+        data: Array.from({ length: 20 }, () => Math.floor(Math.random() * 100) + 100)
+      }
+    ]
+  }
+  chart.setOption(option)
+}
+
+// 开始实时更新
+const startRealtimeUpdate = () => {
+  setInterval(() => {
+    // 更新实时统计数据
+    realtimeStats.currentSpeed = Math.floor(Math.random() * 50) + 150
+    realtimeStats.queueLength = Math.floor(Math.random() * 20) + 15
+    realtimeStats.successRate = (Math.random() * 2 + 97).toFixed(1)
+    
+    // 更新实时图表
+    if (realtimeChart.value) {
+      const chart = echarts.getInstanceByDom(realtimeChart.value)
+      if (chart) {
+        const option = chart.getOption()
+        const newData = Array.from({ length: 20 }, () => Math.floor(Math.random() * 100) + 100)
+        option.series[0].data = newData
+        chart.setOption(option)
+      }
+    }
+  }, 3000)
+}
+
+// 获取类型颜色
+const getTypeColor = (type) => {
+  const colors = {
+    matches: 'primary',
+    odds: 'success',
+    events: 'warning',
+    statistics: 'info'
+  }
+  return colors[type] || 'info'
+}
+
+// 获取类型文本
+const getTypeText = (type) => {
+  const texts = {
+    matches: '比赛',
+    odds: '赔率',
+    events: '事件',
+    statistics: '统计'
+  }
+  return texts[type] || type
+}
+
+// 获取状态颜色
+const getStatusColor = (status) => {
+  const colors = {
+    normal: 'success',
+    error: 'danger',
+    warning: 'warning'
+  }
+  return colors[status] || 'info'
+}
+
+// 获取状态文本
+const getStatusText = (status) => {
+  const texts = {
+    normal: '正常',
+    error: '异常',
+    warning: '警告'
+  }
+  return texts[status] || status
+}
+
+// 获取质量颜色
+const getQualityColor = (quality) => {
+  if (quality >= 90) return '#67C23A'
+  if (quality >= 70) return '#E6A23C'
+  return '#F56C6C'
+}
+</script>
+
+<style scoped lang="scss">
+
+.data-center {
+  padding: var(--spacing-xl);
+  background-color: var(--color-bg-light);
+  min-height: 100vh;
+
+  .breadcrumb {
+    margin-bottom: var(--spacing-lg);
+  }
+
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: var(--spacing-xl);
+    padding: var(--spacing-xl);
+    background: var(--color-white);
+    border-radius: var(--border-radius-large);
+    box-shadow: var(--box-shadow-sm);
+
+    .header-left h2 {
+      margin: 0 0 var(--spacing-sm) 0;
+      color: var(--color-text-primary);
+      font-size: var(--font-size-xl);
+      font-weight: var(--font-weight-semibold);
+      line-height: 1.2;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: var(--color-text-secondary);
+      font-size: var(--font-size-base);
+      font-weight: var(--font-weight-normal);
+    }
+
+    .header-right {
+      display: flex;
+      gap: var(--spacing-sm);
+    }
+  }
+
+  .stats-section {
+    margin-bottom: var(--spacing-xl);
+
+    .stat-card {
+      transition: all var(--transition-base);
+      cursor: pointer;
+      border: none;
+      position: relative;
+      overflow: hidden;
+
+      &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: var(--card-accent-color);
+      }
+
+      &:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--box-shadow-lg);
+      }
+
+        .stat-content {
+          text-align: center;
+          padding: var(--spacing-md) var(--spacing-sm);
+
+          .stat-number {
+            font-size: var(--font-size-xxl);
+            font-weight: var(--font-weight-bold);
+            color: var(--card-accent-color);
+            margin-bottom: var(--spacing-xs);
+            line-height: 1.2;
+          }
+
+          .stat-label {
+            font-size: var(--font-size-sm);
+            color: var(--color-text-secondary);
+            margin-bottom: var(--spacing-sm);
+            font-weight: var(--font-weight-medium);
+          }
+
+          .stat-trend {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--spacing-xs);
+            font-size: var(--font-size-xs);
+            padding: 2px 8px;
+            border-radius: var(--border-radius-base);
+            background: rgba(var(--trend-color), 0.1);
+            color: rgb(var(--trend-color));
+
+          &.positive {
+            --trend-color: 103, 194, 58;
+          }
+
+          &.negative {
+            --trend-color: 245, 108, 108;
+          }
+
+          &.warning {
+            --trend-color: 230, 162, 60;
+          }
+        }
+      }
+
+      // 使用 CSS 变量动态设置强调色
+      &.primary { --card-accent-color: #409EFF; }
+      &.success { --card-accent-color: #67C23A; }
+      &.warning { --card-accent-color: #E6A23C; }
+      &.danger { --card-accent-color: #F56C6C; }
+      &.info { --card-accent-color: #909399; }
+      &.purple { --card-accent-color: #722ED1; }
+    }
+  }
+
+  .filter-section {
+    margin-bottom: var(--spacing-xl);
+
+    .filter-form {
+      margin: 0;
+      .el-form-item {
+        margin-bottom: var(--spacing-md);
+      }
+    }
+  }
+
+  .content-section {
+      .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: var(--spacing-md);
+
+        .header-tabs {
+          display: flex;
+          gap: var(--spacing-xs);
+        }
+
+        .header-actions {
+          display: flex;
+          gap: var(--spacing-xs);
+        }
+      }
+
+    .table-view {
+      .pagination-wrapper {
+        margin-top: var(--spacing-xl);
+        display: flex;
+        justify-content: center;
+        padding-top: var(--spacing-lg);
+        border-top: 1px solid var(--color-border-lighter);
+      }
+
+      // 优化表格样式
+      .el-table {
+        border-radius: var(--border-radius-base);
+        overflow: hidden;
+        
+        .el-table__header th {
+          background-color: var(--color-bg-lighter);
+          color: var(--color-text-primary);
+          font-weight: var(--font-weight-semibold);
+          height: 50px;
+        }
+        
+        .el-table__row {
+          height: 60px;
+          
+          &:hover {
+            background-color: var(--color-bg-lighter);
+          }
+        }
+        
+        .el-progress {
+          .el-progress-bar__outer {
+            background-color: var(--color-border-lighter);
+          }
+        }
+      }
+    }
+
+    .chart-view {
+      .chart-container {
+        display: flex;
+        gap: var(--spacing-lg);
+
+        .main-chart {
+          flex: 1;
+          height: 400px;
+          background: var(--color-white);
+          border-radius: var(--border-radius-base);
+          padding: var(--spacing-md);
+          box-shadow: var(--box-shadow-sm);
+        }
+
+        .chart-sidebar {
+          width: 320px;
+          display: flex;
+          flex-direction: column;
+          gap: var(--spacing-lg);
+
+          .side-chart {
+            height: 180px;
+            background: var(--color-white);
+            border-radius: var(--border-radius-base);
+            padding: var(--spacing-sm);
+            box-shadow: var(--box-shadow-sm);
+          }
+        }
+      }
+    }
+
+    .dashboard-view {
+      .realtime-chart {
+        height: 400px;
+        background: var(--color-white);
+        border-radius: var(--border-radius-base);
+        padding: var(--spacing-md);
+        box-shadow: var(--box-shadow-sm);
+      }
+
+      .realtime-stats {
+        .realtime-item {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: var(--spacing-md) 0;
+          border-bottom: 1px solid var(--color-border-lighter);
+
+          &:first-child {
+            padding-top: 0;
+          }
+
+          &:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+          }
+
+          .label {
+            color: var(--color-text-secondary);
+            font-size: var(--font-size-base);
+            font-weight: var(--font-weight-medium);
+          }
+
+          .value {
+            font-weight: var(--font-weight-bold);
+            color: var(--color-text-primary);
+            font-size: var(--font-size-lg);
+          }
+        }
+      }
+    }
+  }
+
+  .text-danger {
+    color: var(--color-danger);
+  }
+}
+
+// 响应式设计
+@media (max-width: 768px) {
+  .data-center {
+    padding: var(--spacing-md);
+
+    .page-header {
+      flex-direction: column;
+      gap: var(--spacing-md);
+      text-align: center;
+      padding: var(--spacing-lg);
+    }
+
+    .stats-section {
+      .el-col {
+        margin-bottom: var(--spacing-md);
+      }
+    }
+
+    .content-section {
+      .card-header {
+        flex-direction: column;
+        align-items: stretch;
+      }
+    }
+
+    .chart-view .chart-container {
+      flex-direction: column;
+      gap: var(--spacing-md);
+
+      .chart-sidebar {
+        width: 100%;
+        flex-direction: row;
+
+        .side-chart {
+          flex: 1;
+          min-height: 160px;
+        }
+      }
+    }
+
+    .table-view {
+      .el-table {
+        font-size: var(--font-size-sm);
+        
+        .el-table__header th,
+        .el-table__row {
+          height: 44px;
+        }
+      }
+    }
+  }
+}
+</style>

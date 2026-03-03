@@ -1,0 +1,76 @@
+<template>
+  <div class="task-center-page">
+    <div class="page-header">
+      <h2>任务中心</h2>
+      <p>统一管理任务配置与执行监控</p>
+    </div>
+
+    <el-card class="tabs-card" shadow="never">
+      <el-tabs v-model="activeTab" @tab-change="handleTabChange">
+        <el-tab-pane label="任务配置" name="config">
+          <TaskCenterTaskConfigTab />
+        </el-tab-pane>
+        <el-tab-pane label="执行监控" name="executions">
+          <TaskCenterExecutionTab />
+        </el-tab-pane>
+      </el-tabs>
+    </el-card>
+  </div>
+</template>
+
+<script setup>
+import { ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import TaskCenterExecutionTab from './components/TaskCenterExecutionTab.vue'
+import TaskCenterTaskConfigTab from './components/TaskCenterTaskConfigTab.vue'
+
+const route = useRoute()
+const router = useRouter()
+
+const normalizeTab = (value) => {
+  return value === 'executions' ? 'executions' : 'config'
+}
+
+const activeTab = ref(normalizeTab(route.query.tab))
+
+const handleTabChange = (tabName) => {
+  const nextTab = normalizeTab(tabName)
+  if (nextTab === normalizeTab(route.query.tab)) return
+  router.replace({
+    path: route.path,
+    query: {
+      ...route.query,
+      tab: nextTab
+    }
+  })
+}
+</script>
+
+<style scoped>
+.task-center-page {
+  padding: 20px;
+}
+
+.page-header {
+  margin-bottom: 16px;
+}
+
+.page-header h2 {
+  margin: 0;
+  font-size: 24px;
+  color: #303133;
+}
+
+.page-header p {
+  margin: 6px 0 0;
+  color: #909399;
+}
+
+.tabs-card {
+  border: none;
+}
+
+:deep(.el-tabs__header) {
+  margin-bottom: 16px;
+}
+</style>
