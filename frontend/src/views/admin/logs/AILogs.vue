@@ -239,19 +239,22 @@ export default {
     },
     
     getTagType(level) {
-      switch(level.toUpperCase()) {
+      const normalized = String(level || '').toUpperCase()
+      switch (normalized) {
         case 'ERROR':
         case 'CRITICAL':
+        case 'FATAL':
           return 'danger'
         case 'WARN':
         case 'WARNING':
           return 'warning'
-        case 'INFO':
-          return ''
+        case 'SUCCESS':
+          return 'success'
         case 'DEBUG':
-          return 'info'
+        case 'TRACE':
+        case 'INFO':
         default:
-          return ''
+          return 'info'
       }
     },
     
