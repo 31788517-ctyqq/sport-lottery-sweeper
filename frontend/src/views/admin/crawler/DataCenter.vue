@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="data-center">
     <!-- Breadcrumb -->
     <el-breadcrumb separator="/" class="breadcrumb">
@@ -101,6 +101,44 @@
           </el-card>
         </el-col>
       </el-row>
+    </div>
+
+    <div class="mapping-health-section">
+      <el-card shadow="hover" class="mapping-health-card" v-loading="entityMappingHealthLoading">
+        <template #header>
+          <div class="mapping-health-header">
+            <span class="title">实体映射健康度</span>
+            <el-tag :type="entityMappingHealth.healthTagType">{{ entityMappingHealth.syncStatusText }}</el-tag>
+          </div>
+        </template>
+        <el-row :gutter="20">
+          <el-col :xs="24" :sm="8">
+            <div class="mapping-health-item">
+              <div class="label">待审冲突数</div>
+              <div class="value warning">{{ entityMappingHealth.pendingConflicts }}</div>
+            </div>
+          </el-col>
+          <el-col :xs="24" :sm="8">
+            <div class="mapping-health-item">
+              <div class="label">冲突总数</div>
+              <div class="value">{{ entityMappingHealth.totalConflicts }}</div>
+            </div>
+          </el-col>
+          <el-col :xs="24" :sm="8">
+            <div class="mapping-health-item">
+              <div class="label">最近同步完成</div>
+              <div class="value text">{{ entityMappingHealth.lastSyncAt }}</div>
+            </div>
+          </el-col>
+        </el-row>
+        <div class="mapping-health-footer">
+          <span>最近失败时间：{{ entityMappingHealth.lastFailedAt }}</span>
+          <span v-if="entityMappingHealth.lastErrorMessage">
+            最近错误：{{ entityMappingHealth.lastErrorMessage }}
+          </span>
+          <span v-else>最近错误：无</span>
+        </div>
+      </el-card>
     </div>
 
     <!-- Filters -->
@@ -359,22 +397,24 @@ import * as echarts from 'echarts'
 import MatchDetail from '@/components/MatchDetail.vue'
 import OddsDetail from '@/components/OddsDetail.vue'
 import {
-  getSummaryStats,
-  getDataCenterTrend,
-  getDataCenterSourceDistribution,
-  getDataCenterRealtime
-} from '@/api/modules/stats'
-import {
-  getDataCenterTableData,
   exportDataCenterTable,
-  getDataCenterSourceOptions
 } from '@/api/modules/data-center'
+import {
+  getKaggleSyncStatus,
+  getKaggleDatasets,
+  getKaggleRuns
+} from '@/api/modules/kaggle-sync'
+import {
+  getEntityMappingSyncStatus,
+  getEntityMappingConflicts
+} from '@/api/entityMapping'
 import { DATA_CENTER_TEXT as T } from './constants/monitorText'
 
 const REALTIME_REFRESH_MS = 10000
 const TREND_DAYS = 7
 const REALTIME_POINTS = 20
 const REALTIME_INTERVAL_MINUTES = 5
+const RUNS_PAGE_SIZE_LIMIT = 200
 
 const unwrapPayload = (response) => {
   if (!response || typeof response !== 'object' || Array.isArray(response)) {
@@ -434,6 +474,8 @@ const fallbackSources = [
   { id: 2, name: T.sourceCrawler }
 ]
 const sources = ref([])
+const sourceSlugMap = ref({})
+const runsCache = ref([])
 
 const tableData = ref([])
 const filteredData = ref([])
@@ -454,6 +496,17 @@ const realtimeStats = reactive({
   queueLength: 0,
   successRate: 0,
   activeConnections: 0
+})
+
+const entityMappingHealthLoading = ref(false)
+const entityMappingHealth = reactive({
+  syncStatusText: '未知',
+  healthTagType: 'info',
+  pendingConflicts: 0,
+  totalConflicts: 0,
+  lastSyncAt: '-',
+  lastFailedAt: '-',
+  lastErrorMessage: ''
 })
 
 const exportForm = reactive({
@@ -495,33 +548,155 @@ const initializePage = async () => {
     loadStats(),
     loadTableData(),
     loadChartData(),
-    loadRealtimeData()
+    loadRealtimeData(),
+    loadEntityMappingHealth()
   ])
 
   initCharts()
   startRealtimeUpdate()
 }
 
+const toDate = (value) => {
+  if (!value) return null
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? null : date
+}
+
+const isRunSuccess = (status) => ['success', 'succeeded', 'completed'].includes(String(status || '').toLowerCase())
+const isRunFailure = (status) => ['failed', 'error'].includes(String(status || '').toLowerCase())
+const isRunRunning = (status) => ['queued', 'pending', 'running'].includes(String(status || '').toLowerCase())
+
+const toTableStatus = (status) => {
+  if (isRunFailure(status)) return 'error'
+  if (isRunRunning(status)) return 'warning'
+  return 'normal'
+}
+
+const toDataType = (run) => {
+  const taskType = String(run?.task_type || '').toLowerCase()
+  if (taskType.includes('merge')) return 'matches'
+  if (taskType.includes('feature')) return 'statistics'
+  if (taskType.includes('match')) return 'matches'
+  if (taskType.includes('odds')) return 'odds'
+  if (taskType.includes('event')) return 'events'
+  return 'statistics'
+}
+
+const calcGrowth = (current, previous) => {
+  if (previous <= 0) {
+    return current > 0 ? 100 : 0
+  }
+  return Number((((current - previous) / previous) * 100).toFixed(2))
+}
+
+const fetchRecentRuns = async (size = 300) => {
+  const targetSize = Math.max(1, Number(size) || 1)
+  const pageSize = Math.min(RUNS_PAGE_SIZE_LIMIT, targetSize)
+  const merged = []
+  let page = 1
+
+  while (merged.length < targetSize) {
+    const payload = await getKaggleRuns({ page, size: pageSize })
+    const items = Array.isArray(payload?.items) ? payload.items : []
+    if (!items.length) break
+
+    merged.push(...items)
+
+    const total = Number(payload?.total || 0)
+    if (items.length < pageSize || (total > 0 && merged.length >= total)) {
+      break
+    }
+
+    page += 1
+    if (page > 20) break
+  }
+
+  return merged.slice(0, targetSize)
+}
+
+const buildDateLabels = (days) => {
+  const labels = []
+  const now = new Date()
+  for (let i = days - 1; i >= 0; i -= 1) {
+    const date = new Date(now)
+    date.setDate(now.getDate() - i)
+    labels.push(date.toISOString().slice(5, 10))
+  }
+  return labels
+}
+
 const loadStats = async () => {
   try {
-    const res = await getSummaryStats()
-    const payload = unwrapPayload(res) || {}
+    const [statusPayload, recentRuns] = await Promise.all([
+      getKaggleSyncStatus(),
+      fetchRecentRuns(500)
+    ])
+    runsCache.value = recentRuns
+
+    const successRuns = recentRuns.filter((run) => isRunSuccess(run.status))
+    const failedRuns = recentRuns.filter((run) => isRunFailure(run.status))
+    const durations = successRuns
+      .map((run) => Number(run.duration_ms || 0))
+      .filter((value) => value > 0)
+    const totalRowsUpserted = successRuns.reduce((sum, run) => sum + Number(run.rows_upserted || 0), 0)
+    const totalRowsRaw = successRuns.reduce((sum, run) => sum + Number(run.rows_raw || 0), 0)
+
+    const nowMs = Date.now()
+    const dayMs = 24 * 60 * 60 * 1000
+    const sevenDaysAgo = nowMs - (7 * dayMs)
+    const fourteenDaysAgo = nowMs - (14 * dayMs)
+    const currentWindowRuns = recentRuns.filter((run) => {
+      const date = toDate(run.started_at || run.created_at)
+      return date && date.getTime() >= sevenDaysAgo
+    })
+    const previousWindowRuns = recentRuns.filter((run) => {
+      const date = toDate(run.started_at || run.created_at)
+      return date && date.getTime() >= fourteenDaysAgo && date.getTime() < sevenDaysAgo
+    })
+
+    const successRate = recentRuns.length > 0
+      ? Number(((successRuns.length / recentRuns.length) * 100).toFixed(2))
+      : 0
+    const errorRate = recentRuns.length > 0
+      ? Number(((failedRuns.length / recentRuns.length) * 100).toFixed(2))
+      : 0
+    const avgResponseTime = durations.length > 0
+      ? Number((durations.reduce((acc, value) => acc + value, 0) / durations.length).toFixed(0))
+      : 0
+    const storageUsed = Number((totalRowsRaw / 10000).toFixed(2))
+    const matchGrowth = calcGrowth(currentWindowRuns.length, previousWindowRuns.length)
+    const sourceGrowth = calcGrowth(
+      currentWindowRuns.filter((run) => isRunSuccess(run.status)).length,
+      previousWindowRuns.filter((run) => isRunSuccess(run.status)).length
+    )
+
+    const qualityTrend = matchGrowth >= 0 ? 'up' : 'down'
+    const qualityChange = Math.abs(matchGrowth)
+    const errorImprovement = Math.abs(calcGrowth(
+      previousWindowRuns.filter((run) => isRunFailure(run.status)).length,
+      currentWindowRuns.filter((run) => isRunFailure(run.status)).length
+    ))
+    const storageChange = Math.abs(calcGrowth(
+      currentWindowRuns.reduce((sum, run) => sum + Number(run.rows_raw || 0), 0),
+      previousWindowRuns.reduce((sum, run) => sum + Number(run.rows_raw || 0), 0)
+    ))
+    const storageTrend = storageChange > 0 ? 'up' : 'down'
 
     Object.assign(stats, {
-      totalMatches: Number(payload.totalMatches || 0),
-      activeSources: Number(payload.activeSources || 0),
-      dataQuality: Number(payload.dataQuality || 0),
-      errorRate: Number(payload.errorRate || 0),
-      avgResponseTime: Number(payload.avgResponseTime || 0),
-      storageUsed: Number(payload.storageUsed || 0),
-      matchGrowth: Number(payload.matchGrowth || 0),
-      sourceGrowth: Number(payload.sourceGrowth || 0),
-      qualityTrend: payload.qualityTrend || 'up',
-      qualityChange: Number(payload.qualityChange || 0),
-      errorImprovement: Number(payload.errorImprovement || 0),
-      responseImprovement: Number(payload.responseImprovement || 0),
-      storageTrend: payload.storageTrend || 'up',
-      storageChange: Number(payload.storageChange || 0)
+      totalMatches: Number(statusPayload?.kaggle_match_count || totalRowsUpserted || 0),
+      activeSources: Number(statusPayload?.enabled_datasets || 0),
+      dataQuality: Number(statusPayload?.quality_score || successRate || 0),
+      errorRate: Number(errorRate || 0),
+      avgResponseTime: Number(avgResponseTime || 0),
+      storageUsed,
+      matchGrowth,
+      sourceGrowth,
+      qualityTrend,
+      qualityChange,
+      errorImprovement,
+      responseImprovement: Number(errorImprovement || 0),
+      storageTrend,
+      storageChange
     })
   } catch (error) {
     ElMessage.error(T.toastLoadStatsFailed)
@@ -529,17 +704,96 @@ const loadStats = async () => {
   }
 }
 
+const buildEntityMappingHealthCard = (syncStatus, teamConflict, leagueConflict) => {
+  const teamSummary = teamConflict?.summary || {}
+  const leagueSummary = leagueConflict?.summary || {}
+
+  const teamPending = Number(teamSummary.pending_conflicts ?? teamConflict?.pending_total ?? 0)
+  const leaguePending = Number(leagueSummary.pending_conflicts ?? leagueConflict?.pending_total ?? 0)
+  const teamTotal = Number(teamSummary.total_conflicts ?? teamConflict?.total ?? 0)
+  const leagueTotal = Number(leagueSummary.total_conflicts ?? leagueConflict?.total ?? 0)
+
+  const pendingConflicts = Math.max(0, teamPending) + Math.max(0, leaguePending)
+  const totalConflicts = Math.max(0, teamTotal) + Math.max(0, leagueTotal)
+
+  const isRunning = !!syncStatus?.is_running
+  const lastRunStatus = String(syncStatus?.last_run?.status || '').toLowerCase()
+  const hasFailure = lastRunStatus === 'failed' || !!syncStatus?.last_error_message
+
+  let syncStatusText = '未执行'
+  let healthTagType = 'info'
+  if (isRunning) {
+    syncStatusText = '运行中'
+    healthTagType = 'warning'
+  } else if (lastRunStatus === 'success') {
+    syncStatusText = '成功'
+    healthTagType = pendingConflicts > 0 ? 'warning' : 'success'
+  } else if (lastRunStatus === 'failed') {
+    syncStatusText = '失败'
+    healthTagType = 'danger'
+  }
+
+  if (hasFailure) {
+    healthTagType = 'danger'
+  }
+
+  const lastSyncAt = syncStatus?.last_finished_at || syncStatus?.last_run?.finished_at || '-'
+  const lastFailedAt = syncStatus?.last_error_at || '-'
+  const lastErrorMessage = syncStatus?.last_error_message || ''
+
+  return {
+    syncStatusText,
+    healthTagType,
+    pendingConflicts,
+    totalConflicts,
+    lastSyncAt,
+    lastFailedAt,
+    lastErrorMessage
+  }
+}
+
+const loadEntityMappingHealth = async () => {
+  entityMappingHealthLoading.value = true
+  try {
+    const [syncStatus, teamConflict, leagueConflict] = await Promise.all([
+      getEntityMappingSyncStatus(),
+      getEntityMappingConflicts('team', { page: 1, size: 1 }),
+      getEntityMappingConflicts('league', { page: 1, size: 1 })
+    ])
+
+    Object.assign(
+      entityMappingHealth,
+      buildEntityMappingHealthCard(syncStatus, teamConflict, leagueConflict)
+    )
+  } catch (error) {
+    console.error('Error loading entity mapping health:', error)
+    Object.assign(entityMappingHealth, {
+      syncStatusText: '加载失败',
+      healthTagType: 'danger',
+      pendingConflicts: 0,
+      totalConflicts: 0,
+      lastSyncAt: '-',
+      lastFailedAt: '-',
+      lastErrorMessage: ''
+    })
+  } finally {
+    entityMappingHealthLoading.value = false
+  }
+}
+
 const loadSourceOptions = async () => {
   try {
-    const res = await getDataCenterSourceOptions({ page: 1, size: 100 })
-    const payload = unwrapPayload(res) || {}
-    const items = Array.isArray(payload.items) ? payload.items : []
-    sources.value = items
-      .filter((item) => item && item.id != null)
-      .map((item) => ({
+    const payload = await getKaggleDatasets({ page: 1, size: 200, enabled: true })
+    const items = Array.isArray(payload?.items) ? payload.items : []
+    const slugMap = {}
+    sources.value = items.map((item) => {
+      slugMap[item.id] = item.dataset_slug
+      return {
         id: item.id,
-        name: item.name || `${T.sourcePrefix}${item.id}`
-      }))
+        name: item.display_name || item.dataset_slug || `${T.sourcePrefix}${item.id}`
+      }
+    })
+    sourceSlugMap.value = slugMap
 
     if (!sources.value.length) {
       sources.value = [...fallbackSources]
@@ -558,23 +812,64 @@ const loadTableData = async () => {
       size: pagination.size
     }
 
-    if (filters.dataType) {
-      params.type = filters.dataType
-    }
     if (filters.sourceId) {
-      params.source_id = filters.sourceId
+      const datasetSlug = sourceSlugMap.value[filters.sourceId]
+      if (datasetSlug) {
+        params.dataset_slug = datasetSlug
+      }
     }
     if (filters.status) {
-      params.status = filters.status
-    }
-    if (filters.dateRange && filters.dateRange.length === 2) {
-      params.start_date = filters.dateRange[0]
-      params.end_date = filters.dateRange[1]
+      if (filters.status === 'normal') {
+        params.status = 'success'
+      } else if (filters.status === 'error') {
+        params.status = 'failed'
+      } else {
+        params.status = 'running'
+      }
     }
 
-    const res = await getDataCenterTableData(params)
-    const payload = unwrapPayload(res) || {}
-    tableData.value = Array.isArray(payload.items) ? payload.items : []
+    const payload = await getKaggleRuns(params)
+    const items = Array.isArray(payload?.items) ? payload.items : []
+    runsCache.value = items
+
+    const mapped = items.map((run) => {
+      const status = toTableStatus(run.status)
+      const rowsRaw = Number(run.rows_raw || 0)
+      const rowsUpserted = Number(run.rows_upserted || 0)
+      const quality = rowsRaw > 0
+        ? Number(Math.min(100, Math.max(0, ((rowsUpserted / rowsRaw) * 100))).toFixed(2))
+        : (status === 'error' ? 0 : 100)
+      return {
+        id: run.id,
+        type: toDataType(run),
+        sourceName: run.dataset_slug || T.sourceUnknown,
+        title: `${run.run_id || '-'}${run.version ? ` / v${run.version}` : ''}`,
+        status,
+        quality,
+        recordCount: rowsUpserted,
+        createdAt: run.started_at || run.created_at || '',
+        updatedAt: run.finished_at || run.updated_at || '',
+        _raw: run
+      }
+    })
+
+    if (filters.dateRange && filters.dateRange.length === 2) {
+      const start = new Date(`${filters.dateRange[0]}T00:00:00`).getTime()
+      const end = new Date(`${filters.dateRange[1]}T23:59:59`).getTime()
+      tableData.value = mapped.filter((item) => {
+        const dt = toDate(item.createdAt)
+        if (!dt) return false
+        const ts = dt.getTime()
+        return ts >= start && ts <= end
+      })
+    } else {
+      tableData.value = mapped
+    }
+
+    if (filters.dataType) {
+      tableData.value = tableData.value.filter((item) => item.type === filters.dataType)
+    }
+
     pagination.total = Number(payload.total || 0)
     applyFilters()
   } catch (error) {
@@ -600,14 +895,36 @@ const loadChartData = async () => {
 
 const loadTrendData = async () => {
   try {
-    const res = await getDataCenterTrend({ days: TREND_DAYS })
-    const payload = unwrapPayload(res) || {}
+    const labels = buildDateLabels(TREND_DAYS)
+    const runs = runsCache.value.length ? runsCache.value : await fetchRecentRuns(500)
+    const dayStats = labels.reduce((acc, label) => {
+      acc[label] = { total: 0, failed: 0, raw: 0, curated: 0, upserted: 0 }
+      return acc
+    }, {})
 
-    chartData.trendLabels = Array.isArray(payload.labels) ? payload.labels : []
-    chartData.matchSeries = Array.isArray(payload.matches) ? payload.matches.map((n) => Number(n || 0)) : []
-    chartData.oddsSeries = Array.isArray(payload.odds) ? payload.odds.map((n) => Number(n || 0)) : []
-    chartData.spSeries = Array.isArray(payload.spRecords) ? payload.spRecords.map((n) => Number(n || 0)) : []
-    chartData.qualitySeries = Array.isArray(payload.quality) ? payload.quality.map((n) => Number(n || 0)) : []
+    runs.forEach((run) => {
+      const dt = toDate(run.started_at || run.created_at)
+      if (!dt) return
+      const label = dt.toISOString().slice(5, 10)
+      if (!dayStats[label]) return
+      dayStats[label].total += 1
+      dayStats[label].raw += Number(run.rows_raw || 0)
+      dayStats[label].curated += Number(run.rows_curated || 0)
+      dayStats[label].upserted += Number(run.rows_upserted || 0)
+      if (isRunFailure(run.status)) {
+        dayStats[label].failed += 1
+      }
+    })
+
+    chartData.trendLabels = labels
+    chartData.matchSeries = labels.map((label) => Number(dayStats[label].upserted || 0))
+    chartData.oddsSeries = labels.map((label) => Number(dayStats[label].curated || 0))
+    chartData.spSeries = labels.map((label) => Number(dayStats[label].raw || 0))
+    chartData.qualitySeries = labels.map((label) => {
+      const total = dayStats[label].total
+      if (!total) return 100
+      return Number((((total - dayStats[label].failed) / total) * 100).toFixed(2))
+    })
   } catch (error) {
     console.error('Error loading trend data:', error)
     chartData.trendLabels = []
@@ -620,14 +937,16 @@ const loadTrendData = async () => {
 
 const loadSourceDistribution = async () => {
   try {
-    const res = await getDataCenterSourceDistribution()
-    const payload = unwrapPayload(res) || {}
-    const items = Array.isArray(payload.items) ? payload.items : []
-
-    chartData.sourceDistribution = items.map((item) => ({
-      name: item.name || T.sourceUnknown,
-      value: Number(item.value || 0)
-    }))
+    const runs = runsCache.value.length ? runsCache.value : await fetchRecentRuns(500)
+    const distMap = {}
+    runs.forEach((run) => {
+      const key = run.dataset_slug || T.sourceUnknown
+      distMap[key] = (distMap[key] || 0) + Number(run.rows_upserted || 0)
+    })
+    chartData.sourceDistribution = Object.entries(distMap)
+      .map(([name, value]) => ({ name, value: Number(value || 0) }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 12)
   } catch (error) {
     console.error('Error loading source distribution:', error)
     chartData.sourceDistribution = []
@@ -636,24 +955,37 @@ const loadSourceDistribution = async () => {
 
 const loadRealtimeData = async () => {
   try {
-    const res = await getDataCenterRealtime({
-      points: REALTIME_POINTS,
-      interval_minutes: REALTIME_INTERVAL_MINUTES
+    const [statusPayload, runsPayload] = await Promise.all([
+      getKaggleSyncStatus(),
+      getKaggleRuns({ page: 1, size: REALTIME_POINTS })
+    ])
+    const runs = Array.isArray(runsPayload?.items) ? runsPayload.items : []
+    const successCount = runs.filter((run) => isRunSuccess(run.status)).length
+    const latestRun = runs[0] || null
+    const latestDuration = Number(latestRun?.duration_ms || 0)
+    const latestRows = Number(latestRun?.rows_upserted || 0)
+    const currentSpeed = latestDuration > 0
+      ? Number(((latestRows * 1000) / latestDuration).toFixed(3))
+      : 0
+
+    realtimeStats.currentSpeed = currentSpeed
+    realtimeStats.queueLength = Number(statusPayload?.running_runs || 0)
+    realtimeStats.successRate = runs.length > 0
+      ? Number(((successCount / runs.length) * 100).toFixed(2))
+      : 100
+    realtimeStats.activeConnections = Number(statusPayload?.enabled_datasets || 0)
+
+    const ordered = [...runs].reverse()
+    chartData.realtimeLabels = ordered.map((run) => {
+      const dt = toDate(run.started_at || run.created_at)
+      return dt ? dt.toISOString().slice(11, 16) : '--'
     })
-    const payload = unwrapPayload(res) || {}
-
-    const snapshot = payload.snapshot || {}
-    const history = payload.history || {}
-
-    realtimeStats.currentSpeed = Number(snapshot.currentSpeed || 0)
-    realtimeStats.queueLength = Number(snapshot.queueLength || 0)
-    realtimeStats.successRate = Number(snapshot.successRate || 0)
-    realtimeStats.activeConnections = Number(snapshot.activeConnections || 0)
-
-    chartData.realtimeLabels = Array.isArray(history.labels) ? history.labels : []
-    chartData.realtimeSpeed = Array.isArray(history.speed)
-      ? history.speed.map((n) => Number(n || 0))
-      : []
+    chartData.realtimeSpeed = ordered.map((run) => {
+      const duration = Number(run.duration_ms || 0)
+      const rows = Number(run.rows_upserted || 0)
+      if (!duration) return 0
+      return Number(((rows * 1000) / duration).toFixed(3))
+    })
 
     updateRealtimeChart()
   } catch (error) {
@@ -675,7 +1007,7 @@ const handleReset = async () => {
 }
 
 const handleRefresh = async () => {
-  await Promise.all([loadStats(), loadTableData(), loadChartData(), loadRealtimeData()])
+  await Promise.all([loadStats(), loadTableData(), loadChartData(), loadRealtimeData(), loadEntityMappingHealth()])
   ElMessage.success(T.toastDataRefreshed)
 }
 
@@ -1172,6 +1504,60 @@ const getQualityColor = (quality) => {
       &.danger { --card-accent-color: #F56C6C; }
       &.info { --card-accent-color: #909399; }
       &.purple { --card-accent-color: #722ED1; }
+    }
+  }
+
+  .mapping-health-section {
+    margin-bottom: var(--spacing-xl);
+
+    .mapping-health-card {
+      border: none;
+    }
+
+    .mapping-health-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
+      .title {
+        font-size: var(--font-size-base);
+        font-weight: var(--font-weight-semibold);
+        color: var(--color-text-primary);
+      }
+    }
+
+    .mapping-health-item {
+      padding: var(--spacing-sm) 0;
+
+      .label {
+        color: var(--color-text-secondary);
+        font-size: var(--font-size-sm);
+        margin-bottom: 6px;
+      }
+
+      .value {
+        font-size: var(--font-size-xl);
+        font-weight: var(--font-weight-bold);
+        color: var(--color-text-primary);
+      }
+
+      .value.warning {
+        color: var(--color-warning);
+      }
+
+      .value.text {
+        font-size: var(--font-size-base);
+        font-weight: var(--font-weight-medium);
+      }
+    }
+
+    .mapping-health-footer {
+      margin-top: var(--spacing-sm);
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--spacing-lg);
+      color: var(--color-text-secondary);
+      font-size: var(--font-size-sm);
     }
   }
 

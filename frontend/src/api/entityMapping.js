@@ -41,10 +41,11 @@ export function reviewEntityMapping(entityType, entityId, payload = {}) {
   })
 }
 
-export function getOfficialInfoSummary() {
+export function getOfficialInfoSummary(params = {}) {
   return request({
     url: '/api/v1/entity-mapping/official-info/summary',
-    method: 'get'
+    method: 'get',
+    params
   })
 }
 
@@ -75,6 +76,29 @@ export function discoverOfficialInfoAll(entityType = 'all') {
     url: '/api/v1/entity-mapping/official-info/discover-all',
     method: 'post',
     params: { entity_type: entityType }
+  })
+}
+
+export function triggerOfficialInfoEnrich(params = {}) {
+  return request({
+    url: '/api/v1/entity-mapping/official-info/enrich/trigger',
+    method: 'post',
+    params
+  })
+}
+
+export function getOfficialInfoEnrichStatus(params = {}) {
+  return request({
+    url: '/api/v1/entity-mapping/official-info/enrich/status',
+    method: 'get',
+    params
+  })
+}
+
+export function getEntityMappingOpsOverview() {
+  return request({
+    url: '/api/v1/entity-mapping/ops/overview',
+    method: 'get'
   })
 }
 

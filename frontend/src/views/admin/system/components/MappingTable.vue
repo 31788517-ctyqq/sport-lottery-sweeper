@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="mapping-table-container">
     <div class="filter-bar">
       <el-input
@@ -42,19 +42,48 @@
       >
         冲突列表
       </el-button>
+      <el-button v-else size="small" plain @click="handleShowAll">返回全部</el-button>
+
+      <el-divider direction="vertical" />
+
+      <el-tag type="info">已选 {{ selectedCount }} 项</el-tag>
       <el-button
-        v-else
         size="small"
+        type="success"
         plain
-        @click="handleShowAll"
+        :loading="batchActionLoading"
+        :disabled="selectedCount === 0"
+        @click="handleBatchReviewReviewed"
       >
-        返回全部
+        批量标记已审
+      </el-button>
+      <el-button
+        size="small"
+        type="warning"
+        plain
+        :disabled="selectedCount < 2"
+        @click="handleBatchMergeSuggestion"
+      >
+        批量合并建议
       </el-button>
     </div>
 
-    <el-table v-loading="loading" :data="tableData" stripe style="width: 100%" empty-text="暂无映射数据">
+    <div class="summary-row" v-if="requestMode === 'conflicts' || filters.onlyConflicts">
+      <el-tag type="danger">冲突总数：{{ conflictSummary.total_conflicts }}</el-tag>
+      <el-tag type="warning">待审核：{{ conflictSummary.pending_conflicts }}</el-tag>
+    </div>
+
+    <el-table
+      v-loading="loading"
+      :data="tableData"
+      stripe
+      style="width: 100%"
+      :empty-text="tableEmptyText"
+      @selection-change="handleSelectionChange"
+    >
+      <el-table-column type="selection" width="48" />
       <el-table-column prop="id" label="业务ID" width="120" />
-      <el-table-column prop="display_name" label="展示名称" min-width="180" />
+      <el-table-column prop="display_name" label="显示名称" min-width="180" />
       <el-table-column prop="zh" label="中文名称" min-width="180">
         <template #default="{ row }">
           <span>{{ formatArrayField(row.zh) }}</span>
@@ -101,7 +130,7 @@
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="180" fixed="right">
+      <el-table-column label="操作" width="190" fixed="right">
         <template #default="{ row }">
           <div class="action-buttons">
             <el-button size="small" @click="handleEdit(row)">编辑</el-button>
@@ -137,7 +166,7 @@
         <el-form-item label="业务ID">
           <el-input v-model="currentRow.id" disabled />
         </el-form-item>
-        <el-form-item label="展示名称">
+        <el-form-item label="显示名称">
           <el-input v-model="currentRow.display_name" />
         </el-form-item>
         <el-form-item label="中文名称">
@@ -177,6 +206,7 @@
 </template>
 
 <script>
+import { ElMessageBox } from 'element-plus'
 import {
   getEntityMappings,
   getEntityMappingConflicts,
@@ -191,6 +221,21 @@ const parseCsvField = (value) => {
     .split(',')
     .map((item) => item.trim())
     .filter(Boolean)
+}
+
+const normalizeText = (value) =>
+  String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[\s\-_/]+/g, '')
+
+const getRowPrimaryName = (row) => {
+  if (row.display_name) return row.display_name
+  const zh = Array.isArray(row.zh) && row.zh.length ? row.zh[0] : ''
+  if (zh) return zh
+  const en = Array.isArray(row.en) && row.en.length ? row.en[0] : ''
+  if (en) return en
+  return row.id || '-'
 }
 
 export default {
@@ -213,6 +258,13 @@ export default {
       dialogVisible: false,
       currentRow: {},
       searchDebounceTimer: null,
+      selectedRows: [],
+      batchActionLoading: false,
+      tableErrorText: '',
+      conflictSummary: {
+        total_conflicts: 0,
+        pending_conflicts: 0
+      },
       filters: {
         search: '',
         reviewStatus: '',
@@ -228,6 +280,14 @@ export default {
         { label: '待审核', value: 'pending_review' },
         { label: '已审核', value: 'reviewed' }
       ]
+    }
+  },
+  computed: {
+    selectedCount() {
+      return Array.isArray(this.selectedRows) ? this.selectedRows.length : 0
+    },
+    tableEmptyText() {
+      return this.tableErrorText || '暂无映射数据'
     }
   },
   watch: {
@@ -248,6 +308,12 @@ export default {
     resetAndReload() {
       this.requestMode = 'all'
       this.filters.onlyConflicts = false
+      this.selectedRows = []
+      this.tableErrorText = ''
+      this.conflictSummary = {
+        total_conflicts: 0,
+        pending_conflicts: 0
+      }
       this.pager.page = 1
       this.fetchData()
     },
@@ -310,6 +376,7 @@ export default {
     },
     async fetchData() {
       this.loading = true
+      this.tableErrorText = ''
       try {
         const params = this.buildQueryParams()
         const response =
@@ -319,7 +386,23 @@ export default {
         const pageData = this.normalizePagedResponse(response)
         this.tableData = pageData.items || []
         this.pager.total = Number(pageData.total || 0)
+
+        const summary = response?.summary
+        if (summary && typeof summary === 'object') {
+          this.conflictSummary = {
+            total_conflicts: Number(summary.total_conflicts || 0),
+            pending_conflicts: Number(summary.pending_conflicts || 0)
+          }
+        } else {
+          this.conflictSummary = {
+            total_conflicts: Number(response?.total || 0),
+            pending_conflicts: Number(response?.pending_total || 0)
+          }
+        }
       } catch (error) {
+        this.tableData = []
+        this.pager.total = 0
+        this.tableErrorText = '加载失败，请稍后重试'
         this.$message.error('获取映射数据失败')
       } finally {
         this.loading = false
@@ -358,6 +441,68 @@ export default {
       this.filters.onlyConflicts = false
       this.pager.page = 1
       this.fetchData()
+    },
+    handleSelectionChange(rows) {
+      this.selectedRows = Array.isArray(rows) ? rows : []
+    },
+    async handleBatchReviewReviewed() {
+      if (!this.selectedCount) {
+        this.$message.warning('请先选择要操作的记录')
+        return
+      }
+      this.batchActionLoading = true
+      try {
+        const jobs = this.selectedRows.map((row) =>
+          reviewEntityMapping(this.entityType, row.id, { review_status: 'reviewed' })
+        )
+        const results = await Promise.allSettled(jobs)
+        const successCount = results.filter((item) => item.status === 'fulfilled').length
+        const failCount = results.length - successCount
+
+        if (successCount > 0) {
+          this.$message.success(`批量审核完成：成功 ${successCount} 条${failCount ? `，失败 ${failCount} 条` : ''}`)
+          await this.fetchData()
+          this.$emit('update')
+        } else {
+          this.$message.error('批量审核失败，请重试')
+        }
+      } catch (error) {
+        this.$message.error('批量审核失败，请重试')
+      } finally {
+        this.batchActionLoading = false
+      }
+    },
+    async handleBatchMergeSuggestion() {
+      if (this.selectedCount < 2) {
+        this.$message.warning('至少选择 2 条记录后再生成建议')
+        return
+      }
+
+      const groups = {}
+      this.selectedRows.forEach((row) => {
+        const key = normalizeText(getRowPrimaryName(row))
+        if (!key) return
+        if (!groups[key]) groups[key] = []
+        groups[key].push(row)
+      })
+
+      const suggestions = Object.values(groups)
+        .filter((group) => group.length > 1)
+        .map((group) => {
+          const ids = group.map((item) => item.id).join(', ')
+          const name = getRowPrimaryName(group[0])
+          return `【${name}】候选记录：${ids}`
+        })
+
+      if (!suggestions.length) {
+        this.$message.info('未发现明显重复项，建议按来源别名进一步人工核对')
+        return
+      }
+
+      await ElMessageBox.alert(suggestions.join('\n'), '批量合并建议', {
+        confirmButtonText: '我知道了',
+        type: 'warning'
+      })
     },
     buildAliasString(sourceAliases) {
       if (!sourceAliases || typeof sourceAliases !== 'object') return ''
@@ -398,6 +543,7 @@ export default {
         await reviewEntityMapping(this.entityType, row.id, { review_status: 'reviewed' })
         this.$message.success('已标记为已审核')
         await this.fetchData()
+        this.$emit('update')
       } catch (error) {
         this.$message.error('标记审核失败')
       }
@@ -437,6 +583,12 @@ export default {
   flex-wrap: wrap;
   gap: 12px;
   margin-bottom: 14px;
+}
+
+.summary-row {
+  margin-bottom: 10px;
+  display: flex;
+  gap: 10px;
 }
 
 .source-alias {

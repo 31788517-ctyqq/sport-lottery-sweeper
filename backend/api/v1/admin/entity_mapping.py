@@ -12,7 +12,7 @@ from fastapi.responses import JSONResponse
 
 from backend.database import SessionLocal
 from backend.config.entity_mappings import LEAGUE_MAPPINGS, TEAM_MAPPINGS
-from backend.models.entity_mapping_record import EntityMappingRecord
+from backend.models.entity_mapping_record import EntityMappingRecord, EntityMappingSyncRun
 from backend.services.data_processor import MatchDataProcessor
 from backend.services.entity_mapping_sync_service import entity_mapping_sync_service
 from backend.services.official_info_service import official_info_service
@@ -272,6 +272,74 @@ def _paginate_items(items: List[Dict[str, Any]], page: int, size: int) -> Dict[s
         "page": page,
         "size": size,
         "has_more": end < total,
+    }
+
+
+def _build_ops_overview_payload(db) -> Dict[str, Any]:
+    now = datetime.utcnow()
+    window_start = now - timedelta(days=7)
+
+    recent_runs: List[EntityMappingSyncRun] = (
+        db.query(EntityMappingSyncRun)
+        .filter(EntityMappingSyncRun.started_at >= window_start)
+        .order_by(EntityMappingSyncRun.started_at.desc())
+        .all()
+    )
+    completed_runs = [run for run in recent_runs if str(run.status or "").lower() in {"success", "failed"}]
+    success_runs = [run for run in completed_runs if str(run.status or "").lower() == "success"]
+
+    sync_success_rate_7d = 0.0
+    if completed_runs:
+        sync_success_rate_7d = round((len(success_runs) / len(completed_runs)) * 100, 2)
+
+    latest_failed_run = (
+        db.query(EntityMappingSyncRun)
+        .filter(EntityMappingSyncRun.status == "failed")
+        .order_by(EntityMappingSyncRun.started_at.desc())
+        .first()
+    )
+
+    latest_finished_run = (
+        db.query(EntityMappingSyncRun)
+        .filter(EntityMappingSyncRun.finished_at.isnot(None))
+        .order_by(EntityMappingSyncRun.finished_at.desc())
+        .first()
+    )
+
+    pending_conflicts = (
+        db.query(EntityMappingRecord)
+        .filter(
+            EntityMappingRecord.conflict_count > 0,
+            EntityMappingRecord.review_status == entity_mapping_sync_service.REVIEW_PENDING,
+        )
+        .count()
+    )
+    total_conflicts = db.query(EntityMappingRecord).filter(EntityMappingRecord.conflict_count > 0).count()
+
+    enrich_status = official_info_service.get_enrich_status_snapshot("all")
+    enrich_summary = enrich_status.get("summary") or {}
+
+    last_failed_at = None
+    last_failed_message = None
+    if latest_failed_run:
+        last_failed_message = latest_failed_run.error_message
+        fail_time = latest_failed_run.finished_at or latest_failed_run.started_at
+        last_failed_at = fail_time.isoformat() if fail_time else None
+
+    return {
+        "sync_success_rate_7d": sync_success_rate_7d,
+        "last_failed_at": last_failed_at,
+        "last_failed_message": last_failed_message,
+        "pending_conflicts": int(pending_conflicts or 0),
+        "total_conflicts": int(total_conflicts or 0),
+        "official_enrich_running": bool(enrich_status.get("is_running")),
+        "official_enrich_pending": int(enrich_summary.get("pending") or 0),
+        "official_enrich_failed": int(enrich_summary.get("failed") or 0),
+        "last_sync_finished_at": (
+            latest_finished_run.finished_at.isoformat()
+            if latest_finished_run and latest_finished_run.finished_at
+            else None
+        ),
     }
 
 
@@ -684,11 +752,16 @@ async def get_entity_mapping_conflicts(
         )
     ]
     payload = _paginate_items(filtered, page=page, size=size)
-    payload["pending_total"] = sum(
+    pending_total = sum(
         1
         for item in filtered
         if str(item.get("review_status") or "") == entity_mapping_sync_service.REVIEW_PENDING
     )
+    payload["pending_total"] = pending_total
+    payload["summary"] = {
+        "total_conflicts": len(filtered),
+        "pending_conflicts": pending_total,
+    }
     return JSONResponse(content={"status": "success", "data": payload, "source": "db"})
 
 
@@ -847,9 +920,37 @@ async def get_entity_mapping_sync_status() -> JSONResponse:
     db = SessionLocal()
     try:
         snapshot = entity_mapping_sync_service.get_status_snapshot(db)
+        latest_failed_run = (
+            db.query(EntityMappingSyncRun)
+            .filter(EntityMappingSyncRun.status == "failed")
+            .order_by(EntityMappingSyncRun.started_at.desc())
+            .first()
+        )
+        if latest_failed_run:
+            snapshot["last_error_message"] = latest_failed_run.error_message
+            error_time = latest_failed_run.finished_at or latest_failed_run.started_at
+            snapshot["last_error_at"] = error_time.isoformat() if error_time else None
+        else:
+            snapshot["last_error_message"] = None
+            snapshot["last_error_at"] = None
         return JSONResponse(content={"status": "success", "data": snapshot})
     except Exception as exc:  # pragma: no cover - defensive path
         logger.error("Failed to fetch entity mapping sync status: %s", exc, exc_info=True)
+        return JSONResponse(status_code=500, content={"status": "error", "message": "Internal server error"})
+    finally:
+        db.close()
+
+
+@router.get("/ops/overview")
+async def get_entity_mapping_ops_overview() -> JSONResponse:
+    """Return operations overview for entity-mapping admin dashboards."""
+    _ensure_mapping_schema_ready()
+    db = SessionLocal()
+    try:
+        payload = _build_ops_overview_payload(db)
+        return JSONResponse(content={"status": "success", "data": payload})
+    except Exception as exc:  # pragma: no cover - defensive path
+        logger.error("Failed to fetch entity mapping operations overview: %s", exc, exc_info=True)
         return JSONResponse(status_code=500, content={"status": "error", "message": "Internal server error"})
     finally:
         db.close()
