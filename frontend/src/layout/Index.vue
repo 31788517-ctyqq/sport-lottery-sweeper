@@ -39,6 +39,7 @@
             <span>精算工具中心</span>
           </template>
           <el-menu-item index="/admin/beidan-filter">北单三维筛选器</el-menu-item>
+          <el-menu-item index="/m/beidan-filter">北单三维移动版</el-menu-item>
           <el-menu-item index="/admin/beidan-betting-sim">北单投注模拟</el-menu-item>
         </el-sub-menu>
 
