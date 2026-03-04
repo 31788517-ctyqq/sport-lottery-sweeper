@@ -4,7 +4,7 @@ import request from '@/utils/request'
 // 获取任务执行列表
 export function getExecutions(params) {
   return request({
-    url: '/api/task-monitor/executions',
+    url: '/api/v1/task-monitor/executions',
     method: 'get',
     params
   })
@@ -13,7 +13,7 @@ export function getExecutions(params) {
 // 获取单个执行详情
 export function getExecutionDetail(executionId) {
   return request({
-    url: `/api/task-monitor/executions/${executionId}`,
+    url: `/api/v1/task-monitor/executions/${executionId}`,
     method: 'get'
   })
 }
@@ -21,7 +21,7 @@ export function getExecutionDetail(executionId) {
 // 取消正在执行的任务
 export function cancelExecution(executionId) {
   return request({
-    url: `/api/task-monitor/executions/${executionId}/cancel`,
+    url: `/api/v1/task-monitor/executions/${executionId}/cancel`,
     method: 'post'
   })
 }
@@ -29,7 +29,7 @@ export function cancelExecution(executionId) {
 // 获取任务执行日志
 export function getExecutionLogs(executionId, params) {
   return request({
-    url: `/api/task-monitor/executions/${executionId}/logs`,
+    url: `/api/v1/task-monitor/executions/${executionId}/logs`,
     method: 'get',
     params
   })
@@ -38,7 +38,7 @@ export function getExecutionLogs(executionId, params) {
 // 获取每日统计
 export function getDailyStatistics(params) {
   return request({
-    url: '/api/task-monitor/statistics/daily',
+    url: '/api/v1/task-monitor/statistics/daily',
     method: 'get',
     params
   })
@@ -47,7 +47,7 @@ export function getDailyStatistics(params) {
 // 获取主要问题排行
 export function getTopIssues(params) {
   return request({
-    url: '/api/task-monitor/statistics/top-issues',
+    url: '/api/v1/task-monitor/statistics/top-issues',
     method: 'get',
     params
   })
@@ -56,7 +56,7 @@ export function getTopIssues(params) {
 // 获取实时概览
 export function getRealtimeOverview() {
   return request({
-    url: '/api/task-monitor/realtime/overview',
+    url: '/api/v1/task-monitor/realtime/overview',
     method: 'get'
   })
 }

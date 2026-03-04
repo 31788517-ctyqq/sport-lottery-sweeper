@@ -276,7 +276,8 @@ class APIMigrationMiddleware(BaseHTTPMiddleware):
             request.scope["path"] = new_path
             logger.info(f"API璺緞閲嶅畾鍚? {old_path} -> {new_path}")
         elif old_path.startswith("/api/admin/crawler"):
-            new_path = old_path.replace("/admin/crawler", "/v1/admin")
+            # Keep crawler segment: /api/admin/crawler/... -> /api/v1/admin/crawler/...
+            new_path = old_path.replace("/api/admin/crawler", "/api/v1/admin/crawler", 1)
             request.scope["path"] = new_path
             logger.info(f"API璺緞閲嶅畾鍚? {old_path} -> {new_path}")
         
@@ -285,6 +286,16 @@ class APIMigrationMiddleware(BaseHTTPMiddleware):
             new_path = old_path.replace("/api/admin/tasks", "/api/v1/admin/tasks")
             request.scope["path"] = new_path
             logger.info(f"API璺緞閲嶅畾鍚? {old_path} -> {new_path}")
+
+        elif old_path.startswith("/api/task-monitor"):
+            new_path = old_path.replace("/api/task-monitor", "/api/v1/task-monitor", 1)
+            request.scope["path"] = new_path
+            logger.info(f"API path redirected: {old_path} -> {new_path}")
+
+        elif old_path.startswith("/api/admin/source-sync"):
+            new_path = old_path.replace("/api/admin/source-sync", "/api/v1/admin/source-sync", 1)
+            request.scope["path"] = new_path
+            logger.info(f"API path redirected: {old_path} -> {new_path}")
             
         elif old_path == "/api/admin/sources" or old_path.startswith("/api/admin/sources/"):
             # Map legacy source management API paths to full CRUD source endpoints.

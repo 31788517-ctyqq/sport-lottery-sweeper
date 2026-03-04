@@ -9,6 +9,7 @@ from typing import Any, Dict, Iterable, List, Tuple
 
 from fastapi import APIRouter, Query, Request
 from fastapi.responses import JSONResponse
+from sqlalchemy import or_
 
 from backend.database import SessionLocal
 from backend.config.entity_mappings import LEAGUE_MAPPINGS, TEAM_MAPPINGS
@@ -139,6 +140,31 @@ def _load_db_mapping_items(entity_type: str) -> List[Dict[str, Any]]:
         return [_to_mapping_item(row) for row in rows]
     finally:
         db.close()
+
+
+def _build_db_mapping_query(
+    db,
+    *,
+    entity_type: str,
+    review_status: str | None = None,
+    only_conflicts: bool = False,
+    only_missing_official: bool = False,
+):
+    query = db.query(EntityMappingRecord).filter(EntityMappingRecord.entity_type == entity_type)
+    if review_status:
+        query = query.filter(EntityMappingRecord.review_status == review_status)
+    if only_conflicts:
+        query = query.filter(EntityMappingRecord.conflict_count > 0)
+    if only_missing_official:
+        # Best-effort DB-side filter. Keep Python fallback path for strict precision.
+        query = query.filter(
+            or_(
+                EntityMappingRecord.official_info.is_(None),
+                EntityMappingRecord.official_info == {},
+                EntityMappingRecord.official_info == "",
+            )
+        )
+    return query
 
 
 def _load_entity_official_info(entity_type: str, entity_id: str) -> Dict[str, Any] | None:
@@ -372,7 +398,7 @@ def _calculate_summary_from_mapping_data() -> Dict[str, Any]:
     db = SessionLocal()
     try:
         rows = (
-            db.query(EntityMappingRecord)
+            db.query(EntityMappingRecord.official_info, EntityMappingRecord.official_last_success_at)
             .filter(EntityMappingRecord.entity_type.in_(["team", "league"]))
             .all()
         )
@@ -387,14 +413,14 @@ def _calculate_summary_from_mapping_data() -> Dict[str, Any]:
     valid = 0
     invalid = 0
     needs_update = 0
-    for row in rows:
-        info = dict(row.official_info or {})
+    for official_info, official_last_success_at in rows:
+        info = dict(official_info or {})
         if bool(info.get("verified", False)):
             valid += 1
         else:
             invalid += 1
 
-        last_success = row.official_last_success_at
+        last_success = official_last_success_at
         if not last_success:
             last_verified = info.get("last_verified")
             if last_verified:
@@ -679,13 +705,48 @@ async def get_entity_mappings(
             return JSONResponse(status_code=400, content={"status": "error", "message": error})
         return JSONResponse(content={"status": "success", "data": mappings, "source": "static"})
 
+    items: List[Dict[str, Any]] = []
+    source = "db"
+
+    # Fast path: use DB-side pagination when search/missing-official filter is not requested.
+    if not search and not only_missing_official:
+        try:
+            _ensure_mapping_schema_ready()
+            db = SessionLocal()
+            try:
+                query = _build_db_mapping_query(
+                    db,
+                    entity_type=entity_type,
+                    review_status=review_status,
+                    only_conflicts=only_conflicts,
+                    only_missing_official=False,
+                )
+                total = query.count()
+                rows = (
+                    query.order_by(EntityMappingRecord.display_name.asc(), EntityMappingRecord.id.asc())
+                    .offset((page - 1) * size)
+                    .limit(size)
+                    .all()
+                )
+                payload = {
+                    "items": [_to_mapping_item(row) for row in rows],
+                    "total": int(total),
+                    "page": page,
+                    "size": size,
+                    "has_more": (page * size) < int(total),
+                }
+                if total > 0:
+                    return JSONResponse(content={"status": "success", "data": payload, "source": source})
+            finally:
+                db.close()
+        except Exception as exc:  # pragma: no cover - defensive path
+            logger.error("DB-side paged query failed for %s: %s", entity_type, exc, exc_info=True)
+
     try:
         items = _load_db_mapping_items(entity_type)
-        source = "db"
     except Exception as exc:  # pragma: no cover - defensive path
         logger.error("Failed to load DB mappings for %s: %s", entity_type, exc, exc_info=True)
         items = []
-        source = "db"
 
     if not items:
         mappings, error = _get_entity_mapping(entity_type)
@@ -733,6 +794,58 @@ async def get_entity_mapping_conflicts(
                 "allowed": sorted(VALID_REVIEW_STATUS),
             },
         )
+
+    # Fast path: use DB-side filtering/pagination when search is empty.
+    if not search:
+        try:
+            _ensure_mapping_schema_ready()
+            db = SessionLocal()
+            try:
+                base_query = _build_db_mapping_query(
+                    db,
+                    entity_type=entity_type,
+                    review_status=review_status,
+                    only_conflicts=True,
+                    only_missing_official=False,
+                )
+                total = base_query.count()
+                rows = (
+                    base_query.order_by(EntityMappingRecord.display_name.asc(), EntityMappingRecord.id.asc())
+                    .offset((page - 1) * size)
+                    .limit(size)
+                    .all()
+                )
+
+                if review_status == entity_mapping_sync_service.REVIEW_PENDING:
+                    pending_total = int(total)
+                else:
+                    pending_total = (
+                        _build_db_mapping_query(
+                            db,
+                            entity_type=entity_type,
+                            review_status=entity_mapping_sync_service.REVIEW_PENDING,
+                            only_conflicts=True,
+                            only_missing_official=False,
+                        ).count()
+                    )
+
+                payload = {
+                    "items": [_to_mapping_item(row) for row in rows],
+                    "total": int(total),
+                    "page": page,
+                    "size": size,
+                    "has_more": (page * size) < int(total),
+                    "pending_total": int(pending_total),
+                    "summary": {
+                        "total_conflicts": int(total),
+                        "pending_conflicts": int(pending_total),
+                    },
+                }
+                return JSONResponse(content={"status": "success", "data": payload, "source": "db"})
+            finally:
+                db.close()
+        except Exception as exc:  # pragma: no cover - defensive path
+            logger.error("DB-side conflict paged query failed for %s: %s", entity_type, exc, exc_info=True)
 
     try:
         items = _load_db_mapping_items(entity_type)
