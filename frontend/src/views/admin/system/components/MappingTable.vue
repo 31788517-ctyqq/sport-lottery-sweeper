@@ -4,7 +4,7 @@
       <el-input
         v-model="filters.search"
         clearable
-        placeholder="搜索名称/别名/ID"
+        :placeholder="text.searchPlaceholder"
         style="width: 280px"
         @input="handleSearchInput"
         @clear="handleFilterChange"
@@ -13,7 +13,7 @@
       <el-select
         v-model="filters.reviewStatus"
         clearable
-        placeholder="审核状态"
+        :placeholder="text.reviewStatusPlaceholder"
         style="width: 160px"
         @change="handleFilterChange"
       >
@@ -27,12 +27,12 @@
 
       <el-switch
         v-model="filters.onlyConflicts"
-        active-text="仅看冲突"
-        inactive-text="全部"
+        :active-text="text.onlyConflictOn"
+        :inactive-text="text.onlyConflictOff"
         @change="handleFilterChange"
       />
 
-      <el-button size="small" type="primary" :loading="loading" @click="fetchData">刷新</el-button>
+      <el-button size="small" type="primary" :loading="loading" @click="fetchData">{{ text.buttonRefresh }}</el-button>
       <el-button
         v-if="requestMode === 'all'"
         size="small"
@@ -40,13 +40,13 @@
         plain
         @click="handleShowConflicts"
       >
-        冲突列表
+        {{ text.buttonConflictList }}
       </el-button>
-      <el-button v-else size="small" plain @click="handleShowAll">返回全部</el-button>
+      <el-button v-else size="small" plain @click="handleShowAll">{{ text.buttonBackAll }}</el-button>
 
       <el-divider direction="vertical" />
 
-      <el-tag type="info">已选 {{ selectedCount }} 项</el-tag>
+      <el-tag type="info">{{ text.selectedCountPrefix }} {{ selectedCount }} {{ text.selectedCountSuffix }}</el-tag>
       <el-button
         size="small"
         type="success"
@@ -55,7 +55,7 @@
         :disabled="selectedCount === 0"
         @click="handleBatchReviewReviewed"
       >
-        批量标记已审
+        {{ text.buttonBatchMarkReviewed }}
       </el-button>
       <el-button
         size="small"
@@ -64,13 +64,13 @@
         :disabled="selectedCount < 2"
         @click="handleBatchMergeSuggestion"
       >
-        批量合并建议
+        {{ text.buttonBatchMergeSuggestion }}
       </el-button>
     </div>
 
     <div class="summary-row" v-if="requestMode === 'conflicts' || filters.onlyConflicts">
-      <el-tag type="danger">冲突总数：{{ conflictSummary.total_conflicts }}</el-tag>
-      <el-tag type="warning">待审核：{{ conflictSummary.pending_conflicts }}</el-tag>
+      <el-tag type="danger">{{ text.conflictTotalPrefix }}{{ conflictSummary.total_conflicts }}</el-tag>
+      <el-tag type="warning">{{ text.conflictPendingPrefix }}{{ conflictSummary.pending_conflicts }}</el-tag>
     </div>
 
     <el-table
@@ -82,24 +82,24 @@
       @selection-change="handleSelectionChange"
     >
       <el-table-column type="selection" width="48" />
-      <el-table-column prop="id" label="业务ID" width="120" />
-      <el-table-column prop="display_name" label="显示名称" min-width="180" />
-      <el-table-column prop="zh" label="中文名称" min-width="180">
+      <el-table-column prop="id" :label="text.colBizId" width="120" />
+      <el-table-column prop="display_name" :label="text.colDisplayName" min-width="180" />
+      <el-table-column prop="zh" :label="text.colZhName" min-width="180">
         <template #default="{ row }">
           <span>{{ formatArrayField(row.zh) }}</span>
         </template>
       </el-table-column>
-      <el-table-column prop="en" label="英文名称" min-width="180">
+      <el-table-column prop="en" :label="text.colEnName" min-width="180">
         <template #default="{ row }">
           <span>{{ formatArrayField(row.en) }}</span>
         </template>
       </el-table-column>
-      <el-table-column prop="jp" label="日文名称" min-width="180">
+      <el-table-column prop="jp" :label="text.colJpName" min-width="180">
         <template #default="{ row }">
           <span>{{ formatArrayField(row.jp) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="来源别名" min-width="260">
+      <el-table-column :label="text.colSourceAliases" min-width="260">
         <template #default="{ row }">
           <div v-if="row.source_aliases">
             <div v-for="(aliases, source) in row.source_aliases" :key="source" class="source-alias">
@@ -110,30 +110,30 @@
           <span v-else>-</span>
         </template>
       </el-table-column>
-      <el-table-column prop="alias_count" label="别名数" width="90" />
-      <el-table-column label="冲突数" width="90">
+      <el-table-column prop="alias_count" :label="text.colAliasCount" width="90" />
+      <el-table-column :label="text.colConflictCount" width="90">
         <template #default="{ row }">
           <el-tag :type="(row.conflict_count || 0) > 0 ? 'danger' : 'success'">
             {{ row.conflict_count || 0 }}
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="质量分" width="100">
+      <el-table-column :label="text.colQualityScore" width="100">
         <template #default="{ row }">
           {{ formatQuality(row.quality_score) }}
         </template>
       </el-table-column>
-      <el-table-column label="审核状态" width="110">
+      <el-table-column :label="text.colReviewStatus" width="110">
         <template #default="{ row }">
           <el-tag :type="reviewTagType(row.review_status)">
             {{ reviewStatusLabel(row.review_status) }}
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="190" fixed="right">
+      <el-table-column :label="text.colActions" width="190" fixed="right">
         <template #default="{ row }">
           <div class="action-buttons">
-            <el-button size="small" @click="handleEdit(row)">编辑</el-button>
+            <el-button size="small" @click="handleEdit(row)">{{ text.actionEdit }}</el-button>
             <el-button
               v-if="(row.conflict_count || 0) > 0 || row.review_status === 'pending_review'"
               size="small"
@@ -141,7 +141,7 @@
               plain
               @click="handleMarkReviewed(row)"
             >
-              标记已审
+              {{ text.actionMarkReviewed }}
             </el-button>
           </div>
         </template>
@@ -161,32 +161,32 @@
       />
     </div>
 
-    <el-dialog v-model="dialogVisible" title="编辑映射" width="760px">
+    <el-dialog v-model="dialogVisible" :title="text.dialogEditTitle" width="760px">
       <el-form :model="currentRow" label-width="110px">
-        <el-form-item label="业务ID">
+        <el-form-item :label="text.fieldBizId">
           <el-input v-model="currentRow.id" disabled />
         </el-form-item>
-        <el-form-item label="显示名称">
+        <el-form-item :label="text.fieldDisplayName">
           <el-input v-model="currentRow.display_name" />
         </el-form-item>
-        <el-form-item label="中文名称">
-          <el-input v-model="currentRow.zh" placeholder="多个名称用英文逗号分隔" />
+        <el-form-item :label="text.fieldZhName">
+          <el-input v-model="currentRow.zh" :placeholder="text.inputMultipleByComma" />
         </el-form-item>
-        <el-form-item label="英文名称">
-          <el-input v-model="currentRow.en" placeholder="多个名称用英文逗号分隔" />
+        <el-form-item :label="text.fieldEnName">
+          <el-input v-model="currentRow.en" :placeholder="text.inputMultipleByComma" />
         </el-form-item>
-        <el-form-item label="日文名称">
-          <el-input v-model="currentRow.jp" placeholder="多个名称用英文逗号分隔" />
+        <el-form-item :label="text.fieldJpName">
+          <el-input v-model="currentRow.jp" :placeholder="text.inputMultipleByComma" />
         </el-form-item>
-        <el-form-item label="来源别名">
+        <el-form-item :label="text.fieldSourceAliases">
           <el-input
             v-model="currentRow.source_aliases_str"
             type="textarea"
             :rows="4"
-            placeholder="格式: source_a:a1,a2;source_b:b1,b2"
+            :placeholder="text.inputSourceAliasFormat"
           />
         </el-form-item>
-        <el-form-item label="审核状态">
+        <el-form-item :label="text.fieldReviewStatus">
           <el-select v-model="currentRow.review_status" style="width: 220px">
             <el-option
               v-for="option in reviewStatusOptions"
@@ -198,8 +198,8 @@
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleSave">保存</el-button>
+        <el-button @click="dialogVisible = false">{{ text.buttonCancel }}</el-button>
+        <el-button type="primary" @click="handleSave">{{ text.buttonSave }}</el-button>
       </template>
     </el-dialog>
   </div>
@@ -207,6 +207,7 @@
 
 <script>
 import { ElMessageBox } from 'element-plus'
+import { MAPPING_TABLE_TEXT } from '../constants/entityMappingText'
 import {
   getEntityMappings,
   getEntityMappingConflicts,
@@ -257,6 +258,7 @@ export default {
       tableData: [],
       dialogVisible: false,
       currentRow: {},
+      text: MAPPING_TABLE_TEXT,
       searchDebounceTimer: null,
       selectedRows: [],
       batchActionLoading: false,
@@ -276,9 +278,9 @@ export default {
         total: 0
       },
       reviewStatusOptions: [
-        { label: '自动通过', value: 'auto_accepted' },
-        { label: '待审核', value: 'pending_review' },
-        { label: '已审核', value: 'reviewed' }
+        { label: MAPPING_TABLE_TEXT.reviewAutoAccepted, value: 'auto_accepted' },
+        { label: MAPPING_TABLE_TEXT.reviewPending, value: 'pending_review' },
+        { label: MAPPING_TABLE_TEXT.reviewReviewed, value: 'reviewed' }
       ]
     }
   },
@@ -287,7 +289,7 @@ export default {
       return Array.isArray(this.selectedRows) ? this.selectedRows.length : 0
     },
     tableEmptyText() {
-      return this.tableErrorText || '暂无映射数据'
+      return this.tableErrorText || this.text.emptyTable
     }
   },
   watch: {
@@ -328,9 +330,9 @@ export default {
     },
     reviewStatusLabel(value) {
       const mapping = {
-        auto_accepted: '自动通过',
-        pending_review: '待审核',
-        reviewed: '已审核'
+        auto_accepted: this.text.reviewAutoAccepted,
+        pending_review: this.text.reviewPending,
+        reviewed: this.text.reviewReviewed
       }
       return mapping[value] || value || '-'
     },
@@ -402,8 +404,8 @@ export default {
       } catch (error) {
         this.tableData = []
         this.pager.total = 0
-        this.tableErrorText = '加载失败，请稍后重试'
-        this.$message.error('获取映射数据失败')
+        this.tableErrorText = this.text.toastLoadFailed
+        this.$message.error(this.text.toastLoadFailed)
       } finally {
         this.loading = false
       }
@@ -447,7 +449,7 @@ export default {
     },
     async handleBatchReviewReviewed() {
       if (!this.selectedCount) {
-        this.$message.warning('请先选择要操作的记录')
+        this.$message.warning(this.text.toastNeedSelection)
         return
       }
       this.batchActionLoading = true
@@ -464,17 +466,17 @@ export default {
           await this.fetchData()
           this.$emit('update')
         } else {
-          this.$message.error('批量审核失败，请重试')
+          this.$message.error(this.text.toastBatchReviewFailed)
         }
       } catch (error) {
-        this.$message.error('批量审核失败，请重试')
+        this.$message.error(this.text.toastBatchReviewFailed)
       } finally {
         this.batchActionLoading = false
       }
     },
     async handleBatchMergeSuggestion() {
       if (this.selectedCount < 2) {
-        this.$message.warning('至少选择 2 条记录后再生成建议')
+        this.$message.warning(this.text.toastNeedTwoSelections)
         return
       }
 
@@ -495,12 +497,12 @@ export default {
         })
 
       if (!suggestions.length) {
-        this.$message.info('未发现明显重复项，建议按来源别名进一步人工核对')
+        this.$message.info(this.text.toastBatchMergeHint)
         return
       }
 
-      await ElMessageBox.alert(suggestions.join('\n'), '批量合并建议', {
-        confirmButtonText: '我知道了',
+      await ElMessageBox.alert(suggestions.join('\n'), this.text.buttonBatchMergeSuggestion, {
+        confirmButtonText: this.text.buttonAcknowledge,
         type: 'warning'
       })
     },
@@ -541,11 +543,11 @@ export default {
     async handleMarkReviewed(row) {
       try {
         await reviewEntityMapping(this.entityType, row.id, { review_status: 'reviewed' })
-        this.$message.success('已标记为已审核')
+        this.$message.success(this.text.toastReviewSuccess)
         await this.fetchData()
         this.$emit('update')
       } catch (error) {
-        this.$message.error('标记审核失败')
+        this.$message.error(this.text.toastReviewFailed)
       }
     },
     async handleSave() {
@@ -560,12 +562,12 @@ export default {
 
       try {
         await updateEntityMapping(this.entityType, this.currentRow.id, updateData)
-        this.$message.success('保存成功')
+        this.$message.success(this.text.toastSaveSuccess)
         this.dialogVisible = false
         await this.fetchData()
         this.$emit('update')
       } catch (error) {
-        this.$message.error('保存失败')
+        this.$message.error(this.text.toastSaveFailed)
       }
     }
   }

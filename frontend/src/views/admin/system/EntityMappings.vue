@@ -3,25 +3,25 @@
     <el-row :gutter="12" class="overview-row">
       <el-col :xs="24" :sm="12" :md="6">
         <el-card shadow="never" class="overview-card">
-          <div class="overview-label">同步成功率（7天）</div>
+          <div class="overview-label">{{ T.overviewSyncSuccessRate7d }}</div>
           <div class="overview-value">{{ syncSuccessRateText }}</div>
         </el-card>
       </el-col>
       <el-col :xs="24" :sm="12" :md="6">
         <el-card shadow="never" class="overview-card">
-          <div class="overview-label">最近失败</div>
+          <div class="overview-label">{{ T.overviewLastFailure }}</div>
           <div class="overview-value overview-text">{{ lastFailureText }}</div>
         </el-card>
       </el-col>
       <el-col :xs="24" :sm="12" :md="6">
         <el-card shadow="never" class="overview-card">
-          <div class="overview-label">待审冲突数</div>
+          <div class="overview-label">{{ T.overviewPendingConflicts }}</div>
           <div class="overview-value">{{ pendingConflictsText }}</div>
         </el-card>
       </el-col>
       <el-col :xs="24" :sm="12" :md="6">
         <el-card shadow="never" class="overview-card">
-          <div class="overview-label">补全队列</div>
+          <div class="overview-label">{{ T.overviewEnrichQueue }}</div>
           <div class="overview-value overview-text">{{ enrichQueueText }}</div>
         </el-card>
       </el-col>
@@ -29,13 +29,13 @@
 
     <el-card class="sync-card" shadow="never">
       <div class="sync-meta">
-        <span>同步状态：{{ syncStatusText }}</span>
-        <span>最近启动：{{ syncStatus?.last_started_at || '-' }}</span>
-        <span>最近完成：{{ syncStatus?.last_finished_at || '-' }}</span>
-        <span>下次执行：{{ syncStatus?.next_sync_at || '-' }}</span>
+        <span>{{ T.syncStatusPrefix }}{{ syncStatusText }}</span>
+        <span>{{ T.syncLastStartedPrefix }}{{ syncStatus?.last_started_at || '-' }}</span>
+        <span>{{ T.syncLastFinishedPrefix }}{{ syncStatus?.last_finished_at || '-' }}</span>
+        <span>{{ T.syncNextSyncPrefix }}{{ syncStatus?.next_sync_at || '-' }}</span>
       </div>
       <div v-if="syncStatus?.last_error_message" class="sync-error">
-        最近错误：{{ syncStatus.last_error_message }}
+        {{ T.syncLastErrorPrefix }}{{ syncStatus.last_error_message }}
       </div>
       <div class="sync-actions">
         <el-button
@@ -44,7 +44,7 @@
           :loading="syncTriggerLoading"
           @click="handleTriggerSync"
         >
-          立即同步
+          {{ T.buttonTriggerSync }}
         </el-button>
         <el-button
           size="small"
@@ -53,23 +53,23 @@
           :loading="enrichTriggerLoading"
           @click="handleTriggerEnrich"
         >
-          立即补全
+          {{ T.buttonTriggerEnrich }}
         </el-button>
         <el-button size="small" :loading="opsOverviewLoading" @click="handleRefreshOps">
-          刷新状态
+          {{ T.buttonRefreshStatus }}
         </el-button>
       </div>
     </el-card>
 
     <el-tabs v-model="activeTab">
-      <el-tab-pane label="球队映射" name="teams">
+      <el-tab-pane :label="T.tabTeamMapping" name="teams">
         <mapping-table
           :entity-type="'team'"
           :columns="['zh', 'en', 'source_aliases']"
           @update="handleTableUpdated"
         />
       </el-tab-pane>
-      <el-tab-pane label="联赛映射" name="leagues">
+      <el-tab-pane :label="T.tabLeagueMapping" name="leagues">
         <mapping-table
           :entity-type="'league'"
           :columns="['zh', 'en', 'source_aliases']"
@@ -79,12 +79,12 @@
     </el-tabs>
 
     <div class="mapping-documentation">
-      <h3>映射规则说明</h3>
+      <h3>{{ T.docTitle }}</h3>
       <ul>
-        <li>系统优先展示数据库中的实体映射，静态配置仅作兜底。</li>
-        <li>来源别名格式：<code>source_a:a1,a2;source_b:b1,b2</code>。</li>
-        <li>点击“立即同步”后，后台会从比赛库聚合球队/联赛别名并自动回填。</li>
-        <li>点击“立即补全”后，将触发官方信息缺失实体的自动补全过程。</li>
+        <li>{{ T.docItem1 }}</li>
+        <li>{{ T.docItem2 }}</li>
+        <li>{{ T.docItem3 }}</li>
+        <li>{{ T.docItem4 }}</li>
       </ul>
     </div>
   </div>
@@ -92,6 +92,7 @@
 
 <script>
 import MappingTable from './components/MappingTable.vue'
+import { ENTITY_MAPPING_TEXT as T } from './constants/entityMappingText'
 import {
   getEntityMappingSyncStatus,
   triggerEntityMappingSync,
@@ -104,6 +105,7 @@ export default {
   components: { MappingTable },
   data() {
     return {
+      T,
       activeTab: 'teams',
       syncStatus: null,
       opsOverview: null,
@@ -114,13 +116,13 @@ export default {
   },
   computed: {
     syncStatusText() {
-      if (!this.syncStatus) return '未知'
-      if (this.syncStatus.is_running) return '运行中'
+      if (!this.syncStatus) return this.T.syncStatusUnknown
+      if (this.syncStatus.is_running) return this.T.syncStatusRunning
       const lastRun = this.syncStatus.last_run
-      if (!lastRun) return '未执行'
-      if (lastRun.status === 'success') return '成功'
-      if (lastRun.status === 'failed') return '失败'
-      return lastRun.status || '未知'
+      if (!lastRun) return this.T.syncStatusNotRun
+      if (lastRun.status === 'success') return this.T.syncStatusSuccess
+      if (lastRun.status === 'failed') return this.T.syncStatusFailed
+      return lastRun.status || this.T.syncStatusUnknown
     },
     syncSuccessRateText() {
       const value = Number(this.opsOverview?.sync_success_rate_7d)
@@ -153,7 +155,7 @@ export default {
         const resp = await getEntityMappingSyncStatus()
         this.syncStatus = resp || null
       } catch (error) {
-        this.$message.warning('同步状态获取失败')
+        this.$message.warning(this.T.toastLoadSyncStatusFailed)
       }
     },
     async loadOpsOverview() {
@@ -163,7 +165,7 @@ export default {
         this.opsOverview = resp || null
       } catch (error) {
         this.opsOverview = null
-        this.$message.warning('运营概览获取失败')
+        this.$message.warning(this.T.toastLoadOpsOverviewFailed)
       } finally {
         this.opsOverviewLoading = false
       }
@@ -176,9 +178,9 @@ export default {
       try {
         const resp = await triggerEntityMappingSync()
         const started = !!resp?.started
-        this.$message.success(started ? '已触发同步任务' : (resp?.message || '同步任务正在运行'))
+        this.$message.success(started ? this.T.toastTriggerSyncStarted : (resp?.message || this.T.toastTriggerSyncRunning))
       } catch (error) {
-        this.$message.error('触发同步失败')
+        this.$message.error(this.T.toastTriggerSyncFailed)
       } finally {
         this.syncTriggerLoading = false
         await this.handleRefreshOps()
@@ -194,9 +196,9 @@ export default {
           min_confidence: 0.6
         })
         const started = !!resp?.started
-        this.$message.success(started ? '已触发官方信息补全任务' : (resp?.message || '补全任务正在运行'))
+        this.$message.success(started ? this.T.toastTriggerEnrichStarted : (resp?.message || this.T.toastTriggerEnrichRunning))
       } catch (error) {
-        this.$message.error('触发补全失败')
+        this.$message.error(this.T.toastTriggerEnrichFailed)
       } finally {
         this.enrichTriggerLoading = false
         await this.loadOpsOverview()

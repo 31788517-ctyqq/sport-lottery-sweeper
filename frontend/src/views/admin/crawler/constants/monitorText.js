@@ -85,7 +85,7 @@ export const DATA_CENTER_TEXT = {
 
   sourceOfficial: '官方数据',
   sourceCrawler: '爬虫数据',
-  sourcePrefix: '数据源-',
+  sourcePrefix: '数据源',
   sourceUnknown: '未知来源',
 
   toastLoadStatsFailed: '加载统计数据失败',
@@ -126,6 +126,100 @@ export const DATA_CENTER_TEXT = {
     normal: '正常',
     warning: '告警',
     error: '异常'
-  }
+  },
+
+  mappingHealthTitle: '实体映射健康',
+  mappingSyncStatus: '同步状态',
+  mappingPendingConflicts: '待审冲突',
+  mappingTotalConflicts: '总冲突数',
+  mappingLastSync: '最近同步',
+  mappingLastFailure: '最近失败',
+  mappingError: '错误信息'
 }
 
+export const SYSTEM_MONITOR_TEXT = {
+  pageTitle: '系统监控',
+  refreshData: '刷新数据',
+  enableAutoRefresh: '开启自动刷新',
+  disableAutoRefresh: '停止自动刷新',
+  autoRefreshEnabled: '已开启自动刷新',
+  autoRefreshDisabled: '已停止自动刷新',
+
+  healthCardSystem: '系统健康度',
+  healthCardSuccessRate: '采集成功率',
+  healthCardDataQuality: '数据质量',
+  healthCardPerformance: '响应性能',
+
+  statusHealthy: '健康',
+  statusAbnormal: '异常',
+  statusNormal: '正常',
+  statusFluctuate: '波动',
+  statusExcellent: '优秀',
+  statusGeneral: '一般',
+  statusGood: '良好',
+  statusAttention: '关注',
+
+  sectionTaskOverview: '任务执行概览',
+  sectionMappingSync: '实体映射同步状态',
+  sectionRealtimeAlert: '实时告警',
+  sectionSystemResource: '系统资源监控',
+
+  kvTotalTasks: '总任务数',
+  kvRunningTasks: '运行中任务',
+  kvRecentExecutions: '近期执行数',
+  kvSuccessRate: '成功率',
+
+  kvCurrentStatus: '当前状态',
+  kvPendingConflicts: '待审冲突',
+  kvTotalConflicts: '冲突总数',
+  kvSuccessRate7d: '7天成功率',
+  kvLastFinishedAt: '最近完成',
+  kvLastError: '最近错误',
+
+  tableTask: '任务',
+  tableStatus: '状态',
+  tableProgress: '进度',
+  tableLevel: '级别',
+  tableMetric: '指标',
+  tableMessage: '告警信息',
+  tableSource: '来源',
+  tableTriggeredAt: '触发时间',
+  tableActions: '操作',
+
+  sourceMappingSync: '映射同步',
+  sourceSystemMonitor: '系统监控',
+
+  actionAcknowledge: '确认',
+  actionDetail: '详情',
+
+  resourceCpu: 'CPU使用率',
+  resourceMemory: '内存使用率',
+  resourceDisk: '磁盘使用率',
+  resourceDbConn: '数据库连接',
+  resourceDbConnUnit: '个',
+
+  statusLoading: '加载中',
+  statusRunning: '运行中',
+  statusFailed: '失败',
+  statusSuccess: '成功',
+  statusNotRun: '未执行',
+
+  taskStatusRunning: '运行中',
+  taskStatusSuccess: '成功',
+  taskStatusFailed: '失败',
+  taskStatusPending: '待执行',
+
+  alertCritical: '严重',
+  alertWarning: '警告',
+  alertInfo: '信息',
+
+  alertMetricSyncFailed: '实体映射同步失败',
+  alertMetricPendingConflicts: '实体映射待审冲突',
+  alertMessageSyncFailedDefault: '最近一次映射同步失败',
+  alertMessagePendingConflictsPrefix: '待审冲突数：',
+
+  toastRefreshDone: '数据刷新完成',
+  toastMappingAlertHint: '映射告警需在实体映射管理页处理',
+  toastAlertAckSuccess: '告警已确认',
+  toastAlertAckFailed: '确认告警失败'
+}

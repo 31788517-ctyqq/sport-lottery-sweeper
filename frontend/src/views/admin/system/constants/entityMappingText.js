@@ -1,0 +1,110 @@
+export const ENTITY_MAPPING_TEXT = {
+  overviewSyncSuccessRate7d: '同步成功率（7天）',
+  overviewLastFailure: '最近失败',
+  overviewPendingConflicts: '待审冲突数',
+  overviewEnrichQueue: '补全队列',
+
+  syncStatusPrefix: '同步状态：',
+  syncLastStartedPrefix: '最近启动：',
+  syncLastFinishedPrefix: '最近完成：',
+  syncNextSyncPrefix: '下次执行：',
+  syncLastErrorPrefix: '最近错误：',
+
+  syncStatusUnknown: '未知',
+  syncStatusRunning: '运行中',
+  syncStatusNotRun: '未执行',
+  syncStatusSuccess: '成功',
+  syncStatusFailed: '失败',
+
+  buttonTriggerSync: '立即同步',
+  buttonTriggerEnrich: '立即补全',
+  buttonRefreshStatus: '刷新状态',
+
+  tabTeamMapping: '球队映射',
+  tabLeagueMapping: '联赛映射',
+
+  docTitle: '映射规则说明',
+  docItem1: '系统优先展示数据库中的实体映射，静态配置仅作兜底。',
+  docItem2: '来源别名格式：source_a:a1,a2;source_b:b1,b2。',
+  docItem3: '点击“立即同步”后，后台会从比赛库聚合球队/联赛别名并自动回填。',
+  docItem4: '点击“立即补全”后，将触发官方信息缺失实体的自动补全过程。',
+
+  toastLoadSyncStatusFailed: '同步状态获取失败',
+  toastLoadOpsOverviewFailed: '运营概览获取失败',
+  toastTriggerSyncStarted: '已触发同步任务',
+  toastTriggerSyncRunning: '同步任务正在运行',
+  toastTriggerSyncFailed: '触发同步失败',
+  toastTriggerEnrichStarted: '已触发官方信息补全任务',
+  toastTriggerEnrichRunning: '补全任务正在运行',
+  toastTriggerEnrichFailed: '触发补全失败'
+}
+
+export const MAPPING_TABLE_TEXT = {
+  searchPlaceholder: '搜索名称/别名/ID',
+  reviewStatusPlaceholder: '审核状态',
+  onlyConflictOn: '仅看冲突',
+  onlyConflictOff: '全部',
+  buttonRefresh: '刷新',
+  buttonConflictList: '冲突列表',
+  buttonBackAll: '返回全部',
+  selectedCountPrefix: '已选',
+  selectedCountSuffix: '项',
+  buttonBatchMarkReviewed: '批量标记已审',
+  buttonBatchMergeSuggestion: '批量合并建议',
+
+  conflictTotalPrefix: '冲突总数：',
+  conflictPendingPrefix: '待审核：',
+  emptyTable: '暂无映射数据',
+
+  colBizId: '业务ID',
+  colDisplayName: '显示名称',
+  colZhName: '中文名称',
+  colEnName: '英文名称',
+  colJpName: '日文名称',
+  colSourceAliases: '来源别名',
+  colAliasCount: '别名数',
+  colConflictCount: '冲突数',
+  colQualityScore: '质量分',
+  colReviewStatus: '审核状态',
+  colActions: '操作',
+
+  actionEdit: '编辑',
+  actionMarkReviewed: '标记已审',
+
+  dialogEditTitle: '编辑映射',
+  fieldBizId: '业务ID',
+  fieldDisplayName: '显示名称',
+  fieldZhName: '中文名称',
+  fieldEnName: '英文名称',
+  fieldJpName: '日文名称',
+  fieldSourceAliases: '来源别名',
+  fieldReviewStatus: '审核状态',
+  inputMultipleByComma: '多个名称用英文逗号分隔',
+  inputSourceAliasFormat: '格式: source_a:a1,a2;source_b:b1,b2',
+  buttonCancel: '取消',
+  buttonSave: '保存',
+  buttonAcknowledge: '我知道了',
+
+  reviewAutoAccepted: '自动通过',
+  reviewPending: '待审核',
+  reviewReviewed: '已审核',
+
+  toastLoadFailed: '加载映射数据失败',
+  toastConflictLoadFailed: '加载冲突数据失败',
+  toastSaveSuccess: '保存成功',
+  toastSaveFailed: '保存失败',
+  toastReviewSuccess: '审核状态更新成功',
+  toastReviewFailed: '审核状态更新失败',
+  toastNeedSelection: '请先选择至少一条记录',
+  toastNeedTwoSelections: '请至少选择两条记录',
+  toastBatchReviewSuccess: '批量标记已审成功',
+  toastBatchReviewFailed: '批量标记已审失败',
+  toastBatchMergeHint: '批量合并建议功能将在下一阶段接入',
+
+  confirmMarkReviewed: '确认将该记录标记为已审核吗？',
+  confirmTitle: '确认操作',
+
+  reviewTagAutoAccepted: 'success',
+  reviewTagPending: 'warning',
+  reviewTagReviewed: 'info'
+}
