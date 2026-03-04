@@ -49,6 +49,15 @@ from backend.models.base import Base
 from backend.config import settings
 from backend.models.source_issue_state import SourceIssueState  # noqa: F401
 from backend.models.source_issue_fetch_runs import SourceIssueFetchRun  # noqa: F401
+from backend.models.kaggle_dataset_registry import KaggleDatasetRegistry  # noqa: F401
+from backend.models.kaggle_sync_state import KaggleSyncState  # noqa: F401
+from backend.models.kaggle_sync_runs import KaggleSyncRun  # noqa: F401
+from backend.models.kaggle_file_manifest import KaggleFileManifest  # noqa: F401
+from backend.models.kaggle_match_staging import KaggleMatchStaging  # noqa: F401
+from backend.models.kaggle_team_staging import KaggleTeamStaging  # noqa: F401
+from backend.models.kaggle_league_staging import KaggleLeagueStaging  # noqa: F401
+from backend.models.entity_mapping_record import EntityMappingRecord  # noqa: F401
+from backend.models.entity_mapping_record import EntityMappingSyncRun  # noqa: F401
 
 # AI_WORKING: coder1 @2026-02-10 - 娣诲姞鏁版嵁搴撹矾寰勬棩蹇?logger.info(f"鏁版嵁搴撹繛鎺RL: {DATABASE_URL}")
 
@@ -209,6 +218,22 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.error(f"Failed to start source sync scheduler: {e}")
 
+    # Start Kaggle sync baseline service.
+    try:
+        from backend.services.kaggle_sync_service import kaggle_sync_service
+
+        kaggle_sync_service.start()
+    except Exception as e:
+        logger.error(f"Failed to start kaggle sync service: {e}")
+
+    # Start entity mapping DB sync scheduler.
+    try:
+        from backend.services.entity_mapping_sync_service import entity_mapping_sync_service
+
+        entity_mapping_sync_service.start()
+    except Exception as e:
+        logger.error(f"Failed to start entity mapping sync service: {e}")
+
     yield
     
     # 搴旂敤鍏抽棴鏃剁殑娓呯悊
@@ -218,6 +243,20 @@ async def lifespan(app: FastAPI):
         source_issue_auto_sync_service.shutdown()
     except Exception as e:
         logger.error(f"Failed to stop source sync scheduler: {e}")
+
+    try:
+        from backend.services.kaggle_sync_service import kaggle_sync_service
+
+        kaggle_sync_service.shutdown()
+    except Exception as e:
+        logger.error(f"Failed to stop kaggle sync service: {e}")
+
+    try:
+        from backend.services.entity_mapping_sync_service import entity_mapping_sync_service
+
+        entity_mapping_sync_service.shutdown()
+    except Exception as e:
+        logger.error(f"Failed to stop entity mapping sync service: {e}")
 
     logger.info("Application shutting down...")
 
@@ -562,6 +601,16 @@ try:
     logger.info("Source sync API routes registered (/api/v1/admin/source-sync)")
 except Exception as e:
     logger.error(f"Source sync API route registration failed: {e}")
+    import traceback
+    logger.error(f"Details: {traceback.format_exc()}")
+
+try:
+    from backend.api.v1.admin.kaggle_sync import router as kaggle_sync_router
+
+    app.include_router(kaggle_sync_router, prefix="/api/v1/admin", tags=["kaggle-sync"])
+    logger.info("Kaggle sync API routes registered (/api/v1/admin/kaggle-sync)")
+except Exception as e:
+    logger.error(f"Kaggle sync API route registration failed: {e}")
     import traceback
     logger.error(f"Details: {traceback.format_exc()}")
 

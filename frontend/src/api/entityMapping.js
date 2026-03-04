@@ -68,3 +68,17 @@ export function updateOfficialInfo(entityType, entityId, updates) {
     data: updates
   })
 }
+
+export function getEntityMappingSyncStatus() {
+  return request({
+    url: '/api/v1/entity-mapping/sync/status',
+    method: 'get'
+  })
+}
+
+export function triggerEntityMappingSync() {
+  return request({
+    url: '/api/v1/entity-mapping/sync/trigger',
+    method: 'post'
+  })
+}

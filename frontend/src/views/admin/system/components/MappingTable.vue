@@ -1,7 +1,7 @@
 <template>
   <div class="mapping-table-container">
     <el-table :data="tableData" stripe style="width: 100%" empty-text="暂无数据">
-      <el-table-column prop="id" label="业务ID" width="180" />
+      <el-table-column prop="id" label="业务ID" width="120" />
       <el-table-column prop="zh" label="中文名称" min-width="180">
         <template #default="{ row }">
           <span>{{ formatArrayField(row.zh) }}</span>
@@ -17,14 +17,10 @@
           <span>{{ formatArrayField(row.jp) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="来源别名" min-width="240">
+      <el-table-column label="来源别名" min-width="260">
         <template #default="{ row }">
           <div v-if="row.source_aliases">
-            <div
-              v-for="(aliases, source) in row.source_aliases"
-              :key="source"
-              class="source-alias"
-            >
+            <div v-for="(aliases, source) in row.source_aliases" :key="source" class="source-alias">
               <strong>{{ source }}:</strong>
               {{ Array.isArray(aliases) ? aliases.join(', ') : aliases }}
             </div>
@@ -39,7 +35,7 @@
       </el-table-column>
     </el-table>
 
-    <el-dialog v-model="dialogVisible" title="编辑映射" width="680px">
+    <el-dialog v-model="dialogVisible" title="编辑映射" width="700px">
       <el-form :model="currentRow" label-width="100px">
         <el-form-item label="业务ID">
           <el-input v-model="currentRow.id" disabled />
@@ -186,3 +182,4 @@ export default {
   font-size: 12px;
 }
 </style>
+

@@ -245,6 +245,24 @@ class Settings(BaseSettings):
         description="update_frequency value for auto-created 100qiu sources",
     )
 
+    # --- Auto Entity Mapping Sync Settings ---
+    AUTO_ENTITY_MAPPING_SYNC_ENABLED: bool = Field(
+        default=True,
+        description="Enable periodic DB-driven entity mapping synchronization",
+    )
+    AUTO_ENTITY_MAPPING_SYNC_INTERVAL_MINUTES: int = Field(
+        default=180,
+        description="Interval minutes for entity mapping synchronization",
+    )
+    AUTO_ENTITY_MAPPING_SYNC_RUN_ON_STARTUP: bool = Field(
+        default=True,
+        description="Run one entity mapping synchronization after startup",
+    )
+    AUTO_ENTITY_MAPPING_SYNC_MATCH_SCAN_LIMIT: int = Field(
+        default=50000,
+        description="Maximum recent match rows scanned per sync run for alias extraction",
+    )
+
     # --- Logging Settings ---
     LOG_LEVEL: str = Field(default="INFO", description="Logging level")
     LOG_FILE_MAX_BYTES: int = Field(default=10485760, description="Max bytes per log file (10MB)")

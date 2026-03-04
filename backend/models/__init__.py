@@ -44,6 +44,14 @@ from .risk_killswitch_state import RiskKillSwitchState
 from .external_source_mapping import ExternalSourceMapping
 from .source_issue_state import SourceIssueState
 from .source_issue_fetch_runs import SourceIssueFetchRun
+from .entity_mapping_record import EntityMappingRecord, EntityMappingSyncRun
+from .kaggle_dataset_registry import KaggleDatasetRegistry
+from .kaggle_sync_state import KaggleSyncState
+from .kaggle_sync_runs import KaggleSyncRun
+from .kaggle_file_manifest import KaggleFileManifest
+from .kaggle_match_staging import KaggleMatchStaging
+from .kaggle_team_staging import KaggleTeamStaging
+from .kaggle_league_staging import KaggleLeagueStaging
 from .async_task import AsyncTask
 from .llm_provider import LLMProvider, LLMProviderTypeEnum, LLMProviderStatusEnum
 from .log_entry import LogEntry
@@ -84,6 +92,15 @@ __all__ = [
     "ExternalSourceMapping",
     "SourceIssueState",
     "SourceIssueFetchRun",
+    "EntityMappingRecord",
+    "EntityMappingSyncRun",
+    "KaggleDatasetRegistry",
+    "KaggleSyncState",
+    "KaggleSyncRun",
+    "KaggleFileManifest",
+    "KaggleMatchStaging",
+    "KaggleTeamStaging",
+    "KaggleLeagueStaging",
     "AsyncTask",
     "MultiStrategyTask",
     "BeidanBettingScheme",
