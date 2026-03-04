@@ -41,6 +41,10 @@ class EntityMappingRecord(Base):
     alias_count = Column(Integer, nullable=False, default=0)
     conflict_count = Column(Integer, nullable=False, default=0, index=True)
     review_status = Column(String(32), nullable=False, default="auto_accepted", index=True)
+    official_enrich_status = Column(String(32), nullable=False, default="pending", index=True)
+    official_enrich_error = Column(Text, nullable=True)
+    official_last_attempt_at = Column(DateTime(timezone=True), nullable=True, index=True)
+    official_last_success_at = Column(DateTime(timezone=True), nullable=True, index=True)
     auto_generated = Column(Boolean, nullable=False, default=True, index=True)
     last_seen_at = Column(DateTime(timezone=True), nullable=True, index=True)
 

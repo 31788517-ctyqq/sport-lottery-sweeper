@@ -153,6 +153,16 @@ class EntityMappingSyncService:
                 patch_sql.append(
                     "ALTER TABLE entity_mapping_records ADD COLUMN review_status VARCHAR(32) DEFAULT 'auto_accepted'"
                 )
+            if "official_enrich_status" not in existing_columns:
+                patch_sql.append(
+                    "ALTER TABLE entity_mapping_records ADD COLUMN official_enrich_status VARCHAR(32) DEFAULT 'pending'"
+                )
+            if "official_enrich_error" not in existing_columns:
+                patch_sql.append("ALTER TABLE entity_mapping_records ADD COLUMN official_enrich_error TEXT")
+            if "official_last_attempt_at" not in existing_columns:
+                patch_sql.append("ALTER TABLE entity_mapping_records ADD COLUMN official_last_attempt_at DATETIME")
+            if "official_last_success_at" not in existing_columns:
+                patch_sql.append("ALTER TABLE entity_mapping_records ADD COLUMN official_last_success_at DATETIME")
 
             if not patch_sql:
                 return
@@ -209,6 +219,7 @@ class EntityMappingSyncService:
             }
             db.commit()
 
+            enrich_trigger_result = self._trigger_official_info_enrich_after_sync()
             return {
                 "success": True,
                 "trigger_type": trigger_type,
@@ -218,6 +229,7 @@ class EntityMappingSyncService:
                 "upserted_leagues": upserted_leagues,
                 "failed_count": failed_teams + failed_leagues,
                 "run_id": run.id,
+                "official_enrich_trigger": enrich_trigger_result,
             }
         except Exception as exc:
             db.rollback()
@@ -232,6 +244,30 @@ class EntityMappingSyncService:
             return {"success": False, "trigger_type": trigger_type, "message": f"sync failed: {exc}"}
         finally:
             db.close()
+
+    def _trigger_official_info_enrich_after_sync(self) -> Dict[str, Any]:
+        if not bool(getattr(settings, "AUTO_OFFICIAL_INFO_ENRICH_ENABLED", True)):
+            return {"enabled": False, "started": False, "message": "disabled"}
+        if not bool(getattr(settings, "AUTO_OFFICIAL_INFO_ENRICH_ON_MAPPING_SYNC", True)):
+            return {"enabled": True, "started": False, "message": "skip_on_mapping_sync"}
+
+        limit = max(1, int(getattr(settings, "AUTO_OFFICIAL_INFO_ENRICH_LIMIT", 100)))
+        only_missing = bool(getattr(settings, "AUTO_OFFICIAL_INFO_ENRICH_ONLY_MISSING", True))
+        min_confidence = float(getattr(settings, "AUTO_OFFICIAL_INFO_ENRICH_MIN_CONFIDENCE", 0.6))
+
+        try:
+            from backend.services.official_info_service import official_info_service
+
+            trigger = official_info_service.trigger_batch_auto_enrich(
+                entity_type="all",
+                limit=limit,
+                only_missing=only_missing,
+                min_confidence=min_confidence,
+            )
+            return {"enabled": True, **trigger}
+        except Exception as exc:  # pragma: no cover - defensive path
+            logger.error("Failed to trigger official info enrich after mapping sync: %s", exc, exc_info=True)
+            return {"enabled": True, "started": False, "message": str(exc)}
 
     def _sync_teams(self, db: Session, alias_index: Dict[int, Dict[str, Set[str]]]) -> Tuple[int, int, int]:
         teams = db.query(Team).all()

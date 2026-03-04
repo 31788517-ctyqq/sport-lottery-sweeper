@@ -263,6 +263,28 @@ class Settings(BaseSettings):
         description="Maximum recent match rows scanned per sync run for alias extraction",
     )
 
+    # --- Auto Official Info Enrichment Settings ---
+    AUTO_OFFICIAL_INFO_ENRICH_ENABLED: bool = Field(
+        default=True,
+        description="Enable official info auto enrichment pipeline",
+    )
+    AUTO_OFFICIAL_INFO_ENRICH_ON_MAPPING_SYNC: bool = Field(
+        default=True,
+        description="Trigger official info enrichment after each mapping sync run",
+    )
+    AUTO_OFFICIAL_INFO_ENRICH_LIMIT: int = Field(
+        default=100,
+        description="Maximum entities processed in one enrich batch",
+    )
+    AUTO_OFFICIAL_INFO_ENRICH_ONLY_MISSING: bool = Field(
+        default=True,
+        description="Only process entities that still miss official links",
+    )
+    AUTO_OFFICIAL_INFO_ENRICH_MIN_CONFIDENCE: float = Field(
+        default=0.6,
+        description="Minimum discovery confidence required before auto write-back",
+    )
+
     # --- Logging Settings ---
     LOG_LEVEL: str = Field(default="INFO", description="Logging level")
     LOG_FILE_MAX_BYTES: int = Field(default=10485760, description="Max bytes per log file (10MB)")
