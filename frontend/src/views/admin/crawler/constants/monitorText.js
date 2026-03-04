@@ -132,9 +132,18 @@ export const DATA_CENTER_TEXT = {
   mappingSyncStatus: '同步状态',
   mappingPendingConflicts: '待审冲突',
   mappingTotalConflicts: '总冲突数',
+  mappingLastSyncCompleted: '最近同步完成',
   mappingLastSync: '最近同步',
+  mappingLastFailureTime: '最近失败时间',
   mappingLastFailure: '最近失败',
-  mappingError: '错误信息'
+  mappingError: '错误信息',
+  mappingErrorNone: '无',
+  mappingSyncStatusUnknown: '未知',
+  mappingSyncStatusNotRun: '未执行',
+  mappingSyncStatusRunning: '运行中',
+  mappingSyncStatusSuccess: '成功',
+  mappingSyncStatusFailed: '失败',
+  mappingSyncStatusLoadFailed: '加载失败'
 }
 
 export const SYSTEM_MONITOR_TEXT = {
@@ -208,6 +217,7 @@ export const SYSTEM_MONITOR_TEXT = {
   taskStatusSuccess: '成功',
   taskStatusFailed: '失败',
   taskStatusPending: '待执行',
+  taskFallbackNamePrefix: '任务#',
 
   alertCritical: '严重',
   alertWarning: '警告',

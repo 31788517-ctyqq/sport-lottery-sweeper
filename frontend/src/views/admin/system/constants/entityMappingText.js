@@ -9,6 +9,7 @@ export const ENTITY_MAPPING_TEXT = {
   syncLastFinishedPrefix: '最近完成：',
   syncNextSyncPrefix: '下次执行：',
   syncLastErrorPrefix: '最近错误：',
+  commonNone: '无',
 
   syncStatusUnknown: '未知',
   syncStatusRunning: '运行中',
@@ -36,7 +37,11 @@ export const ENTITY_MAPPING_TEXT = {
   toastTriggerSyncFailed: '触发同步失败',
   toastTriggerEnrichStarted: '已触发官方信息补全任务',
   toastTriggerEnrichRunning: '补全任务正在运行',
-  toastTriggerEnrichFailed: '触发补全失败'
+  toastTriggerEnrichFailed: '触发补全失败',
+
+  enrichQueueRunningPrefix: '运行中（待处理 ',
+  enrichQueuePendingPrefix: '待处理 ',
+  enrichQueueSuffix: '）'
 }
 
 export const MAPPING_TABLE_TEXT = {
@@ -100,6 +105,12 @@ export const MAPPING_TABLE_TEXT = {
   toastBatchReviewSuccess: '批量标记已审成功',
   toastBatchReviewFailed: '批量标记已审失败',
   toastBatchMergeHint: '批量合并建议功能将在下一阶段接入',
+  toastBatchReviewResultPrefix: '批量审核完成：成功 ',
+  toastBatchReviewResultMiddle: ' 条',
+  toastBatchReviewResultFailedPrefix: '，失败 ',
+  toastBatchReviewResultFailedSuffix: ' 条',
+  mergeSuggestionItemPrefix: '【',
+  mergeSuggestionItemMiddle: '】候选记录：',
 
   confirmMarkReviewed: '确认将该记录标记为已审核吗？',
   confirmTitle: '确认操作',

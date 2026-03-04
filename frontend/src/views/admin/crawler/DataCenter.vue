@@ -107,36 +107,36 @@
       <el-card shadow="hover" class="mapping-health-card" v-loading="entityMappingHealthLoading">
         <template #header>
           <div class="mapping-health-header">
-            <span class="title">实体映射健康度</span>
+            <span class="title">{{ T.mappingHealthTitle }}</span>
             <el-tag :type="entityMappingHealth.healthTagType">{{ entityMappingHealth.syncStatusText }}</el-tag>
           </div>
         </template>
         <el-row :gutter="20">
           <el-col :xs="24" :sm="8">
             <div class="mapping-health-item">
-              <div class="label">待审冲突数</div>
+              <div class="label">{{ T.mappingPendingConflicts }}</div>
               <div class="value warning">{{ entityMappingHealth.pendingConflicts }}</div>
             </div>
           </el-col>
           <el-col :xs="24" :sm="8">
             <div class="mapping-health-item">
-              <div class="label">冲突总数</div>
+              <div class="label">{{ T.mappingTotalConflicts }}</div>
               <div class="value">{{ entityMappingHealth.totalConflicts }}</div>
             </div>
           </el-col>
           <el-col :xs="24" :sm="8">
             <div class="mapping-health-item">
-              <div class="label">最近同步完成</div>
+              <div class="label">{{ T.mappingLastSyncCompleted }}</div>
               <div class="value text">{{ entityMappingHealth.lastSyncAt }}</div>
             </div>
           </el-col>
         </el-row>
         <div class="mapping-health-footer">
-          <span>最近失败时间：{{ entityMappingHealth.lastFailedAt }}</span>
+          <span>{{ T.mappingLastFailureTime }}：{{ entityMappingHealth.lastFailedAt }}</span>
           <span v-if="entityMappingHealth.lastErrorMessage">
-            最近错误：{{ entityMappingHealth.lastErrorMessage }}
+            {{ T.mappingError }}：{{ entityMappingHealth.lastErrorMessage }}
           </span>
-          <span v-else>最近错误：无</span>
+          <span v-else>{{ T.mappingError }}：{{ T.mappingErrorNone }}</span>
         </div>
       </el-card>
     </div>
@@ -500,7 +500,7 @@ const realtimeStats = reactive({
 
 const entityMappingHealthLoading = ref(false)
 const entityMappingHealth = reactive({
-  syncStatusText: '未知',
+  syncStatusText: T.mappingSyncStatusUnknown,
   healthTagType: 'info',
   pendingConflicts: 0,
   totalConflicts: 0,
@@ -720,16 +720,16 @@ const buildEntityMappingHealthCard = (syncStatus, teamConflict, leagueConflict) 
   const lastRunStatus = String(syncStatus?.last_run?.status || '').toLowerCase()
   const hasFailure = lastRunStatus === 'failed' || !!syncStatus?.last_error_message
 
-  let syncStatusText = '未执行'
+  let syncStatusText = T.mappingSyncStatusNotRun
   let healthTagType = 'info'
   if (isRunning) {
-    syncStatusText = '运行中'
+    syncStatusText = T.mappingSyncStatusRunning
     healthTagType = 'warning'
   } else if (lastRunStatus === 'success') {
-    syncStatusText = '成功'
+    syncStatusText = T.mappingSyncStatusSuccess
     healthTagType = pendingConflicts > 0 ? 'warning' : 'success'
   } else if (lastRunStatus === 'failed') {
-    syncStatusText = '失败'
+    syncStatusText = T.mappingSyncStatusFailed
     healthTagType = 'danger'
   }
 
@@ -768,7 +768,7 @@ const loadEntityMappingHealth = async () => {
   } catch (error) {
     console.error('Error loading entity mapping health:', error)
     Object.assign(entityMappingHealth, {
-      syncStatusText: '加载失败',
+      syncStatusText: T.mappingSyncStatusLoadFailed,
       healthTagType: 'danger',
       pendingConflicts: 0,
       totalConflicts: 0,

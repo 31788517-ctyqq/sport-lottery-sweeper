@@ -462,7 +462,9 @@ export default {
         const failCount = results.length - successCount
 
         if (successCount > 0) {
-          this.$message.success(`批量审核完成：成功 ${successCount} 条${failCount ? `，失败 ${failCount} 条` : ''}`)
+          this.$message.success(
+            `${this.text.toastBatchReviewResultPrefix}${successCount}${this.text.toastBatchReviewResultMiddle}${failCount ? `${this.text.toastBatchReviewResultFailedPrefix}${failCount}${this.text.toastBatchReviewResultFailedSuffix}` : ''}`
+          )
           await this.fetchData()
           this.$emit('update')
         } else {
@@ -493,7 +495,7 @@ export default {
         .map((group) => {
           const ids = group.map((item) => item.id).join(', ')
           const name = getRowPrimaryName(group[0])
-          return `【${name}】候选记录：${ids}`
+          return `${this.text.mergeSuggestionItemPrefix}${name}${this.text.mergeSuggestionItemMiddle}${ids}`
         })
 
       if (!suggestions.length) {

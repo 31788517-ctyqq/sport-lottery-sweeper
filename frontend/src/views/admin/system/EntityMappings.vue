@@ -132,7 +132,7 @@ export default {
     lastFailureText() {
       const message = this.opsOverview?.last_failed_message
       const at = this.opsOverview?.last_failed_at
-      if (!message && !at) return '无'
+      if (!message && !at) return this.T.commonNone
       return at ? `${at}` : message
     },
     pendingConflictsText() {
@@ -143,7 +143,9 @@ export default {
     enrichQueueText() {
       const pending = Number(this.opsOverview?.official_enrich_pending || 0)
       const running = !!this.opsOverview?.official_enrich_running
-      return running ? `运行中（待处理 ${pending}）` : `待处理 ${pending}`
+      return running
+        ? `${this.T.enrichQueueRunningPrefix}${pending}${this.T.enrichQueueSuffix}`
+        : `${this.T.enrichQueuePendingPrefix}${pending}`
     }
   },
   async mounted() {

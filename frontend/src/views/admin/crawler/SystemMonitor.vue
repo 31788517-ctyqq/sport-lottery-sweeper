@@ -323,7 +323,7 @@ const loadTaskStats = async () => {
 
     recentTasks.value = items.slice(0, 6).map((item) => ({
       id: item.id,
-      name: item.task_name || item.name || `任务#${item.id}`,
+      name: item.task_name || item.name || `${T.taskFallbackNamePrefix}${item.id}`,
       status: item.status,
       progress: item.progress
     }))
