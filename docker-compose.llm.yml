@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  backend-llm:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONPATH=/app
+      - DATABASE_URL=${DATABASE_URL:-sqlite:///./sport_lottery.db}
+      
+      # LLM API Keys
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - QWEN_API_KEY=${QWEN_API_KEY}
+      
+      # LLM Settings
+      - DEFAULT_LLM_PROVIDER=${DEFAULT_LLM_PROVIDER:-qwen}
+      - LLM_REQUEST_TIMEOUT=${LLM_REQUEST_TIMEOUT:-30}
+    volumes:
+      - ./logs:/app/logs
+    depends_on:
+      - db
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1'
+        reservations:
+          memory: 1G
+          cpus: '0.5'

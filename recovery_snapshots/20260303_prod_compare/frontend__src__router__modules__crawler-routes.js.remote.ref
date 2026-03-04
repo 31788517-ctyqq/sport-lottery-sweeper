@@ -1,0 +1,109 @@
+// 爬虫管理模块路由
+const crawlerRoutes = [
+  {
+    path: 'data-source',
+    name: 'DataSourceManagement',
+    redirect: '/admin/data-source/overview',
+    meta: {
+      title: '数据源管理',
+      icon: 'SetUp',
+      roles: ['admin', 'manager']
+    },
+    children: [
+      {
+        path: 'overview',
+        name: 'DataSourceOverview',
+        component: () => import('@/views/admin/crawler/SystemMonitor.vue'),
+        meta: {
+          title: '运行总览',
+          icon: 'monitor',
+          roles: ['admin', 'manager']
+        }
+      },
+      {
+        path: 'tasks',
+        name: 'DataSourceTasks',
+        component: () => import('@/views/admin/crawler/TaskConsole.vue'),
+        meta: {
+          title: '任务中心',
+          icon: 'console',
+          roles: ['admin', 'manager']
+        }
+      },
+      {
+        path: 'assets',
+        name: 'DataSourceAssets',
+        component: () => import('@/views/admin/crawler/DataCenter.vue'),
+        meta: {
+          title: '数据资产中心',
+          icon: 'data-analysis',
+          roles: ['admin', 'manager']
+        }
+      },
+      {
+        path: 'config',
+        name: 'DataSourceConfig',
+        component: () => import('@/views/admin/crawler/DataSourceManagement.vue'),
+        meta: {
+          title: '数据源配置',
+          icon: 'link',
+          roles: ['admin', 'manager']
+        }
+      },
+      {
+        path: 'monitor',
+        name: 'DataSourceMonitorLegacy',
+        redirect: '/admin/data-source/overview'
+      },
+      {
+        path: 'task-console',
+        name: 'TaskConsoleLegacy',
+        redirect: '/admin/data-source/tasks'
+      },
+      {
+        path: 'task-monitor',
+        name: 'TaskExecutionMonitorLegacy',
+        redirect: '/admin/data-source/tasks'
+      },
+      {
+        path: 'data-center',
+        name: 'DataCenterLegacy',
+        redirect: '/admin/data-source/assets'
+      },
+      {
+        path: 'ip-pool',
+        name: 'IpPoolManagement',
+        component: () => import('@/views/admin/crawler/IpPoolManagement.vue'),
+        meta: {
+          title: 'IP池管理',
+          icon: 'connection',
+          roles: ['admin', 'manager']
+        }
+      },
+      {
+        path: 'headers',
+        name: 'HeadersManagement',
+        component: () => import('@/views/admin/crawler/HeadersManagement.vue'),
+        meta: {
+          title: '请求头管理',
+          icon: 'tickets',
+          roles: ['admin', 'manager']
+        }
+      },
+      {
+        path: 'official-info',
+        name: 'OfficialInfoManagement',
+        component: () => import('@/views/admin/crawler/OfficialInfoManagement.vue'),
+        meta: {
+          title: '官方信息管理',
+          icon: 'link',
+          roles: ['admin', 'manager'],
+          keepAlive: true
+        }
+      }
+    ]
+  }
+]
+
+export default crawlerRoutes
+

@@ -1,0 +1,122 @@
+2026-02-06 15:16:03 - root - INFO - 日志系统初始化完成 - 级别:INFO, 大小轮转:10MB, 时间轮转:midnight, 备份数:30
+2026-02-06 15:16:04 - backend.exceptions - INFO - 异常处理器配置完成
+2026-02-06 15:16:04 - backend.main - INFO - Application starting up...
+2026-02-06 15:16:04 - backend.main - INFO - 正在注册API路由...
+2026-02-06 15:16:05 - backend.api.v1 - INFO - [OK] lottery 模块导入成功
+2026-02-06 15:16:05 - backend.api.v1 - INFO - [OK] matches 模块导入成功
+2026-02-06 15:16:05 - backend.api.v1 - INFO - [OK] public_matches 模块导入成功
+2026-02-06 15:16:06 - root - INFO - match_admin路由已成功注册
+2026-02-06 15:16:06 - root - INFO - league_management路由已成功注册
+2026-02-06 15:16:06 - backend.api.v1 - INFO - [OK] admin 模块导入成功
+2026-02-06 15:16:06 - backend.api.v1 - INFO - [OK] auth 模块导入成功
+2026-02-06 15:16:06 - backend.api.v1 - INFO -   auth.router 对象: <fastapi.routing.APIRouter object at 0x000002BB3DDAA710>
+2026-02-06 15:16:06 - backend.api.v1 - INFO -   auth.router 路由数: 1
+2026-02-06 15:16:06 - backend.api.v1 - INFO - [OK] intelligence 模块导入成功
+2026-02-06 15:16:06 - backend.api.v1 - INFO - [OK] data_submission 模块导入成功
+2026-02-06 15:16:06 - backend.api.v1 - INFO - [OK] caipiao_data 模块导入成功
+2026-02-06 15:16:06 - backend.api.v1 - INFO -   caipiao_data.router 对象: <fastapi.routing.APIRouter object at 0x000002BB3F536310>
+2026-02-06 15:16:06 - backend.api.v1 - INFO -   caipiao_data.router 路由数: 7
+2026-02-06 15:16:06 - backend.api.v1 - INFO - [OK] draw_prediction 模块导入成功
+2026-02-06 15:16:06 - backend.api.v1 - INFO - [OK] hedging 模块导入成功
+2026-02-06 15:16:06 - backend.api.v1 - INFO - [OK] crawler 模块导入成功
+2026-02-06 15:16:06 - backend.api.v1 - INFO - [OK] crawler_alert 模块导入成功
+2026-02-06 15:16:06 - backend.api.v1 - INFO - [OK] crawler_monitor 模块导入成功
+2026-02-06 15:16:06 - backend.api.v1 - INFO - [OK] crawler_tasks_adapter 模块导入成功
+2026-02-06 15:16:06 - backend.api.v1 - INFO - [OK] data_center_adapter 模块导入成功
+2026-02-06 15:16:06 - backend.api.v1 - INFO - [OK] headers_adapter 模块导入成功
+2026-02-06 15:16:06 - backend.api.v1 - INFO - [OK] ip_pool_adapter 模块导入成功
+2026-02-06 15:16:08 - backend.api.v1 - INFO - [OK] llm 模块导入成功
+2026-02-06 15:16:09 - backend.api.v1 - INFO - [OK] log_analysis 模块导入成功
+2026-02-06 15:16:09 - backend.api.v1 - INFO - [OK] lottery_schedule 模块导入成功
+2026-02-06 15:16:09 - backend.api.v1 - INFO - [OK] lottery_simple 模块导入成功
+2026-02-06 15:16:09 - backend.api.v1 - INFO - [OK] lottery_test 模块导入成功
+2026-02-06 15:16:09 - backend.api.v1 - INFO - [OK] lottery_direct 模块导入成功
+2026-02-06 15:16:09 - backend.api.v1 - INFO - [OK] lottery_final 模块导入成功
+2026-02-06 15:16:09 - backend.api.v1 - INFO - [OK] match_admin 模块导入成功
+2026-02-06 15:16:09 - backend.api.v1 - INFO - [OK] monitoring_dashboard 模块导入成功
+2026-02-06 15:16:09 - backend.api.v1 - INFO - [OK] predictions 模块导入成功
+2026-02-06 15:16:09 - backend.services.enhanced_inference_service - WARNING - scikit-learn 导入失败: No module named 'sklearn'，使用简化回退方案
+2026-02-06 15:16:09 - backend.api.v1 - INFO - [OK] real_time_decision 模块导入成功
+2026-02-06 15:16:09 - backend.api.v1 - INFO - [OK] simple_hedging 模块导入成功
+2026-02-06 15:16:09 - backend.api.v1 - INFO - [OK] sp_data_source 模块导入成功
+2026-02-06 15:16:09 - backend.api.v1 - INFO - [OK] sp_management 模块导入成功
+2026-02-06 15:16:09 - backend.api.v1 - INFO - [OK] sp_management_api 模块导入成功
+2026-02-06 15:16:09 - backend.api.v1 - INFO - [OK] task_monitor 模块导入成功
+2026-02-06 15:16:09 - backend.api.v1 - INFO - [OK] users 模块导入成功
+2026-02-06 15:16:09 - backend.api.v1 - INFO - [OK] frontend_user_management 模块导入成功
+2026-02-06 15:16:09 - backend.api.v1 - INFO - [OK] simple_user_api 模块导入成功
+2026-02-06 15:16:10 - backend.api.v1 - INFO - [OK] agents 模块导入成功
+2026-02-06 15:16:10 - backend.api.v1 - INFO - [OK] data_source_100qiu 模块导入成功
+2026-02-06 15:16:10 - backend.api.v1 - INFO - [OK] lottery 路由已注册
+2026-02-06 15:16:10 - backend.api.v1 - INFO - [OK] matches 路由已注册
+2026-02-06 15:16:10 - backend.api.v1 - INFO - [OK] public_matches 路由已注册
+2026-02-06 15:16:10 - backend.api.v1 - INFO - [OK] admin 路由已注册
+2026-02-06 15:16:10 - backend.api.v1 - INFO - [OK] auth 路由已注册 (prefix=/auth)
+2026-02-06 15:16:10 - backend.api.v1 - INFO -   - /login
+2026-02-06 15:16:10 - backend.api.v1 - INFO - [OK] draw_prediction 路由已注册
+2026-02-06 15:16:10 - backend.api.v1 - INFO - [OK] hedging 路由已注册
+2026-02-06 15:16:10 - backend.api.v1 - INFO - [OK] crawler 路由已注册
+2026-02-06 15:16:10 - backend.api.v1 - INFO - [OK] crawler_alert 路由已注册
+2026-02-06 15:16:10 - backend.api.v1 - INFO - [OK] crawler_monitor 路由已注册
+2026-02-06 15:16:10 - backend.api.v1 - INFO - [OK] crawler_tasks_adapter 路由已注册
+2026-02-06 15:16:10 - backend.api.v1 - INFO - [OK] data_center_adapter 路由已注册
+2026-02-06 15:16:10 - backend.api.v1 - INFO - [OK] headers_adapter 路由已注册
+2026-02-06 15:16:10 - backend.api.v1 - INFO - [OK] ip_pool_adapter 路由已注册
+2026-02-06 15:16:10 - backend.api.v1 - INFO - [OK] llm 路由已注册
+2026-02-06 15:16:10 - backend.api.v1 - INFO - [OK] log_analysis 路由已注册
+2026-02-06 15:16:10 - backend.api.v1 - INFO - [OK] lottery_schedule 路由已注册
+2026-02-06 15:16:10 - backend.api.v1 - INFO - [OK] lottery_simple 路由已注册
+2026-02-06 15:16:10 - backend.api.v1 - INFO - [OK] lottery_test 路由已注册
+2026-02-06 15:16:10 - backend.api.v1 - INFO - [OK] lottery_direct 路由已注册
+2026-02-06 15:16:10 - backend.api.v1 - INFO - [OK] lottery_final 路由已注册
+2026-02-06 15:16:10 - backend.api.v1 - INFO - [OK] match_admin 路由已注册
+2026-02-06 15:16:10 - backend.api.v1 - INFO - [OK] monitoring_dashboard 路由已注册
+2026-02-06 15:16:10 - backend.api.v1 - INFO - [OK] predictions 路由已注册
+2026-02-06 15:16:10 - backend.api.v1 - INFO - [OK] real_time_decision 路由已注册
+2026-02-06 15:16:10 - backend.api.v1 - INFO - [OK] simple_hedging 路由已注册
+2026-02-06 15:16:10 - backend.api.v1 - INFO - [OK] sp_data_source 路由已注册
+2026-02-06 15:16:10 - backend.api.v1 - INFO - [OK] sp_management 路由已注册
+2026-02-06 15:16:10 - backend.api.v1 - INFO - [OK] sp_management_api 路由已注册
+2026-02-06 15:16:10 - backend.api.v1 - INFO - [OK] task_monitor 路由已注册
+2026-02-06 15:16:10 - backend.api.v1 - INFO - [OK] users 路由已注册
+2026-02-06 15:16:10 - backend.api.v1 - INFO - [OK] frontend_user_management 路由已注册
+2026-02-06 15:16:10 - backend.api.v1 - INFO - [OK] simple_user_api 路由已注册
+2026-02-06 15:16:10 - backend.api.v1 - INFO - [OK] agents 路由已注册
+2026-02-06 15:16:10 - backend.api.v1 - INFO - [OK] caipiao_data 路由已注册
+2026-02-06 15:16:10 - backend.api.v1 - INFO - [OK] data_source_100qiu 路由已注册
+2026-02-06 15:16:11 - backend.api - INFO - API v1 路由已加载
+2026-02-06 15:16:11 - backend.api - INFO - WebSocket 路由已加载
+2026-02-06 15:16:11 - backend.api - INFO - API路由器初始化完成，已移除所有废弃的向后兼容路由
+2026-02-06 15:16:11 - backend.main - INFO - API v1 路由已成功注册
+2026-02-06 15:16:11 - backend.main - INFO - 数据源管理路由已成功注册（/api/v1/admin/data-sources）
+2026-02-06 15:16:11 - backend.main - INFO - 爬虫监控API路由已成功注册（/api/v1/admin/crawler/monitor）
+2026-02-06 15:16:11 - backend.main - INFO - 请求头管理API路由已成功注册（/api/v1/admin/headers）
+2026-02-06 15:16:11 - backend.main - INFO - IP池管理API路由已成功注册（/api/v1/admin/ip-pools）
+2026-02-06 15:16:11 - backend.main - INFO - 任务管理API路由已成功注册（/api/v1/admin/tasks）
+2026-02-06 15:16:11 - backend.main - INFO - 用户画像API路由已成功注册（/api/v1/admin/user-profiles）
+2026-02-06 15:16:11 - backend.main - INFO - 角色管理API路由已成功注册（/api/v1/admin/roles）
+2026-02-06 15:16:11 - backend.main - INFO - 权限管理API路由已成功注册（/api/v1/admin/permissions）
+2026-02-06 15:16:11 - backend.main - INFO - 爬虫任务管理API路由已成功注册（/api/v1/admin/crawler/tasks）
+2026-02-06 15:16:11 - backend.main - INFO - 任务监控API路由已成功注册（/api/v1/task-monitor）
+2026-02-06 15:16:11 - backend.main - INFO - 日志API路由已成功注册（/api/v1/admin/system/logs）
+2026-02-06 15:16:11 - backend.main - INFO - 爬虫数据源API路由已成功注册（/api/v1/admin/crawler/sources）
+2026-02-06 15:16:11 - backend.main - INFO - 爬虫配置API路由已成功注册（/api/v1/admin/crawler/config）
+2026-02-06 15:16:11 - backend.main - INFO - 爬虫情报API路由已成功注册（/api/v1/admin/crawler/intelligence）
+2026-02-06 15:16:11 - backend.main - INFO - 管理员用户管理API路由已成功注册（/api/v1/admin/admin-users）
+2026-02-06 15:16:11 - backend.main - INFO - 部门管理API路由已成功注册（/api/v1/admin/departments）
+2026-02-06 15:16:11 - backend.main - INFO - 普通用户管理API路由已成功注册（/api/v1/admin/users）
+2026-02-06 15:16:11 - backend.main - INFO - 前端用户管理API路由已成功注册（/api/v1/admin/frontend-users）
+2026-02-06 15:16:11 - backend.main - INFO - 简单用户API路由已成功注册（/api/v1/admin/simple-users）
+2026-02-06 15:16:11 - backend.exceptions - INFO - 异常处理器配置完成
+2026-02-06 15:16:11 - backend.main - INFO - 异常处理器已注册
+2026-02-06 15:16:11 - backend.main - INFO - Application starting up...
+2026-02-06 15:16:11 - root - INFO - 日志系统初始化完成 - 级别:INFO, 大小轮转:10MB, 时间轮转:midnight, 备份数:30
+2026-02-06 15:16:11 - backend.main - INFO - LLM key presence: openai=False, gemini=False, qwen=True
+2026-02-06 15:16:11 - backend.services.llm_service - INFO - LLM提供商 qwen 已注册
+2026-02-06 15:16:11 - backend.main - INFO - Qwen提供商已注册
+2026-02-06 15:16:11 - backend.services.llm_service - INFO - 默认LLM提供商已设置为 qwen
+2026-02-06 15:16:11 - backend.main - INFO - 默认LLM提供商: qwen
+2026-02-06 15:16:11 - backend.main - INFO - LLM服务已初始化
+2026-02-06 15:16:11 - backend.core.cache_manager - INFO - Redis缓存连接成功
+2026-02-06 15:16:11 - backend.core.cache_manager - INFO - Redis缓存连接成功
+2026-02-06 15:16:11 - backend.core.cache_manager - INFO - Redis缓存连接成功

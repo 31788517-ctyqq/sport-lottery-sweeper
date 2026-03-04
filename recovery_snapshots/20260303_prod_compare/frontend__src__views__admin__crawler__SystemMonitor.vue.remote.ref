@@ -1,0 +1,729 @@
+<template>
+  <div class="system-monitor">
+    <div class="page-header">
+      <h2>运行总览</h2>
+      <div class="header-actions">
+        <el-button type="primary" @click="refreshData">
+          <el-icon><Refresh /></el-icon>
+          刷新数据
+        </el-button>
+        <el-button @click="toggleAutoRefresh">
+          <el-icon><VideoPlay /></el-icon>
+          {{ autoRefresh ? '停止自动刷新' : '开启自动刷新' }}
+        </el-button>
+      </div>
+    </div>
+
+    <div class="health-status">
+      <el-row :gutter="20">
+        <el-col v-for="status in healthStatuses" :key="status.name" :span="6">
+          <el-card shadow="hover" class="status-card">
+            <template #header>
+              <div class="status-header">
+                <span class="status-title">{{ status.name }}</span>
+                <el-tag :type="status.type" size="small" effect="dark">{{ status.value }}</el-tag>
+              </div>
+            </template>
+            <div class="status-body">
+              <el-progress
+                :percentage="status.percentage"
+                :status="status.progressStatus"
+                :stroke-width="8"
+                :show-text="false"
+              />
+              <div class="status-metrics">
+                <span class="status-value">{{ status.currentValue }}{{ status.unit }}</span>
+                <div class="status-trend">
+                  <el-icon v-if="status.trend === 'up'" color="#67c23a"><Top /></el-icon>
+                  <el-icon v-else-if="status.trend === 'down'" color="#f56c6c"><Bottom /></el-icon>
+                  <span class="trend-text">{{ status.change }}</span>
+                </div>
+              </div>
+            </div>
+          </el-card>
+        </el-col>
+      </el-row>
+    </div>
+
+    <div class="monitor-charts">
+      <el-row :gutter="20">
+        <el-col :span="12">
+          <el-card shadow="hover" class="chart-card">
+            <template #header>
+              <div class="chart-header">
+                <span class="chart-title">采集成功率趋势</span>
+                <el-select v-model="successRateRange" size="small" style="width: 140px" @change="loadSuccessRateTrend">
+                  <el-option label="最近24小时" value="24" />
+                  <el-option label="最近3天" value="72" />
+                  <el-option label="最近7天" value="168" />
+                </el-select>
+              </div>
+            </template>
+            <div class="chart-container">
+              <div ref="successRateChart" style="height: 300px"></div>
+            </div>
+          </el-card>
+        </el-col>
+
+        <el-col :span="12">
+          <el-card shadow="hover" class="chart-card">
+            <template #header>
+              <span class="chart-title">数据采集量分布</span>
+            </template>
+            <div class="chart-container">
+              <div ref="dataDistributionChart" style="height: 300px"></div>
+            </div>
+          </el-card>
+        </el-col>
+      </el-row>
+    </div>
+
+    <div class="alerts-section">
+      <el-card shadow="hover" class="alerts-card">
+        <template #header>
+          <div class="alert-header">
+            <span class="alert-title">实时告警</span>
+            <div class="alert-summary">
+              <el-tag type="danger" size="small">紧急: {{ alertCounts.critical }}</el-tag>
+              <el-tag type="warning" size="small">警告: {{ alertCounts.warning }}</el-tag>
+              <el-tag type="info" size="small">信息: {{ alertCounts.info }}</el-tag>
+            </div>
+          </div>
+        </template>
+
+        <el-table :data="activeAlerts" v-loading="alertsLoading" class="alerts-table">
+          <el-table-column prop="severity" label="级别" width="90">
+            <template #default="{ row }">
+              <el-tag :type="getSeverityType(row.severity)" size="small">{{ getSeverityLabel(row.severity) }}</el-tag>
+            </template>
+          </el-table-column>
+
+          <el-table-column prop="metric_name" label="指标" width="160" />
+
+          <el-table-column prop="message" label="告警信息" min-width="320">
+            <template #default="{ row }">
+              <div class="alert-message">
+                <div class="alert-main-message">{{ row.message }}</div>
+                <div class="alert-detail">当前值: {{ row.current_value }} | 阈值: {{ row.threshold }}</div>
+              </div>
+            </template>
+          </el-table-column>
+
+          <el-table-column prop="triggered_at" label="触发时间" width="180">
+            <template #default="{ row }">{{ formatTime(row.triggered_at) }}</template>
+          </el-table-column>
+
+          <el-table-column label="操作" width="170">
+            <template #default="{ row }">
+              <el-button v-if="row.status === 'active'" size="small" @click="handleAcknowledge(row)">确认</el-button>
+              <el-button size="small" @click="handleViewDetail(row)">详情</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </el-card>
+    </div>
+
+    <div class="resource-monitor">
+      <el-card shadow="hover" class="resource-card">
+        <template #header>
+          <span class="resource-title">系统资源监控</span>
+        </template>
+        <el-row :gutter="20">
+          <el-col :span="6">
+            <ResourceGauge title="CPU使用率" :value="systemResources.cpu" :thresholds="[70, 90]" unit="%" />
+          </el-col>
+          <el-col :span="6">
+            <ResourceGauge title="内存使用率" :value="systemResources.memory" :thresholds="[80, 95]" unit="%" />
+          </el-col>
+          <el-col :span="6">
+            <ResourceGauge title="磁盘使用率" :value="systemResources.disk" :thresholds="[85, 95]" unit="%" />
+          </el-col>
+          <el-col :span="6">
+            <ResourceGauge
+              title="数据库连接"
+              :value="systemResources.dbConnections"
+              :max="systemResources.dbMaxConnections"
+              unit="个"
+            />
+          </el-col>
+        </el-row>
+      </el-card>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { nextTick, onMounted, onUnmounted, reactive, ref } from 'vue'
+import { ElMessage } from 'element-plus'
+import { Refresh, VideoPlay, Top, Bottom } from '@element-plus/icons-vue'
+import * as echarts from 'echarts'
+import ResourceGauge from '@/components/common/ResourceGauge.vue'
+import {
+  acknowledgeAlert,
+  getAlerts,
+  getDataVolumeStats,
+  getHealthStatus,
+  getResourcesUsage,
+  getSuccessRateTrends
+} from '@/api/crawlerMonitor'
+
+const autoRefresh = ref(true)
+const refreshTimer = ref(null)
+const alertsLoading = ref(false)
+
+const successRateChart = ref(null)
+const dataDistributionChart = ref(null)
+let successRateChartInstance = null
+let dataDistributionChartInstance = null
+
+const successRateRange = ref('24')
+const trendSeries = ref([])
+const volumeStats = ref([])
+
+const healthStatuses = ref([
+  {
+    name: '系统健康度',
+    value: '未知',
+    type: 'info',
+    percentage: 0,
+    progressStatus: 'warning',
+    currentValue: 0,
+    unit: '%',
+    trend: 'up',
+    change: '-'
+  },
+  {
+    name: '采集成功率',
+    value: '未知',
+    type: 'info',
+    percentage: 0,
+    progressStatus: 'warning',
+    currentValue: 0,
+    unit: '%',
+    trend: 'up',
+    change: '-'
+  },
+  {
+    name: '数据质量',
+    value: '未知',
+    type: 'info',
+    percentage: 0,
+    progressStatus: 'warning',
+    currentValue: 0,
+    unit: '%',
+    trend: 'up',
+    change: '-'
+  },
+  {
+    name: '响应性能',
+    value: '未知',
+    type: 'info',
+    percentage: 0,
+    progressStatus: 'warning',
+    currentValue: 0,
+    unit: '%',
+    trend: 'down',
+    change: '-'
+  }
+])
+
+const activeAlerts = ref([])
+const alertCounts = reactive({ critical: 0, warning: 0, info: 0 })
+
+const systemResources = reactive({
+  cpu: 0,
+  memory: 0,
+  disk: 0,
+  dbConnections: 0,
+  dbMaxConnections: 100
+})
+
+const toNumber = (value, fallback = 0) => {
+  const num = Number(value)
+  return Number.isFinite(num) ? num : fallback
+}
+
+const normalizePercent = (value) => {
+  const num = Math.round(toNumber(value, 0))
+  if (num < 0) return 0
+  if (num > 100) return 100
+  return num
+}
+
+const formatTime = (timeStr) => {
+  if (!timeStr) return '-'
+  const date = new Date(timeStr)
+  if (Number.isNaN(date.getTime())) return '-'
+  return date.toLocaleString('zh-CN')
+}
+
+const getSeverityType = (severity) => {
+  const typeMap = {
+    critical: 'danger',
+    warning: 'warning',
+    info: 'info'
+  }
+  return typeMap[String(severity || '').toLowerCase()] || 'info'
+}
+
+const getSeverityLabel = (severity) => {
+  const labelMap = {
+    critical: '紧急',
+    warning: '警告',
+    info: '信息'
+  }
+  return labelMap[String(severity || '').toLowerCase()] || String(severity || '-')
+}
+
+const buildHealthStatusCards = (health) => {
+  const overall = String(health?.overall || '').toLowerCase()
+  const crawlerHealth = health?.crawlerHealth || {}
+  const successRate = normalizePercent(crawlerHealth.successRate)
+  const dataQuality = normalizePercent(crawlerHealth.dataQuality)
+  const responsePerformance = normalizePercent(crawlerHealth.responsePerformance)
+  const overallScore = normalizePercent((successRate + dataQuality + responsePerformance) / 3)
+
+  return [
+    {
+      name: '系统健康度',
+      value: overall === 'healthy' ? '健康' : '降级',
+      type: overall === 'healthy' ? 'success' : 'danger',
+      percentage: overallScore,
+      progressStatus: overall === 'healthy' ? 'success' : 'exception',
+      currentValue: overallScore,
+      unit: '%',
+      trend: 'up',
+      change: '-'
+    },
+    {
+      name: '采集成功率',
+      value: successRate >= 90 ? '正常' : '波动',
+      type: successRate >= 90 ? 'success' : 'warning',
+      percentage: successRate,
+      progressStatus: successRate >= 90 ? 'success' : 'warning',
+      currentValue: successRate,
+      unit: '%',
+      trend: 'up',
+      change: '-'
+    },
+    {
+      name: '数据质量',
+      value: dataQuality >= 90 ? '优秀' : '一般',
+      type: dataQuality >= 90 ? 'success' : 'warning',
+      percentage: dataQuality,
+      progressStatus: dataQuality >= 90 ? 'success' : 'warning',
+      currentValue: dataQuality,
+      unit: '%',
+      trend: 'up',
+      change: '-'
+    },
+    {
+      name: '响应性能',
+      value: responsePerformance >= 90 ? '良好' : '需关注',
+      type: responsePerformance >= 90 ? 'success' : 'warning',
+      percentage: responsePerformance,
+      progressStatus: responsePerformance >= 90 ? 'success' : 'warning',
+      currentValue: responsePerformance,
+      unit: '%',
+      trend: 'down',
+      change: '-'
+    }
+  ]
+}
+
+const loadHealthStatus = async () => {
+  try {
+    const data = await getHealthStatus()
+    healthStatuses.value = buildHealthStatusCards(data)
+  } catch (error) {
+    console.error('loadHealthStatus failed:', error)
+  }
+}
+
+const loadAlerts = async () => {
+  alertsLoading.value = true
+  try {
+    const data = await getAlerts({ page: 1, size: 20, status: 'active' })
+    const items = Array.isArray(data?.items) ? data.items : []
+    activeAlerts.value = items
+    alertCounts.critical = items.filter((item) => String(item?.severity).toLowerCase() === 'critical').length
+    alertCounts.warning = items.filter((item) => String(item?.severity).toLowerCase() === 'warning').length
+    alertCounts.info = items.filter((item) => String(item?.severity).toLowerCase() === 'info').length
+  } catch (error) {
+    console.error('loadAlerts failed:', error)
+    ElMessage.error('加载告警数据失败')
+  } finally {
+    alertsLoading.value = false
+  }
+}
+
+const loadSystemResources = async () => {
+  try {
+    const data = await getResourcesUsage()
+    systemResources.cpu = toNumber(data?.cpu, systemResources.cpu)
+    systemResources.memory = toNumber(data?.memory, systemResources.memory)
+    systemResources.disk = toNumber(data?.disk, systemResources.disk)
+    systemResources.dbConnections = toNumber(data?.dbConnections, systemResources.dbConnections)
+    systemResources.dbMaxConnections = Math.max(1, toNumber(data?.dbMaxConnections, systemResources.dbMaxConnections))
+  } catch (error) {
+    console.error('loadSystemResources failed:', error)
+  }
+}
+
+const updateSuccessRateChart = () => {
+  if (!successRateChartInstance) return
+
+  const labels = trendSeries.value.map((item) => {
+    const date = new Date(item.timestamp)
+    if (Number.isNaN(date.getTime())) return '-'
+    return Number(successRateRange.value) <= 24
+      ? date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+      : date.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit' })
+  })
+
+  const successRateData = trendSeries.value.map((item) => toNumber(item.successRate, 0))
+  const volumeData = trendSeries.value.map((item) => toNumber(item.volume, 0))
+
+  successRateChartInstance.setOption({
+    tooltip: { trigger: 'axis' },
+    legend: { data: ['成功率', '采集量'] },
+    xAxis: { type: 'category', boundaryGap: false, data: labels },
+    yAxis: [
+      {
+        type: 'value',
+        name: '成功率(%)',
+        min: 0,
+        max: 100,
+        axisLabel: { formatter: '{value}%' }
+      },
+      {
+        type: 'value',
+        name: '采集量'
+      }
+    ],
+    series: [
+      {
+        name: '成功率',
+        type: 'line',
+        smooth: true,
+        data: successRateData,
+        itemStyle: { color: '#67C23A' }
+      },
+      {
+        name: '采集量',
+        type: 'bar',
+        yAxisIndex: 1,
+        data: volumeData,
+        itemStyle: { color: '#409EFF' }
+      }
+    ]
+  })
+}
+
+const updateDataDistributionChart = () => {
+  if (!dataDistributionChartInstance) return
+
+  const data = Array.isArray(volumeStats.value) && volumeStats.value.length > 0
+    ? volumeStats.value
+    : [{ name: '暂无数据', value: 0 }]
+
+  dataDistributionChartInstance.setOption({
+    tooltip: {
+      trigger: 'item',
+      formatter: '{a}<br/>{b}: {c} ({d}%)'
+    },
+    legend: {
+      orient: 'vertical',
+      left: 10,
+      top: 'middle'
+    },
+    series: [
+      {
+        name: '数据类型',
+        type: 'pie',
+        radius: ['50%', '70%'],
+        avoidLabelOverlap: false,
+        label: { show: false, position: 'center' },
+        emphasis: {
+          label: {
+            show: true,
+            fontSize: 16,
+            fontWeight: 'bold'
+          }
+        },
+        labelLine: { show: false },
+        data
+      }
+    ]
+  })
+}
+
+const loadSuccessRateTrend = async () => {
+  try {
+    const data = await getSuccessRateTrends({ range_hours: Number(successRateRange.value) || 24 })
+    trendSeries.value = Array.isArray(data) ? data : []
+    updateSuccessRateChart()
+  } catch (error) {
+    console.error('loadSuccessRateTrend failed:', error)
+  }
+}
+
+const loadDataVolume = async () => {
+  try {
+    const data = await getDataVolumeStats()
+    volumeStats.value = Array.isArray(data) ? data : []
+    updateDataDistributionChart()
+  } catch (error) {
+    console.error('loadDataVolume failed:', error)
+  }
+}
+
+const initCharts = async () => {
+  await nextTick()
+
+  if (successRateChart.value) {
+    successRateChartInstance = echarts.init(successRateChart.value)
+  }
+  if (dataDistributionChart.value) {
+    dataDistributionChartInstance = echarts.init(dataDistributionChart.value)
+  }
+}
+
+const handleAcknowledge = async (alert) => {
+  try {
+    await acknowledgeAlert(alert.id)
+    ElMessage.success('告警已确认')
+    await loadAlerts()
+  } catch (error) {
+    console.error('handleAcknowledge failed:', error)
+    ElMessage.error('确认告警失败')
+  }
+}
+
+const handleViewDetail = (alert) => {
+  ElMessage.info(`${getSeverityLabel(alert.severity)}告警：${alert.metric_name || '-'}`)
+}
+
+const refreshData = async () => {
+  await Promise.all([
+    loadHealthStatus(),
+    loadAlerts(),
+    loadSystemResources(),
+    loadSuccessRateTrend(),
+    loadDataVolume()
+  ])
+  ElMessage.success('数据刷新完成')
+}
+
+const startAutoRefresh = () => {
+  if (refreshTimer.value) return
+  refreshTimer.value = setInterval(() => {
+    loadHealthStatus()
+    loadAlerts()
+    loadSystemResources()
+    loadSuccessRateTrend()
+    loadDataVolume()
+  }, 30000)
+}
+
+const stopAutoRefresh = () => {
+  if (!refreshTimer.value) return
+  clearInterval(refreshTimer.value)
+  refreshTimer.value = null
+}
+
+const toggleAutoRefresh = () => {
+  autoRefresh.value = !autoRefresh.value
+  if (autoRefresh.value) {
+    startAutoRefresh()
+    ElMessage.success('已开启自动刷新')
+  } else {
+    stopAutoRefresh()
+    ElMessage.info('已停止自动刷新')
+  }
+}
+
+let resizeTimer = null
+const handleResize = () => {
+  if (resizeTimer) clearTimeout(resizeTimer)
+  resizeTimer = setTimeout(() => {
+    successRateChartInstance?.resize()
+    dataDistributionChartInstance?.resize()
+  }, 100)
+}
+
+onMounted(async () => {
+  await initCharts()
+  await refreshData()
+  startAutoRefresh()
+  window.addEventListener('resize', handleResize)
+})
+
+onUnmounted(() => {
+  stopAutoRefresh()
+  window.removeEventListener('resize', handleResize)
+
+  if (resizeTimer) {
+    clearTimeout(resizeTimer)
+    resizeTimer = null
+  }
+
+  successRateChartInstance?.dispose()
+  dataDistributionChartInstance?.dispose()
+})
+</script>
+
+<style scoped>
+.system-monitor {
+  padding: 20px;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.page-header h2 {
+  margin: 0;
+  color: #303133;
+}
+
+.header-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.health-status {
+  margin-bottom: 20px;
+}
+
+.status-card {
+  border: none;
+}
+
+.status-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.status-title {
+  font-weight: 600;
+  color: #303133;
+}
+
+.status-body {
+  padding: 10px 0;
+}
+
+.status-metrics {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.status-value {
+  font-size: 18px;
+  font-weight: bold;
+  color: #303133;
+}
+
+.status-trend {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.trend-text {
+  font-size: 12px;
+  color: #909399;
+}
+
+.monitor-charts {
+  margin-bottom: 20px;
+}
+
+.chart-card {
+  border: none;
+}
+
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.chart-title {
+  font-weight: 600;
+  color: #303133;
+}
+
+.alerts-section {
+  margin-bottom: 20px;
+}
+
+.alerts-card {
+  border: none;
+}
+
+.alert-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.alert-title {
+  font-weight: 600;
+  color: #303133;
+}
+
+.alert-summary {
+  display: flex;
+  gap: 8px;
+}
+
+.alert-message {
+  line-height: 1.4;
+}
+
+.alert-main-message {
+  font-weight: 500;
+  color: #303133;
+}
+
+.alert-detail {
+  font-size: 12px;
+  color: #909399;
+  margin-top: 4px;
+}
+
+.resource-monitor {
+  margin-bottom: 20px;
+}
+
+.resource-card {
+  border: none;
+}
+
+.resource-title {
+  font-weight: 600;
+  color: #303133;
+}
+
+:deep(.el-card__header) {
+  background-color: #fafafa;
+  border-bottom: 1px solid #ebeef5;
+}
+
+:deep(.el-progress-bar__outer) {
+  background-color: #f0f0f0;
+}
+
+:deep(.el-table) {
+  --el-table-border-color: #ebeef5;
+  --el-table-header-bg-color: #fafafa;
+}
+</style>

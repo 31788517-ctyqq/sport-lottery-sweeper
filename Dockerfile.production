@@ -1,0 +1,137 @@
+# =============================================================================
+# 体育彩票扫盘系统 - 多阶段生产环境Dockerfile
+# 优化目标：镜像瘦身、安全加固、分层缓存、最小化攻击面
+# =============================================================================
+
+# =============================================================================
+# 阶段1：构建依赖层 (Build Stage)
+# 使用更大镜像编译Python包，利用构建缓存
+# =============================================================================
+FROM python:3.11-slim as builder
+
+# 设置构建参数
+ARG BUILD_DATE
+ARG VERSION
+ARG VCS_REF
+
+# 设置环境变量
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    DEBIAN_FRONTEND=noninteractive
+
+# 安装系统构建依赖
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    make \
+    curl \
+    wget \
+    gnupg \
+    libc6-dev \
+    libffi-dev \
+    libssl-dev \
+    zlib1g-dev \
+    libbz2-dev \
+    libreadline-dev \
+    libsqlite3-dev \
+    llvm \
+    libncursesw5-dev \
+    xz-utils \
+    tk-dev \
+    liblzma-dev \
+    git \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+# 创建工作目录
+WORKDIR /app
+
+# 复制并安装Python依赖（利用Docker层缓存）
+COPY requirements.txt .
+
+# 配置pip镜像源并安装依赖
+RUN pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple && \
+    pip config set global.trusted-host pypi.tuna.tsinghua.edu.cn && \
+    pip install --upgrade pip wheel setuptools && \
+    pip wheel --no-cache-dir --wheel-dir=/app/wheels -r requirements.txt
+
+# =============================================================================
+# 阶段2：运行时环境 (Runtime Stage)
+# 使用极小的Alpine镜像，仅包含运行时必需文件
+# =============================================================================
+FROM python:3.11-alpine
+
+# 设置元数据
+LABEL maintainer="sport-lottery-sweeper@example.com" \
+      org.opencontainers.image.title="Sport Lottery Sweeper Backend" \
+      org.opencontainers.image.description="Backend service for sport lottery data processing" \
+      org.opencontainers.image.version="${VERSION:-latest}" \
+      org.opencontainers.image.created="${BUILD_DATE:-unknown}" \
+      org.opencontainers.image.revision="${VCS_REF:-unknown}" \
+      org.opencontainers.image.url="https://github.com/your-org/sport-lottery-sweeper" \
+      org.opencontainers.image.documentation="https://github.com/your-org/sport-lottery-sweeper/blob/main/README.md" \
+      org.opencontainers.image.source="https://github.com/your-org/sport-lottery-sweeper.git" \
+      org.opencontainers.image.licenses="MIT" \
+      org.opencontainers.image.vendor="Your Organization"
+
+# 设置环境变量
+ENV PATH="/app/.venv/bin:$PATH" \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONHASHSEED=random \
+    PORT=8000 \
+    WORKERS_PER_CORE=1 \
+    MAX_WORKERS=4 \
+    WEB_CONCURRENCY=4 \
+    LOG_LEVEL=info
+
+# 安装运行时系统依赖（最小集合）
+RUN apk add --no-cache \
+    libstdc++ \
+    libffi \
+    openssl \
+    ca-certificates \
+    tzdata \
+    curl \
+    && rm -rf /var/cache/apk/* \
+    && mkdir -p /app /app/logs /app/data
+
+# 创建非root用户和组
+RUN addgroup -g 1001 -S appgroup && \
+    adduser -u 1001 -S appuser -G appgroup && \
+    chown -R appuser:appgroup /app
+
+# 切换到非root用户
+USER appuser
+
+# 设置工作目录
+WORKDIR /app
+
+# 从builder阶段复制预构建的wheels
+COPY --from=builder /app/wheels /wheels
+
+# 安装Python依赖（从预构建的wheels）
+RUN pip install --no-cache /wheels/* && \
+    rm -rf /wheels
+
+# 复制应用代码
+COPY --chown=appuser:appgroup . .
+
+# 创建必要的目录并设置权限
+RUN mkdir -p /app/logs /app/data /app/uploads && \
+    chmod +x /app/startup.sh 2>/dev/null || true
+
+# 健康检查和探针端点
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:${PORT}/health || exit 1
+
+# 暴露端口
+EXPOSE ${PORT}
+
+# 使用非root用户启动应用
+USER appuser
+
+# 启动命令（支持多种运行模式）
+CMD ["/app/startup.sh"]

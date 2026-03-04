@@ -1,0 +1,56 @@
+{
+  "timestamp": "2026-02-27T09:41:13.429507",
+  "checks": {
+    "utf8_encoding": {
+      "passed": 78,
+      "failed": 2,
+      "issues": [
+        {
+          "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\tmp_bjdc_bf_js.js",
+          "issue": "文件不是有效的UTF-8编码",
+          "severity": "high"
+        },
+        {
+          "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\tmp_bjdc_core_js.js",
+          "issue": "文件不是有效的UTF-8编码",
+          "severity": "high"
+        }
+      ]
+    },
+    "path_aliases": {
+      "passed": 54,
+      "failed": 0,
+      "issues": []
+    },
+    "ai_comments": {
+      "passed": 10,
+      "failed": 0,
+      "issues": [],
+      "found_comments": []
+    },
+    "file_locks": {
+      "active_locks": 0,
+      "stale_locks": 0,
+      "issues": []
+    },
+    "project_structure": {
+      "passed": 9,
+      "failed": 0,
+      "issues": []
+    }
+  },
+  "violations": [],
+  "recommendations": [
+    {
+      "category": "编码规范",
+      "priority": "high",
+      "suggestion": "为所有Python/JS文件添加UTF-8编码声明，确保文件使用UTF-8编码保存"
+    },
+    {
+      "category": "总体评价",
+      "priority": "info",
+      "suggestion": "✅ 项目AI合规性优秀，继续保持！"
+    }
+  ],
+  "score": 98.7
+}

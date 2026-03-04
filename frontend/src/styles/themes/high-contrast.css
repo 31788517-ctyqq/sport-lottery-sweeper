@@ -1,0 +1,54 @@
+/* styles/themes/high-contrast.css */
+
+[data-theme="high-contrast"] {
+  /* Colors */
+  --color-primary: #0000ff; /* Bright Blue */
+  --color-primary-hover: #0066ff;
+  --color-primary-active: #0000cc;
+  --color-success: #00ff00; /* Bright Green */
+  --color-warning: #ffff00; /* Bright Yellow */
+  --color-error: #ff0000;   /* Bright Red */
+  --color-info: #00ffff;    /* Cyan */
+
+  /* Background Colors */
+  --bg-color-page: #000000; /* Black */
+  --bg-color-container: #000000;
+  --bg-color-header: #000000;
+  --bg-color-sidebar: #000000;
+  --bg-color-modal: #000000;
+  --bg-color-overlay: rgba(255, 255, 255, 0.8); /* White overlay */
+
+  /* Text Colors */
+  --text-color-primary: #ffffff; /* White */
+  --text-color-secondary: #ffffff;
+  --text-color-tertiary: #ffffff;
+  --text-color-inverse: #000000; /* Black */
+  --text-color-link: var(--color-primary);
+
+  /* Border Colors */
+  --border-color-base: #ffffff; /* White */
+  --border-color-split: #ffffff; /* White */
+  --border-radius-base: 0; /* Sharp corners */
+  --border-radius-lg: 0;
+  --border-radius-sm: 0;
+
+  /* Ensure high contrast text/background */
+  color-scheme: dark; /* Hint for system UI controls */
+}
+
+[data-theme="high-contrast"] * {
+  border-color: var(--border-color-base) !important; /* Force borders */
+  color: var(--text-color-primary) !important;       /* Force text color */
+  background-color: var(--bg-color-container) !important; /* Force bg color */
+}
+
+/* Ensure links are very distinct */
+[data-theme="high-contrast"] a {
+    text-decoration: underline wavy var(--color-primary);
+}
+
+[data-theme="high-contrast"] a:hover {
+    text-decoration: underline wavy var(--color-primary-hover);
+    background-color: var(--color-primary); /* Invert bg on hover */
+    color: var(--text-color-inverse); /* Invert text color on hover */
+}

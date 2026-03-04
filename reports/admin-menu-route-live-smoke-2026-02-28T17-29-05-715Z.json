@@ -1,0 +1,3127 @@
+{
+  "executedAt": "2026-02-28T17:29:05.714Z",
+  "frontendBase": "http://localhost:3000",
+  "backendBase": "http://localhost:8000",
+  "loginUser": "admin",
+  "summary": {
+    "routesTotal": 47,
+    "routesNavigationFailed": 0,
+    "routesWithConsoleErrors": 47,
+    "routesWithPageErrors": 0,
+    "routesWithHttpErrors": 47,
+    "consoleErrorsTotal": 234,
+    "pageErrorsTotal": 0,
+    "httpErrorsTotal": 100,
+    "uniqueHttpErrorEndpoints": 45
+  },
+  "routeResults": [
+    {
+      "route": "/admin/dashboard",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/dashboard",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2880,
+      "consoleErrorsDelta": 2,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 1
+    },
+    {
+      "route": "/admin/users/list",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/users/list",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2894,
+      "consoleErrorsDelta": 4,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 2
+    },
+    {
+      "route": "/admin/users/roles",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/users/roles",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2890,
+      "consoleErrorsDelta": 2,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 1
+    },
+    {
+      "route": "/admin/users/departments",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/users/departments",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2881,
+      "consoleErrorsDelta": 4,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 2
+    },
+    {
+      "route": "/admin/users/profile",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/users/profile",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2877,
+      "consoleErrorsDelta": 8,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 4
+    },
+    {
+      "route": "/admin/users/profiles",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/users/profiles",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2868,
+      "consoleErrorsDelta": 4,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 2
+    },
+    {
+      "route": "/admin/users/logs",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/users/logs",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2869,
+      "consoleErrorsDelta": 4,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 2
+    },
+    {
+      "route": "/admin/beidan-filter",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/beidan-filter",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2890,
+      "consoleErrorsDelta": 2,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 1
+    },
+    {
+      "route": "/admin/beidan-betting-sim",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/#/login",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2918,
+      "consoleErrorsDelta": 6,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 2
+    },
+    {
+      "route": "/admin/data-source/config",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/data-source/config",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2884,
+      "consoleErrorsDelta": 4,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 2
+    },
+    {
+      "route": "/admin/data-source/task-console",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/data-source/task-console",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2911,
+      "consoleErrorsDelta": 2,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 1
+    },
+    {
+      "route": "/admin/data-source/monitor",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/data-source/monitor",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2891,
+      "consoleErrorsDelta": 2,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 1
+    },
+    {
+      "route": "/admin/data-source/data-center",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/#/login",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2913,
+      "consoleErrorsDelta": 8,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 3
+    },
+    {
+      "route": "/admin/data-source/ip-pool",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/data-source/ip-pool",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2874,
+      "consoleErrorsDelta": 2,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 1
+    },
+    {
+      "route": "/admin/data-source/headers",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/data-source/headers",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2876,
+      "consoleErrorsDelta": 2,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 1
+    },
+    {
+      "route": "/admin/data-source/task-monitor",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/data-source/task-monitor",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2872,
+      "consoleErrorsDelta": 2,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 1
+    },
+    {
+      "route": "/admin/match-data/schedule/jczq",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/#/login",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2877,
+      "consoleErrorsDelta": 10,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 4
+    },
+    {
+      "route": "/admin/match-data/schedule/bd",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/#/login",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2902,
+      "consoleErrorsDelta": 12,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 5
+    },
+    {
+      "route": "/admin/draw-prediction/ai-draw",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/draw-prediction/ai-draw",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2902,
+      "consoleErrorsDelta": 16,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 6
+    },
+    {
+      "route": "/admin/draw-prediction/poisson-11",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/draw-prediction/poisson-11",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2891,
+      "consoleErrorsDelta": 14,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 5
+    },
+    {
+      "route": "/admin/draw-prediction/suggestion-center",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/draw-prediction/suggestion-center",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2895,
+      "consoleErrorsDelta": 11,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 4
+    },
+    {
+      "route": "/admin/draw-prediction/killswitch",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/draw-prediction/killswitch",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2891,
+      "consoleErrorsDelta": 7,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 3
+    },
+    {
+      "route": "/admin/draw-prediction/model-workbench",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/draw-prediction/model-workbench?tab=data",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2883,
+      "consoleErrorsDelta": 5,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 2
+    },
+    {
+      "route": "/admin/ai-services/local",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/ai-services/local",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2872,
+      "consoleErrorsDelta": 2,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 1
+    },
+    {
+      "route": "/admin/ai-services/remote",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/ai-services/remote",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2885,
+      "consoleErrorsDelta": 5,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 2
+    },
+    {
+      "route": "/admin/ai-services/costs",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/ai-services/costs",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2886,
+      "consoleErrorsDelta": 5,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 2
+    },
+    {
+      "route": "/admin/ai-services/agents",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/ai-services/agents",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2879,
+      "consoleErrorsDelta": 2,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 1
+    },
+    {
+      "route": "/admin/ai-services/models",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/ai-services/models",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2913,
+      "consoleErrorsDelta": 2,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 1
+    },
+    {
+      "route": "/admin/ai-services/conversation",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/ai-services/conversation",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2886,
+      "consoleErrorsDelta": 2,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 1
+    },
+    {
+      "route": "/admin/ai-services/config",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/ai-services/config",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2893,
+      "consoleErrorsDelta": 2,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 1
+    },
+    {
+      "route": "/admin/intelligent-decision/hedging",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/intelligent-decision/hedging",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2896,
+      "consoleErrorsDelta": 2,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 1
+    },
+    {
+      "route": "/admin/intelligent-decision/recommendations",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/intelligent-decision/recommendations",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2886,
+      "consoleErrorsDelta": 2,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 1
+    },
+    {
+      "route": "/admin/intelligent-decision/risk-control",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/intelligent-decision/risk-control",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2913,
+      "consoleErrorsDelta": 2,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 1
+    },
+    {
+      "route": "/admin/intelligence/screening",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/intelligence/screening",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2885,
+      "consoleErrorsDelta": 2,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 1
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/intelligence/collection",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2873,
+      "consoleErrorsDelta": 29,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 11
+    },
+    {
+      "route": "/admin/intelligence/model",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/intelligence/model",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2894,
+      "consoleErrorsDelta": 2,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 1
+    },
+    {
+      "route": "/admin/intelligence/weight",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/intelligence/weight",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2877,
+      "consoleErrorsDelta": 8,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 1
+    },
+    {
+      "route": "/admin/intelligence/graph",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/intelligence/graph",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2902,
+      "consoleErrorsDelta": 5,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 2
+    },
+    {
+      "route": "/admin/intelligence/sentiment",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/intelligence/sentiment",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2896,
+      "consoleErrorsDelta": 2,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 1
+    },
+    {
+      "route": "/admin/intelligence/multimodal",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/intelligence/multimodal",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2883,
+      "consoleErrorsDelta": 2,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 1
+    },
+    {
+      "route": "/admin/system/config",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/system/config",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2889,
+      "consoleErrorsDelta": 2,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 1
+    },
+    {
+      "route": "/admin/logs",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/logs",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2888,
+      "consoleErrorsDelta": 4,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 3
+    },
+    {
+      "route": "/admin/logs/system",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/logs/system",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2882,
+      "consoleErrorsDelta": 4,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 2
+    },
+    {
+      "route": "/admin/logs/user",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/logs/user",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2909,
+      "consoleErrorsDelta": 4,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 2
+    },
+    {
+      "route": "/admin/logs/security",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/logs/security",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2887,
+      "consoleErrorsDelta": 4,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 2
+    },
+    {
+      "route": "/admin/logs/api",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/logs/api",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2876,
+      "consoleErrorsDelta": 4,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 2
+    },
+    {
+      "route": "/admin/logs/ai",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/logs/ai",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2882,
+      "consoleErrorsDelta": 3,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 2
+    }
+  ],
+  "consoleIssues": [
+    {
+      "route": "/admin/dashboard",
+      "url": "http://localhost:3000/admin/dashboard",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:26:50.300Z"
+    },
+    {
+      "route": "/admin/dashboard",
+      "url": "http://localhost:3000/admin/dashboard",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:26:50.300Z"
+    },
+    {
+      "route": "/admin/users/list",
+      "url": "http://localhost:3000/admin/users/list",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "ts": "2026-02-28T17:26:53.072Z"
+    },
+    {
+      "route": "/admin/users/list",
+      "url": "http://localhost:3000/admin/users/list",
+      "text": "加载用户列表失败: AxiosError: Request failed with status code 401\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)\n    at Axios.request (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:2233:41)\n    at async asDataResponse (http://localhost:3000/src/api/modules/users.js:8:18)\n    at async loadUsers (http://localhost:3000/src/views/admin/users/UserList.vue:53:22)",
+      "ts": "2026-02-28T17:26:53.083Z"
+    },
+    {
+      "route": "/admin/users/list",
+      "url": "http://localhost:3000/admin/users/list",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:26:53.089Z"
+    },
+    {
+      "route": "/admin/users/list",
+      "url": "http://localhost:3000/admin/users/list",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:26:53.089Z"
+    },
+    {
+      "route": "/admin/users/roles",
+      "url": "http://localhost:3000/admin/users/roles",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:26:55.891Z"
+    },
+    {
+      "route": "/admin/users/roles",
+      "url": "http://localhost:3000/admin/users/roles",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:26:55.891Z"
+    },
+    {
+      "route": "/admin/users/departments",
+      "url": "http://localhost:3000/admin/users/departments",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "ts": "2026-02-28T17:26:58.778Z"
+    },
+    {
+      "route": "/admin/users/departments",
+      "url": "http://localhost:3000/admin/users/departments",
+      "text": "加载用户列表失败: AxiosError: Request failed with status code 401\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)\n    at Axios.request (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:2233:41)\n    at async asDataResponse (http://localhost:3000/src/api/modules/users.js:8:18)\n    at async loadUsers (http://localhost:3000/src/views/admin/users/DepartmentManagement.vue:160:22)",
+      "ts": "2026-02-28T17:26:58.787Z"
+    },
+    {
+      "route": "/admin/users/departments",
+      "url": "http://localhost:3000/admin/users/departments",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:26:58.788Z"
+    },
+    {
+      "route": "/admin/users/departments",
+      "url": "http://localhost:3000/admin/users/departments",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:26:58.788Z"
+    },
+    {
+      "route": "/admin/users/profile",
+      "url": "http://localhost:3000/admin/users/profile",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "ts": "2026-02-28T17:27:01.656Z"
+    },
+    {
+      "route": "/admin/users/profile",
+      "url": "http://localhost:3000/admin/users/profile",
+      "text": "加载用户信息失败: AxiosError: Request failed with status code 401\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)\n    at Axios.request (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:2233:41)\n    at async loadUserProfile (http://localhost:3000/src/views/admin/users/UserProfile.vue:87:22)",
+      "ts": "2026-02-28T17:27:01.661Z"
+    },
+    {
+      "route": "/admin/users/profile",
+      "url": "http://localhost:3000/admin/users/profile",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "ts": "2026-02-28T17:27:01.662Z"
+    },
+    {
+      "route": "/admin/users/profile",
+      "url": "http://localhost:3000/admin/users/profile",
+      "text": "加载登录历史失败: AxiosError: Request failed with status code 401\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)\n    at Axios.request (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:2233:41)\n    at async loadLoginHistory (http://localhost:3000/src/views/admin/users/UserProfile.vue:105:22)",
+      "ts": "2026-02-28T17:27:01.667Z"
+    },
+    {
+      "route": "/admin/users/profile",
+      "url": "http://localhost:3000/admin/users/profile",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "ts": "2026-02-28T17:27:01.668Z"
+    },
+    {
+      "route": "/admin/users/profile",
+      "url": "http://localhost:3000/admin/users/profile",
+      "text": "加载用户统计失败: AxiosError: Request failed with status code 401\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)\n    at Axios.request (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:2233:41)\n    at async loadUserStats (http://localhost:3000/src/views/admin/users/UserProfile.vue:116:22)",
+      "ts": "2026-02-28T17:27:01.673Z"
+    },
+    {
+      "route": "/admin/users/profile",
+      "url": "http://localhost:3000/admin/users/profile",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:27:01.674Z"
+    },
+    {
+      "route": "/admin/users/profile",
+      "url": "http://localhost:3000/admin/users/profile",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:27:01.674Z"
+    },
+    {
+      "route": "/admin/users/profiles",
+      "url": "http://localhost:3000/admin/users/profiles",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:27:04.556Z"
+    },
+    {
+      "route": "/admin/users/profiles",
+      "url": "http://localhost:3000/admin/users/profiles",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:27:04.556Z"
+    },
+    {
+      "route": "/admin/users/profiles",
+      "url": "http://localhost:3000/admin/users/profiles",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "ts": "2026-02-28T17:27:04.559Z"
+    },
+    {
+      "route": "/admin/users/profiles",
+      "url": "http://localhost:3000/admin/users/profiles",
+      "text": "加载用户画像列表失败: AxiosError: Request failed with status code 401\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)\n    at Axios.request (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:2233:41)\n    at async getUserProfiles (http://localhost:3000/src/api/modules/user-profiles.js:27:12)\n    at async loadData (http://localhost:3000/src/views/admin/users/UserProfileManagement.vue:72:18)",
+      "ts": "2026-02-28T17:27:04.565Z"
+    },
+    {
+      "route": "/admin/users/logs",
+      "url": "http://localhost:3000/admin/users/logs",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:27:07.437Z"
+    },
+    {
+      "route": "/admin/users/logs",
+      "url": "http://localhost:3000/admin/users/logs",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:27:07.437Z"
+    },
+    {
+      "route": "/admin/users/logs",
+      "url": "http://localhost:3000/admin/users/logs",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "ts": "2026-02-28T17:27:07.439Z"
+    },
+    {
+      "route": "/admin/users/logs",
+      "url": "http://localhost:3000/admin/users/logs",
+      "text": "加载操作日志失败: AxiosError: Request failed with status code 401\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)\n    at Axios.request (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:2233:41)\n    at async getOperationLogs (http://localhost:3000/src/api/modules/operation-logs.js:60:19)\n    at async loadLogs (http://localhost:3000/src/views/admin/users/OperationLog.vue:67:22)",
+      "ts": "2026-02-28T17:27:07.445Z"
+    },
+    {
+      "route": "/admin/beidan-filter",
+      "url": "http://localhost:3000/admin/beidan-filter",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:27:10.388Z"
+    },
+    {
+      "route": "/admin/beidan-filter",
+      "url": "http://localhost:3000/admin/beidan-filter",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:27:10.388Z"
+    },
+    {
+      "route": "/admin/beidan-betting-sim",
+      "url": "http://localhost:3000/admin/beidan-betting-sim",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:27:15.525Z"
+    },
+    {
+      "route": "/admin/beidan-betting-sim",
+      "url": "http://localhost:3000/admin/beidan-betting-sim",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:27:15.526Z"
+    },
+    {
+      "route": "/admin/beidan-betting-sim",
+      "url": "http://localhost:3000/admin/beidan-betting-sim",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "ts": "2026-02-28T17:27:15.529Z"
+    },
+    {
+      "route": "/admin/beidan-betting-sim",
+      "url": "http://localhost:3000/admin/beidan-betting-sim",
+      "text": "API响应错误: AxiosError: Request failed with status code 401\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:27:15.529Z"
+    },
+    {
+      "route": "/admin/beidan-betting-sim",
+      "url": "http://localhost:3000/admin/beidan-betting-sim",
+      "text": "认证失败: 令牌无效或已过期",
+      "ts": "2026-02-28T17:27:15.529Z"
+    },
+    {
+      "route": "/admin/beidan-betting-sim",
+      "url": "http://localhost:3000/admin/beidan-betting-sim",
+      "text": "AxiosError: Request failed with status code 401\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)\n    at Axios.request (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:2233:41)\n    at async fetchExpectOptions (http://localhost:3000/src/views/admin/BeidanBettingSimulator.vue:355:18)\n    at async http://localhost:3000/src/views/admin/BeidanBettingSimulator.vue:581:3",
+      "ts": "2026-02-28T17:27:15.530Z"
+    },
+    {
+      "route": "/admin/data-source/config",
+      "url": "http://localhost:3000/admin/data-source/config",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "ts": "2026-02-28T17:27:16.065Z"
+    },
+    {
+      "route": "/admin/data-source/config",
+      "url": "http://localhost:3000/admin/data-source/config",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:27:16.065Z"
+    },
+    {
+      "route": "/admin/data-source/config",
+      "url": "http://localhost:3000/admin/data-source/config",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:27:16.065Z"
+    },
+    {
+      "route": "/admin/data-source/config",
+      "url": "http://localhost:3000/admin/data-source/config",
+      "text": "加载数据失败: Error: 加载失败\n    at loadData (http://localhost:3000/src/views/admin/crawler/DataSourceManagement.vue:103:13)",
+      "ts": "2026-02-28T17:27:16.070Z"
+    },
+    {
+      "route": "/admin/data-source/task-console",
+      "url": "http://localhost:3000/admin/data-source/task-console",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:27:18.975Z"
+    },
+    {
+      "route": "/admin/data-source/task-console",
+      "url": "http://localhost:3000/admin/data-source/task-console",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:27:18.975Z"
+    },
+    {
+      "route": "/admin/data-source/monitor",
+      "url": "http://localhost:3000/admin/data-source/monitor",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:27:21.910Z"
+    },
+    {
+      "route": "/admin/data-source/monitor",
+      "url": "http://localhost:3000/admin/data-source/monitor",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:27:21.911Z"
+    },
+    {
+      "route": "/admin/data-source/data-center",
+      "url": "http://localhost:3000/admin/data-source/data-center",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:27:24.981Z"
+    },
+    {
+      "route": "/admin/data-source/data-center",
+      "url": "http://localhost:3000/admin/data-source/data-center",
+      "text": "Error loading stats: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)\n    at Axios.request (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:2233:41)\n    at async loadStats (http://localhost:3000/src/views/admin/crawler/DataCenter.vue:107:17)",
+      "ts": "2026-02-28T17:27:24.983Z"
+    },
+    {
+      "route": "/admin/data-source/data-center",
+      "url": "http://localhost:3000/admin/data-source/data-center",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:27:24.988Z"
+    },
+    {
+      "route": "/admin/data-source/data-center",
+      "url": "http://localhost:3000/admin/data-source/data-center",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:27:24.988Z"
+    },
+    {
+      "route": "/admin/data-source/data-center",
+      "url": "http://localhost:3000/admin/data-source/data-center",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "ts": "2026-02-28T17:27:24.990Z"
+    },
+    {
+      "route": "/admin/data-source/data-center",
+      "url": "http://localhost:3000/admin/data-source/data-center",
+      "text": "API响应错误: AxiosError: Request failed with status code 401\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:27:24.990Z"
+    },
+    {
+      "route": "/admin/data-source/data-center",
+      "url": "http://localhost:3000/admin/data-source/data-center",
+      "text": "认证失败: 令牌无效或已过期",
+      "ts": "2026-02-28T17:27:24.990Z"
+    },
+    {
+      "route": "/admin/data-source/data-center",
+      "url": "http://localhost:3000/admin/data-source/data-center",
+      "text": "Error loading table data: AxiosError: Request failed with status code 401\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)\n    at Axios.request (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:2233:41)\n    at async loadTableData (http://localhost:3000/src/views/admin/crawler/DataCenter.vue:140:17)",
+      "ts": "2026-02-28T17:27:24.991Z"
+    },
+    {
+      "route": "/admin/data-source/ip-pool",
+      "url": "http://localhost:3000/admin/data-source/ip-pool",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:27:27.712Z"
+    },
+    {
+      "route": "/admin/data-source/ip-pool",
+      "url": "http://localhost:3000/admin/data-source/ip-pool",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:27:27.716Z"
+    },
+    {
+      "route": "/admin/data-source/headers",
+      "url": "http://localhost:3000/admin/data-source/headers",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:27:30.559Z"
+    },
+    {
+      "route": "/admin/data-source/headers",
+      "url": "http://localhost:3000/admin/data-source/headers",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:27:30.559Z"
+    },
+    {
+      "route": "/admin/data-source/task-monitor",
+      "url": "http://localhost:3000/admin/data-source/task-monitor",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:27:33.462Z"
+    },
+    {
+      "route": "/admin/data-source/task-monitor",
+      "url": "http://localhost:3000/admin/data-source/task-monitor",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:27:33.464Z"
+    },
+    {
+      "route": "/admin/match-data/schedule/jczq",
+      "url": "http://localhost:3000/admin/match-data/schedule/jczq",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:27:36.300Z"
+    },
+    {
+      "route": "/admin/match-data/schedule/jczq",
+      "url": "http://localhost:3000/admin/match-data/schedule/jczq",
+      "text": "加载赛事选项失败: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)\n    at Axios.request (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:2233:41)\n    at async getLeagueOptions (http://localhost:3000/src/views/admin/sp/ScheduleManagement.vue:289:18)",
+      "ts": "2026-02-28T17:27:36.301Z"
+    },
+    {
+      "route": "/admin/match-data/schedule/jczq",
+      "url": "http://localhost:3000/admin/match-data/schedule/jczq",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:27:36.302Z"
+    },
+    {
+      "route": "/admin/match-data/schedule/jczq",
+      "url": "http://localhost:3000/admin/match-data/schedule/jczq",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:27:36.303Z"
+    },
+    {
+      "route": "/admin/match-data/schedule/jczq",
+      "url": "http://localhost:3000/admin/match-data/schedule/jczq",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:27:36.467Z"
+    },
+    {
+      "route": "/admin/match-data/schedule/jczq",
+      "url": "http://localhost:3000/admin/match-data/schedule/jczq",
+      "text": "加载赛事选项失败: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)\n    at Axios.request (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:2233:41)\n    at async getLeagueOptions (http://localhost:3000/src/views/admin/sp/ScheduleManagement.vue:289:18)",
+      "ts": "2026-02-28T17:27:36.467Z"
+    },
+    {
+      "route": "/admin/match-data/schedule/jczq",
+      "url": "http://localhost:3000/admin/match-data/schedule/jczq",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "ts": "2026-02-28T17:27:36.625Z"
+    },
+    {
+      "route": "/admin/match-data/schedule/jczq",
+      "url": "http://localhost:3000/admin/match-data/schedule/jczq",
+      "text": "API响应错误: AxiosError: Request failed with status code 401\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:27:36.625Z"
+    },
+    {
+      "route": "/admin/match-data/schedule/jczq",
+      "url": "http://localhost:3000/admin/match-data/schedule/jczq",
+      "text": "认证失败: 令牌无效或已过期",
+      "ts": "2026-02-28T17:27:36.625Z"
+    },
+    {
+      "route": "/admin/match-data/schedule/jczq",
+      "url": "http://localhost:3000/admin/match-data/schedule/jczq",
+      "text": "加载赛程失败: AxiosError: Request failed with status code 401\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)\n    at Axios.request (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:2233:41)\n    at async getScheduleList (http://localhost:3000/src/views/admin/sp/ScheduleManagement.vue:266:18)",
+      "ts": "2026-02-28T17:27:36.627Z"
+    },
+    {
+      "route": "/admin/match-data/schedule/bd",
+      "url": "http://localhost:3000/admin/match-data/schedule/bd",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:27:39.192Z"
+    },
+    {
+      "route": "/admin/match-data/schedule/bd",
+      "url": "http://localhost:3000/admin/match-data/schedule/bd",
+      "text": "加载北单期号选项失败: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)\n    at Axios.request (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:2233:41)\n    at async getIssueOptions (http://localhost:3000/src/views/admin/sp/ScheduleManagement.vue:317:18)",
+      "ts": "2026-02-28T17:27:39.193Z"
+    },
+    {
+      "route": "/admin/match-data/schedule/bd",
+      "url": "http://localhost:3000/admin/match-data/schedule/bd",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:27:39.195Z"
+    },
+    {
+      "route": "/admin/match-data/schedule/bd",
+      "url": "http://localhost:3000/admin/match-data/schedule/bd",
+      "text": "加载赛事选项失败: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)\n    at Axios.request (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:2233:41)\n    at async getLeagueOptions (http://localhost:3000/src/views/admin/sp/ScheduleManagement.vue:289:18)",
+      "ts": "2026-02-28T17:27:39.196Z"
+    },
+    {
+      "route": "/admin/match-data/schedule/bd",
+      "url": "http://localhost:3000/admin/match-data/schedule/bd",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:27:39.197Z"
+    },
+    {
+      "route": "/admin/match-data/schedule/bd",
+      "url": "http://localhost:3000/admin/match-data/schedule/bd",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:27:39.198Z"
+    },
+    {
+      "route": "/admin/match-data/schedule/bd",
+      "url": "http://localhost:3000/admin/match-data/schedule/bd",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:27:39.218Z"
+    },
+    {
+      "route": "/admin/match-data/schedule/bd",
+      "url": "http://localhost:3000/admin/match-data/schedule/bd",
+      "text": "加载赛事选项失败: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)\n    at Axios.request (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:2233:41)\n    at async getLeagueOptions (http://localhost:3000/src/views/admin/sp/ScheduleManagement.vue:289:18)",
+      "ts": "2026-02-28T17:27:39.218Z"
+    },
+    {
+      "route": "/admin/match-data/schedule/bd",
+      "url": "http://localhost:3000/admin/match-data/schedule/bd",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "ts": "2026-02-28T17:27:39.219Z"
+    },
+    {
+      "route": "/admin/match-data/schedule/bd",
+      "url": "http://localhost:3000/admin/match-data/schedule/bd",
+      "text": "API响应错误: AxiosError: Request failed with status code 401\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:27:39.219Z"
+    },
+    {
+      "route": "/admin/match-data/schedule/bd",
+      "url": "http://localhost:3000/admin/match-data/schedule/bd",
+      "text": "认证失败: 令牌无效或已过期",
+      "ts": "2026-02-28T17:27:39.219Z"
+    },
+    {
+      "route": "/admin/match-data/schedule/bd",
+      "url": "http://localhost:3000/admin/match-data/schedule/bd",
+      "text": "加载赛程失败: AxiosError: Request failed with status code 401\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)\n    at Axios.request (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:2233:41)\n    at async getScheduleList (http://localhost:3000/src/views/admin/sp/ScheduleManagement.vue:266:18)",
+      "ts": "2026-02-28T17:27:39.220Z"
+    },
+    {
+      "route": "/admin/draw-prediction/ai-draw",
+      "url": "http://localhost:3000/admin/draw-prediction/ai-draw",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:27:42.092Z"
+    },
+    {
+      "route": "/admin/draw-prediction/ai-draw",
+      "url": "http://localhost:3000/admin/draw-prediction/ai-draw",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:27:42.093Z"
+    },
+    {
+      "route": "/admin/draw-prediction/ai-draw",
+      "url": "http://localhost:3000/admin/draw-prediction/ai-draw",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:27:42.097Z"
+    },
+    {
+      "route": "/admin/draw-prediction/ai-draw",
+      "url": "http://localhost:3000/admin/draw-prediction/ai-draw",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:27:42.097Z"
+    },
+    {
+      "route": "/admin/draw-prediction/ai-draw",
+      "url": "http://localhost:3000/admin/draw-prediction/ai-draw",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:27:42.114Z"
+    },
+    {
+      "route": "/admin/draw-prediction/ai-draw",
+      "url": "http://localhost:3000/admin/draw-prediction/ai-draw",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:27:42.114Z"
+    },
+    {
+      "route": "/admin/draw-prediction/ai-draw",
+      "url": "http://localhost:3000/admin/draw-prediction/ai-draw",
+      "text": "加载北单期号失败: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)\n    at Axios.request (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:2233:41)\n    at async loadIssueOptions (http://localhost:3000/src/views/admin/draw_prediction/AiDrawScanner.vue:282:17)\n    at async http://localhost:3000/src/views/admin/draw_prediction/AiDrawScanner.vue:613:3",
+      "ts": "2026-02-28T17:27:42.115Z"
+    },
+    {
+      "route": "/admin/draw-prediction/ai-draw",
+      "url": "http://localhost:3000/admin/draw-prediction/ai-draw",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:27:42.132Z"
+    },
+    {
+      "route": "/admin/draw-prediction/ai-draw",
+      "url": "http://localhost:3000/admin/draw-prediction/ai-draw",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:27:42.132Z"
+    },
+    {
+      "route": "/admin/draw-prediction/ai-draw",
+      "url": "http://localhost:3000/admin/draw-prediction/ai-draw",
+      "text": "加载赛事选项失败: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)\n    at Axios.request (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:2233:41)\n    at async loadLeagueOptions (http://localhost:3000/src/views/admin/draw_prediction/AiDrawScanner.vue:317:17)\n    at async http://localhost:3000/src/views/admin/draw_prediction/AiDrawScanner.vue:614:3",
+      "ts": "2026-02-28T17:27:42.133Z"
+    },
+    {
+      "route": "/admin/draw-prediction/ai-draw",
+      "url": "http://localhost:3000/admin/draw-prediction/ai-draw",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:27:42.146Z"
+    },
+    {
+      "route": "/admin/draw-prediction/ai-draw",
+      "url": "http://localhost:3000/admin/draw-prediction/ai-draw",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:27:42.147Z"
+    },
+    {
+      "route": "/admin/draw-prediction/ai-draw",
+      "url": "http://localhost:3000/admin/draw-prediction/ai-draw",
+      "text": "加载赛事选项失败: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)\n    at Axios.request (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:2233:41)\n    at async loadLeagueOptions (http://localhost:3000/src/views/admin/draw_prediction/AiDrawScanner.vue:317:17)\n    at async fetchList (http://localhost:3000/src/views/admin/draw_prediction/AiDrawScanner.vue:424:5)",
+      "ts": "2026-02-28T17:27:42.148Z"
+    },
+    {
+      "route": "/admin/draw-prediction/ai-draw",
+      "url": "http://localhost:3000/admin/draw-prediction/ai-draw",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:27:42.158Z"
+    },
+    {
+      "route": "/admin/draw-prediction/ai-draw",
+      "url": "http://localhost:3000/admin/draw-prediction/ai-draw",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:27:42.158Z"
+    },
+    {
+      "route": "/admin/draw-prediction/ai-draw",
+      "url": "http://localhost:3000/admin/draw-prediction/ai-draw",
+      "text": "获取扫盘列表失败: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)\n    at Axios.request (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:2233:41)\n    at async Promise.all (index 0)\n    at async fetchList (http://localhost:3000/src/views/admin/draw_prediction/AiDrawScanner.vue:437:23)",
+      "ts": "2026-02-28T17:27:42.159Z"
+    },
+    {
+      "route": "/admin/draw-prediction/poisson-11",
+      "url": "http://localhost:3000/admin/draw-prediction/poisson-11",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:27:44.982Z"
+    },
+    {
+      "route": "/admin/draw-prediction/poisson-11",
+      "url": "http://localhost:3000/admin/draw-prediction/poisson-11",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:27:44.982Z"
+    },
+    {
+      "route": "/admin/draw-prediction/poisson-11",
+      "url": "http://localhost:3000/admin/draw-prediction/poisson-11",
+      "text": "加载北单期号失败: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)\n    at Axios.request (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:2233:41)\n    at async loadIssueOptions (http://localhost:3000/src/views/admin/draw_prediction/Poisson11Scanner.vue:669:17)\n    at async http://localhost:3000/src/views/admin/draw_prediction/Poisson11Scanner.vue:916:3",
+      "ts": "2026-02-28T17:27:44.982Z"
+    },
+    {
+      "route": "/admin/draw-prediction/poisson-11",
+      "url": "http://localhost:3000/admin/draw-prediction/poisson-11",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:27:44.985Z"
+    },
+    {
+      "route": "/admin/draw-prediction/poisson-11",
+      "url": "http://localhost:3000/admin/draw-prediction/poisson-11",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:27:44.986Z"
+    },
+    {
+      "route": "/admin/draw-prediction/poisson-11",
+      "url": "http://localhost:3000/admin/draw-prediction/poisson-11",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:27:45.157Z"
+    },
+    {
+      "route": "/admin/draw-prediction/poisson-11",
+      "url": "http://localhost:3000/admin/draw-prediction/poisson-11",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:27:45.158Z"
+    },
+    {
+      "route": "/admin/draw-prediction/poisson-11",
+      "url": "http://localhost:3000/admin/draw-prediction/poisson-11",
+      "text": "加载赛事选项失败: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)\n    at Axios.request (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:2233:41)\n    at async loadLeagueOptions (http://localhost:3000/src/views/admin/draw_prediction/Poisson11Scanner.vue:702:17)\n    at async http://localhost:3000/src/views/admin/draw_prediction/Poisson11Scanner.vue:917:3",
+      "ts": "2026-02-28T17:27:45.161Z"
+    },
+    {
+      "route": "/admin/draw-prediction/poisson-11",
+      "url": "http://localhost:3000/admin/draw-prediction/poisson-11",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:27:45.182Z"
+    },
+    {
+      "route": "/admin/draw-prediction/poisson-11",
+      "url": "http://localhost:3000/admin/draw-prediction/poisson-11",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:27:45.183Z"
+    },
+    {
+      "route": "/admin/draw-prediction/poisson-11",
+      "url": "http://localhost:3000/admin/draw-prediction/poisson-11",
+      "text": "加载赛事选项失败: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)\n    at Axios.request (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:2233:41)\n    at async loadLeagueOptions (http://localhost:3000/src/views/admin/draw_prediction/Poisson11Scanner.vue:702:17)\n    at async fetchList (http://localhost:3000/src/views/admin/draw_prediction/Poisson11Scanner.vue:737:5)",
+      "ts": "2026-02-28T17:27:45.184Z"
+    },
+    {
+      "route": "/admin/draw-prediction/poisson-11",
+      "url": "http://localhost:3000/admin/draw-prediction/poisson-11",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:27:45.194Z"
+    },
+    {
+      "route": "/admin/draw-prediction/poisson-11",
+      "url": "http://localhost:3000/admin/draw-prediction/poisson-11",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:27:45.195Z"
+    },
+    {
+      "route": "/admin/draw-prediction/poisson-11",
+      "url": "http://localhost:3000/admin/draw-prediction/poisson-11",
+      "text": "获取扫盘列表失败: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)\n    at Axios.request (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:2233:41)\n    at async Promise.all (index 0)\n    at async fetchList (http://localhost:3000/src/views/admin/draw_prediction/Poisson11Scanner.vue:750:23)",
+      "ts": "2026-02-28T17:27:45.196Z"
+    },
+    {
+      "route": "/admin/draw-prediction/suggestion-center",
+      "url": "http://localhost:3000/admin/draw-prediction/suggestion-center",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:27:47.878Z"
+    },
+    {
+      "route": "/admin/draw-prediction/suggestion-center",
+      "url": "http://localhost:3000/admin/draw-prediction/suggestion-center",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:27:47.878Z"
+    },
+    {
+      "route": "/admin/draw-prediction/suggestion-center",
+      "url": "http://localhost:3000/admin/draw-prediction/suggestion-center",
+      "text": "Global error caught: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)\n    at Axios.request (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:2233:41)\n    at async refreshSuggestions (http://localhost:3000/src/composables/useDrawSuggestion.js:61:20)\n    at async Promise.all (index 0)\n    at async http://localhost:3000/src/views/admin/draw_prediction/DrawSuggestionCenter.vue:185:3",
+      "ts": "2026-02-28T17:27:47.883Z"
+    },
+    {
+      "route": "/admin/draw-prediction/suggestion-center",
+      "url": "http://localhost:3000/admin/draw-prediction/suggestion-center",
+      "text": "Component instance: Proxy(Object)",
+      "ts": "2026-02-28T17:27:47.883Z"
+    },
+    {
+      "route": "/admin/draw-prediction/suggestion-center",
+      "url": "http://localhost:3000/admin/draw-prediction/suggestion-center",
+      "text": "Error info: mounted hook",
+      "ts": "2026-02-28T17:27:47.883Z"
+    },
+    {
+      "route": "/admin/draw-prediction/suggestion-center",
+      "url": "http://localhost:3000/admin/draw-prediction/suggestion-center",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:27:47.883Z"
+    },
+    {
+      "route": "/admin/draw-prediction/suggestion-center",
+      "url": "http://localhost:3000/admin/draw-prediction/suggestion-center",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:27:47.883Z"
+    },
+    {
+      "route": "/admin/draw-prediction/suggestion-center",
+      "url": "http://localhost:3000/admin/draw-prediction/suggestion-center",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:27:48.073Z"
+    },
+    {
+      "route": "/admin/draw-prediction/suggestion-center",
+      "url": "http://localhost:3000/admin/draw-prediction/suggestion-center",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:27:48.074Z"
+    },
+    {
+      "route": "/admin/draw-prediction/suggestion-center",
+      "url": "http://localhost:3000/admin/draw-prediction/suggestion-center",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:27:48.089Z"
+    },
+    {
+      "route": "/admin/draw-prediction/suggestion-center",
+      "url": "http://localhost:3000/admin/draw-prediction/suggestion-center",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:27:48.089Z"
+    },
+    {
+      "route": "/admin/draw-prediction/killswitch",
+      "url": "http://localhost:3000/admin/draw-prediction/killswitch",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:27:50.739Z"
+    },
+    {
+      "route": "/admin/draw-prediction/killswitch",
+      "url": "http://localhost:3000/admin/draw-prediction/killswitch",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:27:50.740Z"
+    },
+    {
+      "route": "/admin/draw-prediction/killswitch",
+      "url": "http://localhost:3000/admin/draw-prediction/killswitch",
+      "text": "刷新风控状态失败: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)\n    at Axios.request (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:2233:41)\n    at async refreshState (http://localhost:3000/src/composables/useKillSwitch.js:43:21)\n    at async Promise.all (index 0)\n    at async refreshAll (http://localhost:3000/src/composables/useKillSwitch.js:63:7)\n    at async handleRefresh (http://localhost:3000/src/views/admin/draw_prediction/DrawKillSwitchMonitor.vue:66:5)\n    at async http://localhost:3000/src/views/admin/draw_prediction/DrawKillSwitchMonitor.vue:103:3",
+      "ts": "2026-02-28T17:27:50.743Z"
+    },
+    {
+      "route": "/admin/draw-prediction/killswitch",
+      "url": "http://localhost:3000/admin/draw-prediction/killswitch",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:27:50.745Z"
+    },
+    {
+      "route": "/admin/draw-prediction/killswitch",
+      "url": "http://localhost:3000/admin/draw-prediction/killswitch",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:27:50.745Z"
+    },
+    {
+      "route": "/admin/draw-prediction/killswitch",
+      "url": "http://localhost:3000/admin/draw-prediction/killswitch",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:27:50.952Z"
+    },
+    {
+      "route": "/admin/draw-prediction/killswitch",
+      "url": "http://localhost:3000/admin/draw-prediction/killswitch",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:27:50.955Z"
+    },
+    {
+      "route": "/admin/draw-prediction/model-workbench",
+      "url": "http://localhost:3000/admin/draw-prediction/model-workbench?tab=data",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:27:53.610Z"
+    },
+    {
+      "route": "/admin/draw-prediction/model-workbench",
+      "url": "http://localhost:3000/admin/draw-prediction/model-workbench?tab=data",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:27:53.611Z"
+    },
+    {
+      "route": "/admin/draw-prediction/model-workbench",
+      "url": "http://localhost:3000/admin/draw-prediction/model-workbench?tab=data",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:27:53.640Z"
+    },
+    {
+      "route": "/admin/draw-prediction/model-workbench",
+      "url": "http://localhost:3000/admin/draw-prediction/model-workbench?tab=data",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:27:53.640Z"
+    },
+    {
+      "route": "/admin/draw-prediction/model-workbench",
+      "url": "http://localhost:3000/admin/draw-prediction/model-workbench?tab=data",
+      "text": "获取特征列表失败: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)\n    at Axios.request (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:2233:41)\n    at async fetchFeatures (http://localhost:3000/src/views/admin/draw_prediction/DrawDataFeature.vue:53:17)",
+      "ts": "2026-02-28T17:27:53.641Z"
+    },
+    {
+      "route": "/admin/ai-services/local",
+      "url": "http://localhost:3000/admin/ai-services/local",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:27:56.533Z"
+    },
+    {
+      "route": "/admin/ai-services/local",
+      "url": "http://localhost:3000/admin/ai-services/local",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:27:56.534Z"
+    },
+    {
+      "route": "/admin/ai-services/remote",
+      "url": "http://localhost:3000/admin/ai-services/remote",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:27:59.407Z"
+    },
+    {
+      "route": "/admin/ai-services/remote",
+      "url": "http://localhost:3000/admin/ai-services/remote",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:27:59.407Z"
+    },
+    {
+      "route": "/admin/ai-services/remote",
+      "url": "http://localhost:3000/admin/ai-services/remote",
+      "text": "加载LLM供应商失败: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)\n    at Axios.request (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:2233:41)\n    at async loadServices (http://localhost:3000/src/views/admin/ai-services/RemoteAIService.vue:148:27)",
+      "ts": "2026-02-28T17:27:59.409Z"
+    },
+    {
+      "route": "/admin/ai-services/remote",
+      "url": "http://localhost:3000/admin/ai-services/remote",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:27:59.411Z"
+    },
+    {
+      "route": "/admin/ai-services/remote",
+      "url": "http://localhost:3000/admin/ai-services/remote",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:27:59.411Z"
+    },
+    {
+      "route": "/admin/ai-services/costs",
+      "url": "http://localhost:3000/admin/ai-services/costs",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:28:02.290Z"
+    },
+    {
+      "route": "/admin/ai-services/costs",
+      "url": "http://localhost:3000/admin/ai-services/costs",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:28:02.290Z"
+    },
+    {
+      "route": "/admin/ai-services/costs",
+      "url": "http://localhost:3000/admin/ai-services/costs",
+      "text": "加载成本统计数据失败: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)\n    at Axios.request (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:2233:41)\n    at async loadStatsData (http://localhost:3000/src/views/admin/ai-services/CostMonitoring.vue:37:22)",
+      "ts": "2026-02-28T17:28:02.291Z"
+    },
+    {
+      "route": "/admin/ai-services/costs",
+      "url": "http://localhost:3000/admin/ai-services/costs",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:28:02.320Z"
+    },
+    {
+      "route": "/admin/ai-services/costs",
+      "url": "http://localhost:3000/admin/ai-services/costs",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:28:02.321Z"
+    },
+    {
+      "route": "/admin/ai-services/agents",
+      "url": "http://localhost:3000/admin/ai-services/agents",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:28:05.250Z"
+    },
+    {
+      "route": "/admin/ai-services/agents",
+      "url": "http://localhost:3000/admin/ai-services/agents",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:28:05.250Z"
+    },
+    {
+      "route": "/admin/ai-services/models",
+      "url": "http://localhost:3000/admin/ai-services/models",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:28:08.080Z"
+    },
+    {
+      "route": "/admin/ai-services/models",
+      "url": "http://localhost:3000/admin/ai-services/models",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:28:08.081Z"
+    },
+    {
+      "route": "/admin/ai-services/conversation",
+      "url": "http://localhost:3000/admin/ai-services/conversation",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:28:10.942Z"
+    },
+    {
+      "route": "/admin/ai-services/conversation",
+      "url": "http://localhost:3000/admin/ai-services/conversation",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:28:10.942Z"
+    },
+    {
+      "route": "/admin/ai-services/config",
+      "url": "http://localhost:3000/admin/ai-services/config",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:28:13.873Z"
+    },
+    {
+      "route": "/admin/ai-services/config",
+      "url": "http://localhost:3000/admin/ai-services/config",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:28:13.873Z"
+    },
+    {
+      "route": "/admin/intelligent-decision/hedging",
+      "url": "http://localhost:3000/admin/intelligent-decision/hedging",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:28:16.791Z"
+    },
+    {
+      "route": "/admin/intelligent-decision/hedging",
+      "url": "http://localhost:3000/admin/intelligent-decision/hedging",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:28:16.791Z"
+    },
+    {
+      "route": "/admin/intelligent-decision/recommendations",
+      "url": "http://localhost:3000/admin/intelligent-decision/recommendations",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:28:19.655Z"
+    },
+    {
+      "route": "/admin/intelligent-decision/recommendations",
+      "url": "http://localhost:3000/admin/intelligent-decision/recommendations",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:28:19.655Z"
+    },
+    {
+      "route": "/admin/intelligent-decision/risk-control",
+      "url": "http://localhost:3000/admin/intelligent-decision/risk-control",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:28:22.527Z"
+    },
+    {
+      "route": "/admin/intelligent-decision/risk-control",
+      "url": "http://localhost:3000/admin/intelligent-decision/risk-control",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:28:22.527Z"
+    },
+    {
+      "route": "/admin/intelligence/screening",
+      "url": "http://localhost:3000/admin/intelligence/screening",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:28:25.491Z"
+    },
+    {
+      "route": "/admin/intelligence/screening",
+      "url": "http://localhost:3000/admin/intelligence/screening",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:28:25.491Z"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "url": "http://localhost:3000/admin/intelligence/collection",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:28:28.444Z"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "url": "http://localhost:3000/admin/intelligence/collection",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:28:28.444Z"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "url": "http://localhost:3000/admin/intelligence/collection",
+      "text": "Global error caught: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)\n    at Axios.request (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:2233:41)\n    at async loadSources (http://localhost:3000/src/views/admin/intelligence/CollectionManagement.vue:358:16)\n    at async Promise.all (index 0)\n    at async reloadAll (http://localhost:3000/src/views/admin/intelligence/CollectionManagement.vue:1384:3)\n    at async http://localhost:3000/src/views/admin/intelligence/CollectionManagement.vue:1395:3",
+      "ts": "2026-02-28T17:28:28.446Z"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "url": "http://localhost:3000/admin/intelligence/collection",
+      "text": "Component instance: Proxy(Object)",
+      "ts": "2026-02-28T17:28:28.446Z"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "url": "http://localhost:3000/admin/intelligence/collection",
+      "text": "Error info: mounted hook",
+      "ts": "2026-02-28T17:28:28.446Z"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "url": "http://localhost:3000/admin/intelligence/collection",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:28:28.446Z"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "url": "http://localhost:3000/admin/intelligence/collection",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:28:28.446Z"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "url": "http://localhost:3000/admin/intelligence/collection",
+      "text": "AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)\n    at Axios.request (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:2233:41)\n    at async loadMatches (http://localhost:3000/src/views/admin/intelligence/CollectionManagement.vue:528:20)\n    at async Promise.all (index 1)",
+      "ts": "2026-02-28T17:28:28.447Z"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "url": "http://localhost:3000/admin/intelligence/collection",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:28:28.450Z"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "url": "http://localhost:3000/admin/intelligence/collection",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:28:28.450Z"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "url": "http://localhost:3000/admin/intelligence/collection",
+      "text": "AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)\n    at Axios.request (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:2233:41)\n    at async loadTasks (http://localhost:3000/src/views/admin/intelligence/CollectionManagement.vue:707:20)\n    at async Promise.all (index 2)",
+      "ts": "2026-02-28T17:28:28.451Z"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "url": "http://localhost:3000/admin/intelligence/collection",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:28:28.454Z"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "url": "http://localhost:3000/admin/intelligence/collection",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:28:28.454Z"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "url": "http://localhost:3000/admin/intelligence/collection",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:28:28.456Z"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "url": "http://localhost:3000/admin/intelligence/collection",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:28:28.456Z"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "url": "http://localhost:3000/admin/intelligence/collection",
+      "text": "AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)\n    at Axios.request (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:2233:41)\n    at async loadTimeWindowConfig (http://localhost:3000/src/views/admin/intelligence/CollectionManagement.vue:368:22)\n    at async Promise.all (index 4)",
+      "ts": "2026-02-28T17:28:28.457Z"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "url": "http://localhost:3000/admin/intelligence/collection",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:28:28.511Z"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "url": "http://localhost:3000/admin/intelligence/collection",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:28:28.511Z"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "url": "http://localhost:3000/admin/intelligence/collection",
+      "text": "AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)\n    at Axios.request (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:2233:41)\n    at async Promise.all (index 0)\n    at async loadAdvancedSettings (http://localhost:3000/src/views/admin/intelligence/CollectionManagement.vue:410:86)\n    at async Promise.all (index 5)",
+      "ts": "2026-02-28T17:28:28.513Z"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "url": "http://localhost:3000/admin/intelligence/collection",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:28:28.751Z"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "url": "http://localhost:3000/admin/intelligence/collection",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:28:28.754Z"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "url": "http://localhost:3000/admin/intelligence/collection",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:28:28.754Z"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "url": "http://localhost:3000/admin/intelligence/collection",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:28:28.755Z"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "url": "http://localhost:3000/admin/intelligence/collection",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:28:28.756Z"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "url": "http://localhost:3000/admin/intelligence/collection",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:28:28.757Z"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "url": "http://localhost:3000/admin/intelligence/collection",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:28:28.759Z"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "url": "http://localhost:3000/admin/intelligence/collection",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:28:28.759Z"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "url": "http://localhost:3000/admin/intelligence/collection",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:28:28.760Z"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "url": "http://localhost:3000/admin/intelligence/collection",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:28:28.761Z"
+    },
+    {
+      "route": "/admin/intelligence/model",
+      "url": "http://localhost:3000/admin/intelligence/model",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:28:31.214Z"
+    },
+    {
+      "route": "/admin/intelligence/model",
+      "url": "http://localhost:3000/admin/intelligence/model",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:28:31.215Z"
+    },
+    {
+      "route": "/admin/intelligence/weight",
+      "url": "http://localhost:3000/admin/intelligence/weight",
+      "text": "Global error caught: TypeError: _ctx.getStatusColor is not a function\n    at http://localhost:3000/src/views/admin/intelligence/WeightManagement.vue:963:46\n    at renderFnWithContext (http://localhost:3000/node_modules/.vite/deps/chunk-H2732BJL.js?v=ddecc589:2846:13)\n    at renderSlot (http://localhost:3000/node_modules/.vite/deps/chunk-H2732BJL.js?v=ddecc589:5386:53)\n    at Proxy.<anonymous> (http://localhost:3000/node_modules/.vite/deps/element-plus.js?v=0d9bc8da:64656:19)\n    at renderComponentRoot (http://localhost:3000/node_modules/.vite/deps/chunk-H2732BJL.js?v=ddecc589:6650:17)\n    at ReactiveEffect.componentUpdateFn [as fn] (http://localhost:3000/node_modules/.vite/deps/chunk-H2732BJL.js?v=ddecc589:8205:46)\n    at ReactiveEffect.run (http://localhost:3000/node_modules/.vite/deps/chunk-H2732BJL.js?v=ddecc589:505:19)\n    at setupRenderEffect (http://localhost:3000/node_modules/.vite/deps/chunk-H2732BJL.js?v=ddecc589:8340:5)\n    at mountComponent (http://localhost:3000/node_modules/.vite/deps/chunk-H2732BJL.js?v=ddecc589:8114:7)\n    at processComponent (http://localhost:3000/node_modules/.vite/deps/chunk-H2732BJL.js?v=ddecc589:8066:9)",
+      "ts": "2026-02-28T17:28:34.060Z"
+    },
+    {
+      "route": "/admin/intelligence/weight",
+      "url": "http://localhost:3000/admin/intelligence/weight",
+      "text": "Component instance: Proxy(Object)",
+      "ts": "2026-02-28T17:28:34.060Z"
+    },
+    {
+      "route": "/admin/intelligence/weight",
+      "url": "http://localhost:3000/admin/intelligence/weight",
+      "text": "Error info: render function",
+      "ts": "2026-02-28T17:28:34.060Z"
+    },
+    {
+      "route": "/admin/intelligence/weight",
+      "url": "http://localhost:3000/admin/intelligence/weight",
+      "text": "Global error caught: TypeError: _ctx.getStatusColor is not a function\n    at http://localhost:3000/src/views/admin/intelligence/WeightManagement.vue:963:46\n    at renderFnWithContext (http://localhost:3000/node_modules/.vite/deps/chunk-H2732BJL.js?v=ddecc589:2846:13)\n    at renderSlot (http://localhost:3000/node_modules/.vite/deps/chunk-H2732BJL.js?v=ddecc589:5386:53)\n    at Proxy.<anonymous> (http://localhost:3000/node_modules/.vite/deps/element-plus.js?v=0d9bc8da:64656:19)\n    at renderComponentRoot (http://localhost:3000/node_modules/.vite/deps/chunk-H2732BJL.js?v=ddecc589:6650:17)\n    at ReactiveEffect.componentUpdateFn [as fn] (http://localhost:3000/node_modules/.vite/deps/chunk-H2732BJL.js?v=ddecc589:8205:46)\n    at ReactiveEffect.run (http://localhost:3000/node_modules/.vite/deps/chunk-H2732BJL.js?v=ddecc589:505:19)\n    at setupRenderEffect (http://localhost:3000/node_modules/.vite/deps/chunk-H2732BJL.js?v=ddecc589:8340:5)\n    at mountComponent (http://localhost:3000/node_modules/.vite/deps/chunk-H2732BJL.js?v=ddecc589:8114:7)\n    at processComponent (http://localhost:3000/node_modules/.vite/deps/chunk-H2732BJL.js?v=ddecc589:8066:9)",
+      "ts": "2026-02-28T17:28:34.060Z"
+    },
+    {
+      "route": "/admin/intelligence/weight",
+      "url": "http://localhost:3000/admin/intelligence/weight",
+      "text": "Component instance: Proxy(Object)",
+      "ts": "2026-02-28T17:28:34.060Z"
+    },
+    {
+      "route": "/admin/intelligence/weight",
+      "url": "http://localhost:3000/admin/intelligence/weight",
+      "text": "Error info: render function",
+      "ts": "2026-02-28T17:28:34.060Z"
+    },
+    {
+      "route": "/admin/intelligence/weight",
+      "url": "http://localhost:3000/admin/intelligence/weight",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:28:34.119Z"
+    },
+    {
+      "route": "/admin/intelligence/weight",
+      "url": "http://localhost:3000/admin/intelligence/weight",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:28:34.119Z"
+    },
+    {
+      "route": "/admin/intelligence/graph",
+      "url": "http://localhost:3000/admin/intelligence/graph",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:28:37.004Z"
+    },
+    {
+      "route": "/admin/intelligence/graph",
+      "url": "http://localhost:3000/admin/intelligence/graph",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:28:37.004Z"
+    },
+    {
+      "route": "/admin/intelligence/graph",
+      "url": "http://localhost:3000/admin/intelligence/graph",
+      "text": "加载图谱失败 AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)\n    at Axios.request (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:2233:41)\n    at async loadGraphData (http://localhost:3000/src/views/admin/intelligence/GraphManagement.vue:167:18)\n    at async http://localhost:3000/src/views/admin/intelligence/GraphManagement.vue:204:3",
+      "ts": "2026-02-28T17:28:37.006Z"
+    },
+    {
+      "route": "/admin/intelligence/graph",
+      "url": "http://localhost:3000/admin/intelligence/graph",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:28:37.011Z"
+    },
+    {
+      "route": "/admin/intelligence/graph",
+      "url": "http://localhost:3000/admin/intelligence/graph",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:28:37.011Z"
+    },
+    {
+      "route": "/admin/intelligence/sentiment",
+      "url": "http://localhost:3000/admin/intelligence/sentiment",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:28:39.849Z"
+    },
+    {
+      "route": "/admin/intelligence/sentiment",
+      "url": "http://localhost:3000/admin/intelligence/sentiment",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:28:39.849Z"
+    },
+    {
+      "route": "/admin/intelligence/multimodal",
+      "url": "http://localhost:3000/admin/intelligence/multimodal",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:28:42.763Z"
+    },
+    {
+      "route": "/admin/intelligence/multimodal",
+      "url": "http://localhost:3000/admin/intelligence/multimodal",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:28:42.763Z"
+    },
+    {
+      "route": "/admin/system/config",
+      "url": "http://localhost:3000/admin/system/config",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:28:45.676Z"
+    },
+    {
+      "route": "/admin/system/config",
+      "url": "http://localhost:3000/admin/system/config",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:28:45.676Z"
+    },
+    {
+      "route": "/admin/logs",
+      "url": "http://localhost:3000/admin/logs",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:28:48.519Z"
+    },
+    {
+      "route": "/admin/logs",
+      "url": "http://localhost:3000/admin/logs",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:28:48.520Z"
+    },
+    {
+      "route": "/admin/logs",
+      "url": "http://localhost:3000/admin/logs",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "ts": "2026-02-28T17:28:48.523Z"
+    },
+    {
+      "route": "/admin/logs",
+      "url": "http://localhost:3000/admin/logs",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "ts": "2026-02-28T17:28:48.530Z"
+    },
+    {
+      "route": "/admin/logs/system",
+      "url": "http://localhost:3000/admin/logs/system",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:28:51.425Z"
+    },
+    {
+      "route": "/admin/logs/system",
+      "url": "http://localhost:3000/admin/logs/system",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:28:51.426Z"
+    },
+    {
+      "route": "/admin/logs/system",
+      "url": "http://localhost:3000/admin/logs/system",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "ts": "2026-02-28T17:28:51.427Z"
+    },
+    {
+      "route": "/admin/logs/system",
+      "url": "http://localhost:3000/admin/logs/system",
+      "text": "加载系统日志失败: AxiosError: Request failed with status code 401\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)\n    at Axios.request (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:2233:41)\n    at async loadLogs (http://localhost:3000/src/views/admin/logs/SystemLogs.vue:34:26)",
+      "ts": "2026-02-28T17:28:51.433Z"
+    },
+    {
+      "route": "/admin/logs/user",
+      "url": "http://localhost:3000/admin/logs/user",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:28:54.332Z"
+    },
+    {
+      "route": "/admin/logs/user",
+      "url": "http://localhost:3000/admin/logs/user",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:28:54.333Z"
+    },
+    {
+      "route": "/admin/logs/user",
+      "url": "http://localhost:3000/admin/logs/user",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "ts": "2026-02-28T17:28:54.334Z"
+    },
+    {
+      "route": "/admin/logs/user",
+      "url": "http://localhost:3000/admin/logs/user",
+      "text": "加载用户日志失败: AxiosError: Request failed with status code 401\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)\n    at Axios.request (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:2233:41)\n    at async loadLogs (http://localhost:3000/src/views/admin/logs/UserLogs.vue:34:26)",
+      "ts": "2026-02-28T17:28:54.339Z"
+    },
+    {
+      "route": "/admin/logs/security",
+      "url": "http://localhost:3000/admin/logs/security",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:28:57.220Z"
+    },
+    {
+      "route": "/admin/logs/security",
+      "url": "http://localhost:3000/admin/logs/security",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:28:57.221Z"
+    },
+    {
+      "route": "/admin/logs/security",
+      "url": "http://localhost:3000/admin/logs/security",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "ts": "2026-02-28T17:28:57.223Z"
+    },
+    {
+      "route": "/admin/logs/security",
+      "url": "http://localhost:3000/admin/logs/security",
+      "text": "加载安全日志失败: AxiosError: Request failed with status code 401\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)\n    at Axios.request (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:2233:41)\n    at async loadLogs (http://localhost:3000/src/views/admin/logs/SecurityLogs.vue:34:22)",
+      "ts": "2026-02-28T17:28:57.231Z"
+    },
+    {
+      "route": "/admin/logs/api",
+      "url": "http://localhost:3000/admin/logs/api",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:29:00.089Z"
+    },
+    {
+      "route": "/admin/logs/api",
+      "url": "http://localhost:3000/admin/logs/api",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:29:00.089Z"
+    },
+    {
+      "route": "/admin/logs/api",
+      "url": "http://localhost:3000/admin/logs/api",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "ts": "2026-02-28T17:29:00.092Z"
+    },
+    {
+      "route": "/admin/logs/api",
+      "url": "http://localhost:3000/admin/logs/api",
+      "text": "加载API日志失败: AxiosError: Request failed with status code 401\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)\n    at Axios.request (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:2233:41)\n    at async loadLogs (http://localhost:3000/src/views/admin/logs/APILogs.vue:34:26)",
+      "ts": "2026-02-28T17:29:00.098Z"
+    },
+    {
+      "route": "/admin/logs/ai",
+      "url": "http://localhost:3000/admin/logs/ai",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:29:02.986Z"
+    },
+    {
+      "route": "/admin/logs/ai",
+      "url": "http://localhost:3000/admin/logs/ai",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=d80b0a73:1616:7)",
+      "ts": "2026-02-28T17:29:02.987Z"
+    },
+    {
+      "route": "/admin/logs/ai",
+      "url": "http://localhost:3000/admin/logs/ai",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "ts": "2026-02-28T17:29:02.989Z"
+    }
+  ],
+  "pageErrors": [],
+  "failedResponses": [
+    {
+      "route": "/admin/dashboard",
+      "page": "http://localhost:3000/admin/dashboard",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "ts": "2026-02-28T17:26:50.299Z"
+    },
+    {
+      "route": "/admin/users/list",
+      "page": "http://localhost:3000/admin/users/list",
+      "status": 401,
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/v1/admin/admin-users/?skip=0&limit=20&_t=1772299613043",
+      "ts": "2026-02-28T17:26:53.072Z"
+    },
+    {
+      "route": "/admin/users/list",
+      "page": "http://localhost:3000/admin/users/list",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "ts": "2026-02-28T17:26:53.089Z"
+    },
+    {
+      "route": "/admin/users/roles",
+      "page": "http://localhost:3000/admin/users/roles",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "ts": "2026-02-28T17:26:55.891Z"
+    },
+    {
+      "route": "/admin/users/departments",
+      "page": "http://localhost:3000/admin/users/departments",
+      "status": 401,
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/v1/admin/admin-users/?skip=0&limit=100&status=active&_t=1772299618759",
+      "ts": "2026-02-28T17:26:58.778Z"
+    },
+    {
+      "route": "/admin/users/departments",
+      "page": "http://localhost:3000/admin/users/departments",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "ts": "2026-02-28T17:26:58.788Z"
+    },
+    {
+      "route": "/admin/users/profile",
+      "page": "http://localhost:3000/admin/users/profile",
+      "status": 401,
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/v1/admin/admin-users/current-user?_t=1772299621636",
+      "ts": "2026-02-28T17:27:01.656Z"
+    },
+    {
+      "route": "/admin/users/profile",
+      "page": "http://localhost:3000/admin/users/profile",
+      "status": 401,
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/v1/admin/admin-users/login-history?limit=10&_t=1772299621636",
+      "ts": "2026-02-28T17:27:01.662Z"
+    },
+    {
+      "route": "/admin/users/profile",
+      "page": "http://localhost:3000/admin/users/profile",
+      "status": 401,
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/v1/admin/admin-users/stats/overview?_t=1772299621636",
+      "ts": "2026-02-28T17:27:01.668Z"
+    },
+    {
+      "route": "/admin/users/profile",
+      "page": "http://localhost:3000/admin/users/profile",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "ts": "2026-02-28T17:27:01.674Z"
+    },
+    {
+      "route": "/admin/users/profiles",
+      "page": "http://localhost:3000/admin/users/profiles",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "ts": "2026-02-28T17:27:04.556Z"
+    },
+    {
+      "route": "/admin/users/profiles",
+      "page": "http://localhost:3000/admin/users/profiles",
+      "status": 401,
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/v1/admin/user-profiles/?page=1&size=500&skip=0&limit=500&_t=1772299624539",
+      "ts": "2026-02-28T17:27:04.559Z"
+    },
+    {
+      "route": "/admin/users/logs",
+      "page": "http://localhost:3000/admin/users/logs",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "ts": "2026-02-28T17:27:07.437Z"
+    },
+    {
+      "route": "/admin/users/logs",
+      "page": "http://localhost:3000/admin/users/logs",
+      "status": 401,
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/v1/admin/system/logs/db/user?skip=0&limit=20&_t=1772299627412",
+      "ts": "2026-02-28T17:27:07.439Z"
+    },
+    {
+      "route": "/admin/beidan-filter",
+      "page": "http://localhost:3000/admin/beidan-filter",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "ts": "2026-02-28T17:27:10.388Z"
+    },
+    {
+      "route": "/admin/beidan-betting-sim",
+      "page": "http://localhost:3000/admin/beidan-betting-sim",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "ts": "2026-02-28T17:27:15.525Z"
+    },
+    {
+      "route": "/admin/beidan-betting-sim",
+      "page": "http://localhost:3000/admin/beidan-betting-sim",
+      "status": 401,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/beidan-betting/expect-options",
+      "ts": "2026-02-28T17:27:15.529Z"
+    },
+    {
+      "route": "/admin/data-source/config",
+      "page": "http://localhost:3000/admin/data-source/config",
+      "status": 401,
+      "method": "GET",
+      "url": "http://localhost:3000/api/admin/sources",
+      "ts": "2026-02-28T17:27:16.064Z"
+    },
+    {
+      "route": "/admin/data-source/config",
+      "page": "http://localhost:3000/admin/data-source/config",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "ts": "2026-02-28T17:27:16.065Z"
+    },
+    {
+      "route": "/admin/data-source/task-console",
+      "page": "http://localhost:3000/admin/data-source/task-console",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "ts": "2026-02-28T17:27:18.975Z"
+    },
+    {
+      "route": "/admin/data-source/monitor",
+      "page": "http://localhost:3000/admin/data-source/monitor",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "ts": "2026-02-28T17:27:21.910Z"
+    },
+    {
+      "route": "/admin/data-source/data-center",
+      "page": "http://localhost:3000/admin/data-source/data-center",
+      "status": 404,
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/v1/stats/data-center",
+      "ts": "2026-02-28T17:27:24.981Z"
+    },
+    {
+      "route": "/admin/data-source/data-center",
+      "page": "http://localhost:3000/admin/data-source/data-center",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "ts": "2026-02-28T17:27:24.988Z"
+    },
+    {
+      "route": "/admin/data-source/data-center",
+      "page": "http://localhost:3000/admin/data-source/data-center",
+      "status": 401,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/admin/data?page=1&size=20",
+      "ts": "2026-02-28T17:27:24.990Z"
+    },
+    {
+      "route": "/admin/data-source/ip-pool",
+      "page": "http://localhost:3000/admin/data-source/ip-pool",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "ts": "2026-02-28T17:27:27.712Z"
+    },
+    {
+      "route": "/admin/data-source/headers",
+      "page": "http://localhost:3000/admin/data-source/headers",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "ts": "2026-02-28T17:27:30.559Z"
+    },
+    {
+      "route": "/admin/data-source/task-monitor",
+      "page": "http://localhost:3000/admin/data-source/task-monitor",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "ts": "2026-02-28T17:27:33.462Z"
+    },
+    {
+      "route": "/admin/match-data/schedule/jczq",
+      "page": "http://localhost:3000/admin/match-data/schedule/jczq",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/admin/lottery-schedules/league-options?schedule_type=jczq&date_from=2026-02-28&date_to=2026-02-28",
+      "ts": "2026-02-28T17:27:36.300Z"
+    },
+    {
+      "route": "/admin/match-data/schedule/jczq",
+      "page": "http://localhost:3000/admin/match-data/schedule/jczq",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "ts": "2026-02-28T17:27:36.302Z"
+    },
+    {
+      "route": "/admin/match-data/schedule/jczq",
+      "page": "http://localhost:3000/admin/match-data/schedule/jczq",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/admin/lottery-schedules/league-options?schedule_type=jczq&date_from=2026-02-28&date_to=2026-02-28",
+      "ts": "2026-02-28T17:27:36.467Z"
+    },
+    {
+      "route": "/admin/match-data/schedule/jczq",
+      "page": "http://localhost:3000/admin/match-data/schedule/jczq",
+      "status": 401,
+      "method": "GET",
+      "url": "http://localhost:8000/api/v1/admin/lottery-schedules?schedule_type=jczq&page=1&size=20&date_from=2026-02-28&date_to=2026-02-28",
+      "ts": "2026-02-28T17:27:36.624Z"
+    },
+    {
+      "route": "/admin/match-data/schedule/bd",
+      "page": "http://localhost:3000/admin/match-data/schedule/bd",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/admin/lottery-schedules/issue-options?count=3",
+      "ts": "2026-02-28T17:27:39.192Z"
+    },
+    {
+      "route": "/admin/match-data/schedule/bd",
+      "page": "http://localhost:3000/admin/match-data/schedule/bd",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/admin/lottery-schedules/league-options?schedule_type=bd&date_from=2026-02-28&date_to=2026-02-28",
+      "ts": "2026-02-28T17:27:39.195Z"
+    },
+    {
+      "route": "/admin/match-data/schedule/bd",
+      "page": "http://localhost:3000/admin/match-data/schedule/bd",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "ts": "2026-02-28T17:27:39.197Z"
+    },
+    {
+      "route": "/admin/match-data/schedule/bd",
+      "page": "http://localhost:3000/admin/match-data/schedule/bd",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/admin/lottery-schedules/league-options?schedule_type=bd&date_from=2026-02-28&date_to=2026-02-28",
+      "ts": "2026-02-28T17:27:39.218Z"
+    },
+    {
+      "route": "/admin/match-data/schedule/bd",
+      "page": "http://localhost:3000/admin/match-data/schedule/bd",
+      "status": 401,
+      "method": "GET",
+      "url": "http://localhost:8000/api/v1/admin/lottery-schedules?schedule_type=bd&page=1&size=20&date_from=2026-02-28&date_to=2026-02-28",
+      "ts": "2026-02-28T17:27:39.219Z"
+    },
+    {
+      "route": "/admin/draw-prediction/ai-draw",
+      "page": "http://localhost:3000/admin/draw-prediction/ai-draw",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/draw-prediction/ai-draw/rules",
+      "ts": "2026-02-28T17:27:42.092Z"
+    },
+    {
+      "route": "/admin/draw-prediction/ai-draw",
+      "page": "http://localhost:3000/admin/draw-prediction/ai-draw",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "ts": "2026-02-28T17:27:42.097Z"
+    },
+    {
+      "route": "/admin/draw-prediction/ai-draw",
+      "page": "http://localhost:3000/admin/draw-prediction/ai-draw",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/admin/lottery-schedules/issue-options?count=3",
+      "ts": "2026-02-28T17:27:42.114Z"
+    },
+    {
+      "route": "/admin/draw-prediction/ai-draw",
+      "page": "http://localhost:3000/admin/draw-prediction/ai-draw",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/admin/lottery-schedules/league-options?schedule_type=bd&date_from=2026-03-01&date_to=2026-03-01",
+      "ts": "2026-02-28T17:27:42.132Z"
+    },
+    {
+      "route": "/admin/draw-prediction/ai-draw",
+      "page": "http://localhost:3000/admin/draw-prediction/ai-draw",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/admin/lottery-schedules/league-options?schedule_type=bd&date_from=2026-03-01&date_to=2026-03-01",
+      "ts": "2026-02-28T17:27:42.146Z"
+    },
+    {
+      "route": "/admin/draw-prediction/ai-draw",
+      "page": "http://localhost:3000/admin/draw-prediction/ai-draw",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/draw-prediction/ai-draw/list?date_str=2026-03-01&_ts=1772299662149",
+      "ts": "2026-02-28T17:27:42.158Z"
+    },
+    {
+      "route": "/admin/draw-prediction/poisson-11",
+      "page": "http://localhost:3000/admin/draw-prediction/poisson-11",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/admin/lottery-schedules/issue-options?count=3",
+      "ts": "2026-02-28T17:27:44.982Z"
+    },
+    {
+      "route": "/admin/draw-prediction/poisson-11",
+      "page": "http://localhost:3000/admin/draw-prediction/poisson-11",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "ts": "2026-02-28T17:27:44.985Z"
+    },
+    {
+      "route": "/admin/draw-prediction/poisson-11",
+      "page": "http://localhost:3000/admin/draw-prediction/poisson-11",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/admin/lottery-schedules/league-options?schedule_type=bd&date_from=2026-03-01&date_to=2026-03-01",
+      "ts": "2026-02-28T17:27:45.157Z"
+    },
+    {
+      "route": "/admin/draw-prediction/poisson-11",
+      "page": "http://localhost:3000/admin/draw-prediction/poisson-11",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/admin/lottery-schedules/league-options?schedule_type=bd&date_from=2026-03-01&date_to=2026-03-01",
+      "ts": "2026-02-28T17:27:45.182Z"
+    },
+    {
+      "route": "/admin/draw-prediction/poisson-11",
+      "page": "http://localhost:3000/admin/draw-prediction/poisson-11",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/draw-prediction/poisson-11/list?date_str=2026-03-01&data_source=yingqiu_bd&_ts=1772299665185",
+      "ts": "2026-02-28T17:27:45.194Z"
+    },
+    {
+      "route": "/admin/draw-prediction/suggestion-center",
+      "page": "http://localhost:3000/admin/draw-prediction/suggestion-center",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/draw-prediction/draw-suggestion/suggestions?date_str=2026-03-01&page=1&page_size=20",
+      "ts": "2026-02-28T17:27:47.878Z"
+    },
+    {
+      "route": "/admin/draw-prediction/suggestion-center",
+      "page": "http://localhost:3000/admin/draw-prediction/suggestion-center",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/draw-prediction/draw-suggestion/odds-snapshots?date_str=2026-03-01&page=1&page_size=20",
+      "ts": "2026-02-28T17:27:47.883Z"
+    },
+    {
+      "route": "/admin/draw-prediction/suggestion-center",
+      "page": "http://localhost:3000/admin/draw-prediction/suggestion-center",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/draw-prediction/draw-suggestion/metrics/summary?days=7",
+      "ts": "2026-02-28T17:27:48.073Z"
+    },
+    {
+      "route": "/admin/draw-prediction/suggestion-center",
+      "page": "http://localhost:3000/admin/draw-prediction/suggestion-center",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "ts": "2026-02-28T17:27:48.089Z"
+    },
+    {
+      "route": "/admin/draw-prediction/killswitch",
+      "page": "http://localhost:3000/admin/draw-prediction/killswitch",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "ts": "2026-02-28T17:27:50.739Z"
+    },
+    {
+      "route": "/admin/draw-prediction/killswitch",
+      "page": "http://localhost:3000/admin/draw-prediction/killswitch",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/draw-prediction/draw-suggestion/metrics/summary?days=7",
+      "ts": "2026-02-28T17:27:50.745Z"
+    },
+    {
+      "route": "/admin/draw-prediction/killswitch",
+      "page": "http://localhost:3000/admin/draw-prediction/killswitch",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "ts": "2026-02-28T17:27:50.952Z"
+    },
+    {
+      "route": "/admin/draw-prediction/model-workbench",
+      "page": "http://localhost:3000/admin/draw-prediction/model-workbench?tab=data",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "ts": "2026-02-28T17:27:53.610Z"
+    },
+    {
+      "route": "/admin/draw-prediction/model-workbench",
+      "page": "http://localhost:3000/admin/draw-prediction/model-workbench?tab=data",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/draw-prediction/features?keyword=&page=1&size=10",
+      "ts": "2026-02-28T17:27:53.639Z"
+    },
+    {
+      "route": "/admin/ai-services/local",
+      "page": "http://localhost:3000/admin/ai-services/local",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "ts": "2026-02-28T17:27:56.533Z"
+    },
+    {
+      "route": "/admin/ai-services/remote",
+      "page": "http://localhost:3000/admin/ai-services/remote",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/llm-providers/count",
+      "ts": "2026-02-28T17:27:59.407Z"
+    },
+    {
+      "route": "/admin/ai-services/remote",
+      "page": "http://localhost:3000/admin/ai-services/remote",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "ts": "2026-02-28T17:27:59.411Z"
+    },
+    {
+      "route": "/admin/ai-services/costs",
+      "page": "http://localhost:3000/admin/ai-services/costs",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/llm-providers/stats/overview",
+      "ts": "2026-02-28T17:28:02.290Z"
+    },
+    {
+      "route": "/admin/ai-services/costs",
+      "page": "http://localhost:3000/admin/ai-services/costs",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "ts": "2026-02-28T17:28:02.320Z"
+    },
+    {
+      "route": "/admin/ai-services/agents",
+      "page": "http://localhost:3000/admin/ai-services/agents",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "ts": "2026-02-28T17:28:05.250Z"
+    },
+    {
+      "route": "/admin/ai-services/models",
+      "page": "http://localhost:3000/admin/ai-services/models",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "ts": "2026-02-28T17:28:08.080Z"
+    },
+    {
+      "route": "/admin/ai-services/conversation",
+      "page": "http://localhost:3000/admin/ai-services/conversation",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "ts": "2026-02-28T17:28:10.941Z"
+    },
+    {
+      "route": "/admin/ai-services/config",
+      "page": "http://localhost:3000/admin/ai-services/config",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "ts": "2026-02-28T17:28:13.873Z"
+    },
+    {
+      "route": "/admin/intelligent-decision/hedging",
+      "page": "http://localhost:3000/admin/intelligent-decision/hedging",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "ts": "2026-02-28T17:28:16.791Z"
+    },
+    {
+      "route": "/admin/intelligent-decision/recommendations",
+      "page": "http://localhost:3000/admin/intelligent-decision/recommendations",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "ts": "2026-02-28T17:28:19.655Z"
+    },
+    {
+      "route": "/admin/intelligent-decision/risk-control",
+      "page": "http://localhost:3000/admin/intelligent-decision/risk-control",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "ts": "2026-02-28T17:28:22.527Z"
+    },
+    {
+      "route": "/admin/intelligence/screening",
+      "page": "http://localhost:3000/admin/intelligence/screening",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "ts": "2026-02-28T17:28:25.491Z"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "page": "http://localhost:3000/admin/intelligence/collection",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/admin/intelligence/collection/sources",
+      "ts": "2026-02-28T17:28:28.444Z"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "page": "http://localhost:3000/admin/intelligence/collection",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/admin/intelligence/collection/matches?page=1&size=100&search=&date_from=2026-02-28&date_to=2026-02-28",
+      "ts": "2026-02-28T17:28:28.446Z"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "page": "http://localhost:3000/admin/intelligence/collection",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/admin/intelligence/collection/tasks?page=1&size=100",
+      "ts": "2026-02-28T17:28:28.450Z"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "page": "http://localhost:3000/admin/intelligence/collection",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/admin/intelligence/collection/channels/dingtalk/bindings",
+      "ts": "2026-02-28T17:28:28.454Z"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "page": "http://localhost:3000/admin/intelligence/collection",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/admin/intelligence/collection/settings/time-window",
+      "ts": "2026-02-28T17:28:28.456Z"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "page": "http://localhost:3000/admin/intelligence/collection",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/admin/intelligence/collection/settings/network",
+      "ts": "2026-02-28T17:28:28.511Z"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "page": "http://localhost:3000/admin/intelligence/collection",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/admin/intelligence/collection/settings/source-rules",
+      "ts": "2026-02-28T17:28:28.751Z"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "page": "http://localhost:3000/admin/intelligence/collection",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/admin/intelligence/collection/settings/quality-thresholds",
+      "ts": "2026-02-28T17:28:28.754Z"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "page": "http://localhost:3000/admin/intelligence/collection",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/admin/intelligence/collection/settings/alias-dictionary",
+      "ts": "2026-02-28T17:28:28.755Z"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "page": "http://localhost:3000/admin/intelligence/collection",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/admin/intelligence/collection/sources/health?days=7",
+      "ts": "2026-02-28T17:28:28.759Z"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "page": "http://localhost:3000/admin/intelligence/collection",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "ts": "2026-02-28T17:28:28.760Z"
+    },
+    {
+      "route": "/admin/intelligence/model",
+      "page": "http://localhost:3000/admin/intelligence/model",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "ts": "2026-02-28T17:28:31.214Z"
+    },
+    {
+      "route": "/admin/intelligence/weight",
+      "page": "http://localhost:3000/admin/intelligence/weight",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "ts": "2026-02-28T17:28:34.119Z"
+    },
+    {
+      "route": "/admin/intelligence/graph",
+      "page": "http://localhost:3000/admin/intelligence/graph",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/admin/intelligence/collection/graph/overview?days=7&limit=800&include_prediction=true",
+      "ts": "2026-02-28T17:28:37.004Z"
+    },
+    {
+      "route": "/admin/intelligence/graph",
+      "page": "http://localhost:3000/admin/intelligence/graph",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "ts": "2026-02-28T17:28:37.011Z"
+    },
+    {
+      "route": "/admin/intelligence/sentiment",
+      "page": "http://localhost:3000/admin/intelligence/sentiment",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "ts": "2026-02-28T17:28:39.849Z"
+    },
+    {
+      "route": "/admin/intelligence/multimodal",
+      "page": "http://localhost:3000/admin/intelligence/multimodal",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "ts": "2026-02-28T17:28:42.763Z"
+    },
+    {
+      "route": "/admin/system/config",
+      "page": "http://localhost:3000/admin/system/config",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "ts": "2026-02-28T17:28:45.676Z"
+    },
+    {
+      "route": "/admin/logs",
+      "page": "http://localhost:3000/admin/logs",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "ts": "2026-02-28T17:28:48.519Z"
+    },
+    {
+      "route": "/admin/logs",
+      "page": "http://localhost:3000/admin/logs",
+      "status": 401,
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/v1/admin/system/logs/db/statistics?_t=1772299728508",
+      "ts": "2026-02-28T17:28:48.523Z"
+    },
+    {
+      "route": "/admin/logs",
+      "page": "http://localhost:3000/admin/logs",
+      "status": 401,
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/v1/admin/system/logs/db/system?skip=0&limit=5&_t=1772299728508",
+      "ts": "2026-02-28T17:28:48.530Z"
+    },
+    {
+      "route": "/admin/logs/system",
+      "page": "http://localhost:3000/admin/logs/system",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "ts": "2026-02-28T17:28:51.425Z"
+    },
+    {
+      "route": "/admin/logs/system",
+      "page": "http://localhost:3000/admin/logs/system",
+      "status": 401,
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/v1/admin/system/logs/db/system?skip=0&limit=50&_t=1772299731410",
+      "ts": "2026-02-28T17:28:51.427Z"
+    },
+    {
+      "route": "/admin/logs/user",
+      "page": "http://localhost:3000/admin/logs/user",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "ts": "2026-02-28T17:28:54.332Z"
+    },
+    {
+      "route": "/admin/logs/user",
+      "page": "http://localhost:3000/admin/logs/user",
+      "status": 401,
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/v1/admin/system/logs/db/user?skip=0&limit=50&_t=1772299734316",
+      "ts": "2026-02-28T17:28:54.334Z"
+    },
+    {
+      "route": "/admin/logs/security",
+      "page": "http://localhost:3000/admin/logs/security",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "ts": "2026-02-28T17:28:57.220Z"
+    },
+    {
+      "route": "/admin/logs/security",
+      "page": "http://localhost:3000/admin/logs/security",
+      "status": 401,
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/v1/admin/system/logs/db/security?skip=0&limit=50&_t=1772299737193",
+      "ts": "2026-02-28T17:28:57.223Z"
+    },
+    {
+      "route": "/admin/logs/api",
+      "page": "http://localhost:3000/admin/logs/api",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "ts": "2026-02-28T17:29:00.089Z"
+    },
+    {
+      "route": "/admin/logs/api",
+      "page": "http://localhost:3000/admin/logs/api",
+      "status": 401,
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/v1/admin/system/logs/db/api?skip=0&limit=50&_t=1772299740074",
+      "ts": "2026-02-28T17:29:00.092Z"
+    },
+    {
+      "route": "/admin/logs/ai",
+      "page": "http://localhost:3000/admin/logs/ai",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "ts": "2026-02-28T17:29:02.986Z"
+    },
+    {
+      "route": "/admin/logs/ai",
+      "page": "http://localhost:3000/admin/logs/ai",
+      "status": 401,
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/v1/admin/system/logs/db/ai?skip=0&limit=50&_t=1772299742969",
+      "ts": "2026-02-28T17:29:02.989Z"
+    }
+  ],
+  "failedResponseTop": [
+    {
+      "key": "/admin/match-data/schedule/jczq | 404 GET http://localhost:3000/api/v1/admin/lottery-schedules/league-options?schedule_type=jczq&date_from=2026-02-28&date_to=2026-02-28",
+      "count": 2
+    },
+    {
+      "key": "/admin/match-data/schedule/bd | 404 GET http://localhost:3000/api/v1/admin/lottery-schedules/league-options?schedule_type=bd&date_from=2026-02-28&date_to=2026-02-28",
+      "count": 2
+    },
+    {
+      "key": "/admin/draw-prediction/ai-draw | 404 GET http://localhost:3000/api/v1/admin/lottery-schedules/league-options?schedule_type=bd&date_from=2026-03-01&date_to=2026-03-01",
+      "count": 2
+    },
+    {
+      "key": "/admin/draw-prediction/poisson-11 | 404 GET http://localhost:3000/api/v1/admin/lottery-schedules/league-options?schedule_type=bd&date_from=2026-03-01&date_to=2026-03-01",
+      "count": 2
+    },
+    {
+      "key": "/admin/draw-prediction/killswitch | 404 GET http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "count": 2
+    },
+    {
+      "key": "/admin/dashboard | 404 GET http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "count": 1
+    },
+    {
+      "key": "/admin/users/list | 401 GET http://127.0.0.1:8000/api/v1/admin/admin-users/?skip=0&limit=20&_t=1772299613043",
+      "count": 1
+    },
+    {
+      "key": "/admin/users/list | 404 GET http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "count": 1
+    },
+    {
+      "key": "/admin/users/roles | 404 GET http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "count": 1
+    },
+    {
+      "key": "/admin/users/departments | 401 GET http://127.0.0.1:8000/api/v1/admin/admin-users/?skip=0&limit=100&status=active&_t=1772299618759",
+      "count": 1
+    },
+    {
+      "key": "/admin/users/departments | 404 GET http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "count": 1
+    },
+    {
+      "key": "/admin/users/profile | 401 GET http://127.0.0.1:8000/api/v1/admin/admin-users/current-user?_t=1772299621636",
+      "count": 1
+    },
+    {
+      "key": "/admin/users/profile | 401 GET http://127.0.0.1:8000/api/v1/admin/admin-users/login-history?limit=10&_t=1772299621636",
+      "count": 1
+    },
+    {
+      "key": "/admin/users/profile | 401 GET http://127.0.0.1:8000/api/v1/admin/admin-users/stats/overview?_t=1772299621636",
+      "count": 1
+    },
+    {
+      "key": "/admin/users/profile | 404 GET http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "count": 1
+    },
+    {
+      "key": "/admin/users/profiles | 404 GET http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "count": 1
+    },
+    {
+      "key": "/admin/users/profiles | 401 GET http://127.0.0.1:8000/api/v1/admin/user-profiles/?page=1&size=500&skip=0&limit=500&_t=1772299624539",
+      "count": 1
+    },
+    {
+      "key": "/admin/users/logs | 404 GET http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "count": 1
+    },
+    {
+      "key": "/admin/users/logs | 401 GET http://127.0.0.1:8000/api/v1/admin/system/logs/db/user?skip=0&limit=20&_t=1772299627412",
+      "count": 1
+    },
+    {
+      "key": "/admin/beidan-filter | 404 GET http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "count": 1
+    },
+    {
+      "key": "/admin/beidan-betting-sim | 404 GET http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "count": 1
+    },
+    {
+      "key": "/admin/beidan-betting-sim | 401 GET http://localhost:3000/api/v1/beidan-betting/expect-options",
+      "count": 1
+    },
+    {
+      "key": "/admin/data-source/config | 401 GET http://localhost:3000/api/admin/sources",
+      "count": 1
+    },
+    {
+      "key": "/admin/data-source/config | 404 GET http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "count": 1
+    },
+    {
+      "key": "/admin/data-source/task-console | 404 GET http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "count": 1
+    },
+    {
+      "key": "/admin/data-source/monitor | 404 GET http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "count": 1
+    },
+    {
+      "key": "/admin/data-source/data-center | 404 GET http://127.0.0.1:8000/api/v1/stats/data-center",
+      "count": 1
+    },
+    {
+      "key": "/admin/data-source/data-center | 404 GET http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "count": 1
+    },
+    {
+      "key": "/admin/data-source/data-center | 401 GET http://localhost:3000/api/v1/admin/data?page=1&size=20",
+      "count": 1
+    },
+    {
+      "key": "/admin/data-source/ip-pool | 404 GET http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "count": 1
+    },
+    {
+      "key": "/admin/data-source/headers | 404 GET http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "count": 1
+    },
+    {
+      "key": "/admin/data-source/task-monitor | 404 GET http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "count": 1
+    },
+    {
+      "key": "/admin/match-data/schedule/jczq | 404 GET http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "count": 1
+    },
+    {
+      "key": "/admin/match-data/schedule/jczq | 401 GET http://localhost:8000/api/v1/admin/lottery-schedules?schedule_type=jczq&page=1&size=20&date_from=2026-02-28&date_to=2026-02-28",
+      "count": 1
+    },
+    {
+      "key": "/admin/match-data/schedule/bd | 404 GET http://localhost:3000/api/v1/admin/lottery-schedules/issue-options?count=3",
+      "count": 1
+    },
+    {
+      "key": "/admin/match-data/schedule/bd | 404 GET http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "count": 1
+    },
+    {
+      "key": "/admin/match-data/schedule/bd | 401 GET http://localhost:8000/api/v1/admin/lottery-schedules?schedule_type=bd&page=1&size=20&date_from=2026-02-28&date_to=2026-02-28",
+      "count": 1
+    },
+    {
+      "key": "/admin/draw-prediction/ai-draw | 404 GET http://localhost:3000/api/v1/draw-prediction/ai-draw/rules",
+      "count": 1
+    },
+    {
+      "key": "/admin/draw-prediction/ai-draw | 404 GET http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "count": 1
+    },
+    {
+      "key": "/admin/draw-prediction/ai-draw | 404 GET http://localhost:3000/api/v1/admin/lottery-schedules/issue-options?count=3",
+      "count": 1
+    },
+    {
+      "key": "/admin/draw-prediction/ai-draw | 404 GET http://localhost:3000/api/v1/draw-prediction/ai-draw/list?date_str=2026-03-01&_ts=1772299662149",
+      "count": 1
+    },
+    {
+      "key": "/admin/draw-prediction/poisson-11 | 404 GET http://localhost:3000/api/v1/admin/lottery-schedules/issue-options?count=3",
+      "count": 1
+    },
+    {
+      "key": "/admin/draw-prediction/poisson-11 | 404 GET http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "count": 1
+    },
+    {
+      "key": "/admin/draw-prediction/poisson-11 | 404 GET http://localhost:3000/api/v1/draw-prediction/poisson-11/list?date_str=2026-03-01&data_source=yingqiu_bd&_ts=1772299665185",
+      "count": 1
+    },
+    {
+      "key": "/admin/draw-prediction/suggestion-center | 404 GET http://localhost:3000/api/v1/draw-prediction/draw-suggestion/suggestions?date_str=2026-03-01&page=1&page_size=20",
+      "count": 1
+    },
+    {
+      "key": "/admin/draw-prediction/suggestion-center | 404 GET http://localhost:3000/api/v1/draw-prediction/draw-suggestion/odds-snapshots?date_str=2026-03-01&page=1&page_size=20",
+      "count": 1
+    },
+    {
+      "key": "/admin/draw-prediction/suggestion-center | 404 GET http://localhost:3000/api/v1/draw-prediction/draw-suggestion/metrics/summary?days=7",
+      "count": 1
+    },
+    {
+      "key": "/admin/draw-prediction/suggestion-center | 404 GET http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "count": 1
+    },
+    {
+      "key": "/admin/draw-prediction/killswitch | 404 GET http://localhost:3000/api/v1/draw-prediction/draw-suggestion/metrics/summary?days=7",
+      "count": 1
+    },
+    {
+      "key": "/admin/draw-prediction/model-workbench | 404 GET http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "count": 1
+    },
+    {
+      "key": "/admin/draw-prediction/model-workbench | 404 GET http://localhost:3000/api/draw-prediction/features?keyword=&page=1&size=10",
+      "count": 1
+    },
+    {
+      "key": "/admin/ai-services/local | 404 GET http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "count": 1
+    },
+    {
+      "key": "/admin/ai-services/remote | 404 GET http://localhost:3000/api/v1/llm-providers/count",
+      "count": 1
+    },
+    {
+      "key": "/admin/ai-services/remote | 404 GET http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "count": 1
+    },
+    {
+      "key": "/admin/ai-services/costs | 404 GET http://localhost:3000/api/v1/llm-providers/stats/overview",
+      "count": 1
+    },
+    {
+      "key": "/admin/ai-services/costs | 404 GET http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "count": 1
+    },
+    {
+      "key": "/admin/ai-services/agents | 404 GET http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "count": 1
+    },
+    {
+      "key": "/admin/ai-services/models | 404 GET http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "count": 1
+    },
+    {
+      "key": "/admin/ai-services/conversation | 404 GET http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "count": 1
+    },
+    {
+      "key": "/admin/ai-services/config | 404 GET http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "count": 1
+    },
+    {
+      "key": "/admin/intelligent-decision/hedging | 404 GET http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "count": 1
+    },
+    {
+      "key": "/admin/intelligent-decision/recommendations | 404 GET http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "count": 1
+    },
+    {
+      "key": "/admin/intelligent-decision/risk-control | 404 GET http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "count": 1
+    },
+    {
+      "key": "/admin/intelligence/screening | 404 GET http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "count": 1
+    },
+    {
+      "key": "/admin/intelligence/collection | 404 GET http://localhost:3000/api/v1/admin/intelligence/collection/sources",
+      "count": 1
+    },
+    {
+      "key": "/admin/intelligence/collection | 404 GET http://localhost:3000/api/v1/admin/intelligence/collection/matches?page=1&size=100&search=&date_from=2026-02-28&date_to=2026-02-28",
+      "count": 1
+    },
+    {
+      "key": "/admin/intelligence/collection | 404 GET http://localhost:3000/api/v1/admin/intelligence/collection/tasks?page=1&size=100",
+      "count": 1
+    },
+    {
+      "key": "/admin/intelligence/collection | 404 GET http://localhost:3000/api/v1/admin/intelligence/collection/channels/dingtalk/bindings",
+      "count": 1
+    },
+    {
+      "key": "/admin/intelligence/collection | 404 GET http://localhost:3000/api/v1/admin/intelligence/collection/settings/time-window",
+      "count": 1
+    },
+    {
+      "key": "/admin/intelligence/collection | 404 GET http://localhost:3000/api/v1/admin/intelligence/collection/settings/network",
+      "count": 1
+    },
+    {
+      "key": "/admin/intelligence/collection | 404 GET http://localhost:3000/api/v1/admin/intelligence/collection/settings/source-rules",
+      "count": 1
+    },
+    {
+      "key": "/admin/intelligence/collection | 404 GET http://localhost:3000/api/v1/admin/intelligence/collection/settings/quality-thresholds",
+      "count": 1
+    },
+    {
+      "key": "/admin/intelligence/collection | 404 GET http://localhost:3000/api/v1/admin/intelligence/collection/settings/alias-dictionary",
+      "count": 1
+    },
+    {
+      "key": "/admin/intelligence/collection | 404 GET http://localhost:3000/api/v1/admin/intelligence/collection/sources/health?days=7",
+      "count": 1
+    },
+    {
+      "key": "/admin/intelligence/collection | 404 GET http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "count": 1
+    },
+    {
+      "key": "/admin/intelligence/model | 404 GET http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "count": 1
+    },
+    {
+      "key": "/admin/intelligence/weight | 404 GET http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "count": 1
+    },
+    {
+      "key": "/admin/intelligence/graph | 404 GET http://localhost:3000/api/v1/admin/intelligence/collection/graph/overview?days=7&limit=800&include_prediction=true",
+      "count": 1
+    },
+    {
+      "key": "/admin/intelligence/graph | 404 GET http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "count": 1
+    },
+    {
+      "key": "/admin/intelligence/sentiment | 404 GET http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "count": 1
+    },
+    {
+      "key": "/admin/intelligence/multimodal | 404 GET http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "count": 1
+    },
+    {
+      "key": "/admin/system/config | 404 GET http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "count": 1
+    },
+    {
+      "key": "/admin/logs | 404 GET http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "count": 1
+    },
+    {
+      "key": "/admin/logs | 401 GET http://127.0.0.1:8000/api/v1/admin/system/logs/db/statistics?_t=1772299728508",
+      "count": 1
+    },
+    {
+      "key": "/admin/logs | 401 GET http://127.0.0.1:8000/api/v1/admin/system/logs/db/system?skip=0&limit=5&_t=1772299728508",
+      "count": 1
+    },
+    {
+      "key": "/admin/logs/system | 404 GET http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "count": 1
+    },
+    {
+      "key": "/admin/logs/system | 401 GET http://127.0.0.1:8000/api/v1/admin/system/logs/db/system?skip=0&limit=50&_t=1772299731410",
+      "count": 1
+    },
+    {
+      "key": "/admin/logs/user | 404 GET http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "count": 1
+    },
+    {
+      "key": "/admin/logs/user | 401 GET http://127.0.0.1:8000/api/v1/admin/system/logs/db/user?skip=0&limit=50&_t=1772299734316",
+      "count": 1
+    },
+    {
+      "key": "/admin/logs/security | 404 GET http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "count": 1
+    },
+    {
+      "key": "/admin/logs/security | 401 GET http://127.0.0.1:8000/api/v1/admin/system/logs/db/security?skip=0&limit=50&_t=1772299737193",
+      "count": 1
+    },
+    {
+      "key": "/admin/logs/api | 404 GET http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "count": 1
+    },
+    {
+      "key": "/admin/logs/api | 401 GET http://127.0.0.1:8000/api/v1/admin/system/logs/db/api?skip=0&limit=50&_t=1772299740074",
+      "count": 1
+    },
+    {
+      "key": "/admin/logs/ai | 404 GET http://localhost:3000/api/v1/draw-prediction/draw-suggestion/killswitch/state",
+      "count": 1
+    },
+    {
+      "key": "/admin/logs/ai | 401 GET http://127.0.0.1:8000/api/v1/admin/system/logs/db/ai?skip=0&limit=50&_t=1772299742969",
+      "count": 1
+    }
+  ]
+}

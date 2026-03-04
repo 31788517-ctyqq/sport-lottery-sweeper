@@ -1,0 +1,101 @@
+{
+  "project_name": "体育彩票扫盘系统",
+  "version": "1.0.0",
+  "description": "标准化项目结构与开发规范",
+  "key_files": {
+    "backend_entry": "backend/main.py",
+    "frontend_entry": "frontend/src/router/index.js", 
+    "backend_port": 8000,
+    "frontend_port": 3000,
+    "api_docs": "http://localhost:8000/docs"
+  },
+  "structure": {
+    "backend": {
+      "main.py": {
+        "type": "启动文件",
+        "description": "后端服务唯一入口，FastAPI应用主文件",
+        "port": 8000,
+        "commands": ["python main.py", "start_backend.bat"]
+      },
+      "api/v1/__init__.py": {
+        "type": "路由注册",
+        "description": "API v1版本路由统一注册入口"
+      },
+      "database_utils.py": {
+        "type": "数据库工具",
+        "description": "数据库连接和操作工具函数"
+      }
+    },
+    "frontend": {
+      "src/router/index.js": {
+        "type": "路由配置",
+        "description": "前端路由唯一配置文件，定义所有页面路径",
+        "base_url": "http://localhost:3000"
+      },
+      "views/Login.vue": {
+        "type": "登录页面",
+        "route": "/login",
+        "description": "系统登录入口"
+      },
+      "views/admin/Layout.vue": {
+        "type": "布局组件", 
+        "route": "/admin/*",
+        "description": "管理端统一布局"
+      }
+    }
+  },
+  "routes_mapping": {
+    "backend_api": {
+      "/api/v1/auth/login": "用户登录认证",
+      "/api/v1/admin/dashboard/stats": "仪表板统计",
+      "/api/v1/admin/users/*": "用户管理相关",
+      "/api/v1/admin/crawler/*": "爬虫管理相关",
+      "/api/v1/admin/sp/*": "足球SP管理相关"
+    },
+    "frontend_routes": {
+      "/": "重定向到登录页",
+      "/login": "登录页面",
+      "/admin/dashboard": "系统仪表板",
+      "/admin/users": "用户管理",
+      "/admin/crawler": "爬虫管理",
+      "/admin/sp": "足球SP管理",
+      "/admin/schedule": "赛程管理",
+      "/admin/draw-prediction": "平局预测管理",
+      "/admin/intelligence": "情报管理"
+    }
+  },
+  "startup_sequence": [
+    {
+      "step": 1,
+      "action": "启动后端服务",
+      "command": "cd backend && python main.py",
+      "expected_result": "服务运行在8000端口，API文档可访问"
+    },
+    {
+      "step": 2, 
+      "action": "启动前端服务",
+      "command": "cd frontend && npm run dev",
+      "expected_result": "开发服务器运行在3000端口"
+    },
+    {
+      "step": 3,
+      "action": "验证连通性",
+      "command": "访问 http://localhost:3000 和 http://localhost:8000/docs",
+      "expected_result": "前端页面和API文档均可正常访问"
+    }
+  ],
+  "common_issues": {
+    "port_conflict": {
+      "symptom": "端口被占用",
+      "solution": "使用 kill_port_8000.bat 清理端口后重启"
+    },
+    "route_404": {
+      "symptom": "API返回404",
+      "solution": "检查main.py中路由注册和router/index.js中路径配置"
+    },
+    "encoding_error": {
+      "symptom": "中文乱码或语法错误",
+      "solution": "确保所有.py和.js文件使用UTF-8编码"
+    }
+  }
+}

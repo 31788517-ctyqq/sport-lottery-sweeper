@@ -1,0 +1,182 @@
+# Docker Compose for Staging Environment
+# 体育彩票系统预发布环境配置
+
+version: '3.8'
+
+services:
+  # Backend API Service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: ../Dockerfile.backend
+    container_name: sport-lottery-backend-staging
+    restart: unless-stopped
+    ports:
+      - "8001:8000"
+    environment:
+      - ENVIRONMENT=staging
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/sport_lottery_staging
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - LOG_LEVEL=INFO
+      - DEBUG=false
+    volumes:
+      - ./backend/logs:/app/logs
+      - ./backend/uploads:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - sport-lottery-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Frontend Service
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: sport-lottery-frontend-staging
+    restart: unless-stopped
+    ports:
+      - "3001:80"
+    environment:
+      - VITE_API_BASE_URL=http://localhost:8001/api/v1
+      - VITE_ENVIRONMENT=staging
+    depends_on:
+      - backend
+    networks:
+      - sport-lottery-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: sport-lottery-postgres-staging
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=sport_lottery_staging
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_staging_data:/var/lib/postgresql/data
+      - ./scripts/init-db-staging.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - sport-lottery-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d sport_lottery_staging"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: sport-lottery-redis-staging
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass redis_password_staging
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_staging_data:/data
+    networks:
+      - sport-lottery-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Celery Worker
+  celery-worker:
+    build:
+      context: ./backend
+      dockerfile: ../Dockerfile.backend
+    container_name: sport-lottery-celery-staging
+    restart: unless-stopped
+    command: celery -A app.celery_app:celery worker -l info -Q default,data_processing,crawler
+    environment:
+      - ENVIRONMENT=staging
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/sport_lottery_staging
+      - REDIS_URL=redis://:redis_password_staging@redis:6379/0
+      - CELERY_BROKER_URL=redis://:redis_password_staging@redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://:redis_password_staging@redis:6379/0
+    volumes:
+      - ./backend/logs:/app/logs
+      - ./backend/uploads:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - sport-lottery-network
+
+  # Celery Beat (Scheduler)
+  celery-beat:
+    build:
+      context: ./backend
+      dockerfile: ../Dockerfile.backend
+    container_name: sport-lottery-celery-beat-staging
+    restart: unless-stopped
+    command: celery -A app.celery_app:celery beat -l info
+    environment:
+      - ENVIRONMENT=staging
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/sport_lottery_staging
+      - REDIS_URL=redis://:redis_password_staging@redis:6379/0
+      - CELERY_BROKER_URL=redis://:redis_password_staging@redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://:redis_password_staging@redis:6379/0
+    volumes:
+      - ./backend/logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - sport-lottery-network
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: sport-lottery-nginx-staging
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx/nginx.staging.conf:/etc/nginx/nginx.conf
+      - ./nginx/ssl:/etc/nginx/ssl
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - sport-lottery-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  postgres_staging_data:
+    driver: local
+  redis_staging_data:
+    driver: local
+
+networks:
+  sport-lottery-network:
+    driver: bridge

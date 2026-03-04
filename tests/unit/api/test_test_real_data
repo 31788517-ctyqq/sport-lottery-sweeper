@@ -1,0 +1,34 @@
+"""
+测试爬虫是否能获取真实数据
+"""
+import asyncio
+from backend.scrapers.sporttery_scraper import sporttery_scraper
+
+
+async def test_real_data():
+    print("开始测试爬虫获取真实数据...")
+    
+    # 尝试获取比赛数据
+    matches = await sporttery_scraper.get_recent_matches(days_ahead=3)
+    
+    print(f"获取到 {len(matches)} 场比赛数据")
+    
+    if matches:
+        print("\n前3场比赛详情:")
+        for i, match in enumerate(matches[:3]):
+            print(f"\n比赛 {i+1}:")
+            print(f"  主队: {match.get('home_team', 'N/A')}")
+            print(f"  客队: {match.get('away_team', 'N/A')}")
+            print(f"  联赛: {match.get('league', 'N/A')}")
+            print(f"  时间: {match.get('match_time', 'N/A')}")
+            print(f"  赔率(主): {match.get('odds_home_win', 'N/A')}")
+            print(f"  赔率(平): {match.get('odds_draw', 'N/A')}")
+            print(f"  赔率(客): {match.get('odds_away_win', 'N/A')}")
+            print(f"  ID: {match.get('id', 'N/A')}")
+            print(f"  状态: {match.get('status', 'N/A')}")
+    else:
+        print("未能获取到任何比赛数据")
+
+
+if __name__ == "__main__":
+    asyncio.run(test_real_data())

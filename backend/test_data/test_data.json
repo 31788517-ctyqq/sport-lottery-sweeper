@@ -1,0 +1,121 @@
+{
+  "users": [
+    [
+      "admin",
+      "admin@sport-lottery.com",
+      "$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW",
+      "admin,manager",
+      "技术部"
+    ],
+    [
+      "analyst",
+      "analyst@sport-lottery.com",
+      "$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW",
+      "analyst",
+      "数据分析部"
+    ],
+    [
+      "viewer",
+      "viewer@sport-lottery.com",
+      "$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW",
+      "viewer",
+      "运营部"
+    ]
+  ],
+  "data_sources": [
+    [
+      "500彩票网API",
+      "api",
+      "https://api.500.com/v1",
+      "enabled",
+      2.5,
+      "2026-01-28 10:30:00",
+      "官方500彩票网API接口"
+    ],
+    [
+      "本地比赛数据",
+      "file",
+      "file:///data/local_matches.json",
+      "enabled",
+      0.0,
+      "2026-01-28 09:15:00",
+      "本地存储的历史比赛数据文件"
+    ],
+    [
+      "测试数据源",
+      "test",
+      "test://mock/data",
+      "disabled",
+      15.0,
+      "2026-01-27 14:20:00",
+      "用于测试的模拟数据源"
+    ]
+  ],
+  "matches": [
+    [
+      "MATCH1000",
+      "英超",
+      "球队0A",
+      "球队1B",
+      "2026-01-30 03:05:43",
+      "finished",
+      2,
+      0,
+      1.54,
+      3.28,
+      4.54
+    ],
+    [
+      "MATCH1001",
+      "西甲",
+      "球队2A",
+      "球队3B",
+      "2026-01-31 00:05:43",
+      "finished",
+      4,
+      5,
+      3.09,
+      3.73,
+      6.42
+    ],
+    [
+      "MATCH1002",
+      "意甲",
+      "球队4A",
+      "球队5B",
+      "2026-02-01 04:05:43",
+      "finished",
+      4,
+      5,
+      2.34,
+      4.03,
+      5.67
+    ],
+    [
+      "MATCH1003",
+      "德甲",
+      "球队6A",
+      "球队7B",
+      "2026-02-01 23:05:43",
+      "finished",
+      0,
+      2,
+      2.08,
+      3.7,
+      4.66
+    ],
+    [
+      "MATCH1004",
+      "法甲",
+      "球队8A",
+      "球队9B",
+      "2026-02-03 03:05:43",
+      "finished",
+      3,
+      0,
+      2.35,
+      3.71,
+      6.54
+    ]
+  ]
+}

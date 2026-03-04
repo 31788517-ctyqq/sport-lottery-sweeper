@@ -1,0 +1,11 @@
+/* styles/themes/dark.css */
+/* Overrides for dark theme applied via [data-theme="dark"] selector */
+
+/* Already defined in variables.css under [data-theme="dark"] */
+/* This file can contain more complex theme-specific styles or overrides not covered by variables */
+/* Example: */
+/* [data-theme="dark"] .some-component { */
+/*   background: linear-gradient(to bottom, #1e1e1e, #121212); */
+/* } */
+
+/* If all dark styles are handled by CSS variables, this file can remain empty or serve as documentation. */

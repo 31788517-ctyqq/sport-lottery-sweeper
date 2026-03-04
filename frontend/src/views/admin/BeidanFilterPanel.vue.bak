@@ -1,0 +1,2586 @@
+锘?template>
+  <div class="beidan-filter-panel">
+    <el-card class="filter-card">
+      <template #header>
+        <div class="card-header">
+          <div class="header-title">
+            <div class="title">娑撳娣划鍓х暬缁涙盯鈧娅?/div>
+            <div class="subtitle">閸╄桨绨?铻朠 / 铻朩P / P-Tier 閻ㄥ嫯浠堥崝銊х摣闁?/div>
+          </div>
+          <div class="header-actions">
+            <div class="match-count">鐎圭偞妞傞崠褰掑帳 <span>{{ totalResults }}</span> 閸?/div>
+            <el-button type="primary" @click="fetchRealData" :loading="loading">閼惧嘲褰囩€圭偞妞傞弫鐗堝祦</el-button>
+          </div>
+        </div>
+      </template>
+
+      <!-- 缁涙盯鈧娼禒璺哄隘閸?-->
+      <div class="filter-section">
+        <el-row :gutter="20" class="dimension-row">
+          <el-col :span="8">
+            <div class="filter-group">
+              <div class="group-title">
+                <span>鐎圭偛濮忕粵澶岄獓瀹?铻朠</span>
+                <span class="group-hint">娑撹顓圭€圭偛濮忓顔煎瀻鐏?/span>
+              </div>
+              <el-checkbox-group v-model="filterForm.powerDiffs" class="checkbox-grid">
+                <el-checkbox-button
+                  v-for="option in strengthOptions"
+                  :key="option.value"
+                  :value="option.value"
+                >
+                  <div class="option-tile">
+                    <div class="option-value">{{ option.label }}</div>
+                    <div class="option-desc">{{ option.desc }}</div>
+                    <div class="option-range">{{ option.range }}</div>
+                  </div>
+                </el-checkbox-button>
+              </el-checkbox-group>
+            </div>
+          </el-col>
+
+          <el-col :span="8">
+            <div class="filter-group">
+              <div class="group-title">
+                <span>鐠с垻娲忕粵澶岄獓瀹?铻朩P</span>
+                <span class="group-hint">閻╂鐭鹃崗鎴犲箛閸旀稑顕幘?/span>
+              </div>
+              <el-checkbox-group v-model="filterForm.winPanDiffs" class="checkbox-grid">
+                <el-checkbox-button
+                  v-for="option in winPanOptions"
+                  :key="option.value"
+                  :value="option.value"
+                >
+                  <div class="option-tile">
+                    <div class="option-value">{{ option.label }}</div>
+                    <div class="option-desc">{{ option.desc }}</div>
+                    <div class="option-range">{{ option.range }}</div>
+                  </div>
+                </el-checkbox-button>
+              </el-checkbox-group>
+            </div>
+          </el-col>
+
+          <el-col :span="8">
+            <div class="filter-group">
+              <div class="group-title">
+                <span>娑撯偓鐠ф梻菙鐎规碍鈧?P-Tier</span>
+                <span class="group-hint">濮濓綀鐭鹃崣顖欎繆鎼达妇鐡戠痪?/span>
+              </div>
+              <el-checkbox-group v-model="filterForm.stabilityTiers" class="tier-grid">
+                <el-checkbox-button
+                  v-for="option in stabilityOptions"
+                  :key="option.value"
+                  :value="option.value"
+                >
+                  <div class="tier-tile">
+                    <div class="tier-label">{{ option.label }}</div>
+                    <div class="tier-desc">{{ option.desc }}</div>
+                    <div class="tier-range">{{ option.range }}</div>
+                  </div>
+                </el-checkbox-button>
+              </el-checkbox-group>
+            </div>
+          </el-col>
+        </el-row>
+
+        <el-row :gutter="20" class="control-row">
+          <el-col :span="8">
+            <div class="filter-group">
+              <div class="group-title">
+                <span>妤傛楠囩粵娑⑩偓?/span>
+                <span class="group-hint">婢舵氨娣崣鐘插</span>
+              </div>
+              <div class="filter-item">
+                <label>閼辨棁绂岀粵娑⑩偓?/label>
+                <el-select
+                  v-model="filterForm.leagues"
+                  placeholder="鐠囩兘鈧瀚ㄩ懕鏃囩"
+                  multiple
+                  collapse-tags
+                  style="width: 100%"
+                >
+                  <el-option
+                    v-for="league in availableLeagues"
+                    :key="league"
+                    :label="league"
+                    :value="league"
+                  />
+                </el-select>
+              </div>
+              <div class="filter-item">
+                <label>date_time</label>
+                <el-select
+                  v-model="filterForm.dateTime"
+                  placeholder="date_time"
+                  clearable
+                  style="width: 100%"
+                >
+                  <el-option
+                    v-for="value in dateTimeOptions"
+                    :key="value"
+                    :label="value"
+                    :value="value"
+                  />
+                </el-select>
+              </div>
+              <div class="filter-item">
+                <label>閺冦儲婀￠懠鍐ㄦ纯</label>
+                <el-date-picker
+                  v-model="filterForm.dateRange"
+                  type="daterange"
+                  range-separator="閼?
+                  start-placeholder="瀵偓婵妫╅張?
+                  end-placeholder="缂佹挻娼弮銉︽埂"
+                  style="width: 100%"
+                />
+              </div>
+            </div>
+          </el-col>
+
+          <el-col :span="8">
+            <div class="filter-group">
+              <div class="group-title">
+                <span>缁涙盯鈧鐡ラ悾?/span>
+                <span class="group-hint">閹烘帒绨稉搴ゎ潐閸?/span>
+              </div>
+              <div class="filter-item">
+                <label>閹烘帒绨弬鐟扮础</label>
+                <el-radio-group v-model="filterForm.sortBy">
+                  <el-radio label="p_level">P缁?/el-radio>
+                  <el-radio label="delta_wp">铻朩P</el-radio>
+                  <el-radio label="power_diff">铻朠</el-radio>
+                </el-radio-group>
+              </div>
+              <div class="filter-item">
+                <label>閹烘帒绨い鍝勭碍</label>
+                <el-radio-group v-model="filterForm.sortOrder">
+                  <el-radio label="asc">閸楀洤绨?/el-radio>
+                  <el-radio label="desc">闂勫秴绨?/el-radio>
+                </el-radio-group>
+              </div>
+              <div class="filter-item switch-item">
+                <label>鎼存梻鏁ら梽宥囬獓鐟欏嫬鍨?/label>
+                <el-switch v-model="filterForm.includeDerating" />
+              </div>
+              <div class="rule-preview">閹烘帒绨０鍕潔閿涙瓍缁狙囨鎼?閳?铻朩P闂勫秴绨?/div>
+            </div>
+          </el-col>
+
+          <el-col :span="8">
+            <div class="filter-group">
+              <div class="group-title">
+                <span>韫囶偅宓庣紒鍕値</span>
+                <span class="group-hint">娑撯偓闁款喖绨查悽?/span>
+              </div>
+              <div class="preset-grid">
+                <el-button @click="applyPreset('strong')">瀵搫濞嶅锝堢熅</el-button>
+                <el-button @click="applyPreset('upset')">閸愮兘妫婊嗗窛</el-button>
+                <el-button @click="applyPreset('balance')">閸у洩銆€閸楁艾绱?/el-button>
+              </div>
+
+              <el-alert
+                v-if="directionWarning"
+                title="閺傜懓鎮滈懗宀€顬囨０鍕劅閿涙艾鐤勯崝娑楃瑢閻╂鐭鹃柅澶嬪閺傜懓鎮滈惄绋垮冀閿涘苯褰查懗鍊熜曢崣鎴︽缁?
+                type="warning"
+                :closable="false"
+                class="direction-alert"
+              />
+
+              <div class="filter-actions">
+                <el-button type="primary" @click="applyAdvancedFilter" :loading="loading">鎼存梻鏁ょ粵娑⑩偓?/el-button>
+                <el-button @click="resetFilters">闁插秶鐤?/el-button>
+                <el-dropdown @command="handleSaveStrategy">
+                  <el-button type="success">
+                    娣囨繂鐡ㄧ粵鏍殣<i class="el-icon-arrow-down el-icon--right"></i>
+                  </el-button>
+                  <template #dropdown>
+                    <el-dropdown-menu>
+                      <el-dropdown-item command="save">娣囨繂鐡ㄨぐ鎾冲缁涙牜鏆?/el-dropdown-item>
+                      <el-dropdown-item command="load">閸旂姾娴囩粵鏍殣</el-dropdown-item>
+                    </el-dropdown-menu>
+                  </template>
+                </el-dropdown>
+              </div>
+            </div>
+          </el-col>
+        </el-row>
+      </div>
+    </el-card>
+
+    <!-- 缂佺喕顓告穱鈩冧紖閸栧搫鐓?-->
+    
+    
+    
+    
+    <el-card class="strategy-card">
+      <div class="strategy-bar">
+        <div class="strategy-select">
+          <span class="strategy-label">缁涙牜鏆愮粵娑⑩偓?/span>
+          <el-select
+            v-model="selectedStrategyName"
+            placeholder="闁瀚ㄥ韫箽鐎涙娈戠粵鏍殣"
+            clearable
+            filterable
+            style="width: 260px"
+            @change="handleSelectStrategy"
+          >
+            <el-option
+              v-for="name in strategyOptions"
+              :key="name"
+              :label="name"
+              :value="name"
+            />
+          </el-select>
+          <el-button size="small" @click="loadStrategyOptions">閸掗攱鏌?/el-button>
+        </div>
+        <div class="strategy-detail" v-if="strategyDetailItems.length">
+          <div class="detail-item" v-for="item in strategyDetailItems" :key="item.label">
+            <span class="detail-label">{{ item.label }}:</span>
+            <span class="detail-value">{{ item.value }}</span>
+          </div>
+        </div>
+        <div class="strategy-empty" v-else>
+          闁瀚ㄧ粵鏍殣閸氬骸鐨㈤弰鍓с仛鐠囷附鍎?
+        </div>
+      </div>
+      <div class="strategy-list" v-if="strategyOptions.length">
+        <div class="strategy-list-title">缁涙牜鏆愰崚妤勩€?/div>
+        <div class="strategy-grid">
+          <div
+            class="strategy-item"
+            v-for="name in strategyOptions"
+            :key="name"
+            :class="{ active: name === selectedStrategyName }"
+            @click="handleSelectStrategy(name)"
+          >
+            <div class="strategy-item-header">
+              <span class="strategy-item-name">{{ name }}</span>
+              <span class="strategy-item-tag" v-if="name === selectedStrategyName">瀹告煡鈧?/span>
+            </div>          </div>
+        </div>
+      </div>
+      <div class="strategy-list-empty" v-else>
+        閺嗗倹妫ゅ韫箽鐎涙鐡ラ悾?
+      </div>
+    </el-card>
+
+
+
+
+    <el-card class="stats-card" v-if="showStats && strategyApplied">
+      <template #header>
+        <div class="card-header">
+          <span>缁涙盯鈧绮虹拋?/span>
+        </div>
+      </template>
+
+      <el-row :gutter="20">
+        <el-col :span="6">
+          <div class="stat-item">
+            <div class="stat-number">{{ statistics.total_matches }}</div>
+            <div class="stat-label">缁楋箑鎮庨弶鈥叉閸︾儤顐?/div>
+          </div>
+        </el-col>
+
+        <el-col :span="6">
+          <div class="stat-item">
+            <div class="stat-number">{{ filterForm.powerDiffs.length > 0 ? statistics.delta_p_count || 0 : '閺堫亣顔曠純? }}</div>
+            <div class="stat-label">鐎圭偛濮忕粵澶岄獓瀹?铻朠</div>
+          </div>
+        </el-col>
+
+        <el-col :span="6">
+          <div class="stat-item">
+            <div class="stat-number">{{ filterForm.winPanDiffs.length > 0 ? statistics.delta_wp_count || 0 : '閺堫亣顔曠純? }}</div>
+            <div class="stat-label">鐠с垻娲忕粵澶岄獓瀹?铻朩P</div>
+          </div>
+        </el-col>
+
+        <el-col :span="6">
+          <div class="stat-item">
+            <div class="stat-number">{{ filterForm.stabilityTiers.length > 0 ? statistics.p_tier_count || 0 : '閺堫亣顔曠純? }}</div>
+            <div class="stat-label">娑撯偓鐠ф梻菙鐎规碍鈧?P-Tier</div>
+          </div>
+        </el-col>
+      </el-row>
+    </el-card>
+
+    <!-- 缂佹挻鐏夌仦鏇犮仛閸栧搫鐓?-->
+    <el-card class="result-card" v-if="strategyApplied">
+      <template #header>
+        <div class="card-header">
+          <span>缁涙盯鈧绮ㄩ弸?/span>
+          <div>
+            <el-button @click="exportResults('excel')">鐎电厧鍤璄xcel</el-button>
+            <el-button @click="exportResults('csv')">鐎电厧鍤瑿SV</el-button>
+            <el-button @click="toggleStats">{{ showStats ? '闂呮劘妫岀紒鐔活吀' : '閺勫墽銇氱紒鐔活吀' }}</el-button>
+          </div>
+        </div>
+      </template>
+
+      <el-table
+        :data="pagedResults"
+        style="width: 100%"
+        v-loading="loading"
+        @sort-change="handleSortChange"
+      >
+        <el-table-column prop="match_id" label="濮ｆ棁绂孖D" width="120" sortable>
+          <template #default="{ row }">{{ formatMatchId(row.match_id) }}</template>
+        </el-table-column>
+        <el-table-column prop="home_team" label="娑撳妲? width="120">
+          <template #default="{ row }">{{ displayValue(row.home_team) }}</template>
+        </el-table-column>
+        <el-table-column prop="away_team" label="鐎广垽妲? width="120">
+          <template #default="{ row }">{{ displayValue(row.away_team) }}</template>
+        </el-table-column>
+        <el-table-column prop="league" label="閼辨棁绂? width="120">
+          <template #default="{ row }">{{ displayValue(row.league) }}</template>
+        </el-table-column>
+        <el-table-column prop="match_time" label="濮ｆ棁绂岄弮鍫曟？" width="170">
+          <template #default="{ row }">{{ formatMatchTime(row.match_time) }}</template>
+        </el-table-column>
+        <el-table-column prop="power_diff" label="铻朠" width="80" sortable>
+          <template #default="{ row }">{{ displayValue(row.power_diff) }}</template>
+        </el-table-column>
+        <el-table-column prop="delta_wp" label="铻朩P" width="100" sortable>
+          <template #default="{ row }">{{ displayValue(row.delta_wp) }}</template>
+        </el-table-column>
+        <el-table-column prop="p_level" label="P缁? width="80" sortable>
+          <template #default="{ row }">
+            <el-tag v-if="row.p_level" :type="getPLevelTagType(row.p_level)">P{{ row.p_level }}</el-tag>
+            <span v-else>-</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="power_home" label="娑撳妲︾€圭偛濮? width="100" sortable>
+          <template #default="{ row }">{{ displayValue(row.power_home) }}</template>
+        </el-table-column>
+        <el-table-column prop="power_away" label="鐎广垽妲︾€圭偛濮? width="100" sortable>
+          <template #default="{ row }">{{ displayValue(row.power_away) }}</template>
+        </el-table-column>
+        <el-table-column prop="win_pan_home" label="娑撳妲︾挧銏㈡磸" width="100" sortable>
+          <template #default="{ row }">{{ displayValue(row.win_pan_home) }}</template>
+        </el-table-column>
+        <el-table-column prop="win_pan_away" label="鐎广垽妲︾挧銏㈡磸" width="100" sortable>
+          <template #default="{ row }">{{ displayValue(row.win_pan_away) }}</template>
+        </el-table-column>
+        <el-table-column prop="home_feature" label="娑撳妲﹂悧鐟扮窙" width="120">
+          <template #default="{ row }">{{ displayValue(row.home_feature) }}</template>
+        </el-table-column>
+        <el-table-column prop="away_feature" label="鐎广垽妲﹂悧鐟扮窙" width="120">
+          <template #default="{ row }">{{ displayValue(row.away_feature) }}</template>
+        </el-table-column>
+        <el-table-column label="閹垮秳缍? width="150">
+          <template #default="{ row }">
+            <el-button size="small" type="success" @click="openAnalysis(row)">閸掑棙鐎?/el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+
+
+
+
+
+
+      
+      <el-pagination
+        @size-change="handleSizeChange"
+        @current-change="handleCurrentChange"
+        :current-page="currentPage"
+        :page-sizes="[10, 20, 50, 100]"
+        :page-size="pageSize"
+        :total="totalResults"
+        layout="slot, sizes, prev, pager, next, jumper"
+        prev-text="娑撳﹣绔存い?
+        next-text="娑撳绔存い?
+        style="margin-top: 20px; text-align: right;"
+      >
+        <span class="pagination-total">閸?{{ totalResults }} 閺?/span>
+      </el-pagination>
+
+    </el-card>
+    
+    <!-- P缁狙嗩潐閸掓瑨顕╅弰搴¤剨缁?-->
+    <el-dialog title="P缁狙嗩吀缁犳顫夐崚? v-model="showRulesDialog" width="60%">
+      <div v-if="pLevelRules">
+        <h3>鐠囧嫮楠囬弽鍥у櫙</h3>
+        <ul>
+          <li><strong>P1閿?/strong>{{ pLevelRules.p1_criteria }}</li>
+          <li><strong>P2閿?/strong>{{ pLevelRules.p2_criteria }}</li>
+          <li><strong>P3閿?/strong>{{ pLevelRules.p3_criteria }}</li>
+          <li><strong>P4閿?/strong>{{ pLevelRules.p4_criteria }}</li>
+          <li><strong>P5閿?/strong>{{ pLevelRules.p5_criteria }}</li>
+        </ul>
+        
+        <h3>闂勫秶楠囩憴鍕灟</h3>
+        <ol>
+          <li v-for="(rule, index) in pLevelRules.derating_rules" :key="index">{{ rule }}</li>
+        </ol>
+        
+        <h3>閹烘帒绨憴鍕灟</h3>
+        <ol>
+          <li v-for="(rule, index) in pLevelRules.sort_rules" :key="'sort'+index">{{ rule }}</li>
+        </ol>
+      </div>
+    </el-dialog>
+
+    <el-dialog title="濮ｆ棁绂岄崚鍡樼€? v-model="showAnalysisDialog" width="70%" class="analysis-dialog">
+      <div v-if="analysisData">
+        <div class="analysis-sim-container">
+          <div class="analysis-sim-header">
+            <div class="analysis-sim-title">濮ｆ棁绂岄崚鍡樼€藉Ο鈩冨珯</div>
+            <div class="analysis-sim-subtitle">閸╄桨绨?00閻炲啯鏆熼幑顔炬畱濮ｆ棁绂岄崚鍡樼€界仦鏇犮仛</div>
+          </div>
+
+          <div class="analysis-sim-card">
+            <div class="analysis-sim-card-title">濮ｆ棁绂岄崺鐑樻拱娣団剝浼?/div>
+            <div class="analysis-sim-basic">
+              <div class="analysis-sim-team">
+                <div class="analysis-sim-team-name">{{ analysisData.homeTeam || '-' }}</div>
+                <div class="analysis-sim-team-meta">鐎圭偛濮忛崐? {{ analysisData.homePower ?? '-' }}</div>
+              </div>
+              <div class="analysis-sim-vs">
+                <div class="analysis-sim-league">{{ analysisData.gameShortName || '-' }}</div>
+                <div class="analysis-sim-vs-text">VS</div>
+                <div class="analysis-sim-time">{{ analysisData.matchTimeStr || '-' }}</div>
+              </div>
+              <div class="analysis-sim-team">
+                <div class="analysis-sim-team-name">{{ analysisData.guestTeam || '-' }}</div>
+                <div class="analysis-sim-team-meta">鐎圭偛濮忛崐? {{ analysisData.guestPower ?? '-' }}</div>
+              </div>
+            </div>
+            <div class="analysis-sim-odds">
+              <div class="analysis-sim-odds-item"><span>娑撴槒鍎?/span><strong>{{ analysisData.homeWinAward ?? '-' }}</strong></div>
+              <div class="analysis-sim-odds-item"><span>楠炲啿鐪?/span><strong>{{ analysisData.drawAward ?? '-' }}</strong></div>
+              <div class="analysis-sim-odds-item"><span>鐎广垼鍎?/span><strong>{{ analysisData.guestWinAward ?? '-' }}</strong></div>
+              <div class="analysis-sim-odds-item"><span>鐠佲晝鎮?/span><strong>{{ analysisData.rq ?? '-' }}</strong></div>
+            </div>
+          </div>
+
+          <div class="analysis-sim-card">
+            <div class="analysis-sim-card-title">閻炲啴妲︾€圭偛濮忕€佃鐦?/div>
+            <div class="analysis-sim-progress">
+              <div class="analysis-sim-progress-labels">
+                <span>{{ analysisData.homeTeam || '-' }}</span>
+                <span>{{ analysisData.guestTeam || '-' }}</span>
+              </div>
+              <div class="analysis-sim-progress-bars">
+                <el-progress :percentage="getProgressValue(analysisData.homePower)" :show-text="false" :color="'#a4b2a4'" />
+                <el-progress :percentage="getProgressValue(analysisData.guestPower)" :show-text="false" :color="'#b9a7a0'" />
+              </div>
+            </div>
+            <div class="analysis-sim-table">
+              <div class="analysis-sim-table-row analysis-sim-table-head">
+                <span>閹稿洦鐖?/span><span>娑撳妲?/span><span>鐎广垽妲?/span><span>娴兼ê濞嶉弬?/span>
+              </div>
+              <div class="analysis-sim-table-row">
+                <span>缁夘垰鍨庨敍鍫滃瘜閸?閹紮绱?/span>
+                <span>{{ analysisData.homeJiFenHome || '-' }}/{{ analysisData.homeJiFenHomeAll || '-' }}</span>
+                <span>{{ analysisData.awayJiFenHome || '-' }}/{{ analysisData.awayJiFenHomeAll || '-' }}</span>
+                <span>{{ compareAdvantage(analysisData.homeJiFenHome, analysisData.awayJiFenHome) }}</span>
+              </div>
+              <div class="analysis-sim-table-row">
+                <span>鐎广垹婧€缁夘垰鍨?/span>
+                <span>-</span>
+                <span>{{ analysisData.awayJiFenGuest || '-' }}</span>
+                <span>鐎广垽妲?/span>
+              </div>
+              <div class="analysis-sim-table-row">
+                <span>閻楃懓绶?/span>
+                <span>{{ analysisData.homeFeature || '-' }}</span>
+                <span>{{ analysisData.guestFeature || '-' }}</span>
+                <span>{{ compareAdvantage(getPercentValue(analysisData.homeFeature), getPercentValue(analysisData.guestFeature)) }}</span>
+              </div>
+              <div class="analysis-sim-table-row">
+                <span>鏉╂稒鏁鹃弫鍫㈠芳</span>
+                <span>{{ analysisData.homeEnterEfficiency || '-' }}</span>
+                <span>{{ analysisData.guestEnterEfficiency || '-' }}</span>
+                <span>{{ compareAdvantage(getEfficiencyValue(analysisData.homeEnterEfficiency), getEfficiencyValue(analysisData.guestEnterEfficiency)) }}</span>
+              </div>
+              <div class="analysis-sim-table-row">
+                <span>闂冩彃鐣ч弫鍫㈠芳</span>
+                <span>{{ analysisData.homePreventEfficiency || '-' }}</span>
+                <span>{{ analysisData.guestPreventEfficiency || '-' }}</span>
+                <span>{{ compareAdvantage(getEfficiencyValue(analysisData.homePreventEfficiency), getEfficiencyValue(analysisData.guestPreventEfficiency)) }}</span>
+              </div>
+              <div class="analysis-sim-table-row">
+                <span>鏉╂垶婀￠幋妯煎摋</span>
+                <span>{{ analysisData.homeSpf || '-' }}</span>
+                <span>{{ analysisData.guestSpf || '-' }}</span>
+                <span>{{ compareAdvantage(getSpfWins(analysisData.homeSpf), getSpfWins(analysisData.guestSpf)) }}</span>
+              </div>
+              <div class="analysis-sim-table-row">
+                <span>婢堆呮倖閻ф儳鍨庡В?/span>
+                <span>{{ analysisData.homeDxqPercentStr || '-' }}</span>
+                <span>{{ analysisData.guestDxqPercentStr || '-' }}</span>
+                <span>{{ compareAdvantage(getPercentValue(analysisData.homeDxqPercentStr), getPercentValue(analysisData.guestDxqPercentStr)) }}</span>
+              </div>
+              <div class="analysis-sim-table-row">
+                <span>鏉╂垶婀℃潻娑氭倖/婢惰京鎮?/span>
+                <span>{{ analysisData.homeDxqDesc || '-' }}</span>
+                <span>{{ analysisData.guestDxqDesc || '-' }}</span>
+                <span>闂団偓閸掑棙鐎?/span>
+              </div>
+              <div class="analysis-sim-table-row">
+                <span>娑撹婧€/鐎广垹婧€鐞涖劎骞?/span>
+                <span>{{ analysisData.homeDxqSame10Desc || '-' }}</span>
+                <span>{{ analysisData.awayDxqSame10Desc || '-' }}</span>
+                <span>闂団偓閸掑棙鐎?/span>
+              </div>
+            </div>
+          </div>
+
+          <div class="analysis-sim-card">
+            <div class="analysis-sim-card-title">鐠ф梻宸肩€佃鐦崚鍡樼€?/div>
+            <div class="analysis-sim-odds-panels">
+              <div class="analysis-sim-odds-panel">
+                <div class="analysis-sim-panel-title">娑撴槒鍎ㄩ惄?/div>
+                <div class="analysis-sim-panel-value">{{ analysisData.homeWinPan ?? '-' }}</div>
+                <div class="analysis-sim-panel-grid">
+                  <div>鏉?閻?{{ analysisData.homeWinQiu_0 ?? '-' }}</div>
+                  <div>鏉?閻?{{ analysisData.homeWinQiu_1 ?? '-' }}</div>
+                  <div>鏉?閻?{{ analysisData.homeWinQiu_2 ?? '-' }}</div>
+                </div>
+                <div class="analysis-sim-panel-grid">
+                  <div>鐠?閻炲啫妯婄捄?{{ analysisData.homeWinGap_1 ?? '-' }}</div>
+                  <div>鐠?閻炲啫妯婄捄?{{ analysisData.homeWinGap_2 ?? '-' }}</div>
+                  <div>-</div>
+                </div>
+              </div>
+              <div class="analysis-sim-odds-panel">
+                <div class="analysis-sim-panel-title">鐎广垼鍎ㄩ惄?/div>
+                <div class="analysis-sim-panel-value">{{ analysisData.guestWinPan ?? '-' }}</div>
+                <div class="analysis-sim-panel-grid">
+                  <div>鏉?閻?{{ analysisData.awayWinQiu_0 ?? '-' }}</div>
+                  <div>鏉?閻?{{ analysisData.awayWinQiu_1 ?? '-' }}</div>
+                  <div>鏉?閻?{{ analysisData.awayWinQiu_2 ?? '-' }}</div>
+                </div>
+                <div class="analysis-sim-panel-grid">
+                  <div>鐠?閻炲啫妯婄捄?{{ analysisData.awayWinGap_1 ?? '-' }}</div>
+                  <div>鐠?閻炲啫妯婄捄?{{ analysisData.awayWinGap_2 ?? '-' }}</div>
+                  <div>-</div>
+                </div>
+              </div>
+            </div>
+            <div class="analysis-sim-lose">
+              <div class="analysis-sim-lose-panel">
+                <div class="analysis-sim-panel-title">娑撳妲︽径杈╂倖</div>
+                <div class="analysis-sim-panel-grid">
+                  <div>婢?閻?{{ analysisData.homeLoseQiu_0 ?? '-' }}</div>
+                  <div>婢?閻?{{ analysisData.homeLoseQiu_1 ?? '-' }}</div>
+                  <div>婢?閻?{{ analysisData.homeLoseQiu_2 ?? '-' }}</div>
+                </div>
+                <div class="analysis-sim-panel-grid">
+                  <div>鏉?閻炲啫妯婄捄?{{ analysisData.homeLoseGap_1 ?? '-' }}</div>
+                  <div>鏉?閻炲啫妯婄捄?{{ analysisData.homeLoseGap_2 ?? '-' }}</div>
+                  <div>-</div>
+                </div>
+              </div>
+              <div class="analysis-sim-lose-panel">
+                <div class="analysis-sim-panel-title">鐎广垽妲︽径杈╂倖</div>
+                <div class="analysis-sim-panel-grid">
+                  <div>婢?閻?{{ analysisData.awayLoseQiu_0 ?? '-' }}</div>
+                  <div>婢?閻?{{ analysisData.awayLoseQiu_1 ?? '-' }}</div>
+                  <div>婢?閻?{{ analysisData.awayLoseQiu_2 ?? '-' }}</div>
+                </div>
+                <div class="analysis-sim-panel-grid">
+                  <div>鏉?閻炲啫妯婄捄?{{ analysisData.awayLoseGap_1 ?? '-' }}</div>
+                  <div>鏉?閻炲啫妯婄捄?{{ analysisData.awayLoseGap_2 ?? '-' }}</div>
+                  <div>-</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="analysis-sim-card">
+            <div class="analysis-sim-card-title">閸樺棗褰舵禍銈夋敱</div>
+            <div class="analysis-sim-summary">{{ analysisData.jiaoFenDesc || '-' }}</div>
+            <div class="analysis-sim-history">
+              <div v-for="item in getJiaoFenMatches(analysisData)" :key="item" class="analysis-sim-history-item">{{ item }}</div>
+              <div v-if="!getJiaoFenMatches(analysisData).length" class="analysis-sim-history-item">閺嗗倹妫ゆ禍銈夋敱鐠佹澘缍?/div>
+            </div>
+          </div>
+
+          <div class="analysis-sim-card">
+            <div class="analysis-sim-card-title">閺佺増宓佸┃鎰繆閹?/div>
+            <div class="analysis-sim-source">
+              <div><span>lineId:</span><strong>{{ analysisData.lineId || '-' }}</strong></div>
+              <div><span>閺佺増宓侀弶銉︾爱:</span><strong>100閻炲啫鍨庨弸鎰般€夐棃?/strong></div>
+              <div><span>URL:</span><strong>https://m.100qiu.com/analysis/detail.php?lotteryType=40&term=26023&lineId={{ analysisData.lineId || '-' }}</strong></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div v-else class="analysis-empty">閺嗗倹妫ら崢鐔奉潗閺佺増宓侀敍宀冾嚞閸忓牓鈧俺绻冮弫鐗堝祦濠ф劙鍘ょ純顔藉閸欐牕鍙嗘惔鎾扁偓?/div>
+    </el-dialog>
+  </div>
+</template>
+
+<script setup>
+import { ref, reactive, onMounted, computed } from 'vue';
+import { ElMessage, ElMessageBox } from 'element-plus';
+import request from '@/utils/request'; // 娴ｈ法鏁ゆい鍦窗娑擃厾娈憆equest鐎圭偘绶?
+
+// 缁涙盯鈧銆冮崡鏇熸殶閹?
+const filterForm = reactive({
+  powerDiffs: [],
+  winPanDiffs: [],
+  stabilityTiers: [],
+  leagues: [],
+  dateTime: '',
+  dateRange: null,
+  sortBy: 'p_level',
+  sortOrder: 'desc',
+  includeDerating: true
+});
+
+// 闁銆嶉弫鐗堝祦
+const strengthOptions = [
+  { value: -3, label: '-3', range: '< -25', desc: '鐎广垽妲︾紒鐔镐笉' },
+  { value: -2, label: '-2', range: '-25 ~ -17', desc: '鐎广垽妲﹂崢瀣煑' },
+  { value: -1, label: '-1', range: '-16 ~ -9', desc: '鐎广垽妲﹀顔荤喘' },
+  { value: 0, label: '0', range: '-8 ~ +8', desc: '閺冩绱﹂惄绋跨秼' },
+  { value: 1, label: '+1', range: '+9 ~ +16', desc: '娑撳妲﹀顔荤喘' },
+  { value: 2, label: '+2', range: '+17 ~ +25', desc: '瀵搫濮忛崢瀣煑' },
+  { value: 3, label: '+3', range: '> +25', desc: '闂勫秶娣幍鎾冲毊' }
+];
+
+    const winPanOptions = [
+      { value: 4, label: '+4', range: 'S', desc: '娑撶粯鐎悘顐ゅ劰' },
+      { value: 3, label: '+3', range: 'S', desc: '娑撶粯鐎悘顐ゅ劰' },
+      { value: 2, label: '+2', range: 'A', desc: '娑撴槒骞忛崚鈺勮泲瀵? },
+      { value: 1, label: '+1', range: 'A', desc: '娑撴槒骞忛崚鈺勮泲瀵? },
+      { value: 0, label: '0', range: 'B', desc: '閺佺増宓侀崸鍥€€' },
+      { value: -1, label: '-1', range: 'C', desc: '鐎广垼骞忛崚鈺勮泲瀵? },
+      { value: -2, label: '-2', range: 'C', desc: '鐎广垼骞忛崚鈺勮泲瀵? },
+      { value: -3, label: '-3', range: 'D', desc: '鐎广垺鐎悘顐ゅ劰' },
+      { value: -4, label: '-4', range: 'D', desc: '鐎广垺鐎悘顐ゅ劰' }
+    ];
+
+    const stabilityOptions = [
+      { value: 'S', label: 'S', range: 'P1', desc: '濮濓綀鐭剧粙瀹犲剱' },
+      { value: 'A', label: 'A', range: 'P2', desc: '濮濓綀鐭炬＃鏍偓? },
+      { value: 'B', label: 'B', range: 'P3', desc: '濮濓綀鐭炬穱婵嬫' },
+      { value: 'B-', label: 'B-', range: 'P4', desc: '濮濓綀鐭鹃崚鍡橆劆' },
+      { value: 'C', label: 'C', range: 'P5', desc: '濮濓綀鐭剧€涙鏋? },
+      { value: 'D', label: 'D', range: 'P6', desc: '濮濓綀鐭鹃懘鍡楁€? },
+      { value: 'E', label: 'E', range: 'P7', desc: '濮濓綀鐭剧紓鍝勩亼' }
+    ];
+
+    // 缁夊娅?pLevelOptions閿涘苯娲滄稉绡滅痪褏鐡柅澶婂嚒娴犲海鏅棃顫厬缁夊娅?
+    // const pLevelOptions = [
+    //   { label: 'P1', value: 1 },
+    //   { label: 'P2', value: 2 },
+    //   { label: 'P3', value: 3 },
+    //   { label: 'P4', value: 4 },
+    //   { label: 'P5', value: 5 },
+    //   { label: 'P6', value: 6 },
+    //   { label: 'P7', value: 7 }
+    // ];
+
+    // 缁涙盯鈧绮ㄩ弸?
+
+    // 閹貉冨煑缂佺喕顓告穱鈩冧紖閺勫墽銇?
+    const showStats = ref(true);
+    const showAnalysisDialog = ref(false);
+    const analysisData = ref(null);
+
+    // 閸掑棝銆夐崪宀€绮ㄩ弸?
+    const currentPage = ref(1);
+    const pageSize = ref(10);
+    const filterResults = ref([]);
+    const rawMatches = ref([]);
+    
+    // 缂佺喕顓搁弫鐗堝祦
+    const statistics = reactive({
+      delta_p_count: 0,
+      delta_wp_count: 0,
+      p_tier_count: 0,
+    });
+
+    // 閸欘垳鏁ら懕鏃囩閸掓銆?
+    const availableLeagues = ref([]);
+    const dateTimeOptions = ref([]);
+    const strategyOptions = ref([]);
+    const selectedStrategyName = ref('');
+    const selectedStrategy = ref(null);
+    const strategyApplied = ref(false);
+
+    const strategyPreviewMap = ref({});
+
+    const totalResults = ref(0);
+    const loading = ref(false);
+    
+    const pagedResults = computed(() => {
+      const start = (currentPage.value - 1) * pageSize.value;
+      totalResults.value = filterResults.value.length;
+      return filterResults.value.slice(start, start + pageSize.value);
+    });
+
+    const displayValue = (value) => {
+      if (value === null || value === undefined || value === '') return '-';
+      return value;
+    };
+
+
+
+    const getJiaoFenMatches = (data) => {
+      if (!data) return [];
+      const matches = [];
+      for (let i = 1; i <= 6; i += 1) {
+        const key = `jiaoFenMatch${i}`;
+        if (data[key]) matches.push(data[key]);
+      }
+      return matches;
+    };
+
+    const getPercentValue = (value) => {
+      if (!value) return 0;
+      const match = String(value).match(/(\\d+)(?:\\.\\d+)?%/);
+      if (match) return Math.min(100, Number(match[1]));
+      return 0;
+    };
+
+    const getProgressValue = (value) => {
+      const num = Number(value);
+      if (Number.isNaN(num)) return 0;
+      return Math.max(0, Math.min(100, num));
+    };
+
+    const getEfficiencyValue = (value) => {
+      if (!value) return 0;
+      const parts = String(value).split(':');
+      if (parts.length < 2) return 0;
+      const num = Number(parts[1]);
+      return Number.isNaN(num) ? 0 : num;
+    };
+
+    const getSpfWins = (value) => {
+      if (!value) return 0;
+      const match = String(value).match(/(\\d+)閼?);
+      if (!match) return 0;
+      return Number(match[1]);
+    };
+
+    const compareAdvantage = (homeValue, awayValue) => {
+      const homeNum = Number(homeValue);
+      const awayNum = Number(awayValue);
+      if (Number.isNaN(homeNum) || Number.isNaN(awayNum)) return '閹镐礁閽?;
+      if (homeNum > awayNum) return '娑撳妲?;
+      if (homeNum < awayNum) return '鐎广垽妲?;
+      return '閹镐礁閽?;
+    };
+
+
+
+    const openAnalysis = async (row) => {
+      const raw = row?.source_attributes;
+      if (raw) {
+        analysisData.value = raw;
+        showAnalysisDialog.value = true;
+        return;
+      }
+
+      const matchId = row?.match_id;
+      if (!matchId) {
+        analysisData.value = null;
+        showAnalysisDialog.value = true;
+        return;
+      }
+
+      try {
+        const response = await request.get(`/api/v1/data-source-100qiu/match/${matchId}`);
+        const payload = response?.data?.source_attributes;
+        analysisData.value = payload || null;
+      } catch (error) {
+        analysisData.value = null;
+      } finally {
+        showAnalysisDialog.value = true;
+      }
+    };
+
+    const formatMatchId = (value) => {
+      if (value === null || value === undefined || value === '') return '-';
+      return String(value);
+    };
+
+    const formatMatchTime = (value) => {
+      if (value === null || value === undefined || value === '') return '-';
+      const date = value instanceof Date ? value : new Date(value);
+      if (Number.isNaN(date.getTime())) return String(value);
+      const pad = (num) => String(num).padStart(2, '0');
+      return `${date.getFullYear()}/${pad(date.getMonth() + 1)}/${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+    };
+
+    const parsePercents = (text) => {
+      if (!text) return [];
+      const matches = String(text).match(/(\d+(?:\.\d+)?)%/g) || [];
+      return matches.map((m) => Number(m.replace('%', ''))).filter((v) => !Number.isNaN(v));
+    };
+
+    const calcDeltaPLevel = (homePower, awayPower) => {
+      if (homePower === '-' || awayPower === '-') return 0;
+      const diff = Number(homePower) - Number(awayPower);
+      if (diff > 25) return 3;
+      if (diff >= 17) return 2;
+      if (diff >= 9) return 1;
+      if (diff >= -8) return 0;
+      if (diff >= -16) return -1;
+      if (diff >= -25) return -2;
+      return -3;
+    };
+
+    const wpToScore = (wp) => {
+      const value = Number(wp);
+      if (Number.isNaN(value)) return 0;
+      if (value > 1.4) return 4;
+      if (value >= 1.2) return 3;
+      if (value >= 0.8) return 2;
+      if (value >= 0.6) return 1;
+      return 0;
+    };
+
+    const calcDeltaWp = (homeWp, awayWp) => {
+      return wpToScore(homeWp) - wpToScore(awayWp);
+    };
+
+    const calcStabilityTier = (homeFeature, guestFeature) => {
+      const homeText = homeFeature || '';
+      const guestText = guestFeature || '';
+      const homePercents = parsePercents(homeText);
+      const guestPercents = parsePercents(guestText);
+      const homeOne = homeText.includes('娑撯偓鐠?) ? (homePercents[0] ?? 0) : null;
+      const guestOne = guestText.includes('娑撯偓鐠?) ? (guestPercents[0] ?? 0) : null;
+
+      if (homeOne !== null && guestOne !== null) {
+        const pValue = homeOne + guestOne;
+        if (pValue >= 140) return { tier: 'S', pLevel: 1 };
+        if (pValue >= 110) return { tier: 'A', pLevel: 2 };
+        return { tier: 'B-', pLevel: 4 };
+      }
+
+      if (homeOne !== null || guestOne !== null) {
+        const oneValue = homeOne !== null ? homeOne : guestOne;
+        const opponentPercents = homeOne !== null ? guestPercents : homePercents;
+        const opponentMax = opponentPercents.length ? Math.max(...opponentPercents) : 0;
+        const pValue = oneValue - opponentMax;
+        if (pValue >= 40) return { tier: 'B', pLevel: 3 };
+        if (pValue >= 15) return { tier: 'C', pLevel: 5 };
+        if (pValue >= 0) return { tier: 'D', pLevel: 6 };
+        return { tier: 'E', pLevel: 7 };
+      }
+
+      return { tier: 'E', pLevel: 7 };
+    };
+
+    const normalizeMatches = (matches = [], dateTime = null) => {
+      return matches.map((item, index) => {
+        const matchId = item.match_id ?? item.id ?? item.lineId ?? item.line_id ?? `match-${index}`;
+        const raw = item.source_attributes ?? item.sourceAttributes ?? item.raw_data ?? item.rawData ?? null;
+        const homeTeam = raw?.homeTeam ?? item.home_team ?? item.homeTeam ?? item.home ?? '-';
+        const awayTeam = raw?.guestTeam ?? item.away_team ?? item.awayTeam ?? item.guestTeam ?? item.guest_team ?? item.away ?? '-';
+        const league = raw?.gameShortName ?? item.league ?? item.gameShortName ?? item.leagueName ?? '-';
+        const matchTime = raw?.matchTimeStr ?? item.match_time ?? item.matchTime ?? item.startTime ?? item.matchDate ?? '-';
+        const powerHome = raw?.homePower ?? item.power_home ?? item.powerHome ?? item.homePower ?? item.home_power ?? '-';
+        const powerAway = raw?.guestPower ?? item.power_away ?? item.powerAway ?? item.guestPower ?? item.awayPower ?? item.away_power ?? '-';
+        const winPanHome = raw?.homeWinPan ?? item.win_pan_home ?? item.winPanHome ?? item.homeWinPan ?? item.home_win_pan ?? '-';
+        const winPanAway = raw?.guestWinPan ?? item.win_pan_away ?? item.winPanAway ?? item.guestWinPan ?? item.awayWinPan ?? item.away_win_pan ?? '-';
+        const homeFeature = raw?.homeFeature ?? item.home_feature ?? item.homeFeature ?? '-';
+        const awayFeature = raw?.guestFeature ?? item.away_feature ?? item.awayFeature ?? item.guestFeature ?? item.guest_feature ?? '-';
+        const deltaPLevel = calcDeltaPLevel(powerHome, powerAway);
+        const deltaWp = calcDeltaWp(winPanHome, winPanAway);
+        const stabilityResult = calcStabilityTier(raw?.homeFeature, raw?.guestFeature);
+        const stabilityValue = stabilityResult.tier;
+        const pLevel = stabilityResult.pLevel;
+        const powerDiff = deltaPLevel;
+        const winPanDiff = deltaWp;
+
+        
+        // 閻滄澘婀猰atch_id瀹歌尙绮￠弰鐥檃te_time_lineId閺嶇厧绱￠敍宀€娲块幒銉ゅ▏閻?
+        const formattedMatchId = item.match_id || String(matchId);
+        // 娴兼ê鍘涙禒?raw.data_source 娑擃叀骞忛崣?date_time閿涘苯顩ч弸婊€绗夌€涙ê婀崚娆庡▏閻劋绱堕崗銉ф畱 dateTime 閸欏倹鏆熼幋?filterForm.dateTime
+        const dateTimeFromRaw = raw?.date_time ?? raw?.dateTime ?? raw?.['date_time'];
+        let dateTimePart = dateTimeFromRaw || dateTime || filterForm.dateTime;
+        
+        // 婵″倹鐏夋潻妯荤梾閺堝—ateTimePart閿涘苯鐨剧拠鏇氱矤matchTime娑擃厽褰侀崣鏈癥MMDD閺嶇厧绱?
+        if (!dateTimePart && matchTime) {
+          try {
+            const dateStr = String(matchTime).split('T')[0];
+            const yearMatch = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+            if (yearMatch) {
+              const [, year, month, day] = yearMatch;
+              const yy = year.slice(-2);
+              const d = parseInt(day, 10);
+              // 100閻炲啯鐗稿蹇ョ窗YYMM + D閿涘牆顩ч弸娣?10閸掓瑤绗夐崝鐘插鐎靛ジ娴傞敍灞芥儊閸掓瑥濮為崜宥咁嚤闂嗚绱?
+              // 娓氬顩ч敍?026-02-03 -> 26023, 2026-02-13 -> 260213
+              dateTimePart = d < 10 ? `${yy}${month}${d}` : `${yy}${month}${d}`;
+            }
+          } catch (e) {
+            console.warn('Failed to extract date_time from matchTime:', matchTime, e);
+          }
+        }
+        
+        // 如果还是没有dateTimePart，回退到原有的逻辑
+        if (!dateTimePart) {
+          dateTimePart = String(matchTime || '').split('T')[0].replace(/-/g, '').slice(2);
+        }
+        
+        return {
+          win_pan_home: winPanHome,
+          win_pan_away: winPanAway,
+          home_feature: homeFeature,
+          away_feature: awayFeature,
+          p_level: pLevel,
+          delta_wp: deltaWp,
+          power_diff: powerDiff,
+          win_pan_diff: winPanDiff,
+          stability: stabilityValue,
+          source_attributes: item.source_attributes ?? item.sourceAttributes ?? item.raw_data ?? item.rawData ?? null
+        };
+      });
+    };
+
+
+    // P缁狙嗩潐閸掓瑥鑴婄粣?
+    const showRulesDialog = ref(false);
+    const pLevelRules = ref(null);
+
+
+
+    const fetchDateTimeOptions = async () => {
+      try {
+        const response = await request.get('/api/v1/data-source-100qiu/date-time-options');
+        const options = response?.data?.options || [];
+        dateTimeOptions.value = options;
+        if (!filterForm.dateTime && options.length > 0) {
+          filterForm.dateTime = options[0];
+        }
+      } catch (error) {
+        console.error('Failed to load date_time options:', error);
+      }
+    };
+
+    
+    const buildStrategyPreview = (strategy) => {
+      if (!strategy) return '閺堫亣顔曠純?;
+      const parts = [];
+      if (strategy.dateTime) parts.push(`date_time:${strategy.dateTime}`);
+      if (strategy.pLevels?.length) parts.push(`P${strategy.pLevels.join('/')}`);
+      if (strategy.leagues?.length) parts.push(`閼辨棁绂?${strategy.leagues.slice(0, 2).join(',')}`);
+      if (strategy.dateRange?.length) {
+        const range = strategy.dateRange.map((item) => {
+          if (!item) return '';
+          if (typeof item === 'string') return item.split('T')[0];
+          if (item.toISOString) return item.toISOString().split('T')[0];
+          return String(item);
+        }).join('~');
+        if (range) parts.push(`閺冦儲婀?${range}`);
+      }
+      return parts.join(' | ') || '閺堫亣顔曠純?;
+    };
+
+    const serializeStrategy = () => JSON.stringify({
+      powerDiffs: filterForm.powerDiffs,
+      winPanDiffs: filterForm.winPanDiffs,
+      stabilityTiers: filterForm.stabilityTiers,
+      pLevels: filterForm.pLevels,
+      leagues: filterForm.leagues,
+      dateTime: filterForm.dateTime,
+      dateRange: filterForm.dateRange,
+      sortBy: filterForm.sortBy,
+      sortOrder: filterForm.sortOrder,
+      includeDerating: filterForm.includeDerating
+    });
+
+    
+    const CURRENT_STRATEGY = '瑜版挸澧犳惔鏃傛暏';
+
+    const loadStrategyOptions = () => {
+      const keys = Object.keys(localStorage).filter(key => key.startsWith('beidan_strategy_'));
+      const names = keys.map(key => key.replace('beidan_strategy_', ''));
+      strategyOptions.value = [CURRENT_STRATEGY, ...names];
+      const map = {};
+      names.forEach((name) => {
+        try {
+          const saved = localStorage.getItem(`beidan_strategy_${name}`);
+          map[name] = buildStrategyPreview(saved ? JSON.parse(saved) : null);
+        } catch (error) {
+          map[name] = '閺堫亣顔曠純?;
+        }
+      });
+      strategyPreviewMap.value = map;
+    };
+
+
+    
+    const formatDateRange = (range) => {
+      if (!Array.isArray(range) || range.length !== 2) return '閺堫亣顔曠純?;
+      return range.map((item) => {
+        if (!item) return '';
+        if (typeof item === 'string') return item.split('T')[0];
+        if (item.toISOString) return item.toISOString().split('T')[0];
+        return String(item);
+      }).join(' ~ ');
+    };
+
+    const strategyDetailItems = computed(() => {
+      if (!selectedStrategy.value) return [];
+      const detail = selectedStrategy.value;
+      return [
+        { label: 'P缁涘楠?, value: detail.pLevels?.length ? detail.pLevels.map(v => `P${v}`).join(', ') : '閺堫亣顔曠純? },
+        { label: '閼辨棁绂?, value: detail.leagues?.length ? detail.leagues.join(', ') : '閺堫亣顔曠純? },
+        { label: 'date_time', value: detail.dateTime || '閺堫亣顔曠純? },
+        { label: '閺冦儲婀￠懠鍐ㄦ纯', value: formatDateRange(detail.dateRange) },
+        { label: '鐎圭偛濮忓?, value: detail.powerDiffs?.length ? detail.powerDiffs.join(', ') : '閺堫亣顔曠純? },
+        { label: '鐠с垻娲忓?, value: detail.winPanDiffs?.length ? detail.winPanDiffs.join(', ') : '閺堫亣顔曠純? },
+        { label: 'P-Tier', value: detail.stabilityTiers?.length ? detail.stabilityTiers.join(', ') : '閺堫亣顔曠純? }
+      ];
+    });
+
+    const clearResults = () => {
+
+      filterResults.value = [];
+      totalResults.value = 0;
+      currentPage.value = 1;
+    };
+
+    
+    const handleSelectStrategy = async (name) => {
+      if (!name) {
+        selectedStrategy.value = null;
+        selectedStrategyName.value = '';
+        strategyApplied.value = false;
+        clearResults();
+        return;
+      }
+
+      if (name === CURRENT_STRATEGY) {
+        selectedStrategyName.value = CURRENT_STRATEGY;
+        selectedStrategy.value = { ...filterForm };
+        if (!strategyApplied.value) {
+          clearResults();
+        }
+        return;
+      }
+
+      const savedStrategy = localStorage.getItem(`beidan_strategy_${name}`);
+      if (!savedStrategy) {
+        ElMessage.error('缁涙牜鏆愭稉宥呯摠閸︺劍鍨ㄥ鑼额潶閸掔娀娅?);
+        return;
+      }
+      try {
+        const parsed = JSON.parse(savedStrategy);
+        Object.assign(filterForm, parsed);
+        selectedStrategy.value = parsed;
+        selectedStrategyName.value = name;
+        strategyApplied.value = true;
+        await applyAdvancedFilter();
+      } catch (error) {
+        console.error('閸旂姾娴囩粵鏍殣婢惰精瑙?', error);
+        ElMessage.error('閸旂姾娴囩粵鏍殣婢惰精瑙?);
+      }
+    };
+
+
+
+    // 閼惧嘲褰囩€圭偞妞傞弫鐗堝祦
+    const fetchRealData = async () => {
+      loading.value = true;
+      try {
+        const response = await request.get('/api/v1/data-source-100qiu/latest-matches', {
+          params: { limit: 200, include_raw: true }
+        });
+
+        const matches = response?.data?.matches || response?.matches || [];
+        if (response?.success !== false) {
+          rawMatches.value = normalizeMatches(matches, filterForm.dateTime);
+          filterResults.value = [...rawMatches.value];
+          totalResults.value = response?.data?.total ?? rawMatches.value.length;
+          currentPage.value = 1;
+
+          const leaguesSet = new Set(rawMatches.value.map(match => match.league));
+          availableLeagues.value = Array.from(leaguesSet).filter(league => league);
+
+          await updateStatistics();
+        } else {
+          console.error('Failed to load 100qiu data:', response?.message || 'Unknown error');
+          ElMessage.error('Failed to load 100qiu data: ' + (response?.message || 'Unknown error'));
+        }
+      } catch (error) {
+        console.error('Failed to load 100qiu data:', error);
+        ElMessage.error('Failed to load 100qiu data');
+      } finally {
+        loading.value = false;
+      }
+    };
+
+    // 鎼存梻鏁ゆ妯奸獓缁涙盯鈧?
+    const applyAdvancedFilter = async () => {
+      if (!strategyApplied.value && !selectedStrategyName.value) {
+        ElMessage.info('鐠囧嘲鍘涙禒搴ｇ摜閻ｃ儳鐡柅澶嬬埉闁瀚ㄧ粵鏍殣');
+        return;
+      }
+
+      // 濡偓閺屻儲妲搁崥锔芥箒閺堝鏅ラ惃鍕吇鐠囦辜oken
+      const token = localStorage.getItem('access_token') || localStorage.getItem('token');
+      if (!token) {
+        ElMessage.error('鐠囧嘲鍘涢惂璇茬秿娴犮儰濞囬悽銊х摜閻ｃ儳鐡柅澶婂閼?);
+        return;
+      }
+
+      loading.value = true;
+
+      try {
+        // 鐏忓棗澧犵粩顖滄畱缁傜粯鏆庣粵娑⑩偓澶娾偓鑹版祮閹诡澀璐熼崥搴ｎ伂閺堢喐婀滈惃鍕箾缂侇叀瀵栭崶瀛樼壐瀵?
+        let strengthFilter = null;
+        if (filterForm.powerDiffs.length > 0) {
+          // 閺嶈宓侀弬鍥ㄣ€傜憴鍕瘱閺勭姴鐨犻崚鐗堫劀绾喚娈戞潻鐐电敾閼煎啫娲?
+          const getRangeForPowerDiff = (value) => {
+            if (value === -3) return [-100.0, -25.0]; // < -25
+            if (value === -2) return [-25.0, -17.0];  // -17 ~ -25
+            if (value === -1) return [-16.0, -9.0];   // -9 ~ -16  
+            if (value === 0) return [-8.0, 8.0];      // -8 ~ +8
+            if (value === 1) return [9.0, 16.0];      // +9 ~ +16
+            if (value === 2) return [17.0, 25.0];     // +17 ~ +25
+            if (value === 3) return [25.0, 100.0];    // > +25
+            return [-100.0, 100.0];
+          };
+          
+          // 閺€鍫曟肠閹碘偓閺堝鈧鑵戦惃鍕瘱閸?
+          const allRanges = filterForm.powerDiffs.map(v => getRangeForPowerDiff(v));
+          const overallMin = Math.min(...allRanges.map(r => r[0]));
+          const overallMax = Math.max(...allRanges.map(r => r[1]));
+          
+          strengthFilter = {
+            min_strength: overallMin,
+            max_strength: overallMax
+          };
+        }
+
+        let winPanFilter = null;
+        if (filterForm.winPanDiffs.length > 0) {
+
+          
+          const getRangeForWinPanDiff = (value) => {
+            if (value <= -4) return [-4.0, -3.5];
+            if (value === -3) return [-3.5, -2.5];
+            if (value === -2) return [-2.5, -1.5];
+            if (value === -1) return [-1.5, -0.5];
+            if (value === 0) return [-0.5, 0.5];
+            if (value === 1) return [0.5, 1.5];
+            if (value === 2) return [1.5, 2.5];
+            if (value === 3) return [2.5, 3.5];
+            if (value >= 4) return [3.5, 4.0];
+            return [-4.0, 4.0];
+          };
+          
+          const allRanges = filterForm.winPanDiffs.map(v => getRangeForWinPanDiff(v));
+          const overallMin = Math.min(...allRanges.map(r => r[0]));
+          const overallMax = Math.max(...allRanges.map(r => r[1]));
+          
+          winPanFilter = {
+            min_win_pan: overallMin,
+            max_win_pan: overallMax
+          };
+        }
+
+        let stabilityFilter = null;
+        if (filterForm.stabilityTiers.length > 0) {
+          stabilityFilter = {
+            tiers: filterForm.stabilityTiers
+          };
+        }
+
+        // 閺嬪嫰鈧姷鐡柅澶庮嚞濮瑰倸顕挒?
+        const requestPayload = {
+          strength_filter: strengthFilter,
+          win_pan_filter: winPanFilter,
+          stability_filter: stabilityFilter,
+          leagues: filterForm.leagues.length > 0 ? filterForm.leagues : null,
+          date_time: filterForm.dateTime || null,
+          date_range: filterForm.dateRange ? [
+            filterForm.dateRange[0]?.toISOString().split('T')[0],
+            filterForm.dateRange[1]?.toISOString().split('T')[0]
+          ] : null,
+          sort_by: filterForm.sortBy,
+          sort_order: filterForm.sortOrder,
+          include_derating: filterForm.includeDerating
+        };
+
+        const response = await request.post('/api/v1/beidan-filter/advanced-filter', requestPayload);
+        
+        if (response.data && response.data.matches) {
+          const normalized = normalizeMatches(response.data.matches, filterForm.dateTime);
+          filterResults.value = normalized;
+          totalResults.value = response.data.total ?? normalized.length;
+          currentPage.value = 1;
+          strategyApplied.value = true; // 绾喕绻氱粵鏍殣鎼存梻鏁ら悩鑸碘偓浣疯礋true
+          
+          // 閺囧瓨鏌婄紒鐔活吀娣団剝浼?
+          await updateStatistics();
+        } else {
+          console.error('鎼存梻鏁ょ粵娑⑩偓澶娿亼鐠?', response.data?.detail || '閺堫亞鐓￠柨娆掝嚖');
+          ElMessage.error('鎼存梻鏁ょ粵娑⑩偓澶娿亼鐠? ' + (response.data?.detail || '閺堫亞鐓￠柨娆掝嚖'));
+          filterResults.value = [];
+          totalResults.value = 0;
+        }
+      } catch (error) {
+        console.error('鎼存梻鏁ょ粵娑⑩偓澶嬫閸欐垹鏁撻柨娆掝嚖:', error);
+        ElMessage.error('鎼存梻鏁ょ粵娑⑩偓澶嬫閸欐垹鏁撻柨娆掝嚖');
+        filterResults.value = [];
+        totalResults.value = 0;
+      } finally {
+        loading.value = false;
+      }
+    };
+
+    // 閼惧嘲褰囩紒鐔活吀娣団剝浼?
+    const updateStatistics = async () => {
+      // 濡偓閺屻儲妲搁崥锔芥箒閺堝鏅ラ惃鍓噊ken
+      const token = localStorage.getItem('access_token') || localStorage.getItem('token');
+      if (!token) {
+        console.warn('No valid token found, skipping statistics update');
+        return;
+      }
+      
+      try {
+        // 鐏忓棗澧犵粩顖滄畱缁傜粯鏆庣粵娑⑩偓澶娾偓鑹版祮閹诡澀璐熼崥搴ｎ伂閺堢喐婀滈惃鍕箾缂侇叀瀵栭崶瀛樼壐瀵骏绱欐稉宸僷plyAdvancedFilter娣囨繃瀵旀稉鈧懛杈剧礆
+        let strengthFilter = null;
+        if (filterForm.powerDiffs.length > 0) {
+          // 閺嶈宓侀弬鍥ㄣ€傜憴鍕瘱閺勭姴鐨犻崚鐗堫劀绾喚娈戞潻鐐电敾閼煎啫娲?
+          const getRangeForPowerDiff = (value) => {
+            if (value === -3) return [-100.0, -25.0]; // < -25
+            if (value === -2) return [-25.0, -17.0];  // -17 ~ -25
+            if (value === -1) return [-16.0, -9.0];   // -9 ~ -16  
+            if (value === 0) return [-8.0, 8.0];      // -8 ~ +8
+            if (value === 1) return [9.0, 16.0];      // +9 ~ +16
+            if (value === 2) return [17.0, 25.0];     // +17 ~ +25
+            if (value === 3) return [25.0, 100.0];    // > +25
+            return [-100.0, 100.0];
+          };
+          
+          const allRanges = filterForm.powerDiffs.map(v => getRangeForPowerDiff(v));
+          const overallMin = Math.min(...allRanges.map(r => r[0]));
+          const overallMax = Math.max(...allRanges.map(r => r[1]));
+          
+          strengthFilter = {
+            min_strength: overallMin,
+            max_strength: overallMax
+          };
+        }
+
+        let winPanFilter = null;
+        if (filterForm.winPanDiffs.length > 0) {
+
+          
+          const getRangeForWinPanDiff = (value) => {
+            if (value <= -4) return [-4.0, -3.5];
+            if (value === -3) return [-3.5, -2.5];
+            if (value === -2) return [-2.5, -1.5];
+            if (value === -1) return [-1.5, -0.5];
+            if (value === 0) return [-0.5, 0.5];
+            if (value === 1) return [0.5, 1.5];
+            if (value === 2) return [1.5, 2.5];
+            if (value === 3) return [2.5, 3.5];
+            if (value >= 4) return [3.5, 4.0];
+            return [-4.0, 4.0];
+          };
+          
+          const allRanges = filterForm.winPanDiffs.map(v => getRangeForWinPanDiff(v));
+          const overallMin = Math.min(...allRanges.map(r => r[0]));
+          const overallMax = Math.max(...allRanges.map(r => r[1]));
+          
+          winPanFilter = {
+            min_win_pan: overallMin,
+            max_win_pan: overallMax
+          };
+        }
+
+        let stabilityFilter = null;
+        if (filterForm.stabilityTiers.length > 0) {
+          stabilityFilter = {
+            tiers: filterForm.stabilityTiers
+          };
+        }
+
+        // 閺嬪嫰鈧姷鐡柅澶庮嚞濮瑰倸顕挒?
+        const requestPayload = {
+          strength_filter: strengthFilter,
+          win_pan_filter: winPanFilter,
+          stability_filter: stabilityFilter,
+          leagues: filterForm.leagues.length > 0 ? filterForm.leagues : null,
+          date_time: filterForm.dateTime || null,
+          date_range: filterForm.dateRange ? [
+            filterForm.dateRange[0]?.toISOString().split('T')[0],
+            filterForm.dateRange[1]?.toISOString().split('T')[0]
+          ] : null,
+          sort_by: filterForm.sortBy,
+          sort_order: filterForm.sortOrder,
+          include_derating: filterForm.includeDerating
+        };
+
+        const response = await request.post('/api/v1/beidan-filter/statistics', requestPayload);
+        
+        if (response.data) {
+          statistics.value = {
+            total_matches: response.data.total_matches,
+            average_power_diff: response.data.average_strength_diff,
+            average_win_pan_diff: response.data.average_win_pan_diff,
+            average_stability: response.data.average_stability,
+            delta_p_count: response.data.delta_p_count,
+            delta_wp_count: response.data.delta_wp_count,
+            p_tier_count: response.data.p_tier_count
+          };
+        }
+      } catch (error) {
+        console.error('閺囧瓨鏌婄紒鐔活吀娣団剝浼呴弮璺哄絺閻㈢喖鏁婄拠?', error);
+        // 娑撳秵妯夌粈娲晩鐠囶垱绉烽幁顖ょ礉閸ョ姳璐熺紒鐔活吀娣団剝浼呮稉宥嗘Ц韫囧懘娓堕惃?
+      }
+    };
+
+    // 闁插秶鐤嗙粵娑⑩偓澶嬫蒋娴?
+    
+    const resetFilters = () => {
+      filterForm.powerDiffs = [];
+      filterForm.winPanDiffs = [];
+      filterForm.stabilityTiers = [];
+
+      if (selectedStrategyName.value === CURRENT_STRATEGY) {
+        strategyApplied.value = false;
+        clearResults();
+      }
+    };
+
+
+    // 閸掑洦宕茬紒鐔活吀娣団剝浼呴弰鍓с仛
+    const toggleStats = () => {
+      showStats.value = !showStats.value;
+    };
+
+    // 鐎电厧鍤紒鎾寸亯
+    const exportResults = (format) => {
+      ElMessage.info(`鐎电厧鍤崝鐔诲厴瀵偓閸欐垳鑵戦敍灞剧壐瀵? ${format}`);
+      // 鐎圭偤妾惔鏃傛暏娑擃厼绨茬€圭偟骞囬崗铚傜秼閻ㄥ嫬顕遍崙娲偓鏄忕帆
+    };
+
+
+
+    // 閼惧嘲褰嘝缁狙勭垼缁涘墽琚崹?
+    const getPLevelTagType = (level) => {
+      switch (level) {
+        case 1: return 'success'; // P1缁狙呮暏缂佽儻澹?
+        case 2: return 'primary'; // P2缁狙呮暏閽冩繆澹?
+        case 3: return 'warning'; // P3缁狙呮暏姒涘嫯澹?
+        case 4: return 'danger';  // P4缁狙呮暏缁俱垼澹?
+        case 5: return 'info';    // P5缁狙呮暏閻忔媽澹?
+        default: return 'info';
+      }
+    };
+
+    // 婢跺嫮鎮婇幒鎺戠碍閸欐ê瀵?
+    const handleSortChange = (params) => {
+      console.log('閹烘帒绨崣妯哄:', params);
+      // 鐎圭偟骞囩€广垺鍩涚粩顖涘笓鎼村繑鍨ㄩ柌宥嗘煀鐠囬攱鐪伴弫鐗堝祦
+    };
+
+    // 婢跺嫮鎮婂В蹇涖€夋径褍鐨崣妯哄
+    const handleSizeChange = (size) => {
+      pageSize.value = size;
+      currentPage.value = 1;
+    };
+
+    // 婢跺嫮鎮婅ぐ鎾冲妞ら潧褰夐崠?
+    const handleCurrentChange = (page) => {
+      currentPage.value = page;
+    };
+
+    // 婢跺嫮鎮婃穱婵嗙摠缁涙牜鏆?
+    
+    const handleSaveStrategy = (command) => {
+      if (command === 'save') {
+        ElMessageBox.prompt('鐠囩柉绶崗銉х摜閻ｃ儱鎮曠粔?, '娣囨繂鐡ㄧ粵鏍殣', {
+          confirmButtonText: '娣囨繂鐡?,
+          cancelButtonText: '閸欐牗绉?,
+          inputPattern: /\S+/,
+          inputErrorMessage: '缁涙牜鏆愰崥宥囆炴稉宥堝厴娑撹櫣鈹?
+        }).then(({ value }) => {
+          const strategyName = value.trim();
+          localStorage.setItem(`beidan_strategy_${strategyName}`, serializeStrategy());
+          loadStrategyOptions();
+          ElMessage.success('缁涙牜鏆愬韫箽鐎?);
+        }).catch(() => {
+          // 閻劍鍩涢崣鏍ㄧХ
+        });
+      } else if (command === 'load') {
+        const strategyKeys = Object.keys(localStorage).filter(key => key.startsWith('beidan_strategy_'));
+        if (strategyKeys.length === 0) {
+          ElMessage.info('閺嗗倹妫ら崣顖氬鏉炵晫鐡ラ悾?);
+          return;
+        }
+
+        const strategyNames = strategyKeys.map(key => key.replace('beidan_strategy_', ''));
+        let optionsHtml = '';
+        strategyNames.forEach(name => {
+          optionsHtml += `<option value="${name}">${name}</option>`;
+        });
+
+        ElMessageBox({
+          title: '閸旂姾娴囩粵鏍殣',
+          message: `
+            <select id="strategySelect" style="width:100%;padding:5px;">
+              ${optionsHtml}
+            </select>
+            <div style="display:flex;gap:8px;margin-top:10px;">
+              <button id="strategyOverwrite" style="flex:1;padding:6px;border:1px solid #d6d2cb;border-radius:6px;background:#f6f5f4;cursor:pointer;">鐟曞棛娲婃穱婵嗙摠</button>
+              <button id="strategyDelete" style="flex:1;padding:6px;border:1px solid #d6d2cb;border-radius:6px;background:#f6f5f4;cursor:pointer;">閸掔娀娅?/button>
+            </div>
+            <div style="margin-top:8px;font-size:12px;color:#8b8680;">閹绘劗銇氶敍姘愁洬閻╂牔绻氱€涙ü绱伴弴瀛樻煀瑜版挸澧犵粵娑⑩偓澶婂敶鐎瑰箍鈧?/div>
+          `,
+          showCancelButton: true,
+          confirmButtonText: '閸旂姾娴?,
+          cancelButtonText: '閸欐牗绉?,
+          dangerouslyUseHTMLString: true,
+          didOpen: () => {
+            const selectEl = document.getElementById('strategySelect');
+            if (selectEl && strategyNames.length > 0) {
+              selectEl.value = strategyNames[0];
+            }
+
+            const overwriteBtn = document.getElementById('strategyOverwrite');
+            if (overwriteBtn) {
+              overwriteBtn.addEventListener('click', () => {
+                const name = selectEl ? selectEl.value : '';
+                if (!name) return;
+                localStorage.setItem(`beidan_strategy_${name}`, serializeStrategy());
+                loadStrategyOptions();
+                ElMessage.success('缁涙牜鏆愬鑼额洬閻?);
+              });
+            }
+
+            const deleteBtn = document.getElementById('strategyDelete');
+            if (deleteBtn) {
+              deleteBtn.addEventListener('click', () => {
+                const name = selectEl ? selectEl.value : '';
+                if (!name) return;
+                localStorage.removeItem(`beidan_strategy_${name}`);
+                if (selectedStrategyName.value === name) {
+                  selectedStrategyName.value = '';
+                  selectedStrategy.value = null;
+                  strategyApplied.value = false;
+                  clearResults();
+                }
+                loadStrategyOptions();
+                ElMessage.success('缁涙牜鏆愬鎻掑灩闂?);
+              });
+            }
+          }
+        }).then(() => {
+          const selectEl = document.getElementById('strategySelect');
+          if (selectEl) {
+            const selectedStrategy = selectEl.value;
+            const savedStrategy = localStorage.getItem(`beidan_strategy_${selectedStrategy}`);
+            if (savedStrategy) {
+              const parsed = JSON.parse(savedStrategy);
+              Object.assign(filterForm, parsed);
+              selectedStrategyName.value = selectedStrategy;
+              selectedStrategy.value = parsed;
+              strategyApplied.value = true;
+              ElMessage.success('缁涙牜鏆愬鎻掑鏉?);
+              applyAdvancedFilter(); // 閸旂姾娴囬崥搴″煕閺傛壆绮ㄩ弸?
+            } else {
+              ElMessage.error('缁涙牜鏆愰崝鐘烘祰婢惰精瑙?);
+            }
+          }
+        }).catch(() => {
+          // 閻劍鍩涢崣鏍ㄧХ
+        });
+      }
+
+    const directionWarning = computed(() => {
+      const hasPositiveStrength = filterForm.powerDiffs.some((v) => v > 0);
+      const hasNegativeStrength = filterForm.powerDiffs.some((v) => v < 0);
+      const hasPositiveWinPan = filterForm.winPanDiffs.some((v) => v > 0);
+      const hasNegativeWinPan = filterForm.winPanDiffs.some((v) => v < 0);
+
+      if ((hasPositiveStrength && hasNegativeWinPan) || (hasNegativeStrength && hasPositiveWinPan)) {
+        return true;
+      }
+      return false;
+    });
+
+    const applyPreset = (preset) => {
+      if (preset === 'strong') {
+        filterForm.powerDiffs = [2, 3];
+        filterForm.winPanDiffs = [3, 4];
+        filterForm.stabilityTiers = ['S', 'A', 'B'];
+      } else if (preset === 'upset') {
+        filterForm.powerDiffs = [-1, 0];
+        filterForm.winPanDiffs = [-3, -4];
+        filterForm.stabilityTiers = ['D', 'E'];
+      } else if (preset === 'balance') {
+        filterForm.powerDiffs = [0];
+        filterForm.winPanDiffs = [0];
+        filterForm.stabilityTiers = ['B', 'C'];
+      }
+      
+      ElMessage.success(`瀹告彃绨查悽?${preset === 'strong' ? '瀵搫濞嶅锝堢熅' : preset === 'upset' ? '閸愮兘妫婊嗗窛' : '閸у洩銆€閸楁艾绱?}"妫板嫯顔昤);
+    }
+
+    // 缂佸嫪娆㈤幐鍌濇祰閺冭泛鍨垫慨瀣閺佺増宓?
+    onMounted(async () => {
+      await fetchDateTimeOptions();
+      await fetchRealData();
+    });
+</script>
+
+<style scoped>
+.beidan-filter-panel {
+  padding: 24px;
+  background: linear-gradient(180deg, #f6f5f4 0%, #f0eeeb 100%);
+  border-radius: 18px;
+  min-height: 100%;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-title .title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #6b6763;
+}
+
+.header-title .subtitle {
+  font-size: 13px;
+  color: #8b8680;
+  margin-top: 4px;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.match-count {
+  font-size: 13px;
+  color: #6b6763;
+  background: #f3efe8;
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 1px solid #d6d2cb;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.match-count span {
+  color: #9fb1c4;
+  font-weight: 700;
+}
+
+.filter-card, .stats-card, .result-card {
+  margin-bottom: 24px;
+  border: 1px solid #d6d2cb;
+  background: #fbfaf8;
+  box-shadow: 0 14px 24px rgba(107, 103, 99, 0.12);
+}
+
+.strategy-card {
+  margin-bottom: 24px;
+  border: 1px solid #d6d2cb;
+  background: #fbfaf8;
+  box-shadow: 0 12px 20px rgba(107, 103, 99, 0.1);
+}
+
+.strategy-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.strategy-select {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.strategy-label {
+  font-weight: 600;
+  color: #6b6763;
+}
+
+.strategy-detail {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 16px;
+  padding: 12px;
+  background: #f6f5f4;
+  border: 1px solid #d6d2cb;
+  border-radius: 10px;
+}
+
+.detail-item {
+  display: flex;
+  gap: 6px;
+  font-size: 13px;
+  color: #6b6763;
+}
+
+.detail-label {
+  color: #8b8680;
+  font-weight: 600;
+}
+
+.detail-value {
+  color: #4c4743;
+}
+
+.strategy-empty {
+  font-size: 13px;
+  color: #8b8680;
+}
+
+.strategy-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.strategy-list-title {
+  font-weight: 600;
+  color: #6b6763;
+}
+
+.strategy-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.strategy-item {
+  border: 1px solid #d6d2cb;
+  border-radius: 10px;
+  padding: 12px;
+  background: #fdfcfb;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.strategy-item:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 16px rgba(107, 103, 99, 0.15);
+  border-color: #c6bdb4;
+}
+
+.strategy-item.active {
+  border-color: #d4b3a1;
+  box-shadow: 0 12px 20px rgba(212, 179, 161, 0.25);
+}
+
+.strategy-item-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.strategy-item-name {
+  font-weight: 600;
+  color: #4c4743;
+}
+
+.strategy-item-tag {
+  background: #d4b3a1;
+  color: #4c4743;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+}
+
+
+.strategy-list-empty {
+  font-size: 13px;
+  color: #8b8680;
+}
+
+.filter-section {
+  margin-top: 24px;
+}
+
+.dimension-row {
+  margin-bottom: 24px;
+}
+
+.control-row {
+  margin-top: 20px;
+}
+
+.filter-group {
+  border: 1px solid #d6d2cb;
+  border-radius: 10px;
+  padding: 18px 20px;
+  margin-bottom: 16px;
+  background-color: #fdfcfb;
+  box-shadow: 0 10px 18px rgba(107, 103, 99, 0.08);
+}
+
+.group-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #6b6763;
+}
+
+.group-hint {
+  font-size: 13px;
+  color: #8b8680;
+  font-weight: normal;
+}
+
+.filter-item {
+  margin-bottom: 16px;
+}
+
+.filter-item label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+  color: #6b6763;
+  font-size: 14px;
+}
+
+.checkbox-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.tier-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.option-tile {
+  text-align: left;
+  line-height: 1.3;
+  padding: 6px 8px;
+}
+
+.option-value {
+  font-weight: 700;
+  color: #6b6763;
+  font-size: 13px;
+}
+
+.option-desc {
+  font-size: 12px;
+  color: #9fb1c4;
+  margin-top: 2px;
+}
+
+.option-range {
+  font-size: 11px;
+  color: #8b8680;
+  margin-top: 2px;
+}
+
+.tier-tile {
+  text-align: left;
+  line-height: 1.3;
+  padding: 6px 8px;
+}
+
+.tier-label {
+  font-weight: 700;
+  color: #6b6763;
+  font-size: 13px;
+}
+
+.tier-desc {
+  font-size: 12px;
+  color: #aabead;
+  margin-top: 2px;
+}
+
+.tier-range {
+  font-size: 11px;
+  color: #8b8680;
+  margin-top: 2px;
+}
+
+.pill-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.switch-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.rule-preview {
+  margin-top: 12px;
+  font-size: 13px;
+  color: #8b8680;
+  font-style: italic;
+}
+
+.preset-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.direction-alert {
+  margin-bottom: 20px;
+}
+
+.filter-actions {
+  margin-top: 24px;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+
+.control-row .el-col:last-child .filter-group {
+  background-color: #f6f5f4;
+  border-color: #d6d2cb;
+  box-shadow: none;
+}
+
+.stat-item {
+  text-align: center;
+  padding: 20px;
+  border: 1px solid #d6d2cb;
+  border-radius: 10px;
+  background-color: #fdfcfb;
+  box-shadow: 0 10px 18px rgba(107, 103, 99, 0.08);
+}
+
+.stat-number {
+  font-size: 28px;
+  font-weight: 700;
+  color: #9fb1c4;
+  margin-bottom: 8px;
+}
+
+.stat-label {
+  font-size: 14px;
+  color: #8b8680;
+  font-weight: 500;
+}
+
+.result-card .el-table {
+  margin-bottom: 24px;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.raw-json {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-all;
+  font-size: 12px;
+  color: #6f6a64;
+}
+
+.analysis-header {
+  margin-bottom: 16px;
+}
+
+.analysis-hero {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 18px;
+  background: linear-gradient(135deg, #2e5a2f, #3b7a39);
+  border-radius: 16px;
+  padding: 18px;
+  color: #f6f3ee;
+}
+
+.team-card {
+  border: 1px solid #d6d2cb;
+  border-radius: 14px;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #f6f3ee;
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.team-card--away {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.team-label {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.team-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: #f6f3ee;
+  margin-top: 6px;
+}
+
+.team-meta {
+  margin-top: 6px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.hero-center {
+  text-align: center;
+  padding: 12px 16px;
+  color: #f6f3ee;
+}
+
+.match-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #f6f3ee;
+}
+
+.match-time {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.75);
+  margin-top: 6px;
+}
+
+.match-meta {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.75);
+  margin-top: 6px;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.2);
+  color: #f6f3ee;
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: 8px;
+}
+
+.analysis-columns {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.analysis-dialog :deep(.el-dialog) {
+  max-width: 920px;
+  width: 92%;
+}
+
+.analysis-sim-container {
+  display: grid;
+  gap: 16px;
+}
+
+.analysis-sim-header {
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: #f4f1ed;
+  border: 1px solid #e4dfd8;
+}
+
+.analysis-sim-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #5a534e;
+}
+
+.analysis-sim-subtitle {
+  font-size: 13px;
+  color: #8b8680;
+  margin-top: 4px;
+}
+
+.analysis-sim-card {
+  border: 1px solid #e2ddd6;
+  border-radius: 12px;
+  padding: 14px 16px;
+  background: #fdfcfb;
+}
+
+.analysis-sim-card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #6b6763;
+  margin-bottom: 10px;
+}
+
+.analysis-sim-basic {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.analysis-sim-team {
+  text-align: center;
+}
+
+.analysis-sim-team-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: #5a534e;
+}
+
+.analysis-sim-team-meta {
+  font-size: 12px;
+  color: #8b8680;
+  margin-top: 4px;
+}
+
+.analysis-sim-vs {
+  text-align: center;
+  color: #7a7067;
+}
+
+.analysis-sim-league {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.analysis-sim-vs-text {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 4px 0;
+  color: #b36b5e;
+}
+
+.analysis-sim-time {
+  font-size: 12px;
+  color: #8b8680;
+}
+
+.analysis-sim-odds {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px;
+}
+
+.analysis-sim-odds-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px;
+  border-radius: 8px;
+  background: #f6f2ee;
+  border: 1px solid #e4dfd8;
+  font-size: 12px;
+  color: #8b8680;
+  text-align: center;
+}
+
+.analysis-sim-odds-item strong {
+  color: #5a534e;
+  font-size: 16px;
+}
+
+.analysis-sim-progress {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.analysis-sim-progress-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: #6f6a64;
+}
+
+.analysis-sim-progress-bars :deep(.el-progress__bar) {
+  height: 10px;
+  border-radius: 999px;
+}
+
+.analysis-sim-table {
+  border: 1px solid #ece6df;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.analysis-sim-table-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(90px, 1fr));
+  padding: 10px 12px;
+  font-size: 13px;
+  color: #6f6a64;
+  border-bottom: 1px solid #eee8e1;
+}
+
+.analysis-sim-table-row:last-child {
+  border-bottom: none;
+}
+
+.analysis-sim-table-head {
+  background: #f2eeea;
+  font-weight: 600;
+  color: #6b6763;
+}
+
+.analysis-sim-odds-panels {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.analysis-sim-odds-panel,
+.analysis-sim-lose-panel {
+  border: 1px solid #e4dfd8;
+  border-radius: 10px;
+  padding: 12px;
+  background: #f8f5f1;
+  text-align: center;
+}
+
+.analysis-sim-panel-title {
+  font-size: 13px;
+  color: #8b8680;
+  margin-bottom: 6px;
+}
+
+.analysis-sim-panel-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: #b36b5e;
+  margin-bottom: 8px;
+}
+
+.analysis-sim-panel-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  font-size: 12px;
+  color: #6f6a64;
+}
+
+.analysis-sim-lose {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.analysis-sim-summary {
+  padding: 10px 12px;
+  background: #f4f1ed;
+  border-radius: 8px;
+  color: #6f6a64;
+  font-size: 13px;
+}
+
+.analysis-sim-history {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.analysis-sim-history-item {
+  padding: 8px 10px;
+  border: 1px solid #e4dfd8;
+  border-radius: 8px;
+  background: #fdfcfb;
+  font-size: 12px;
+  color: #6f6a64;
+}
+
+.analysis-sim-source {
+  display: grid;
+  gap: 8px;
+  font-size: 12px;
+  color: #6f6a64;
+}
+
+.analysis-sim-source span {
+  color: #8b8680;
+  margin-right: 6px;
+}
+
+@media (max-width: 900px) {
+  .analysis-sim-basic {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  .analysis-sim-table-row {
+    grid-template-columns: repeat(2, minmax(90px, 1fr));
+    row-gap: 6px;
+  }
+}
+.analysis-tabs {
+  margin-top: 14px;
+}
+
+.analysis-tabs :deep(.el-tabs__header) {
+  margin: 0 0 12px;
+  border-bottom: 1px solid #e2ddd6;
+}
+
+.analysis-tabs :deep(.el-tabs__nav-wrap::after) {
+  background: transparent;
+}
+
+.analysis-tabs :deep(.el-tabs__item) {
+  font-size: 15px;
+  color: #6f6a64;
+  padding: 0 18px;
+}
+
+.analysis-tabs :deep(.el-tabs__item.is-active) {
+  color: #c24a3a;
+  font-weight: 600;
+}
+
+.analysis-tabs :deep(.el-tabs__active-bar) {
+  background-color: #c24a3a;
+  height: 2px;
+}
+
+.analysis-section {
+  margin-bottom: 16px;
+}
+
+.analysis-section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #6b6763;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.analysis-section-title::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #c24a3a;
+}
+
+.analysis-table {
+  border: 1px solid #e5e0da;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fdfcfb;
+}
+
+.analysis-table-row {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(70px, 1fr));
+  gap: 6px;
+  padding: 10px 12px;
+  font-size: 13px;
+  color: #6f6a64;
+  border-bottom: 1px solid #eee8e1;
+}
+
+.analysis-table-row:last-child {
+  border-bottom: none;
+}
+
+.analysis-table-head {
+  background: #f2eeea;
+  color: #6b6763;
+  font-weight: 600;
+}
+
+.analysis-split {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+}
+
+.analysis-number {
+  font-size: 20px;
+  font-weight: 700;
+  color: #c24a3a;
+}
+
+.analysis-muted {
+  font-size: 12px;
+  color: #8b8680;
+  margin-top: 4px;
+}
+
+.analysis-split-center {
+  font-size: 12px;
+  color: #8b8680;
+  font-weight: 600;
+}
+
+.analysis-matrix {
+  display: grid;
+  gap: 12px;
+}
+
+.analysis-matrix-row {
+  display: grid;
+  grid-template-columns: 120px repeat(3, 1fr);
+  gap: 8px;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid #e5e0da;
+  border-radius: 12px;
+  background: #fdfcfb;
+}
+
+.analysis-matrix-label {
+  font-size: 13px;
+  color: #6b6763;
+  font-weight: 600;
+}
+
+.analysis-matrix-cell {
+  text-align: center;
+}
+
+.analysis-heat {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+  gap: 12px;
+}
+
+.analysis-heat-item {
+  border: 1px solid #e5e0da;
+  border-radius: 12px;
+  padding: 12px;
+  text-align: center;
+  background: #fdfcfb;
+}
+
+.analysis-left,
+.analysis-right {
+  display: grid;
+  gap: 16px;
+}
+
+.analysis-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #5a534e;
+}
+
+.analysis-subtitle {
+  font-size: 13px;
+  color: #8b8680;
+  margin-top: 6px;
+}
+
+.analysis-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.analysis-card,
+.analysis-block {
+  border: 1px solid #d6d2cb;
+  border-radius: 10px;
+  padding: 12px;
+  background: #fdfcfb;
+}
+
+.analysis-card-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b6763;
+  margin-bottom: 8px;
+}
+
+.analysis-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+  color: #6f6a64;
+  padding: 4px 0;
+}
+
+.analysis-row strong {
+  color: #5a534e;
+  font-weight: 600;
+}
+
+.bar {
+  height: 8px;
+  border-radius: 999px;
+  background: #ebe7e1;
+  overflow: hidden;
+  margin: 6px 0 10px;
+}
+
+.bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #aeb7bf, #8fa0b1);
+}
+
+.bar-fill--alt {
+  background: linear-gradient(90deg, #c5b8a8, #a99683);
+}
+
+.analysis-list {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  color: #6f6a64;
+}
+
+.analysis-list-item {
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: #f7f5f1;
+  border: 1px solid #e2ddd6;
+}
+
+@media (max-width: 900px) {
+  .analysis-hero {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  .analysis-columns {
+    grid-template-columns: 1fr;
+  }
+
+  .analysis-table-row {
+    grid-template-columns: repeat(3, minmax(70px, 1fr));
+    row-gap: 8px;
+  }
+
+  .analysis-matrix-row {
+    grid-template-columns: 1fr;
+    text-align: left;
+  }
+
+  .analysis-matrix-cell {
+    text-align: left;
+  }
+}
+
+.analysis-empty {
+  color: #8b8680;
+  font-size: 14px;
+  padding: 16px 0;
+}
+
+.pagination-total {
+  margin-right: 12px;
+  color: #6b6763;
+  font-size: 13px;
+}
+
+:deep(.el-button) {
+  transition: transform 0.15s ease, box-shadow 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+}
+
+:deep(.el-button:hover) {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(107, 103, 99, 0.2);
+}
+
+:deep(.el-button:active) {
+  transform: translateY(0);
+  box-shadow: 0 4px 10px rgba(107, 103, 99, 0.16);
+}
+
+:deep(.el-button--primary) {
+  background-color: #d4b3a1;
+  border-color: #d4b3a1;
+  color: #4c4743;
+}
+
+:deep(.el-button--primary:hover) {
+  background-color: #c9a595;
+  border-color: #c9a595;
+  color: #4c4743;
+}
+
+:deep(.el-button--success) {
+  background-color: #aabead;
+  border-color: #aabead;
+  color: #4c4743;
+}
+
+:deep(.el-button--success:hover) {
+  background-color: #9daf9f;
+  border-color: #9daf9f;
+  color: #4c4743;
+}
+
+:deep(.el-button--default) {
+  background-color: #f3efe8;
+  border-color: #d6d2cb;
+  color: #6b6763;
+}
+
+:deep(.el-checkbox-button__inner) {
+  background-color: #f6f3f0;
+  border-color: #d6d2cb;
+  color: #6b6763;
+  transition: all 0.2s ease;
+}
+
+:deep(.el-checkbox-button__inner:hover) {
+  border-color: #bfb8b0;
+  color: #5a5652;
+}
+
+:deep(.el-checkbox-button.is-checked .el-checkbox-button__inner) {
+  background-color: #d4b3a1;
+  border-color: #c6a1a6;
+  color: #4c4743;
+  box-shadow: inset 0 0 0 1px rgba(107, 103, 99, 0.2);
+}
+
+:deep(.el-radio__inner) {
+  border-color: #d6d2cb;
+  background-color: #f6f3f0;
+}
+
+:deep(.el-radio__label) {
+  color: #6b6763;
+}
+
+:deep(.el-radio__input.is-checked .el-radio__inner) {
+  border-color: #9fb1c4;
+  background-color: #9fb1c4;
+}
+
+:deep(.el-radio__input.is-checked + .el-radio__label) {
+  color: #4c4743;
+  font-weight: 600;
+}
+</style>
+

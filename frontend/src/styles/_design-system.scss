@@ -1,0 +1,76 @@
+// src/styles/_design-system.scss
+// 设计系统 CSS 变量 - 与 Element Plus 保持一致
+
+:root {
+  // 颜色映射 - 转换为 CSS 变量 (莫兰迪色系)
+  --color-primary: #8aa3ab;
+  --color-success: #8a9b8f;
+  --color-warning: #b8a98f;
+  --color-danger: #b88a8a;
+  --color-info: #8aa3ab;
+  --color-white: #FFFFFF;
+  --color-black: #000000;
+  --color-neutral-100: #FFFFFF;
+  --color-neutral-200: #F5F7FA;
+  --color-neutral-300: #E4E7ED;
+  --color-neutral-400: #C0C4CC;
+  --color-neutral-500: #909399;
+  --color-neutral-600: #606266;
+  --color-neutral-700: #303133;
+  --color-neutral-800: #2c2c2c;
+  --color-neutral-900: #242424;
+  --color-bg-light: #f0f2f5;
+  --color-bg-lighter: #f5f7fa;
+  --color-border-light: #ebeef5;
+  --color-border-lighter: #f2f6fc;
+
+  // 文本颜色
+  --color-text-primary: rgba(0, 0, 0, 0.85);
+  --color-text-regular: rgba(0, 0, 0, 0.65);
+  --color-text-secondary: rgba(0, 0, 0, 0.45);
+  --color-text-placeholder: rgba(0, 0, 0, 0.25);
+  --color-text-disabled: rgba(0, 0, 0, 0.25);
+
+  // 边框颜色
+  --border-color-base: #DCDFE6;
+  --border-color-light: #E4E7ED;
+  --border-color-lighter: #EBEEF5;
+  --border-color-extra-light: #F2F6FC;
+
+  // 间距 - 直接使用具体数值，避免 Sass 依赖
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+
+  // 字体大小 - 直接使用具体数值
+  --font-size-xs: 12px;
+  --font-size-sm: 14px;
+  --font-size-base: 16px;
+  --font-size-lg: 18px;
+  --font-size-xl: 20px;
+  --font-size-xxl: 28px;
+
+  // 字体粗细
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  // 边框圆角
+  --border-radius-base: 4px;
+  --border-radius-medium: 6px;
+  --border-radius-large: 8px;
+
+  // 阴影
+  --box-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --box-shadow-base: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --box-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.15);
+  --box-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.15);
+
+  // 过渡动画
+  --transition-base: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-fast: all 0.15s ease;
+  --transition-slow: all 0.5s ease;
+}

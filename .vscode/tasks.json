@@ -1,0 +1,79 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "pip install requirements-dev",
+			"type": "shell",
+			"command": "pip",
+			"args": [
+				"install",
+				"-r",
+				"requirements-dev.txt"
+			],
+			"presentation": {
+				"reveal": "silent"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Run Tests for Scraper",
+			"type": "shell",
+			"command": "pytest",
+			"args": [
+				"--maxfail=3",
+				"--disable-warnings",
+				"-q"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$pytest"
+			],
+			"group": "test"
+		},
+		{
+			"label": "Run Tests for Scraper",
+			"type": "shell",
+			"command": "pytest",
+			"args": [
+				"--maxfail=3",
+				"--disable-warnings",
+				"-q"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$pytest"
+			],
+			"group": "test"
+		},
+		{
+			"label": "Run Tests for Scraper",
+			"type": "shell",
+			"command": "pytest",
+			"args": [
+				"--maxfail=3",
+				"--disable-warnings",
+				"-q"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$pytest"
+			],
+			"group": "test"
+		},
+		{
+			"label": "Run Tests for Scraper",
+			"type": "shell",
+			"command": "pytest",
+			"args": [
+				"--maxfail=3",
+				"--disable-warnings",
+				"-q"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$pytest"
+			],
+			"group": "test"
+		}
+	]
+}

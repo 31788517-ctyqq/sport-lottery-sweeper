@@ -1,0 +1,43 @@
+import request from '@/utils/request'
+
+const BASE = '/api/v1'
+
+export const statsAPI = {
+  getSummaryStats() {
+    return request({
+      url: `${BASE}/stats/data-center`,
+      method: 'get'
+    })
+  },
+
+  getMatchChartStats(params = {}) {
+    return request({
+      url: `${BASE}/stats/matches/chart`,
+      method: 'get',
+      params
+    })
+  },
+
+  getIntelligenceChartStats(params = {}) {
+    return request({
+      url: `${BASE}/stats/intelligence/chart`,
+      method: 'get',
+      params
+    })
+  },
+
+  getUserBehaviorStats(params = {}) {
+    return request({
+      url: `${BASE}/stats/users/behavior`,
+      method: 'get',
+      params
+    })
+  }
+}
+
+export const {
+  getSummaryStats,
+  getMatchChartStats,
+  getIntelligenceChartStats,
+  getUserBehaviorStats
+} = statsAPI

@@ -1,0 +1,37 @@
+/* styles/responsive/desktop.css */
+/* Styles specific to desktop devices (typically screens wider than 1024px) */
+
+@media (min-width: 1025px) {
+
+  /* Layout adjustments */
+  .app-sidebar {
+    width: 256px; /* Standard desktop sidebar width */
+  }
+
+  .app-main-content {
+    margin-left: 256px; /* Match sidebar width */
+  }
+
+  /* Typography */
+  /* Keep standard desktop sizes defined in typography.css */
+
+  /* Components */
+  .card {
+    margin-bottom: var(--spacing-lg); /* More space between cards on larger screens */
+  }
+
+  /* Utilities */
+  .container {
+    max-width: 1200px; /* Standard desktop container width */
+  }
+
+  /* Responsive Grid (Standard for large screens) */
+  /* The standard .col-* rules in layout.css apply here. */
+  /* This file can be used for any desktop-specific overrides or enhancements. */
+
+  /* Example: Sticky elements on desktop */
+  .sticky-desktop {
+    position: sticky;
+    top: var(--spacing-md);
+  }
+}

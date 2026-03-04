@@ -1,0 +1,68 @@
+auth:
+  admin_patterns:
+  - /admin/.*
+  - /users/admin.*
+  - /system/.*
+  - /config/.*
+  - /settings/.*
+  public_patterns:
+  - /auth/login.*
+  - /auth/register.*
+  - /public/.*
+  - /health.*
+  - /docs.*
+  - /openapi\.json
+  sensitive_patterns:
+  - /users?/.*
+  - /profile.*
+  - /admin.*
+  - /data.*
+  - /config.*
+  - /settings.*
+  - /payment.*
+  - /wallet.*
+  - /balance.*
+  - /transaction.*
+routes:
+  expected_patterns:
+  - /api/v1/health
+  - /api/v1/info
+  - /api/v1/users/profile
+  - /api/v1/admin/users
+  - /api/v1/auth/login
+  - /api/v1/auth/register
+scan:
+  api_dirs:
+  - api/v1
+  backend_dir: backend
+  generate_tests: true
+  output_dir: reports
+  report_format:
+  - json
+  - md
+  - csv
+  test_output_dir: generated_tests
+validation:
+  common_params_requiring_validation:
+  - id
+  - user_id
+  - page
+  - size
+  - limit
+  - offset
+  data_creation_patterns:
+  - /create.*
+  - /register.*
+  - /add.*
+  - /insert.*
+  - /new.*
+  - /save.*
+  sensitive_params:
+  - password
+  - token
+  - secret
+  - key
+  - credit_card
+  - ssn
+  - phone
+  - email

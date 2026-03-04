@@ -1,0 +1,869 @@
+{
+  "timestamp": "2026-02-27T09:45:41.118869",
+  "project_structure": {
+    "directories": [
+      {
+        "name": "backend",
+        "path": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend",
+        "file_count": 1910
+      },
+      {
+        "name": "frontend",
+        "path": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\frontend",
+        "file_count": 49162
+      },
+      {
+        "name": "scripts",
+        "path": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\scripts",
+        "file_count": 696
+      },
+      {
+        "name": ".codebuddy",
+        "path": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\.codebuddy",
+        "file_count": 22
+      },
+      {
+        "name": "docs",
+        "path": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\docs",
+        "file_count": 291
+      }
+    ],
+    "key_files": [
+      "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\package.json",
+      "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\pyproject.toml",
+      "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\requirements.txt",
+      "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\frontend\\vite.config.js",
+      "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\main.py",
+      "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\frontend\\src\\router\\index.js",
+      "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\.env.example"
+    ],
+    "file_counts": {}
+  },
+  "entry_points": {
+    "backend": {
+      "main_file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\main.py",
+      "port": 8000,
+      "framework": "FastAPI",
+      "docs_url": "http://localhost:8000/docs"
+    },
+    "frontend": {
+      "main_file": "frontend/src/main.js",
+      "dev_script": "vite --port 3000",
+      "port": 3000,
+      "framework": "Vue 3 + Vite",
+      "homepage": "http://localhost:3000"
+    },
+    "scripts": {
+      "directory": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\scripts",
+      "scripts": [
+        "add_500_wang_source.py",
+        "add_beidan_test_data.py",
+        "api_error_fix.py",
+        "api_health_check.py",
+        "api_route_integrity_check.py",
+        "apply_morandi_style.py",
+        "benchmark_startup.py",
+        "check-coverage-thresholds.py",
+        "check-syntax.py",
+        "check_ai_compliance.py"
+      ]
+    }
+  },
+  "dependencies": {
+    "node": {
+      "dependencies": {
+        "@element-plus/icons-vue": "^2.1.0",
+        "@pinia/testing": "^1.0.3",
+        "axios": "^1.5.0",
+        "chart.js": "^4.5.1",
+        "crypto-js": "^4.1.1",
+        "dayjs": "^1.11.9",
+        "echarts": "^5.4.3",
+        "element-plus": "^2.4.1",
+        "js-cookie": "^3.0.5",
+        "lodash-es": "^4.17.21",
+        "mitt": "^3.0.0",
+        "nprogress": "^0.2.0",
+        "pinia": "^3.0.4",
+        "qs": "^6.11.2",
+        "socket.io-client": "^4.7.2",
+        "vue": "^3.3.4",
+        "vue-i18n": "^9.13.1",
+        "vue-router": "^4.2.4"
+      },
+      "devDependencies": {
+        "@playwright/test": "^1.38.1",
+        "@testing-library/jest-dom": "^6.1.3",
+        "@testing-library/user-event": "^14.4.3",
+        "@testing-library/vue": "^8.1.0",
+        "@types/js-cookie": "^3.0.2",
+        "@types/lodash-es": "^4.17.6",
+        "@types/node": "^20.5.2",
+        "@types/nprogress": "^0.2.0",
+        "@types/qs": "^6.9.7",
+        "@typescript-eslint/eslint-plugin": "^6.0.0",
+        "@typescript-eslint/parser": "^6.0.0",
+        "@vitejs/plugin-vue": "^5.0.4",
+        "@vue/tsconfig": "^0.4.0",
+        "concurrently": "^8.2.1",
+        "eslint": "^8.47.0",
+        "eslint-config-prettier": "^9.0.0",
+        "eslint-plugin-prettier": "^5.0.0",
+        "eslint-plugin-vue": "^9.17.0",
+        "husky": "^8.0.3",
+        "jsdom": "^22.1.0",
+        "lint-staged": "^14.0.1",
+        "patch-package": "^8.0.0",
+        "playwright": "^1.38.1",
+        "prettier": "^3.0.0",
+        "sass": "^1.69.0",
+        "typescript": "~5.2.2",
+        "unplugin-auto-import": "^0.16.6",
+        "unplugin-element-plus": "^0.7.1",
+        "unplugin-vue-components": "^0.25.1",
+        "vite": "^5.2.0",
+        "vite-plugin-pwa": "^1.2.0",
+        "vitest": "^4.0.18",
+        "vue-tsc": "^1.8.8",
+        "wait-on": "^7.0.1"
+      },
+      "engines": {}
+    },
+    "python": {
+      "requirements": [
+        "fastapi==0.104.1",
+        "uvicorn[standard]==0.24.0",
+        "sqlalchemy==2.0.23",
+        "alembic==1.13.1",
+        "psycopg2-binary==2.9.9",
+        "redis==5.0.1",
+        "aioredis==2.0.1",
+        "celery==5.3.4",
+        "apscheduler==3.10.4",
+        "scrapy==2.11.2",
+        "playwright==1.40.0",
+        "beautifulsoup4==4.12.2",
+        "requests==2.31.0",
+        "numpy==1.26.2",
+        "pandas==2.1.4",
+        "jinja2==3.1.2",
+        "pillow==10.1.0",
+        "opencv-python-headless==4.8.1.78",
+        "onnxruntime==1.16.3",
+        "torch==2.1.1",
+        "scikit-learn==1.3.2",
+        "python-dotenv==1.0.0",
+        "pydantic==2.5.0",
+        "pydantic-settings==2.1.0",
+        "bcrypt==4.0.1",
+        "python-jose[cryptography]==3.3.0",
+        "passlib[bcrypt]==1.7.4",
+        "langchain==0.1.0",
+        "langchain-openai==0.0.5",
+        "langchain-community==0.0.20",
+        "langchain-experimental==0.0.50",
+        "langsmith==0.0.83",
+        "openai==1.10.0",
+        "dashscope==1.14.0",
+        "google-generativeai==0.3.1",
+        "faiss-cpu==1.7.4",
+        "pytest==7.4.3",
+        "pytest-asyncio==0.21.1",
+        "pytest-cov==4.1.0",
+        "flake8==6.1.0",
+        "black==23.12.1",
+        "isort==5.13.2",
+        "mypy==1.8.0",
+        "sentry-sdk[fastapi]==1.39.1",
+        "passlib<2.0.0,>=1.7.4",
+        "cryptography>=41.0.7,<42.0.0",
+        "alembic==1.13.1",
+        "pywin32>=223; sys_platform == \"win32\"",
+        "pyobjc-core>=10.7; sys_platform == \"darwin\"",
+        "psycopg2-binary==2.9.9",
+        "asyncpg==0.29.0"
+      ],
+      "pyproject": "present"
+    }
+  },
+  "api_routes": [
+    {
+      "type": "frontend",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\frontend\\src\\router\\index.js",
+      "note": "包含路由配置"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\auth.py",
+      "module": "backend\\api\\auth.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\dependencies.py",
+      "module": "backend\\api\\dependencies.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\deps.py",
+      "module": "backend\\api\\deps.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\minimal_api.py",
+      "module": "backend\\api\\minimal_api.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\sp_routes_simple.py",
+      "module": "backend\\api\\sp_routes_simple.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\websocket.py",
+      "module": "backend\\api\\websocket.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\websocket_handler.py",
+      "module": "backend\\api\\websocket_handler.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\websocket_routes.py",
+      "module": "backend\\api\\websocket_routes.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\__init__.py",
+      "module": "backend\\api\\__init__.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\models\\__init__.py",
+      "module": "backend\\api\\models\\__init__.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\schemas\\agent.py",
+      "module": "backend\\api\\schemas\\agent.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\schemas\\auth.py",
+      "module": "backend\\api\\schemas\\auth.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\schemas\\common.py",
+      "module": "backend\\api\\schemas\\common.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\schemas\\user.py",
+      "module": "backend\\api\\schemas\\user.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\schemas\\__init__.py",
+      "module": "backend\\api\\schemas\\__init__.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\admin.py",
+      "module": "backend\\api\\v1\\admin.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\admin_matches.py",
+      "module": "backend\\api\\v1\\admin_matches.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\admin_matches_new.py",
+      "module": "backend\\api\\v1\\admin_matches_new.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\admin_user_management.py",
+      "module": "backend\\api\\v1\\admin_user_management.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\agents.py",
+      "module": "backend\\api\\v1\\agents.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\auth.py",
+      "module": "backend\\api\\v1\\auth.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\cache_dependency.py",
+      "module": "backend\\api\\v1\\cache_dependency.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\caipiao_data.py",
+      "module": "backend\\api\\v1\\caipiao_data.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\crawler.py",
+      "module": "backend\\api\\v1\\crawler.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\crawler_alert.py",
+      "module": "backend\\api\\v1\\crawler_alert.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\crawler_monitor.py",
+      "module": "backend\\api\\v1\\crawler_monitor.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\crawler_tasks_adapter.py",
+      "module": "backend\\api\\v1\\crawler_tasks_adapter.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\data_center_adapter.py",
+      "module": "backend\\api\\v1\\data_center_adapter.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\data_source_100qiu.py",
+      "module": "backend\\api\\v1\\data_source_100qiu.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\data_submission.py",
+      "module": "backend\\api\\v1\\data_submission.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\departments.py",
+      "module": "backend\\api\\v1\\departments.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\draw_prediction.py",
+      "module": "backend\\api\\v1\\draw_prediction.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\draw_prediction_simple.py",
+      "module": "backend\\api\\v1\\draw_prediction_simple.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\frontend_user_management.py",
+      "module": "backend\\api\\v1\\frontend_user_management.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\headers_adapter.py",
+      "module": "backend\\api\\v1\\headers_adapter.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\hedging.py",
+      "module": "backend\\api\\v1\\hedging.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\intelligence.py",
+      "module": "backend\\api\\v1\\intelligence.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\intelligence_collection.py",
+      "module": "backend\\api\\v1\\intelligence_collection.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\ip_pool_adapter.py",
+      "module": "backend\\api\\v1\\ip_pool_adapter.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\llm.py",
+      "module": "backend\\api\\v1\\llm.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\llm_providers.py",
+      "module": "backend\\api\\v1\\llm_providers.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\log_analysis.py",
+      "module": "backend\\api\\v1\\log_analysis.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\lottery.py",
+      "module": "backend\\api\\v1\\lottery.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\lottery_direct.py",
+      "module": "backend\\api\\v1\\lottery_direct.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\lottery_final.py",
+      "module": "backend\\api\\v1\\lottery_final.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\lottery_schedule.py",
+      "module": "backend\\api\\v1\\lottery_schedule.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\lottery_simple.py",
+      "module": "backend\\api\\v1\\lottery_simple.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\lottery_test.py",
+      "module": "backend\\api\\v1\\lottery_test.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\matches.py",
+      "module": "backend\\api\\v1\\matches.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\match_admin.py",
+      "module": "backend\\api\\v1\\match_admin.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\monitoring_dashboard.py",
+      "module": "backend\\api\\v1\\monitoring_dashboard.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\permissions.py",
+      "module": "backend\\api\\v1\\permissions.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\predictions.py",
+      "module": "backend\\api\\v1\\predictions.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\public_matches.py",
+      "module": "backend\\api\\v1\\public_matches.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\public_matches_clean.py",
+      "module": "backend\\api\\v1\\public_matches_clean.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\real_time_decision.py",
+      "module": "backend\\api\\v1\\real_time_decision.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\roles.py",
+      "module": "backend\\api\\v1\\roles.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\simple_auth.py",
+      "module": "backend\\api\\v1\\simple_auth.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\simple_hedging.py",
+      "module": "backend\\api\\v1\\simple_hedging.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\simple_user_api.py",
+      "module": "backend\\api\\v1\\simple_user_api.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\sp_data_source.py",
+      "module": "backend\\api\\v1\\sp_data_source.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\sp_management.py",
+      "module": "backend\\api\\v1\\sp_management.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\sp_management_api.py",
+      "module": "backend\\api\\v1\\sp_management_api.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\sp_management_simple.py",
+      "module": "backend\\api\\v1\\sp_management_simple.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\task_monitor.py",
+      "module": "backend\\api\\v1\\task_monitor.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\users.py",
+      "module": "backend\\api\\v1\\users.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\user_profiles.py",
+      "module": "backend\\api\\v1\\user_profiles.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\__init__.py",
+      "module": "backend\\api\\v1\\__init__.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\admin\\backend_user_admin.py",
+      "module": "backend\\api\\v1\\admin\\backend_user_admin.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\admin\\beidan_schedule.py",
+      "module": "backend\\api\\v1\\admin\\beidan_schedule.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\admin\\cache_management.py",
+      "module": "backend\\api\\v1\\admin\\cache_management.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\admin\\crawler_configs.py",
+      "module": "backend\\api\\v1\\admin\\crawler_configs.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\admin\\crawler_intelligence.py",
+      "module": "backend\\api\\v1\\admin\\crawler_intelligence.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\admin\\crawler_sources.py",
+      "module": "backend\\api\\v1\\admin\\crawler_sources.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\admin\\crawler_tasks.py",
+      "module": "backend\\api\\v1\\admin\\crawler_tasks.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\admin\\data_center.py",
+      "module": "backend\\api\\v1\\admin\\data_center.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\admin\\data_source.py",
+      "module": "backend\\api\\v1\\admin\\data_source.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\admin\\frontend_user_admin.py",
+      "module": "backend\\api\\v1\\admin\\frontend_user_admin.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\admin\\headers_management.py",
+      "module": "backend\\api\\v1\\admin\\headers_management.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\admin\\intelligence_collection.py",
+      "module": "backend\\api\\v1\\admin\\intelligence_collection.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\admin\\ip_pool_management.py",
+      "module": "backend\\api\\v1\\admin\\ip_pool_management.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\admin\\league_management.py",
+      "module": "backend\\api\\v1\\admin\\league_management.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\admin\\logs.py",
+      "module": "backend\\api\\v1\\admin\\logs.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\admin\\lottery_schedule.py",
+      "module": "backend\\api\\v1\\admin\\lottery_schedule.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\admin\\metrics.py",
+      "module": "backend\\api\\v1\\admin\\metrics.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\admin\\monitoring.py",
+      "module": "backend\\api\\v1\\admin\\monitoring.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\admin\\odds_management.py",
+      "module": "backend\\api\\v1\\admin\\odds_management.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\admin\\system_monitor.py",
+      "module": "backend\\api\\v1\\admin\\system_monitor.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\admin\\task_management.py",
+      "module": "backend\\api\\v1\\admin\\task_management.py"
+    },
+    {
+      "type": "backend_api",
+      "file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\backend\\api\\v1\\admin\\__init__.py",
+      "module": "backend\\api\\v1\\admin\\__init__.py"
+    }
+  ],
+  "path_aliases": {
+    "frontend": {
+      "config_file": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\frontend\\vite.config.js",
+      "has_aliases": true,
+      "note": "使用@别名系统"
+    },
+    "backend": {}
+  },
+  "ai_coordination": {
+    "lock_system": {
+      "directory": "c:\\Users\\11581\\Downloads\\sport-lottery-sweeper\\.codebuddy\\locks",
+      "active_locks": 0,
+      "lock_files": []
+    },
+    "plugin_config": {
+      "version": "1.0.0",
+      "last_updated": "2026-01-25T00:00:00Z",
+      "description": "AI插件身份注册与协同配置",
+      "plugins": {
+        "coder1": {
+          "name": "主要代码编写AI",
+          "type": "primary_coder",
+          "identity": "claude-3-5-sonnet",
+          "capabilities": [
+            "代码编写",
+            "架构设计",
+            "bug修复",
+            "性能优化",
+            "代码重构"
+          ],
+          "priority": 1,
+          "color": "#FF6B6B",
+          "can_modify_files": true,
+          "can_create_files": true,
+          "max_concurrent_operations": 3,
+          "specialties": [
+            "Vue 3",
+            "FastAPI",
+            "TypeScript",
+            "Python"
+          ],
+          "communication_protocol": "json_rpc",
+          "heartbeat_interval": 30
+        },
+        "coder2": {
+          "name": "辅助代码编写AI",
+          "type": "secondary_coder",
+          "identity": "github-copilot",
+          "capabilities": [
+            "代码补全",
+            "单元测试生成",
+            "文档编写",
+            "简单功能实现"
+          ],
+          "priority": 2,
+          "color": "#4ECDC4",
+          "can_modify_files": true,
+          "can_create_files": false,
+          "max_concurrent_operations": 2,
+          "specialties": [
+            "JavaScript",
+            "Python",
+            "Vue",
+            "API集成"
+          ],
+          "communication_protocol": "direct_message",
+          "heartbeat_interval": 60
+        },
+        "tester1": {
+          "name": "测试AI",
+          "type": "quality_assurance",
+          "identity": "tabnine-test",
+          "capabilities": [
+            "测试用例生成",
+            "测试执行",
+            "覆盖率分析",
+            "性能测试"
+          ],
+          "priority": 3,
+          "color": "#45B7D1",
+          "can_modify_files": true,
+          "can_create_files": true,
+          "max_concurrent_operations": 2,
+          "specialties": [
+            "Pytest",
+            "Vitest",
+            "E2E测试",
+            "性能基准"
+          ],
+          "communication_protocol": "event_driven",
+          "heartbeat_interval": 45
+        },
+        "reviewer1": {
+          "name": "代码审查AI",
+          "type": "code_reviewer",
+          "identity": "sonarqube-ai",
+          "capabilities": [
+            "代码质量检查",
+            "安全漏洞扫描",
+            "最佳实践验证",
+            "性能分析"
+          ],
+          "priority": 4,
+          "color": "#96CEB4",
+          "can_modify_files": false,
+          "can_create_files": true,
+          "max_concurrent_operations": 1,
+          "specialties": [
+            "代码审查",
+            "静态分析",
+            "安全审计",
+            "合规性检查"
+          ],
+          "communication_protocol": "batch_report",
+          "heartbeat_interval": 120
+        },
+        "analyzer1": {
+          "name": "分析AI",
+          "type": "data_analyzer",
+          "identity": "codegecko-analyzer",
+          "capabilities": [
+            "项目分析",
+            "依赖关系分析",
+            "性能瓶颈识别",
+            "架构建议"
+          ],
+          "priority": 5,
+          "color": "#FECA57",
+          "can_modify_files": false,
+          "can_create_files": true,
+          "max_concurrent_operations": 1,
+          "specialties": [
+            "静态分析",
+            "架构分析",
+            "依赖分析",
+            "趋势预测"
+          ],
+          "communication_protocol": "report_only",
+          "heartbeat_interval": 300
+        }
+      },
+      "collaboration_rules": {
+        "conflict_resolution": {
+          "strategy": "timestamp_priority",
+          "fallback": "user_arbitration",
+          "rules": [
+            "时间戳优先：先获取锁的AI获得优先权",
+            "优先级次之：同时间时按priority数值决定",
+            "用户仲裁：无法解决时标记需要人工介入"
+          ]
+        },
+        "communication_format": {
+          "file_modification": {
+            "required_fields": [
+              "ai_id",
+              "timestamp",
+              "action",
+              "file_path",
+              "description"
+            ],
+            "format": {
+              "ai_working": "# AI_WORKING: {ai_id} @{timestamp} - {description}",
+              "ai_done": "# AI_DONE: {ai_id} @{timestamp}",
+              "ai_conflict": "# AI_CONFLICT: {ai_id} @{timestamp} - {issue_description}"
+            }
+          },
+          "state_notifications": {
+            "lock_acquired": {
+              "type": "notification",
+              "message": {
+                "event": "lock_acquired",
+                "ai_id": "{ai_id}",
+                "file": "{file_path}",
+                "timestamp": "{timestamp}",
+                "expires_at": "{expires_at}"
+              }
+            },
+            "work_completed": {
+              "type": "notification",
+              "message": {
+                "event": "work_completed",
+                "ai_id": "{ai_id}",
+                "file": "{file_path}",
+                "timestamp": "{timestamp}",
+                "changes": "{changes_summary}"
+              }
+            }
+          }
+        },
+        "atomic_operations": {
+          "max_changes_per_file": 3,
+          "min_interval_same_file": 5,
+          "complex_task_decomposition": true,
+          "require_confirmation_after": 5
+        }
+      },
+      "active_plugins": {
+        "registration_required": true,
+        "auto_cleanup": true,
+        "timeout_threshold": 600
+      },
+      "monitoring": {
+        "enabled": true,
+        "log_level": "INFO",
+        "metrics_collection": true,
+        "performance_tracking": true
+      }
+    },
+    "active_plugins": {
+      "status": "initialized",
+      "timestamp": "2026-01-25T00:00:00Z",
+      "active_plugins": {},
+      "plugin_sessions": {},
+      "system_metrics": {
+        "total_operations": 0,
+        "successful_operations": 0,
+        "failed_operations": 0,
+        "conflicts_resolved": 0,
+        "average_operation_time": 0
+      },
+      "last_updated": "2026-01-25T00:00:00Z"
+    }
+  }
+}

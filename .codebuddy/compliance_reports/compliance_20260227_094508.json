@@ -1,0 +1,40 @@
+{
+  "timestamp": "2026-02-27T09:44:58.750709",
+  "checks": {
+    "utf8_encoding": {
+      "passed": 80,
+      "failed": 0,
+      "issues": []
+    },
+    "path_aliases": {
+      "passed": 54,
+      "failed": 0,
+      "issues": []
+    },
+    "ai_comments": {
+      "passed": 10,
+      "failed": 0,
+      "issues": [],
+      "found_comments": []
+    },
+    "file_locks": {
+      "active_locks": 0,
+      "stale_locks": 0,
+      "issues": []
+    },
+    "project_structure": {
+      "passed": 9,
+      "failed": 0,
+      "issues": []
+    }
+  },
+  "violations": [],
+  "recommendations": [
+    {
+      "category": "总体评价",
+      "priority": "info",
+      "suggestion": "✅ 项目AI合规性优秀，继续保持！"
+    }
+  ],
+  "score": 100.0
+}

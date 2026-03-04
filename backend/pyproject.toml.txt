@@ -1,0 +1,274 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "football-scan-backend"
+version = "1.0.0"
+description = "竞彩足球扫盘系统后端"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [
+    { name = "Football Scan Team", email = "team@football-scan.com" }
+]
+maintainers = [
+    { name = "Dev Team", email = "dev@football-scan.com" }
+]
+requires-python = ">=3.11"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Financial and Insurance Industry",
+    "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: OS Independent",
+    "Environment :: Web Environment",
+    "Framework :: FastAPI",
+]
+
+dependencies = [
+    "fastapi>=0.104.0,<0.105.0",
+    "uvicorn[standard]>=0.24.0,<0.25.0",
+    "sqlalchemy>=2.0.0,<3.0.0",
+    "psycopg2-binary>=2.9.0,<3.0.0",
+    "alembic>=1.13.0,<2.0.0",
+    "pydantic>=2.0.0,<3.0.0",
+    "pydantic-settings>=2.0.0,<3.0.0",
+    "python-jose[cryptography]>=3.3.0,<4.0.0",
+    "passlib[bcrypt]>=1.7.0,<2.0.0",
+    "redis>=5.0.0,<6.0.0",
+    "celery>=5.3.0,<6.0.0",
+    "scrapy>=2.11.0,<3.0.0",
+    "playwright>=1.40.0,<2.0.0",
+    "pandas>=2.1.0,<3.0.0",
+    "weasyprint>=60.0,<61.0",
+    "python-decouple>=3.8.0,<4.0.0",
+    "structlog>=23.0.0,<24.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "black>=23.0.0",
+    "isort>=5.12.0",
+    "flake8>=6.0.0",
+    "flake8-docstrings>=1.7.0",
+    "mypy>=1.7.0",
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.1.0",
+    "pytest-mock>=3.12.0",
+    "requests-mock>=1.11.0",
+    "mkdocs>=1.5.0",
+    "mkdocs-material>=9.5.0",
+    "ipdb>=0.13.0",
+    "watchfiles>=0.21.0",
+    "bandit>=1.7.0",
+    "safety>=2.3.0",
+    "pre-commit>=3.5.0",
+]
+test = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.1.0",
+    "pytest-xdist>=3.5.0",
+    "pytest-timeout>=2.2.0",
+    "factory-boy>=3.3.0",
+    "Faker>=20.0.0",
+    "respx>=0.20.0",
+    "freezegun>=1.2.0",
+]
+docs = [
+    "mkdocs>=1.5.0",
+    "mkdocs-material>=9.5.0",
+    "mkdocstrings[python]>=0.24.0",
+    "mkdocs-include-markdown-plugin>=6.0.0",
+]
+performance = [
+    "pyinstrument>=4.6.0",
+    "memory-profiler>=0.61.0",
+    "scalene>=1.5.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/football-scan/backend"
+Documentation = "https://docs.football-scan.com"
+Repository = "https://github.com/football-scan/backend.git"
+Issues = "https://github.com/football-scan/backend/issues"
+Changelog = "https://github.com/football-scan/backend/releases"
+
+[project.scripts]
+football-scan-api = "app.main:main"
+football-scan-celery = "app.tasks.celery_app:main"
+football-scan-worker = "app.tasks.celery_app:worker_main"
+football-scan-beat = "app.tasks.celery_app:beat_main"
+
+[tool.black]
+line-length = 88
+target-version = ['py311']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  | \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+  | migrations
+)/
+'''
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+line_length = 88
+known_first_party = ["app"]
+known_third_party = ["fastapi", "sqlalchemy", "pydantic"]
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+
+[[tool.mypy.overrides]]
+module = [
+    "sqlalchemy.*",
+    "alembic.*",
+    "pydantic.*",
+]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-ra -q --strict-markers --strict-config"
+testpaths = [
+    "tests",
+]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "e2e: marks tests as end-to-end tests",
+    "crawler: marks tests as crawler tests",
+    "auth: marks tests as authentication tests",
+    "api: marks tests as API tests",
+]
+filterwarnings = [
+    "error",
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+    "ignore::ResourceWarning",
+]
+
+[tool.coverage.run]
+source = ["app"]
+omit = [
+    "*/tests/*",
+    "*/migrations/*",
+    "*/__pycache__/*",
+    "*/alembic/*",
+    "*/scripts/*",
+]
+branch = true
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
+omit = [
+    "*/tests/*",
+    "*/migrations/*",
+    "*/__pycache__/*",
+    "*/alembic/*",
+    "*/scripts/*",
+]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 88
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "B",  # flake8-bugbear
+    "C4", # flake8-comprehensions
+    "UP", # pyupgrade
+]
+ignore = [
+    "E501",  # line too long, handled by black
+    "B008",  # do not perform function calls in argument defaults
+    "C901",  # too complex
+]
+exclude = [
+    ".eggs",
+    ".git",
+    ".hg",
+    ".mypy_cache",
+    ".pytest_cache",
+    ".ruff_cache",
+    ".tox",
+    ".venv",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "migrations",
+    "alembic",
+    "node_modules",
+]
+
+[tool.ruff.per-file-ignores]
+"__init__.py" = ["F401"]
+"tests/*" = ["S101"]
+
+[tool.setuptools]
+packages = ["app"]
+
+[tool.setuptools.package-data]
+"*" = ["*.txt", "*.json", "*.yaml", "*.yml", "*.html", "*.css", "*.js"]
+
+[tool.setuptools.dynamic]
+version = {attr = "app.__version__"}
+readme = {file = ["README.md", "CHANGELOG.md"], content-type = "text/markdown"}
+
+[project.entry-points."console_scripts"]
+init-db = "app.scripts.init_db:main"
+create-admin = "app.scripts.create_admin:main"
+run-crawler = "app.scripts.run_crawler:main"
+generate-report = "app.scripts.generate_report:main"
+
+[project.entry-points."alembic"]
+script = "app.alembic"
+
+[project.entry-points."scrapy"]
+settings = "app.scrapers.settings"

@@ -1,0 +1,214 @@
+{
+  "startedAt": "2026-02-19T16:38:04.407Z",
+  "endedAt": "2026-02-19T16:38:18.349Z",
+  "frontendUrl": "http://localhost:3000/admin/intelligence/collection",
+  "urlAfterGoto": "http://localhost:3000/admin/intelligence/collection",
+  "counts": {
+    "requests": 7,
+    "responses": 6,
+    "authRequests": 0,
+    "authResponses": 0,
+    "backendLogLines": 4
+  },
+  "network": [
+    {
+      "type": "request",
+      "at": "2026-02-19T16:38:05.546Z",
+      "method": "GET",
+      "url": "http://localhost:3000/@fs/C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/api/auth.js?t=1771517837859",
+      "path": "/@fs/C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/api/auth.js",
+      "query": {
+        "t": "1771517837859"
+      },
+      "postData": null
+    },
+    {
+      "type": "request",
+      "at": "2026-02-19T16:38:05.642Z",
+      "method": "GET",
+      "url": "http://localhost:3000/@fs/C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/api/mock/auth.js",
+      "path": "/@fs/C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/api/mock/auth.js",
+      "query": {},
+      "postData": null
+    },
+    {
+      "type": "response",
+      "at": "2026-02-19T16:38:05.645Z",
+      "status": 200,
+      "method": "GET",
+      "url": "http://localhost:3000/@fs/C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/api/auth.js?t=1771517837859",
+      "path": "/@fs/C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/api/auth.js",
+      "bodyPreview": "import { request } from \"/@fs/C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/utils/http.js?t=1771517837859\"\nimport { ElMessage } from \"/node_modules/.vite/deps/element-plus.js?v=b02e1482\"\nimport { mockLogin, mockLogout, mockGetUserInfo } from \"/@fs/C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/api/mock/auth.js\"\n\n// 环境变量控制"
+    },
+    {
+      "type": "response",
+      "at": "2026-02-19T16:38:05.695Z",
+      "status": 200,
+      "method": "GET",
+      "url": "http://localhost:3000/@fs/C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/api/mock/auth.js",
+      "path": "/@fs/C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/api/mock/auth.js",
+      "bodyPreview": "/**\n * Mock认证API - 临时解决后端500错误问题\n * 用于前端开发和测试\n */\n\n// 模拟登录响应\nconst mockLoginResponse = {\n  code: 200,\n  message: \"登录成功\",\n  data: {\n    access_token: \"mock-jwt-token-1234567890\",\n    token_type: \"bearer\",\n    user_info: {\n      userId: 1,\n      username: \"admin\",\n      email: \"admin@sportlottery.com\",\n      roles: [\"admin\"],\n      status: \"active\"\n "
+    },
+    {
+      "type": "request",
+      "at": "2026-02-19T16:38:05.790Z",
+      "method": "GET",
+      "url": "http://localhost:3000/@fs/C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/api/intelligenceCollection.js?t=1771517821959",
+      "path": "/@fs/C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/api/intelligenceCollection.js",
+      "query": {
+        "t": "1771517821959"
+      },
+      "postData": null
+    },
+    {
+      "type": "request",
+      "at": "2026-02-19T16:38:05.987Z",
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/admin/intelligence/collection/sources",
+      "path": "/api/v1/admin/intelligence/collection/sources",
+      "query": {},
+      "postData": null
+    },
+    {
+      "type": "request",
+      "at": "2026-02-19T16:38:05.987Z",
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/admin/intelligence/collection/matches?page=1&size=100&search=&date_from=2026-02-19&date_to=2026-02-19",
+      "path": "/api/v1/admin/intelligence/collection/matches",
+      "query": {
+        "page": "1",
+        "size": "100",
+        "search": "",
+        "date_from": "2026-02-19",
+        "date_to": "2026-02-19"
+      },
+      "postData": null
+    },
+    {
+      "type": "request",
+      "at": "2026-02-19T16:38:05.987Z",
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/admin/intelligence/collection/tasks?page=1&size=100",
+      "path": "/api/v1/admin/intelligence/collection/tasks",
+      "query": {
+        "page": "1",
+        "size": "100"
+      },
+      "postData": null
+    },
+    {
+      "type": "request",
+      "at": "2026-02-19T16:38:05.987Z",
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/admin/intelligence/collection/channels/dingtalk/bindings",
+      "path": "/api/v1/admin/intelligence/collection/channels/dingtalk/bindings",
+      "query": {},
+      "postData": null
+    },
+    {
+      "type": "response",
+      "at": "2026-02-19T16:38:06.005Z",
+      "status": 200,
+      "method": "GET",
+      "url": "http://localhost:3000/@fs/C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/api/intelligenceCollection.js?t=1771517821959",
+      "path": "/@fs/C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/api/intelligenceCollection.js",
+      "bodyPreview": "import request from \"/@fs/C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/utils/request.js\"\n\nconst BASE = '/api/v1/admin/intelligence/collection'\n\nexport const getCollectionSources = () => request.get(`${BASE}/sources`)\n\nexport const getJczqMatches = (params) => request.get(`${BASE}/matches`, { params })\n\nexport const createCollectionTa"
+    },
+    {
+      "type": "response",
+      "at": "2026-02-19T16:38:06.064Z",
+      "status": 200,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/admin/intelligence/collection/sources",
+      "path": "/api/v1/admin/intelligence/collection/sources",
+      "bodyPreview": "{\"success\":true,\"data\":[{\"code\":\"sina\",\"name\":\"sina\",\"url\":\"https://sports.sina.com.cn/\",\"item_count\":291},{\"code\":\"netease\",\"name\":\"netease\",\"url\":\"https://sports.163.com/\",\"item_count\":0},{\"code\":\"sohu\",\"name\":\"sohu\",\"url\":\"https://sports.sohu.com/\",\"item_count\":6},{\"code\":\"tencent\",\"name\":\"tencent\",\"url\":\"https://sports.qq.com/\",\"item_count\":292"
+    },
+    {
+      "type": "response",
+      "at": "2026-02-19T16:38:06.065Z",
+      "status": 200,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/admin/intelligence/collection/channels/dingtalk/bindings",
+      "path": "/api/v1/admin/intelligence/collection/channels/dingtalk/bindings",
+      "bodyPreview": "{\"success\":true,\"data\":[],\"message\":\"ok\"}"
+    },
+    {
+      "type": "response",
+      "at": "2026-02-19T16:38:06.086Z",
+      "status": 200,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/admin/intelligence/collection/tasks?page=1&size=100",
+      "path": "/api/v1/admin/intelligence/collection/tasks",
+      "bodyPreview": "{\"success\":true,\"data\":{\"items\":[{\"id\":9,\"task_uuid\":\"8edf664e5abe4f7584a4bfa90c6072a5\",\"task_name\":\"intelligence-collect-0219-162348\",\"mode\":\"immediate\",\"status\":\"success\",\"match_ids\":[210,211,212,217],\"sources\":[\"wechat\",\"sohu\"],\"intel_types\":[\"win_draw_lose\"],\"offset_hours\":[],\"total_count\":8,\"success_count\":8,\"failed_count\":6,\"retry_count\":1,\"l"
+    },
+    {
+      "type": "response",
+      "at": "2026-02-19T16:38:06.099Z",
+      "status": 200,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/admin/intelligence/collection/matches?page=1&size=100&search=&date_from=2026-02-19&date_to=2026-02-19",
+      "path": "/api/v1/admin/intelligence/collection/matches",
+      "bodyPreview": "{\"success\":true,\"data\":{\"items\":[],\"total\":0,\"page\":1,\"size\":100},\"message\":\"ok\"}"
+    },
+    {
+      "type": "request",
+      "at": "2026-02-19T16:38:08.455Z",
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/admin/intelligence/collection/matches?page=1&size=100&search=&date_from=2026-02-10&date_to=2026-02-10",
+      "path": "/api/v1/admin/intelligence/collection/matches",
+      "query": {
+        "page": "1",
+        "size": "100",
+        "search": "",
+        "date_from": "2026-02-10",
+        "date_to": "2026-02-10"
+      },
+      "postData": null
+    },
+    {
+      "type": "response",
+      "at": "2026-02-19T16:38:08.523Z",
+      "status": 200,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/admin/intelligence/collection/matches?page=1&size=100&search=&date_from=2026-02-10&date_to=2026-02-10",
+      "path": "/api/v1/admin/intelligence/collection/matches",
+      "bodyPreview": "{\"success\":true,\"data\":{\"items\":[{\"id\":207,\"league_name\":\"亚冠\",\"home_team\":\"广岛三箭\",\"away_team\":\"柔佛\",\"kickoff_time\":\"2026-02-10T18:00:00\",\"status\":\"scheduled\",\"schedule_date\":\"2026-02-10\"},{\"id\":208,\"league_name\":\"亚冠\",\"home_team\":\"神户胜利\",\"away_team\":\"首尔FC\",\"kickoff_time\":\"2026-02-10T18:00:00\",\"status\":\"scheduled\",\"schedule_date\":\"2026-02-10\"},{\"id\":209"
+    },
+    {
+      "type": "request",
+      "at": "2026-02-19T16:38:12.339Z",
+      "method": "POST",
+      "url": "http://localhost:3000/api/v1/admin/intelligence/collection/tasks",
+      "path": "/api/v1/admin/intelligence/collection/tasks",
+      "query": {},
+      "postData": "{\"match_ids\":[207],\"sources\":[\"500w\",\"ttyingqiu\",\"tencent\"],\"intel_types\":[\"injury\",\"weather\",\"motivation\",\"win_draw_lose\",\"handicap_1x2\"],\"mode\":\"immediate\",\"offset_hours\":[]}"
+    },
+    {
+      "type": "request",
+      "at": "2026-02-19T16:38:12.395Z",
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/admin/intelligence/collection/tasks?page=1&size=100",
+      "path": "/api/v1/admin/intelligence/collection/tasks",
+      "query": {
+        "page": "1",
+        "size": "100"
+      },
+      "postData": null
+    },
+    {
+      "type": "response",
+      "at": "2026-02-19T16:38:12.401Z",
+      "status": 200,
+      "method": "POST",
+      "url": "http://localhost:3000/api/v1/admin/intelligence/collection/tasks",
+      "path": "/api/v1/admin/intelligence/collection/tasks",
+      "bodyPreview": "{\"success\":true,\"data\":{\"id\":10,\"task_uuid\":\"ea119d9f5161401bbf8a32fd53bb9a82\",\"task_name\":\"intelligence-collect-0219-163812\",\"mode\":\"immediate\",\"status\":\"running\",\"match_ids\":[207],\"sources\":[\"500w\",\"ttyingqiu\",\"tencent\"],\"intel_types\":[\"injury\",\"weather\",\"motivation\",\"win_draw_lose\",\"handicap_1x2\"],\"offset_hours\":[],\"total_count\":15,\"success_coun"
+    }
+  ],
+  "backendLogLines": [
+    "2026-02-20 00:38:06 - backend.api.v1.admin.intelligence_collection - WARNING - [intelligence.collection.matches] params search='' date_from='2026-02-19' date_to='2026-02-19' page=1 size=100 matched_total=0 returned_ids=[] returned_schedule_dates=[]",
+    "2026-02-20 00:38:08 - backend.api.v1.admin.intelligence_collection - WARNING - [intelligence.collection.matches] params search='' date_from='2026-02-10' date_to='2026-02-10' page=1 size=100 matched_total=11 returned_ids=[207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217] returned_schedule_dates=['2026-02-10', '2026-02-10', '2026-02-10', '2026-02-10', '2026-02-10', '2026-02-10', '2026-02-10', '2026-02-10', '2026-02-10', '2026-02-10', '2026-02-10']",
+    "2026-02-20 00:38:12 - backend.api.v1.admin.intelligence_collection - WARNING - [intelligence.collection.tasks.create] request mode=immediate match_ids_count=1 match_ids=[207] sources=['500w', 'ttyingqiu', 'tencent'] intel_types=['injury', 'weather', 'motivation', 'win_draw_lose', 'handicap_1x2'] offset_hours=[] by_admin=1",
+    "2026-02-20 00:38:12 - backend.api.v1.admin.intelligence_collection - WARNING - [intelligence.collection.tasks.create] accepted task_id=10 status=running total_count=15"
+  ]
+}

@@ -1,0 +1,40 @@
+# 注意：移除了 version 行，因为最新版本已经弃用
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev  # 明确指定文件名
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    environment:
+      - DEBUG=1
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+    command: pnpm run dev
+    depends_on:
+      - backend
+
+  crawler:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./crawler:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    depends_on:
+      - backend

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Proxy Test</title>
+</head>
+<body>
+    <h1>测试Vite代理</h1>
+    <button onclick="testProxy()">测试API代理</button>
+    <pre id="result"></pre>
+
+    <script>
+        async function testProxy() {
+            const resultElement = document.getElementById('result');
+            try {
+                resultElement.textContent = '正在发送请求...';
+                
+                const response = await fetch('/api/v1/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: 'admin',
+                        password: 'admin123'
+                    })
+                });
+                
+                const data = await response.json();
+                resultElement.textContent = `状态码: ${response.status}\n响应内容:\n${JSON.stringify(data, null, 2)}`;
+            } catch (error) {
+                resultElement.textContent = `错误: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>

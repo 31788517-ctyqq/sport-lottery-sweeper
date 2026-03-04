@@ -1,0 +1,56 @@
+{
+  "name": "sport-lottery-sweeper",
+  "version": "1.0.0",
+  "private": true,
+  "description": "体育彩票扫盘系统 - AI协同开发项目",
+  "scripts": {
+    "dev": "concurrently \"npm run backend:dev\" \"npm run frontend:dev\"",
+    "backend:dev": "cd backend && python main.py",
+    "frontend:dev": "cd frontend && npm run dev",
+    "bootstrap": "npm run install:backend && npm run install:frontend",
+    "install:backend": "python -m pip install -r requirements.txt",
+    "install:frontend": "cd frontend && npm install",
+    "test": "npm run test:backend && npm run test:frontend",
+    "test:backend": "cd backend && pytest",
+    "test:frontend": "cd frontend && npm run test:run",
+    "lint": "npm run lint:backend && npm run lint:frontend",
+    "lint:backend": "cd backend && flake8 app --exclude .venv,venv,__pycache__,tests,scripts,admin,agents,tasks,tools,unit,debug,monitoring,optimization,processors,repositories,routes,scanner,scrapers,static,uploads,venv --ignore W291,W292,W293,W391,E251,E261,E302,E303,E305,E501,F401,W503",
+    "lint:frontend": "cd frontend && npm run lint",
+    "scan": "python scripts/config_scanner.py",
+    "health": "python scripts/project_health_check.py",
+    "compliance": "python scripts/check_ai_compliance.py",
+    "smart-start": "python scripts/smart_start.py",
+    "test:e2e": "cd frontend && npx playwright test",
+    "cleanup": "force_kill_port_8000.bat && npm run bootstrap",
+    "reset": "npm run cleanup && npm run dev"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.0",
+    "@testing-library/vue": "^8.1.0",
+    "@types/node": "^25.1.0",
+    "@vitejs/plugin-vue": "^6.0.3",
+    "@vitest/ui": "^4.0.18",
+    "@vue/test-utils": "^2.4.6",
+    "concurrently": "^9.2.1",
+    "happy-dom": "^20.6.1",
+    "jsdom": "^27.4.0",
+    "msw": "^2.12.10",
+    "sass": "^1.97.3",
+    "vitest": "^4.0.18",
+    "wait-on": "^9.0.3"
+  },
+  "dependencies": {
+    "@element-plus/icons-vue": "^2.3.2",
+    "chrome-devtools-mcp": "^0.18.1",
+    "echarts": "^6.0.0",
+    "vite-plugin-pwa": "^1.2.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "python": ">=3.9.0"
+  },
+  "volta": {
+    "node": "20.5.1",
+    "npm": "9.8.0"
+  }
+}
