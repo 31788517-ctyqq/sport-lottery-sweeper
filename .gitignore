@@ -66,3 +66,5 @@ frontend/playwright-report/
 frontend/tmp_edit_dialog.png
 uploads/avatars/
 data/*.bak_*
+data/external/
+data/external/kaggle/
