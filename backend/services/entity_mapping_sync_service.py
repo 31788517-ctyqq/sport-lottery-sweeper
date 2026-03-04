@@ -1,4 +1,4 @@
-"""
+﻿"""
 Periodic DB-driven entity mapping synchronization service.
 
 This service builds team/league mapping records from existing DB entities and
@@ -16,10 +16,11 @@ from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
+from sqlalchemy import inspect, text
 from sqlalchemy.orm import Session
 
 from backend.config import settings
-from backend.database import SessionLocal
+from backend.database import SessionLocal, engine
 from backend.models.entity_mapping_record import EntityMappingRecord, EntityMappingSyncRun
 from backend.models.match import League, Match, Team
 
@@ -41,6 +42,10 @@ class EntityMappingSyncService:
         "matchName",
     )
 
+    REVIEW_AUTO_ACCEPTED = "auto_accepted"
+    REVIEW_PENDING = "pending_review"
+    REVIEW_REVIEWED = "reviewed"
+
     def __init__(self) -> None:
         self._lock = threading.Lock()
         self._scheduler = BackgroundScheduler(timezone="Asia/Shanghai")
@@ -53,6 +58,10 @@ class EntityMappingSyncService:
     def start(self) -> None:
         if self._started:
             return
+
+        # Keep old DBs compatible when new fields are introduced.
+        self._ensure_schema()
+
         if not bool(getattr(settings, "AUTO_ENTITY_MAPPING_SYNC_ENABLED", True)):
             logger.info("Entity mapping auto sync disabled by configuration")
             return
@@ -73,6 +82,10 @@ class EntityMappingSyncService:
 
         if bool(getattr(settings, "AUTO_ENTITY_MAPPING_SYNC_RUN_ON_STARTUP", True)):
             self.trigger_run_now(trigger_type="startup")
+
+    def ensure_schema(self) -> None:
+        """Public hook for API/runtime calls to keep schema backward-compatible."""
+        self._ensure_schema()
 
     def shutdown(self) -> None:
         if not self._started:
@@ -119,6 +132,37 @@ class EntityMappingSyncService:
             "last_result": self._last_result,
             "last_run": self._serialize_run(latest_run) if latest_run else None,
         }
+
+    def _ensure_schema(self) -> None:
+        """Best-effort online schema patch for new Stage-1 columns."""
+        try:
+            inspector = inspect(engine)
+            tables = set(inspector.get_table_names())
+            if "entity_mapping_records" not in tables:
+                return
+
+            existing_columns = {col["name"] for col in inspector.get_columns("entity_mapping_records")}
+            patch_sql: List[str] = []
+            if "quality_score" not in existing_columns:
+                patch_sql.append("ALTER TABLE entity_mapping_records ADD COLUMN quality_score FLOAT DEFAULT 1.0")
+            if "alias_count" not in existing_columns:
+                patch_sql.append("ALTER TABLE entity_mapping_records ADD COLUMN alias_count INTEGER DEFAULT 0")
+            if "conflict_count" not in existing_columns:
+                patch_sql.append("ALTER TABLE entity_mapping_records ADD COLUMN conflict_count INTEGER DEFAULT 0")
+            if "review_status" not in existing_columns:
+                patch_sql.append(
+                    "ALTER TABLE entity_mapping_records ADD COLUMN review_status VARCHAR(32) DEFAULT 'auto_accepted'"
+                )
+
+            if not patch_sql:
+                return
+
+            with engine.begin() as conn:
+                for sql in patch_sql:
+                    conn.execute(text(sql))
+            logger.info("Entity mapping schema patched with %s column(s)", len(patch_sql))
+        except Exception as exc:  # pragma: no cover - defensive path
+            logger.warning("Entity mapping schema patch skipped: %s", exc)
 
     def _run_safely(self, trigger_type: str = "scheduler") -> None:
         if not self._lock.acquire(blocking=False):
@@ -195,35 +239,73 @@ class EntityMappingSyncService:
         upserted = 0
         failed = 0
 
+        payloads: List[Dict[str, Any]] = []
         for team in teams:
             try:
                 zh_names = self._unique_names([team.name, team.short_name, team.full_name])
+                en_names = self._extract_en_names(team.config)
+                jp_names = self._extract_jp_names(team.config)
+
                 source_aliases = self._normalize_alias_map(alias_index.get(int(team.id), {}))
                 source_aliases.setdefault("database", [])
                 source_aliases["database"] = self._merge_and_sort(source_aliases["database"], zh_names)
 
-                official_info = {}
+                alias_set = self._build_alias_set(zh_names, en_names, jp_names, source_aliases)
+                alias_count = len(alias_set)
+
+                official_info: Dict[str, Any] = {}
                 if team.website:
                     official_info["website"] = team.website
 
+                payloads.append(
+                    {
+                        "entity_ref_id": str(team.id),
+                        "canonical_key": f"team_{team.id}",
+                        "display_name": team.name or (zh_names[0] if zh_names else f"team_{team.id}"),
+                        "zh_names": zh_names,
+                        "en_names": en_names,
+                        "jp_names": jp_names,
+                        "source_aliases": source_aliases,
+                        "official_info": official_info,
+                        "alias_set": alias_set,
+                        "alias_count": alias_count,
+                    }
+                )
+            except Exception as exc:
+                failed += 1
+                logger.warning("Failed to build team mapping payload for team_id=%s: %s", team.id, exc)
+
+        conflict_index = self._detect_conflicts(payloads)
+        for payload in payloads:
+            try:
+                conflict_count = conflict_index.get(payload["entity_ref_id"], 0)
+                review_status = self.REVIEW_PENDING if conflict_count > 0 else self.REVIEW_AUTO_ACCEPTED
+                quality_score = self._compute_quality_score(
+                    alias_count=int(payload["alias_count"]),
+                    conflict_count=int(conflict_count),
+                )
                 changed = self._upsert_mapping_record(
                     db=db,
                     entity_type="team",
-                    entity_ref_id=str(team.id),
-                    canonical_key=f"team_{team.id}",
-                    display_name=team.name or (zh_names[0] if zh_names else f"team_{team.id}"),
-                    zh_names=zh_names,
-                    en_names=self._extract_en_names(team.config),
-                    jp_names=self._extract_jp_names(team.config),
-                    source_aliases=source_aliases,
-                    official_info=official_info,
+                    entity_ref_id=payload["entity_ref_id"],
+                    canonical_key=payload["canonical_key"],
+                    display_name=payload["display_name"],
+                    zh_names=payload["zh_names"],
+                    en_names=payload["en_names"],
+                    jp_names=payload["jp_names"],
+                    source_aliases=payload["source_aliases"],
+                    official_info=payload["official_info"],
                     confidence_score=1.0,
+                    quality_score=quality_score,
+                    alias_count=int(payload["alias_count"]),
+                    conflict_count=int(conflict_count),
+                    review_status=review_status,
                 )
                 if changed:
                     upserted += 1
             except Exception as exc:
                 failed += 1
-                logger.warning("Failed to sync team mapping for team_id=%s: %s", team.id, exc)
+                logger.warning("Failed to sync team mapping for team_id=%s: %s", payload["entity_ref_id"], exc)
 
         return scanned, upserted, failed
 
@@ -233,35 +315,73 @@ class EntityMappingSyncService:
         upserted = 0
         failed = 0
 
+        payloads: List[Dict[str, Any]] = []
         for league in leagues:
             try:
                 zh_names = self._unique_names([league.name, league.short_name])
+                en_names = self._extract_en_names(league.config)
+                jp_names = self._extract_jp_names(league.config)
+
                 source_aliases = self._normalize_alias_map(alias_index.get(int(league.id), {}))
                 source_aliases.setdefault("database", [])
                 source_aliases["database"] = self._merge_and_sort(source_aliases["database"], zh_names)
 
-                official_info = {}
+                alias_set = self._build_alias_set(zh_names, en_names, jp_names, source_aliases)
+                alias_count = len(alias_set)
+
+                official_info: Dict[str, Any] = {}
                 if league.logo_url:
                     official_info["logo_url"] = league.logo_url
 
+                payloads.append(
+                    {
+                        "entity_ref_id": str(league.id),
+                        "canonical_key": f"league_{league.id}",
+                        "display_name": league.name or (zh_names[0] if zh_names else f"league_{league.id}"),
+                        "zh_names": zh_names,
+                        "en_names": en_names,
+                        "jp_names": jp_names,
+                        "source_aliases": source_aliases,
+                        "official_info": official_info,
+                        "alias_set": alias_set,
+                        "alias_count": alias_count,
+                    }
+                )
+            except Exception as exc:
+                failed += 1
+                logger.warning("Failed to build league mapping payload for league_id=%s: %s", league.id, exc)
+
+        conflict_index = self._detect_conflicts(payloads)
+        for payload in payloads:
+            try:
+                conflict_count = conflict_index.get(payload["entity_ref_id"], 0)
+                review_status = self.REVIEW_PENDING if conflict_count > 0 else self.REVIEW_AUTO_ACCEPTED
+                quality_score = self._compute_quality_score(
+                    alias_count=int(payload["alias_count"]),
+                    conflict_count=int(conflict_count),
+                )
                 changed = self._upsert_mapping_record(
                     db=db,
                     entity_type="league",
-                    entity_ref_id=str(league.id),
-                    canonical_key=f"league_{league.id}",
-                    display_name=league.name or (zh_names[0] if zh_names else f"league_{league.id}"),
-                    zh_names=zh_names,
-                    en_names=self._extract_en_names(league.config),
-                    jp_names=self._extract_jp_names(league.config),
-                    source_aliases=source_aliases,
-                    official_info=official_info,
+                    entity_ref_id=payload["entity_ref_id"],
+                    canonical_key=payload["canonical_key"],
+                    display_name=payload["display_name"],
+                    zh_names=payload["zh_names"],
+                    en_names=payload["en_names"],
+                    jp_names=payload["jp_names"],
+                    source_aliases=payload["source_aliases"],
+                    official_info=payload["official_info"],
                     confidence_score=1.0,
+                    quality_score=quality_score,
+                    alias_count=int(payload["alias_count"]),
+                    conflict_count=int(conflict_count),
+                    review_status=review_status,
                 )
                 if changed:
                     upserted += 1
             except Exception as exc:
                 failed += 1
-                logger.warning("Failed to sync league mapping for league_id=%s: %s", league.id, exc)
+                logger.warning("Failed to sync league mapping for league_id=%s: %s", payload["entity_ref_id"], exc)
 
         return scanned, upserted, failed
 
@@ -322,6 +442,10 @@ class EntityMappingSyncService:
         source_aliases: Dict[str, List[str]],
         official_info: Dict[str, Any],
         confidence_score: float,
+        quality_score: float,
+        alias_count: int,
+        conflict_count: int,
+        review_status: str,
     ) -> bool:
         now = datetime.utcnow()
         row = (
@@ -345,6 +469,10 @@ class EntityMappingSyncService:
                 source_aliases=source_aliases,
                 official_info=official_info,
                 confidence_score=confidence_score,
+                quality_score=quality_score,
+                alias_count=alias_count,
+                conflict_count=conflict_count,
+                review_status=review_status,
                 auto_generated=True,
                 last_seen_at=now,
                 updated_at=now,
@@ -366,6 +494,10 @@ class EntityMappingSyncService:
         merged_official.update(official_info or {})
         changed |= self._set_if_diff(row, "official_info", merged_official)
         changed |= self._set_if_diff(row, "confidence_score", confidence_score)
+        changed |= self._set_if_diff(row, "quality_score", quality_score)
+        changed |= self._set_if_diff(row, "alias_count", alias_count)
+        changed |= self._set_if_diff(row, "conflict_count", conflict_count)
+        changed |= self._set_if_diff(row, "review_status", review_status)
 
         row.last_seen_at = now
         row.updated_at = now
@@ -395,6 +527,42 @@ class EntityMappingSyncService:
             for candidate in self._extract_name_candidates(value):
                 target.add(candidate)
 
+    def _build_alias_set(
+        self,
+        zh_names: List[str],
+        en_names: List[str],
+        jp_names: List[str],
+        source_aliases: Dict[str, List[str]],
+    ) -> Set[str]:
+        aliases: Set[str] = set()
+        for name in (zh_names or []) + (en_names or []) + (jp_names or []):
+            normalized = self._normalize_alias(name)
+            if normalized:
+                aliases.add(normalized)
+        for source_items in (source_aliases or {}).values():
+            for alias in source_items or []:
+                normalized = self._normalize_alias(alias)
+                if normalized:
+                    aliases.add(normalized)
+        return aliases
+
+    def _detect_conflicts(self, payloads: List[Dict[str, Any]]) -> Dict[str, int]:
+        alias_owners: Dict[str, Set[str]] = {}
+        for payload in payloads:
+            entity_ref_id = str(payload["entity_ref_id"])
+            for alias in payload.get("alias_set", set()):
+                alias_owners.setdefault(alias, set()).add(entity_ref_id)
+
+        conflict_count: Dict[str, int] = {}
+        for payload in payloads:
+            entity_ref_id = str(payload["entity_ref_id"])
+            count = 0
+            for alias in payload.get("alias_set", set()):
+                if len(alias_owners.get(alias, set())) > 1:
+                    count += 1
+            conflict_count[entity_ref_id] = count
+        return conflict_count
+
     def _extract_name_candidates(self, raw: Any) -> List[str]:
         if raw is None:
             return []
@@ -402,44 +570,68 @@ class EntityMappingSyncService:
         if not text:
             return []
 
-        parts = re.split(r"[,，;；|/]+", text)
+        parts = re.split(r"[,，;/|]+", text)
         results: List[str] = []
         for part in parts:
             cleaned = self._clean_candidate_name(part)
             if cleaned:
                 results.append(cleaned)
-        return self._unique_names(results)
+        return self._dedupe_aliases(results)
 
-    @staticmethod
-    def _clean_candidate_name(raw: Any) -> str:
+    def _clean_candidate_name(self, raw: Any) -> str:
         text = str(raw or "").strip()
         if not text:
             return ""
 
         text = re.sub(r"\[\d+\]", "", text)
         text = re.sub(r"\(\d+\)", "", text)
-        text = re.sub(r"\d+\s*[:：]\s*\d+", "", text)
-        text = re.sub(r"\s{2,}", " ", text).strip()
+        text = re.sub(r"\d+\s*[:：-]\s*\d+", "", text)
+        text = re.sub(r"\s+", " ", text).strip()
+        text = re.sub(r"^[\-\|_/]+|[\-\|_/]+$", "", text).strip()
 
-        if not text or len(text) > 80:
-            return ""
-        if text.isdigit():
+        if self._is_noise_alias(text):
             return ""
         return text
 
     @staticmethod
-    def _unique_names(values: Iterable[Any]) -> List[str]:
+    def _normalize_alias(raw: Any) -> str:
+        text = str(raw or "").strip().lower()
+        if not text:
+            return ""
+        text = re.sub(r"[\s\-_]+", "", text)
+        text = re.sub(r"[^\w\u4e00-\u9fff]+", "", text)
+        return text
+
+    def _is_noise_alias(self, raw: Any) -> bool:
+        text = str(raw or "").strip()
+        if not text:
+            return True
+        if len(text) < 2 or len(text) > 80:
+            return True
+        if text.isdigit():
+            return True
+        if re.search(r"\d+\s*[:：-]\s*\d+", text):
+            return True
+        if re.match(r"^[\[\(]?\d+[\]\)]?$", text):
+            return True
+        return False
+
+    def _dedupe_aliases(self, values: Iterable[Any]) -> List[str]:
         seen: Set[str] = set()
         result: List[str] = []
         for value in values:
-            text = str(value or "").strip()
+            text = self._clean_candidate_name(value)
             if not text:
                 continue
-            if text in seen:
+            key = self._normalize_alias(text)
+            if not key or key in seen:
                 continue
-            seen.add(text)
+            seen.add(key)
             result.append(text)
         return result
+
+    def _unique_names(self, values: Iterable[Any]) -> List[str]:
+        return self._dedupe_aliases(values)
 
     @staticmethod
     def _merge_and_sort(existing: List[str], incoming: List[str]) -> List[str]:
@@ -449,17 +641,22 @@ class EntityMappingSyncService:
                 merged.append(item)
         return sorted(merged, key=lambda x: (len(str(x)), str(x)))
 
-    @staticmethod
-    def _normalize_alias_map(alias_map: Dict[str, Set[str]]) -> Dict[str, List[str]]:
+    def _normalize_alias_map(self, alias_map: Dict[str, Set[str]]) -> Dict[str, List[str]]:
         normalized: Dict[str, List[str]] = {}
         for source, names in (alias_map or {}).items():
-            cleaned = sorted([name for name in names if name], key=lambda x: (len(str(x)), str(x)))
+            cleaned = self._dedupe_aliases(names or [])
+            cleaned = sorted(cleaned, key=lambda x: (len(str(x)), str(x)))
             if cleaned:
                 normalized[str(source)] = cleaned
         return normalized
 
     @staticmethod
-    def _extract_en_names(config: Any) -> List[str]:
+    def _compute_quality_score(alias_count: int, conflict_count: int) -> float:
+        base = min(1.0, 0.35 + alias_count * 0.08)
+        penalty = min(0.6, conflict_count * 0.12)
+        return round(max(0.1, base - penalty), 4)
+
+    def _extract_en_names(self, config: Any) -> List[str]:
         if not isinstance(config, dict):
             return []
         candidates = [
@@ -468,10 +665,9 @@ class EntityMappingSyncService:
             config.get("english_name"),
             config.get("name_en"),
         ]
-        return EntityMappingSyncService._unique_names(candidates)
+        return self._unique_names(candidates)
 
-    @staticmethod
-    def _extract_jp_names(config: Any) -> List[str]:
+    def _extract_jp_names(self, config: Any) -> List[str]:
         if not isinstance(config, dict):
             return []
         candidates = [
@@ -480,7 +676,7 @@ class EntityMappingSyncService:
             config.get("japanese_name"),
             config.get("name_jp"),
         ]
-        return EntityMappingSyncService._unique_names(candidates)
+        return self._unique_names(candidates)
 
     @staticmethod
     def _serialize_run(row: EntityMappingSyncRun) -> Dict[str, Any]:
@@ -501,4 +697,3 @@ class EntityMappingSyncService:
 
 
 entity_mapping_sync_service = EntityMappingSyncService()
-

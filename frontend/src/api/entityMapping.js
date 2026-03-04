@@ -9,10 +9,11 @@ export function standardizeMatchData(rawData, sourceId) {
   })
 }
 
-export function getEntityMappings(entityType) {
+export function getEntityMappings(entityType, params = {}) {
   return request({
     url: `/api/v1/entity-mapping/mappings/${entityType}`,
-    method: 'get'
+    method: 'get',
+    params
   })
 }
 
@@ -21,6 +22,22 @@ export function updateEntityMapping(entityType, entityId, updates) {
     url: `/api/v1/entity-mapping/mappings/${entityType}/${entityId}`,
     method: 'put',
     data: updates
+  })
+}
+
+export function getEntityMappingConflicts(entityType, params = {}) {
+  return request({
+    url: `/api/v1/entity-mapping/conflicts/${entityType}`,
+    method: 'get',
+    params
+  })
+}
+
+export function reviewEntityMapping(entityType, entityId, payload = {}) {
+  return request({
+    url: `/api/v1/entity-mapping/review/${entityType}/${entityId}`,
+    method: 'post',
+    data: payload
   })
 }
 

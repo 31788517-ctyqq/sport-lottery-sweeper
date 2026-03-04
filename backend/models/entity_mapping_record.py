@@ -37,6 +37,10 @@ class EntityMappingRecord(Base):
     official_info = Column(JSON, nullable=False, default=dict)
 
     confidence_score = Column(Float, nullable=False, default=1.0)
+    quality_score = Column(Float, nullable=False, default=1.0, index=True)
+    alias_count = Column(Integer, nullable=False, default=0)
+    conflict_count = Column(Integer, nullable=False, default=0, index=True)
+    review_status = Column(String(32), nullable=False, default="auto_accepted", index=True)
     auto_generated = Column(Boolean, nullable=False, default=True, index=True)
     last_seen_at = Column(DateTime(timezone=True), nullable=True, index=True)
 
@@ -73,4 +77,3 @@ class EntityMappingSyncRun(Base):
 
     started_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), index=True)
     finished_at = Column(DateTime(timezone=True), nullable=True, index=True)
-
