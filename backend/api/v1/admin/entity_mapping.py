@@ -76,12 +76,13 @@ def _normalize_source_aliases(value: Any) -> Dict[str, List[str]]:
 
 
 def _to_mapping_payload(row: EntityMappingRecord) -> Dict[str, Any]:
+    official_info = row.official_info or {}
     return {
         "zh": row.zh_names or [],
         "en": row.en_names or [],
         "jp": row.jp_names or [],
         "source_aliases": row.source_aliases or {},
-        "official_info": row.official_info or {},
+        "official_info": official_info,
         "canonical_key": row.canonical_key,
         "display_name": row.display_name,
         "confidence_score": row.confidence_score,
@@ -89,6 +90,12 @@ def _to_mapping_payload(row: EntityMappingRecord) -> Dict[str, Any]:
         "alias_count": row.alias_count,
         "conflict_count": row.conflict_count,
         "review_status": row.review_status,
+        "official_enrich_status": row.official_enrich_status,
+        "official_enrich_error": row.official_enrich_error,
+        "official_last_attempt_at": row.official_last_attempt_at.isoformat() if row.official_last_attempt_at else None,
+        "official_last_success_at": row.official_last_success_at.isoformat() if row.official_last_success_at else None,
+        "official_source_tag": official_info.get("source_tag"),
+        "official_last_enriched_at": official_info.get("last_enriched_at"),
         "auto_generated": bool(row.auto_generated),
         "last_seen_at": row.last_seen_at.isoformat() if row.last_seen_at else None,
     }
@@ -134,9 +141,36 @@ def _load_db_mapping_items(entity_type: str) -> List[Dict[str, Any]]:
         db.close()
 
 
+def _load_entity_official_info(entity_type: str, entity_id: str) -> Dict[str, Any] | None:
+    _ensure_mapping_schema_ready()
+    db = SessionLocal()
+    try:
+        row = (
+            db.query(EntityMappingRecord)
+            .filter(
+                EntityMappingRecord.entity_type == entity_type,
+                EntityMappingRecord.entity_ref_id == str(entity_id),
+            )
+            .first()
+        )
+        if row:
+            return dict(row.official_info or {})
+    finally:
+        db.close()
+
+    mappings, _ = _get_entity_mapping(entity_type)
+    if not mappings:
+        return None
+    entity = mappings.get(str(entity_id))
+    if not entity:
+        return None
+    return dict(entity.get("official_info") or {})
+
+
 def _static_to_mapping_items(mappings: Dict[str, Dict[str, Any]]) -> List[Dict[str, Any]]:
     items: List[Dict[str, Any]] = []
     for entity_id, payload in (mappings or {}).items():
+        official_info = payload.get("official_info") or {}
         item = {
             "id": str(entity_id),
             "entity_ref_id": str(entity_id),
@@ -144,7 +178,7 @@ def _static_to_mapping_items(mappings: Dict[str, Dict[str, Any]]) -> List[Dict[s
             "en": payload.get("en") or [],
             "jp": payload.get("jp") or [],
             "source_aliases": payload.get("source_aliases") or {},
-            "official_info": payload.get("official_info") or {},
+            "official_info": official_info,
             "canonical_key": payload.get("canonical_key"),
             "display_name": payload.get("display_name"),
             "confidence_score": payload.get("confidence_score"),
@@ -152,6 +186,12 @@ def _static_to_mapping_items(mappings: Dict[str, Dict[str, Any]]) -> List[Dict[s
             "alias_count": payload.get("alias_count", 0),
             "conflict_count": payload.get("conflict_count", 0),
             "review_status": payload.get("review_status", entity_mapping_sync_service.REVIEW_AUTO_ACCEPTED),
+            "official_enrich_status": payload.get("official_enrich_status", "pending"),
+            "official_enrich_error": payload.get("official_enrich_error"),
+            "official_last_attempt_at": payload.get("official_last_attempt_at"),
+            "official_last_success_at": payload.get("official_last_success_at"),
+            "official_source_tag": official_info.get("source_tag"),
+            "official_last_enriched_at": official_info.get("last_enriched_at"),
             "auto_generated": payload.get("auto_generated", False),
             "last_seen_at": payload.get("last_seen_at"),
         }
@@ -181,8 +221,12 @@ def _item_matches_filters(
     search: str | None,
     review_status: str | None,
     only_conflicts: bool,
+    only_missing_official: bool,
 ) -> bool:
     if only_conflicts and int(item.get("conflict_count") or 0) <= 0:
+        return False
+
+    if only_missing_official and not _is_missing_official_links(item.get("official_info")):
         return False
 
     if review_status and str(item.get("review_status") or "") != review_status:
@@ -205,6 +249,15 @@ def _item_matches_filters(
         if not any(keyword in field for field in normalized_fields):
             return False
 
+    return True
+
+
+def _is_missing_official_links(official_info: Any) -> bool:
+    if not isinstance(official_info, dict):
+        return True
+    for key in ("website", "twitter", "facebook", "instagram", "weibo"):
+        if str(official_info.get(key) or "").strip():
+            return False
     return True
 
 
@@ -247,6 +300,57 @@ async def standardize_match_data(raw_data: Dict[str, Any], source_id: str = Quer
 
 
 def _calculate_summary_from_mapping_data() -> Dict[str, Any]:
+    _ensure_mapping_schema_ready()
+    db = SessionLocal()
+    try:
+        rows = (
+            db.query(EntityMappingRecord)
+            .filter(EntityMappingRecord.entity_type.in_(["team", "league"]))
+            .all()
+        )
+    finally:
+        db.close()
+
+    if not rows:
+        return _calculate_summary_from_static_data()
+
+    now = datetime.utcnow()
+    total = len(rows)
+    valid = 0
+    invalid = 0
+    needs_update = 0
+    for row in rows:
+        info = dict(row.official_info or {})
+        if bool(info.get("verified", False)):
+            valid += 1
+        else:
+            invalid += 1
+
+        last_success = row.official_last_success_at
+        if not last_success:
+            last_verified = info.get("last_verified")
+            if last_verified:
+                try:
+                    last_success = datetime.fromisoformat(
+                        str(last_verified).replace("Z", "+00:00").replace("+00:00", "")
+                    )
+                except ValueError:
+                    last_success = None
+        if not last_success or now - last_success > timedelta(days=30):
+            needs_update += 1
+
+    return {
+        "total": total,
+        "valid": valid,
+        "invalid": invalid,
+        "needs_update": needs_update,
+        "last_verified": now.isoformat(),
+        "valid_rate": round(valid / total, 4) if total else 0.0,
+        "stale_rate": round(needs_update / total, 4) if total else 0.0,
+    }
+
+
+def _calculate_summary_from_static_data() -> Dict[str, Any]:
     total = 0
     valid = 0
     invalid = 0
@@ -282,6 +386,8 @@ def _calculate_summary_from_mapping_data() -> Dict[str, Any]:
         "invalid": invalid,
         "needs_update": needs_update,
         "last_verified": now.isoformat(),
+        "valid_rate": round(valid / total, 4) if total else 0.0,
+        "stale_rate": round(needs_update / total, 4) if total else 0.0,
     }
 
 
@@ -294,7 +400,17 @@ async def get_official_info_summary(force_verify: bool = Query(False)) -> JSONRe
             summary = result["summary"]
         else:
             summary = _calculate_summary_from_mapping_data()
-        return JSONResponse(content={"status": "success", "data": {"summary": summary}})
+        enrich_status = official_info_service.get_enrich_status_snapshot("all")
+        summary["last_batch_job_at"] = enrich_status.get("last_finished_at")
+        return JSONResponse(
+            content={
+                "status": "success",
+                "data": {
+                    "summary": summary,
+                    "enrich_status": enrich_status,
+                },
+            }
+        )
     except Exception as exc:  # pragma: no cover - defensive path
         logger.error("Failed to get official-info summary: %s", exc, exc_info=True)
         return JSONResponse(status_code=500, content={"status": "error", "message": "Internal server error"})
@@ -306,13 +422,12 @@ async def verify_official_info(entity_type: str, entity_id: str) -> JSONResponse
     if entity_type not in VALID_ENTITY_TYPES:
         return JSONResponse(status_code=400, content={"status": "error", "message": "Invalid entity type"})
 
-    mappings, _ = _get_entity_mapping(entity_type)
-    entity_data = (mappings or {}).get(entity_id)
-    if not entity_data or "official_info" not in entity_data:
+    official_info = _load_entity_official_info(entity_type, entity_id)
+    if not official_info:
         return JSONResponse(status_code=404, content={"status": "error", "message": "Entity not found"})
 
     try:
-        result = await official_info_service.verify_entity_official_info(entity_type, entity_id, entity_data["official_info"])
+        result = await official_info_service.verify_entity_official_info(entity_type, entity_id, official_info)
         return JSONResponse(content={"status": "success", "data": result})
     except Exception as exc:  # pragma: no cover - defensive path
         logger.error("Verify official-info failed for %s/%s: %s", entity_type, entity_id, exc, exc_info=True)
@@ -353,14 +468,27 @@ async def discover_official_info_all(entity_type: str = Query("all")) -> JSONRes
     if entity_type not in {"all", "teams", "leagues"}:
         return JSONResponse(status_code=400, content={"status": "error", "message": "Invalid entity type"})
 
-    targets: list[tuple[str, str]]
-    if entity_type == "teams":
-        targets = [("team", entity_id) for entity_id in TEAM_MAPPINGS.keys()]
-    elif entity_type == "leagues":
-        targets = [("league", entity_id) for entity_id in LEAGUE_MAPPINGS.keys()]
-    else:
-        targets = [("team", entity_id) for entity_id in TEAM_MAPPINGS.keys()]
-        targets.extend(("league", entity_id) for entity_id in LEAGUE_MAPPINGS.keys())
+    _ensure_mapping_schema_ready()
+    db = SessionLocal()
+    try:
+        query = db.query(EntityMappingRecord).filter(EntityMappingRecord.entity_type.in_(["team", "league"]))
+        if entity_type == "teams":
+            query = query.filter(EntityMappingRecord.entity_type == "team")
+        elif entity_type == "leagues":
+            query = query.filter(EntityMappingRecord.entity_type == "league")
+        rows = query.order_by(EntityMappingRecord.id.asc()).all()
+    finally:
+        db.close()
+
+    targets: list[tuple[str, str]] = [(row.entity_type, str(row.entity_ref_id)) for row in rows]
+    if not targets:
+        if entity_type == "teams":
+            targets = [("team", entity_id) for entity_id in TEAM_MAPPINGS.keys()]
+        elif entity_type == "leagues":
+            targets = [("league", entity_id) for entity_id in LEAGUE_MAPPINGS.keys()]
+        else:
+            targets = [("team", entity_id) for entity_id in TEAM_MAPPINGS.keys()]
+            targets.extend(("league", entity_id) for entity_id in LEAGUE_MAPPINGS.keys())
 
     results: Dict[str, Dict[str, Any]] = {"teams": {}, "leagues": {}}
     errors = 0
@@ -398,6 +526,42 @@ async def update_official_info(entity_type: str, entity_id: str, updates: Dict[s
         return JSONResponse(status_code=500, content={"status": "error", "message": "Internal server error"})
 
 
+@router.post("/official-info/enrich/trigger")
+async def trigger_official_info_enrich(
+    entity_type: str = Query("all"),
+    limit: int = Query(100, ge=1, le=2000),
+    only_missing: bool = Query(True),
+    min_confidence: float = Query(0.6, ge=0.0, le=1.0),
+) -> JSONResponse:
+    """Trigger automatic official-info enrichment task."""
+    if entity_type not in {"all", "teams", "leagues", "team", "league"}:
+        return JSONResponse(status_code=400, content={"status": "error", "message": "Invalid entity type"})
+    try:
+        payload = official_info_service.trigger_batch_auto_enrich(
+            entity_type=entity_type,
+            limit=limit,
+            only_missing=only_missing,
+            min_confidence=min_confidence,
+        )
+        return JSONResponse(content={"status": "success", "data": payload})
+    except Exception as exc:  # pragma: no cover - defensive path
+        logger.error("Failed to trigger official-info enrich: %s", exc, exc_info=True)
+        return JSONResponse(status_code=500, content={"status": "error", "message": "Internal server error"})
+
+
+@router.get("/official-info/enrich/status")
+async def get_official_info_enrich_status(entity_type: str = Query("all")) -> JSONResponse:
+    """Return automatic official-info enrichment task status."""
+    if entity_type not in {"all", "teams", "leagues", "team", "league"}:
+        return JSONResponse(status_code=400, content={"status": "error", "message": "Invalid entity type"})
+    try:
+        payload = official_info_service.get_enrich_status_snapshot(entity_type)
+        return JSONResponse(content={"status": "success", "data": payload})
+    except Exception as exc:  # pragma: no cover - defensive path
+        logger.error("Failed to get official-info enrich status: %s", exc, exc_info=True)
+        return JSONResponse(status_code=500, content={"status": "error", "message": "Internal server error"})
+
+
 @router.get("/mappings/{entity_type}")
 async def get_entity_mappings(
     entity_type: str,
@@ -407,6 +571,7 @@ async def get_entity_mappings(
     search: str | None = Query(None),
     review_status: str | None = Query(None),
     only_conflicts: bool = Query(False),
+    only_missing_official: bool = Query(False),
     paged: bool = Query(False),
 ) -> JSONResponse:
     """Return entity mapping config (DB first, static fallback)."""
@@ -428,7 +593,7 @@ async def get_entity_mappings(
 
     query_params = set(request.query_params.keys())
     use_paged_mode = paged or bool(
-        {"page", "size", "search", "review_status", "only_conflicts", "paged"} & query_params
+        {"page", "size", "search", "review_status", "only_conflicts", "only_missing_official", "paged"} & query_params
     )
 
     if not use_paged_mode:
@@ -469,6 +634,7 @@ async def get_entity_mappings(
             search=search,
             review_status=review_status,
             only_conflicts=only_conflicts,
+            only_missing_official=only_missing_official,
         )
     ]
     payload = _paginate_items(filtered, page=page, size=size)
@@ -514,6 +680,7 @@ async def get_entity_mapping_conflicts(
             search=search,
             review_status=review_status,
             only_conflicts=True,
+            only_missing_official=False,
         )
     ]
     payload = _paginate_items(filtered, page=page, size=size)
