@@ -1,0 +1,381 @@
+<template>
+  <el-container class="admin-layout">
+    <el-aside width="200px" class="sidebar">
+      <div class="logo">足彩扫盘系统</div>
+      <el-menu
+        :default-active="activeMenu"
+        router
+        class="menu"
+        background-color="#424242"
+        text-color="#e4e7ed"
+        active-text-color="#409EFF"
+        unique-opened
+      >
+        <el-menu-item index="/admin/dashboard">
+          <el-icon><House /></el-icon>
+          <span>仪表盘</span>
+        </el-menu-item>
+
+        <el-sub-menu index="/admin/users">
+          <template #title>
+            <el-icon><UserFilled /></el-icon>
+            <span>用户管理</span>
+          </template>
+          <el-menu-item index="/admin/users/list">用户列表</el-menu-item>
+          <el-menu-item index="/admin/users/roles">角色与权限</el-menu-item>
+          <el-menu-item index="/admin/users/departments">部门管理</el-menu-item>
+          <el-menu-item index="/admin/users/profile">个人中心</el-menu-item>
+          <el-menu-item index="/admin/users/profiles">用户画像管理</el-menu-item>
+          <el-menu-item index="/admin/users/logs">操作日志</el-menu-item>
+        </el-sub-menu>
+
+        <el-sub-menu index="/admin/analytic-tools">
+          <template #title>
+            <el-icon><DataAnalysis /></el-icon>
+            <span>精算工具中心</span>
+          </template>
+          <el-menu-item index="/admin/beidan-filter">北单三维筛选器</el-menu-item>
+          <el-menu-item index="/admin/beidan-betting-sim">北单投注模拟</el-menu-item>
+        </el-sub-menu>
+
+        <el-sub-menu index="/admin/data-source">
+          <template #title>
+            <el-icon><SetUp /></el-icon>
+            <span>数据源管理</span>
+          </template>
+          <el-menu-item index="/admin/data-source/overview">运行总览</el-menu-item>
+          <el-menu-item index="/admin/data-source/tasks">任务中心</el-menu-item>
+          <el-menu-item index="/admin/data-source/assets">数据资产中心</el-menu-item>
+          <el-menu-item index="/admin/data-source/config">数据源配置</el-menu-item>
+          <el-menu-item index="/admin/data-source/ip-pool">IP池管理</el-menu-item>
+          <el-menu-item index="/admin/data-source/headers">请求头管理</el-menu-item>
+          <el-menu-item index="/admin/data-source/official-info">官方信息管理</el-menu-item>
+        </el-sub-menu>
+
+        <el-sub-menu index="/admin/match-data">
+          <template #title>
+            <el-icon><Soccer /></el-icon>
+            <span>比赛数据管理</span>
+          </template>
+          <el-menu-item index="/admin/match-data/schedule/jczq">竞猜赛程</el-menu-item>
+          <el-menu-item index="/admin/match-data/schedule/bd">北单赛程</el-menu-item>
+        </el-sub-menu>
+
+        <el-sub-menu index="/admin/draw-prediction">
+          <template #title>
+            <el-icon><Histogram /></el-icon>
+            <span>平局预测管理</span>
+          </template>
+          <el-menu-item index="/admin/draw-prediction/ai-draw">北单平局预测扫盘</el-menu-item>
+          <el-menu-item index="/admin/draw-prediction/poisson-11">1-1比分预测扫盘</el-menu-item>
+          <el-menu-item index="/admin/draw-prediction/suggestion-center">下注建议中心</el-menu-item>
+          <el-menu-item index="/admin/draw-prediction/killswitch">风控与熔断监控</el-menu-item>
+          <el-menu-item index="/admin/draw-prediction/model-workbench">模型工坊</el-menu-item>
+        </el-sub-menu>
+
+        <el-sub-menu index="/admin/ai-services">
+          <template #title>
+            <el-icon><ChatLineRound /></el-icon>
+            <span>AI服务管理</span>
+          </template>
+          <el-menu-item index="/admin/ai-services/local">本地AI服务</el-menu-item>
+          <el-menu-item index="/admin/ai-services/remote">远程AI服务</el-menu-item>
+          <el-menu-item index="/admin/ai-services/costs">成本监控</el-menu-item>
+          <el-menu-item index="/admin/ai-services/agents">智能体管理</el-menu-item>
+          <el-menu-item index="/admin/ai-services/models">预测模型管理</el-menu-item>
+          <el-menu-item index="/admin/ai-services/conversation">对话助手</el-menu-item>
+          <el-menu-item index="/admin/ai-services/config">配置管理</el-menu-item>
+        </el-sub-menu>
+
+        <el-sub-menu index="/admin/intelligent-decision">
+          <template #title>
+            <el-icon><Management /></el-icon>
+            <span>智能决策</span>
+          </template>
+          <el-menu-item index="/admin/intelligent-decision/hedging">对冲策略管理</el-menu-item>
+          <el-menu-item index="/admin/intelligent-decision/recommendations">推荐系统管理</el-menu-item>
+          <el-menu-item index="/admin/intelligent-decision/risk-control">风险控制</el-menu-item>
+        </el-sub-menu>
+
+        <el-sub-menu index="/admin/intelligence">
+          <template #title>
+            <el-icon><Document /></el-icon>
+            <span>情报分析</span>
+          </template>
+          <el-menu-item index="/admin/intelligence/screening">智能筛选</el-menu-item>
+          <el-menu-item index="/admin/intelligence/collection">采集管理</el-menu-item>
+          <el-menu-item index="/admin/intelligence/model">模型管理</el-menu-item>
+          <el-menu-item index="/admin/intelligence/weight">权重管理</el-menu-item>
+          <el-menu-item index="/admin/intelligence/graph">图谱管理</el-menu-item>
+          <el-menu-item index="/admin/intelligence/sentiment">情感分析</el-menu-item>
+          <el-menu-item index="/admin/intelligence/multimodal">多模态分析</el-menu-item>
+        </el-sub-menu>
+
+        <el-sub-menu index="/admin/system">
+          <template #title>
+            <el-icon><Setting /></el-icon>
+            <span>系统管理</span>
+          </template>
+          <el-menu-item index="/admin/system/config">系统配置</el-menu-item>
+        </el-sub-menu>
+
+        <el-sub-menu index="/admin/logs">
+          <template #title>
+            <el-icon><Tickets /></el-icon>
+            <span>日志管理</span>
+          </template>
+          <el-menu-item index="/admin/logs">日志总览</el-menu-item>
+          <el-menu-item index="/admin/logs/system">系统日志</el-menu-item>
+          <el-menu-item index="/admin/logs/user">用户日志</el-menu-item>
+          <el-menu-item index="/admin/logs/security">安全日志</el-menu-item>
+          <el-menu-item index="/admin/logs/api">API日志</el-menu-item>
+          <el-menu-item index="/admin/logs/ai">AI服务日志</el-menu-item>
+        </el-sub-menu>
+      </el-menu>
+    </el-aside>
+
+    <el-container>
+      <el-header class="header">
+        <div class="breadcrumb">
+          <el-breadcrumb separator="/">
+            <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
+            <el-breadcrumb-item>{{ route.meta.title || '当前页' }}</el-breadcrumb-item>
+          </el-breadcrumb>
+        </div>
+        <div class="header-right">
+          <div
+            class="risk-indicator"
+            :title="riskUpdatedAt ? `最近更新: ${riskUpdatedAt}` : '风控状态'"
+            role="button"
+            tabindex="0"
+            @click="goToRiskMonitor"
+            @keydown.enter="goToRiskMonitor"
+            @keydown.space.prevent="goToRiskMonitor"
+          >
+            <span class="risk-dot" :class="`is-${riskStateText.toLowerCase()}`" />
+            <el-tag size="small" :type="riskTagType">风控 {{ riskStateText }}</el-tag>
+          </div>
+          <div class="user-info">
+            <el-dropdown>
+              <span class="el-dropdown-link">
+                {{ authStore.user?.username || '管理员' }}
+                <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+              </span>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item @click="logout">退出登录</el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+          </div>
+        </div>
+      </el-header>
+
+      <el-main class="main">
+        <router-view />
+      </el-main>
+    </el-container>
+  </el-container>
+</template>
+
+<script setup>
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
+import { getKillSwitchState } from '@/api/drawPrediction'
+import {
+  House,
+  UserFilled,
+  SetUp,
+  Soccer,
+  ChatLineRound,
+  Management,
+  Document,
+  Setting,
+  Tickets,
+  ArrowDown,
+  DataAnalysis,
+  Histogram
+} from '@element-plus/icons-vue'
+
+const route = useRoute()
+const router = useRouter()
+const authStore = useAuthStore()
+
+const activeMenu = computed(() => route.path)
+
+const riskState = ref('RUN')
+const riskUpdatedAt = ref('')
+let riskTimer = null
+
+const riskStateText = computed(() => String(riskState.value || 'RUN').toUpperCase())
+const riskTagType = computed(() => {
+  if (riskStateText.value === 'STOP') return 'danger'
+  if (riskStateText.value === 'WARN') return 'warning'
+  return 'success'
+})
+
+const loadRiskState = async () => {
+  try {
+    const data = await getKillSwitchState()
+    riskState.value = String(data?.state || 'RUN').toUpperCase()
+    riskUpdatedAt.value = data?.updated_at ? new Date(data.updated_at).toLocaleString() : ''
+  } catch (_) {}
+}
+
+const goToRiskMonitor = () => {
+  if (route.path !== '/admin/draw-prediction/killswitch') {
+    router.push('/admin/draw-prediction/killswitch')
+  }
+}
+
+const logout = () => {
+  authStore.logout()
+  router.push('/login')
+}
+
+onMounted(async () => {
+  await loadRiskState()
+  riskTimer = setInterval(loadRiskState, 30000)
+})
+
+onBeforeUnmount(() => {
+  if (riskTimer) {
+    clearInterval(riskTimer)
+    riskTimer = null
+  }
+})
+</script>
+
+<style scoped>
+.admin-layout {
+  height: 100vh;
+  background: #f9fafb;
+}
+
+.sidebar {
+  background-color: #424242;
+  box-shadow: 1px 0 4px rgba(0, 0, 0, 0.08);
+}
+
+.logo {
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 600;
+  text-align: center;
+  padding: 16px 8px;
+  border-bottom: 1px solid #383838;
+  letter-spacing: 1px;
+}
+
+.menu {
+  border-right: none;
+  height: calc(100vh - 60px);
+  background-color: #424242;
+}
+
+.menu :deep(.el-sub-menu__title),
+.menu :deep(.el-menu-item) {
+  height: 48px;
+  line-height: 48px;
+  padding-left: 24px !important;
+}
+
+.menu :deep(.el-sub-menu .el-menu-item) {
+  background-color: #2c2c2c;
+  padding-left: 44px !important;
+}
+
+.menu :deep(.el-sub-menu__title) {
+  color: #e4e7ed;
+  font-weight: 500;
+}
+
+.menu :deep(.el-menu-item) {
+  color: #acacac;
+}
+
+.menu :deep(.el-menu-item:hover),
+.menu :deep(.el-sub-menu__title:hover) {
+  background-color: #4a4a4a !important;
+}
+
+.menu :deep(.el-icon) {
+  width: 20px;
+  text-align: center;
+  margin-right: 8px;
+  vertical-align: middle;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.header {
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  border-bottom: 1px solid #e5e7eb;
+  z-index: 10;
+}
+
+.breadcrumb {
+  font-size: 15px;
+  color: #374151;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.risk-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.risk-indicator:hover {
+  opacity: 0.88;
+}
+
+.risk-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #67c23a;
+}
+
+.risk-dot.is-stop {
+  background: #f56c6c;
+}
+
+.risk-dot.is-warn {
+  background: #e6a23c;
+}
+
+.risk-dot.is-run {
+  background: #67c23a;
+}
+
+.user-info {
+  cursor: pointer;
+  color: #374151;
+  font-weight: 500;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.main {
+  background: #f9fafb;
+  padding: 24px;
+  min-height: calc(100vh - 60px);
+}
+</style>
+

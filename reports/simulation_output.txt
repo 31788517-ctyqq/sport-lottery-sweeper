@@ -1,0 +1,22 @@
+============================================================
+体育彩票扫盘系统 - 用户操作模拟
+============================================================
+1. 创建数据库表...
+Traceback (most recent call last):
+  File "c:\Users\11581\Downloads\sport-lottery-sweeper\complete_simulation_final.py", line 43, in setup_database
+    from core.database import create_tables
+  File "c:\Users\11581\Downloads\sport-lottery-sweeper\backend\core\database.py", line 4, in <module>
+    from ..config import settings
+ImportError: attempted relative import beyond top-level package
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "c:\Users\11581\Downloads\sport-lottery-sweeper\complete_simulation_final.py", line 391, in <module>
+    main()
+  File "c:\Users\11581\Downloads\sport-lottery-sweeper\complete_simulation_final.py", line 322, in main
+    if not setup_database():
+           ^^^^^^^^^^^^^^^^
+  File "c:\Users\11581\Downloads\sport-lottery-sweeper\complete_simulation_final.py", line 56, in setup_database
+    print(f"   \u274c 创建表失败: {e}")
+UnicodeEncodeError: 'gbk' codec can't encode character '\u274c' in position 3: illegal multibyte sequence

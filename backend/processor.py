@@ -1,8 +1,18 @@
 from typing import List, Dict, Optional
+import logging
+logger = logging.getLogger(__name__)
 from datetime import datetime
 from sqlalchemy.orm import Session
 import models
-from config import settings
+from backend.config import settings
+
+
+def process_data(data):
+    """处理数据"""
+    logger.debug(f"使用配置: {settings.PROJECT_NAME}")
+    # 处理逻辑...
+    return data
+
 
 class DataProcessor:
     """数据处理类"""

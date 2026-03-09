@@ -1,0 +1,100 @@
+# 分支保护规则配置
+# 此文件用于文档化分支保护策略，实际配置需在GitHub仓库设置中手动配置
+
+name: Branch Protection Configuration
+
+on:
+  workflow_dispatch:
+    inputs:
+      setup_branch_protection:
+        description: 'Setup branch protection rules'
+        required: true
+        default: 'true'
+        type: boolean
+
+jobs:
+  document-branch-protection:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Document Branch Protection Rules
+        run: |
+          echo "# 分支保护规则配置指南"
+          echo ""
+          echo "## Main分支保护规则"
+          echo ""
+          echo "### 基本要求"
+          echo "- ✅ Require a pull request before merging"
+          echo "- ✅ Require approvals: **至少2个**"
+          echo "- ✅ Dismiss stale reviews when new commits are pushed"
+          echo "- ✅ Require review from code owners"
+          echo "- ✅ Restrict pushes that create files over 100MB"
+          echo ""
+          echo "### 状态检查要求"
+          echo "- ✅ Require status checks to pass before merging"
+          echo "- ✅ Require branches to be up to date before merging"
+          echo "- ✅ Status checks must include:"
+          echo "  - CI/CD Pipeline (Optimized) / python-quality"
+          echo "  - CI/CD Pipeline (Optimized) / javascript-quality"
+          echo "  - CI/CD Pipeline (Optimized) / backend-tests"
+          echo "  - CI/CD Pipeline (Optimized) / frontend-tests"
+          echo "  - CI/CD Pipeline (Optimized) / security-scan"
+          echo "  - CI/CD Pipeline (Optimized) / e2e-tests"
+          echo "  - Code quality check"
+          echo ""
+          echo "### 其他限制"
+          echo "- ✅ Include administrators (apply rules to admins)"
+          echo "- ✅ Allow force pushes: **禁用**"
+          echo "- ✅ Allow deletions: **禁用**"
+          echo ""
+          echo "## Develop分支保护规则"
+          echo ""
+          echo "### 基本要求"
+          echo "- ✅ Require a pull request before merging"
+          echo "- ✅ Require approvals: **至少1个**"
+          echo "- ✅ Dismiss stale reviews when new commits are pushed"
+          echo "- ✅ Restrict pushes that create files over 50MB"
+          echo ""
+          echo "### 状态检查要求"
+          echo "- ✅ Require status checks to pass before merging"
+          echo "- ✅ Status checks must include:"
+          echo "  - CI/CD Pipeline (Optimized) / python-quality"
+          echo "  - CI/CD Pipeline (Optimized) / backend-tests"
+          echo "  - Code quality check"
+          echo ""
+          echo "## Stable-base分支保护规则"
+          echo ""
+          echo "### 基本要求"
+          echo "- ✅ Require a pull request before merging"
+          echo "- ✅ Require approvals: **至少2个**"
+          echo "- ✅ Dismiss stale reviews when new commits are pushed"
+          echo "- ✅ Require review from code owners"
+          echo "- ✅ Restrict pushes that create files over 100MB"
+          echo ""
+          echo "### 状态检查要求"
+          echo "- ✅ Require status checks to pass before merging"
+          echo "- ✅ Status checks must include所有主要检查项"
+          echo "- ✅ Include administrators (apply rules to admins)"
+          echo "- ✅ Allow force pushes: **禁用**"
+          echo ""
+          echo "## Feature分支命名规范"
+          echo ""
+          echo "### 分支前缀"
+          echo "- `feature/` - 新功能开发"
+          echo "- `bugfix/` - Bug修复"
+          echo "- `hotfix/` - 紧急热修复"
+          echo "- `refactor/` - 代码重构"
+          echo "- `docs/` - 文档更新"
+          echo "- `test/` - 测试相关"
+          echo "- `chore/` - 构建/工具链更新"
+          echo ""
+          echo "### 命名格式"
+          echo "```"
+          echo "feature/JIRA-123-add-user-authentication"
+          echo "bugfix/JIRA-456-fix-login-validation"
+          echo "hotfix/JIRA-789-emergency-security-patch"
+          echo "```"
+          echo ""
+          echo "## 自动化配置脚本"
+          echo ""
+          echo "可以使用GitHub CLI或API来自动化配置分支保护规则。"
+          echo "参考脚本: scripts/setup_branch_protection.py"

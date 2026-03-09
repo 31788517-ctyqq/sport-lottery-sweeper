@@ -1,0 +1,936 @@
+{
+  "executedAt": "2026-02-28T17:57:04.564804+00:00",
+  "frontendBase": "http://localhost:3000",
+  "backendBase": "http://localhost:8000",
+  "loginUser": "admin",
+  "summary": {
+    "routesTotal": 47,
+    "routesNavigationFailed": 0,
+    "routesWithConsoleErrors": 8,
+    "routesWithPageErrors": 0,
+    "routesWithHttpErrors": 5,
+    "consoleErrorsTotal": 47,
+    "pageErrorsTotal": 0,
+    "httpErrorsTotal": 14,
+    "uniqueHttpErrorEndpoints": 14,
+    "durationSeconds": 131.68
+  },
+  "routeResults": [
+    {
+      "route": "/admin/dashboard",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/dashboard",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2723,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/users/list",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/users/list",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2666,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/users/roles",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/users/roles",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2682,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/users/departments",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/users/departments",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2660,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/users/profile",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/users/profile",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2674,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/users/profiles",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/users/profiles",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2672,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/users/logs",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/users/logs",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2661,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/beidan-filter",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/beidan-filter",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2662,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/beidan-betting-sim",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/beidan-betting-sim",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2684,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/data-source/config",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/data-source/config",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2670,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/data-source/task-console",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/data-source/task-console",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2684,
+      "consoleErrorsDelta": 1,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/data-source/monitor",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/data-source/monitor",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2666,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/data-source/data-center",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/data-source/data-center",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2673,
+      "consoleErrorsDelta": 3,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 1
+    },
+    {
+      "route": "/admin/data-source/ip-pool",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/data-source/ip-pool",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2674,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/data-source/headers",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/data-source/headers",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2680,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/data-source/task-monitor",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/data-source/task-monitor",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2670,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/match-data/schedule/jczq",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/match-data/schedule/jczq",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2657,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/match-data/schedule/bd",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/match-data/schedule/bd",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2680,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/draw-prediction/ai-draw",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/draw-prediction/ai-draw",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2678,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/draw-prediction/poisson-11",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/draw-prediction/poisson-11",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2689,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/draw-prediction/suggestion-center",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/draw-prediction/suggestion-center",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2686,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/draw-prediction/killswitch",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/draw-prediction/killswitch",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2682,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/draw-prediction/model-workbench",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/draw-prediction/model-workbench?tab=data",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2684,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/ai-services/local",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/ai-services/local",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2677,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/ai-services/remote",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/ai-services/remote",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2662,
+      "consoleErrorsDelta": 3,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 1
+    },
+    {
+      "route": "/admin/ai-services/costs",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/ai-services/costs",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2670,
+      "consoleErrorsDelta": 3,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 1
+    },
+    {
+      "route": "/admin/ai-services/agents",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/ai-services/agents",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2669,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/ai-services/models",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/ai-services/models",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2669,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/ai-services/conversation",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/ai-services/conversation",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2656,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/ai-services/config",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/ai-services/config",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2675,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/intelligent-decision/hedging",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/intelligent-decision/hedging",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2655,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/intelligent-decision/recommendations",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/intelligent-decision/recommendations",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2672,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/intelligent-decision/risk-control",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/intelligent-decision/risk-control",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2660,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/intelligence/screening",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/intelligence/screening",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2672,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/intelligence/collection",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2671,
+      "consoleErrorsDelta": 27,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 10
+    },
+    {
+      "route": "/admin/intelligence/model",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/intelligence/model",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2667,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/intelligence/weight",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/intelligence/weight",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2685,
+      "consoleErrorsDelta": 6,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/intelligence/graph",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/intelligence/graph",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2669,
+      "consoleErrorsDelta": 3,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 1
+    },
+    {
+      "route": "/admin/intelligence/sentiment",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/intelligence/sentiment",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2674,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/intelligence/multimodal",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/intelligence/multimodal",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2658,
+      "consoleErrorsDelta": 1,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/system/config",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/system/config",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2670,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/logs",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/logs",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2675,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/logs/system",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/logs/system",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2662,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/logs/user",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/logs/user",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2675,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/logs/security",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/logs/security",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2676,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/logs/api",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/logs/api",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2669,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/logs/ai",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/logs/ai",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2675,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    }
+  ],
+  "consoleIssues": [
+    {
+      "route": "/admin/data-source/task-console",
+      "url": "http://localhost:3000/admin/data-source/config",
+      "text": "加载数据失败: TypeError: Failed to fetch\n    at loadData (http://localhost:3000/@fs/C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/views/admin/crawler/DataSourceManagement.vue:89:28)\n    at http://localhost:3000/@fs/C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/views/admin/crawler/DataSourceManagement.vue:704:3\n    at http://localhost:3000/node_modules/.vite/deps/chunk-H2732BJL.js?v=d51e91f5:5221:40\n    at callWithErrorHandling (http://localhost:3000/node_modules/.vite/deps/chunk-H2732BJL.js?v=d51e91f5:2342:19)\n    at callWithAsyncErrorHandling (http://localhost:3000/node_modules/.vite/deps/chunk-H2732BJL.js?v=d51e91f5:2349:17)\n    at hook.__weh.hook.__weh (http://localhost:3000/node_modules/.vite/deps/chunk-H2732BJL.js?v=d51e91f5:5201:19)\n    at flushPostFlushCbs (http://localhost:3000/node_modules/.vite/deps/chunk-H2732BJL.js?v=d51e91f5:2527:28)\n    at flushJobs (http://localhost:3000/node_modules/.vite/deps/chunk-H2732BJL.js?v=d51e91f5:2569:5)",
+      "ts": "2026-02-28T17:55:24.278709+00:00"
+    },
+    {
+      "route": "/admin/data-source/data-center",
+      "url": "http://localhost:3000/admin/data-source/data-center",
+      "text": "Failed to load resource: the server responded with a status of 422 (Unprocessable Entity)",
+      "ts": "2026-02-28T17:55:30.082429+00:00"
+    },
+    {
+      "route": "/admin/data-source/data-center",
+      "url": "http://localhost:3000/admin/data-source/data-center",
+      "text": "API响应错误: AxiosError: Request failed with status code 422\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=367fde09:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=367fde09:1616:7)",
+      "ts": "2026-02-28T17:55:30.083431+00:00"
+    },
+    {
+      "route": "/admin/data-source/data-center",
+      "url": "http://localhost:3000/admin/data-source/data-center",
+      "text": "Error loading table data: AxiosError: Request failed with status code 422\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=367fde09:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=367fde09:1616:7)\n    at Axios.request (http://localhost:3000/node_modules/.vite/deps/axios.js?v=367fde09:2233:41)\n    at async loadTableData (http://localhost:3000/@fs/C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/views/admin/crawler/DataCenter.vue:140:17)",
+      "ts": "2026-02-28T17:55:30.086449+00:00"
+    },
+    {
+      "route": "/admin/ai-services/remote",
+      "url": "http://localhost:3000/admin/ai-services/remote",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:56:02.398900+00:00"
+    },
+    {
+      "route": "/admin/ai-services/remote",
+      "url": "http://localhost:3000/admin/ai-services/remote",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=367fde09:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=367fde09:1616:7)",
+      "ts": "2026-02-28T17:56:02.399901+00:00"
+    },
+    {
+      "route": "/admin/ai-services/remote",
+      "url": "http://localhost:3000/admin/ai-services/remote",
+      "text": "加载LLM供应商失败: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=367fde09:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=367fde09:1616:7)\n    at Axios.request (http://localhost:3000/node_modules/.vite/deps/axios.js?v=367fde09:2233:41)\n    at async loadServices (http://localhost:3000/@fs/C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/views/admin/ai-services/RemoteAIService.vue:148:27)",
+      "ts": "2026-02-28T17:56:02.399901+00:00"
+    },
+    {
+      "route": "/admin/ai-services/costs",
+      "url": "http://localhost:3000/admin/ai-services/costs",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:56:05.100066+00:00"
+    },
+    {
+      "route": "/admin/ai-services/costs",
+      "url": "http://localhost:3000/admin/ai-services/costs",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=367fde09:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=367fde09:1616:7)",
+      "ts": "2026-02-28T17:56:05.101066+00:00"
+    },
+    {
+      "route": "/admin/ai-services/costs",
+      "url": "http://localhost:3000/admin/ai-services/costs",
+      "text": "加载成本统计数据失败: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=367fde09:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=367fde09:1616:7)\n    at Axios.request (http://localhost:3000/node_modules/.vite/deps/axios.js?v=367fde09:2233:41)\n    at async loadStatsData (http://localhost:3000/@fs/C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/views/admin/ai-services/CostMonitoring.vue:37:22)",
+      "ts": "2026-02-28T17:56:05.103066+00:00"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "url": "http://localhost:3000/admin/intelligence/collection",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:56:29.565049+00:00"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "url": "http://localhost:3000/admin/intelligence/collection",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=367fde09:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=367fde09:1616:7)",
+      "ts": "2026-02-28T17:56:29.565049+00:00"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "url": "http://localhost:3000/admin/intelligence/collection",
+      "text": "Global error caught: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=367fde09:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=367fde09:1616:7)\n    at Axios.request (http://localhost:3000/node_modules/.vite/deps/axios.js?v=367fde09:2233:41)\n    at async loadSources (http://localhost:3000/@fs/C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/views/admin/intelligence/CollectionManagement.vue:358:16)\n    at async Promise.all (index 0)\n    at async reloadAll (http://localhost:3000/@fs/C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/views/admin/intelligence/CollectionManagement.vue:1384:3)\n    at async http://localhost:3000/@fs/C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/views/admin/intelligence/CollectionManagement.vue:1395:3",
+      "ts": "2026-02-28T17:56:29.568048+00:00"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "url": "http://localhost:3000/admin/intelligence/collection",
+      "text": "Component instance: Proxy(Object)",
+      "ts": "2026-02-28T17:56:29.568048+00:00"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "url": "http://localhost:3000/admin/intelligence/collection",
+      "text": "Error info: mounted hook",
+      "ts": "2026-02-28T17:56:29.568048+00:00"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "url": "http://localhost:3000/admin/intelligence/collection",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:56:29.569051+00:00"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "url": "http://localhost:3000/admin/intelligence/collection",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=367fde09:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=367fde09:1616:7)",
+      "ts": "2026-02-28T17:56:29.569051+00:00"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "url": "http://localhost:3000/admin/intelligence/collection",
+      "text": "AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=367fde09:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=367fde09:1616:7)\n    at Axios.request (http://localhost:3000/node_modules/.vite/deps/axios.js?v=367fde09:2233:41)\n    at async loadMatches (http://localhost:3000/@fs/C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/views/admin/intelligence/CollectionManagement.vue:528:20)\n    at async Promise.all (index 1)",
+      "ts": "2026-02-28T17:56:29.570054+00:00"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "url": "http://localhost:3000/admin/intelligence/collection",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:56:29.573050+00:00"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "url": "http://localhost:3000/admin/intelligence/collection",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=367fde09:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=367fde09:1616:7)",
+      "ts": "2026-02-28T17:56:29.573050+00:00"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "url": "http://localhost:3000/admin/intelligence/collection",
+      "text": "AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=367fde09:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=367fde09:1616:7)\n    at Axios.request (http://localhost:3000/node_modules/.vite/deps/axios.js?v=367fde09:2233:41)\n    at async loadTasks (http://localhost:3000/@fs/C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/views/admin/intelligence/CollectionManagement.vue:707:20)\n    at async Promise.all (index 2)",
+      "ts": "2026-02-28T17:56:29.574049+00:00"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "url": "http://localhost:3000/admin/intelligence/collection",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:56:29.581050+00:00"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "url": "http://localhost:3000/admin/intelligence/collection",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=367fde09:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=367fde09:1616:7)",
+      "ts": "2026-02-28T17:56:29.582049+00:00"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "url": "http://localhost:3000/admin/intelligence/collection",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:56:29.583055+00:00"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "url": "http://localhost:3000/admin/intelligence/collection",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=367fde09:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=367fde09:1616:7)",
+      "ts": "2026-02-28T17:56:29.583055+00:00"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "url": "http://localhost:3000/admin/intelligence/collection",
+      "text": "AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=367fde09:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=367fde09:1616:7)\n    at Axios.request (http://localhost:3000/node_modules/.vite/deps/axios.js?v=367fde09:2233:41)\n    at async loadTimeWindowConfig (http://localhost:3000/@fs/C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/views/admin/intelligence/CollectionManagement.vue:368:22)\n    at async Promise.all (index 4)",
+      "ts": "2026-02-28T17:56:29.585048+00:00"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "url": "http://localhost:3000/admin/intelligence/collection",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:56:29.856519+00:00"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "url": "http://localhost:3000/admin/intelligence/collection",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=367fde09:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=367fde09:1616:7)",
+      "ts": "2026-02-28T17:56:29.856519+00:00"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "url": "http://localhost:3000/admin/intelligence/collection",
+      "text": "AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=367fde09:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=367fde09:1616:7)\n    at Axios.request (http://localhost:3000/node_modules/.vite/deps/axios.js?v=367fde09:2233:41)\n    at async Promise.all (index 0)\n    at async loadAdvancedSettings (http://localhost:3000/@fs/C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/views/admin/intelligence/CollectionManagement.vue:410:86)\n    at async Promise.all (index 5)",
+      "ts": "2026-02-28T17:56:29.862077+00:00"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "url": "http://localhost:3000/admin/intelligence/collection",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:56:29.911598+00:00"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "url": "http://localhost:3000/admin/intelligence/collection",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=367fde09:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=367fde09:1616:7)",
+      "ts": "2026-02-28T17:56:29.914403+00:00"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "url": "http://localhost:3000/admin/intelligence/collection",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:56:29.916949+00:00"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "url": "http://localhost:3000/admin/intelligence/collection",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=367fde09:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=367fde09:1616:7)",
+      "ts": "2026-02-28T17:56:29.916949+00:00"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "url": "http://localhost:3000/admin/intelligence/collection",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:56:29.923898+00:00"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "url": "http://localhost:3000/admin/intelligence/collection",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=367fde09:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=367fde09:1616:7)",
+      "ts": "2026-02-28T17:56:29.924927+00:00"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "url": "http://localhost:3000/admin/intelligence/collection",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:56:29.933330+00:00"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "url": "http://localhost:3000/admin/intelligence/collection",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=367fde09:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=367fde09:1616:7)",
+      "ts": "2026-02-28T17:56:29.934331+00:00"
+    },
+    {
+      "route": "/admin/intelligence/weight",
+      "url": "http://localhost:3000/admin/intelligence/weight",
+      "text": "Global error caught: TypeError: _ctx.getStatusColor is not a function\n    at http://localhost:3000/@fs/C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/views/admin/intelligence/WeightManagement.vue:963:46\n    at renderFnWithContext (http://localhost:3000/node_modules/.vite/deps/chunk-H2732BJL.js?v=d51e91f5:2846:13)\n    at renderSlot (http://localhost:3000/node_modules/.vite/deps/chunk-H2732BJL.js?v=d51e91f5:5386:53)\n    at Proxy.<anonymous> (http://localhost:3000/node_modules/.vite/deps/element-plus.js?v=e9f195a3:64656:19)\n    at renderComponentRoot (http://localhost:3000/node_modules/.vite/deps/chunk-H2732BJL.js?v=d51e91f5:6650:17)\n    at ReactiveEffect.componentUpdateFn [as fn] (http://localhost:3000/node_modules/.vite/deps/chunk-H2732BJL.js?v=d51e91f5:8205:46)\n    at ReactiveEffect.run (http://localhost:3000/node_modules/.vite/deps/chunk-H2732BJL.js?v=d51e91f5:505:19)\n    at setupRenderEffect (http://localhost:3000/node_modules/.vite/deps/chunk-H2732BJL.js?v=d51e91f5:8340:5)\n    at mountComponent (http://localhost:3000/node_modules/.vite/deps/chunk-H2732BJL.js?v=d51e91f5:8114:7)\n    at processComponent (http://localhost:3000/node_modules/.vite/deps/chunk-H2732BJL.js?v=d51e91f5:8066:9)",
+      "ts": "2026-02-28T17:56:34.782193+00:00"
+    },
+    {
+      "route": "/admin/intelligence/weight",
+      "url": "http://localhost:3000/admin/intelligence/weight",
+      "text": "Component instance: Proxy(Object)",
+      "ts": "2026-02-28T17:56:34.782193+00:00"
+    },
+    {
+      "route": "/admin/intelligence/weight",
+      "url": "http://localhost:3000/admin/intelligence/weight",
+      "text": "Error info: render function",
+      "ts": "2026-02-28T17:56:34.782193+00:00"
+    },
+    {
+      "route": "/admin/intelligence/weight",
+      "url": "http://localhost:3000/admin/intelligence/weight",
+      "text": "Global error caught: TypeError: _ctx.getStatusColor is not a function\n    at http://localhost:3000/@fs/C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/views/admin/intelligence/WeightManagement.vue:963:46\n    at renderFnWithContext (http://localhost:3000/node_modules/.vite/deps/chunk-H2732BJL.js?v=d51e91f5:2846:13)\n    at renderSlot (http://localhost:3000/node_modules/.vite/deps/chunk-H2732BJL.js?v=d51e91f5:5386:53)\n    at Proxy.<anonymous> (http://localhost:3000/node_modules/.vite/deps/element-plus.js?v=e9f195a3:64656:19)\n    at renderComponentRoot (http://localhost:3000/node_modules/.vite/deps/chunk-H2732BJL.js?v=d51e91f5:6650:17)\n    at ReactiveEffect.componentUpdateFn [as fn] (http://localhost:3000/node_modules/.vite/deps/chunk-H2732BJL.js?v=d51e91f5:8205:46)\n    at ReactiveEffect.run (http://localhost:3000/node_modules/.vite/deps/chunk-H2732BJL.js?v=d51e91f5:505:19)\n    at setupRenderEffect (http://localhost:3000/node_modules/.vite/deps/chunk-H2732BJL.js?v=d51e91f5:8340:5)\n    at mountComponent (http://localhost:3000/node_modules/.vite/deps/chunk-H2732BJL.js?v=d51e91f5:8114:7)\n    at processComponent (http://localhost:3000/node_modules/.vite/deps/chunk-H2732BJL.js?v=d51e91f5:8066:9)",
+      "ts": "2026-02-28T17:56:34.783194+00:00"
+    },
+    {
+      "route": "/admin/intelligence/weight",
+      "url": "http://localhost:3000/admin/intelligence/weight",
+      "text": "Component instance: Proxy(Object)",
+      "ts": "2026-02-28T17:56:34.783194+00:00"
+    },
+    {
+      "route": "/admin/intelligence/weight",
+      "url": "http://localhost:3000/admin/intelligence/weight",
+      "text": "Error info: render function",
+      "ts": "2026-02-28T17:56:34.784223+00:00"
+    },
+    {
+      "route": "/admin/intelligence/graph",
+      "url": "http://localhost:3000/admin/intelligence/graph",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "ts": "2026-02-28T17:56:37.451855+00:00"
+    },
+    {
+      "route": "/admin/intelligence/graph",
+      "url": "http://localhost:3000/admin/intelligence/graph",
+      "text": "API响应错误: AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=367fde09:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=367fde09:1616:7)",
+      "ts": "2026-02-28T17:56:37.451855+00:00"
+    },
+    {
+      "route": "/admin/intelligence/graph",
+      "url": "http://localhost:3000/admin/intelligence/graph",
+      "text": "加载图谱失败 AxiosError: Request failed with status code 404\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=367fde09:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=367fde09:1616:7)\n    at Axios.request (http://localhost:3000/node_modules/.vite/deps/axios.js?v=367fde09:2233:41)\n    at async loadGraphData (http://localhost:3000/@fs/C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/views/admin/intelligence/GraphManagement.vue:167:18)\n    at async http://localhost:3000/@fs/C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/views/admin/intelligence/GraphManagement.vue:204:3",
+      "ts": "2026-02-28T17:56:37.452855+00:00"
+    },
+    {
+      "route": "/admin/intelligence/multimodal",
+      "url": "http://localhost:3000/admin/intelligence/multimodal",
+      "text": "Failed to load resource: net::ERR_CONNECTION_CLOSED",
+      "ts": "2026-02-28T17:56:44.865800+00:00"
+    }
+  ],
+  "pageIssues": [],
+  "failedResponses": [
+    {
+      "route": "/admin/data-source/data-center",
+      "page": "http://localhost:3000/admin/data-source/data-center",
+      "status": 422,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/admin/data?page=1&size=20",
+      "ts": "2026-02-28T17:55:30.081418+00:00"
+    },
+    {
+      "route": "/admin/ai-services/remote",
+      "page": "http://localhost:3000/admin/ai-services/remote",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/llm-providers/count",
+      "ts": "2026-02-28T17:56:02.398900+00:00"
+    },
+    {
+      "route": "/admin/ai-services/costs",
+      "page": "http://localhost:3000/admin/ai-services/costs",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/llm-providers/stats/overview",
+      "ts": "2026-02-28T17:56:05.100066+00:00"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "page": "http://localhost:3000/admin/intelligence/collection",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/admin/intelligence/collection/sources",
+      "ts": "2026-02-28T17:56:29.565049+00:00"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "page": "http://localhost:3000/admin/intelligence/collection",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/admin/intelligence/collection/matches?page=1&size=100&search=&date_from=2026-02-28&date_to=2026-02-28",
+      "ts": "2026-02-28T17:56:29.569051+00:00"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "page": "http://localhost:3000/admin/intelligence/collection",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/admin/intelligence/collection/tasks?page=1&size=100",
+      "ts": "2026-02-28T17:56:29.573050+00:00"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "page": "http://localhost:3000/admin/intelligence/collection",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/admin/intelligence/collection/channels/dingtalk/bindings",
+      "ts": "2026-02-28T17:56:29.581050+00:00"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "page": "http://localhost:3000/admin/intelligence/collection",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/admin/intelligence/collection/settings/time-window",
+      "ts": "2026-02-28T17:56:29.583055+00:00"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "page": "http://localhost:3000/admin/intelligence/collection",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/admin/intelligence/collection/settings/network",
+      "ts": "2026-02-28T17:56:29.856519+00:00"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "page": "http://localhost:3000/admin/intelligence/collection",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/admin/intelligence/collection/settings/source-rules",
+      "ts": "2026-02-28T17:56:29.911598+00:00"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "page": "http://localhost:3000/admin/intelligence/collection",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/admin/intelligence/collection/settings/quality-thresholds",
+      "ts": "2026-02-28T17:56:29.916949+00:00"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "page": "http://localhost:3000/admin/intelligence/collection",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/admin/intelligence/collection/settings/alias-dictionary",
+      "ts": "2026-02-28T17:56:29.923898+00:00"
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "page": "http://localhost:3000/admin/intelligence/collection",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/admin/intelligence/collection/sources/health?days=7",
+      "ts": "2026-02-28T17:56:29.933330+00:00"
+    },
+    {
+      "route": "/admin/intelligence/graph",
+      "page": "http://localhost:3000/admin/intelligence/graph",
+      "status": 404,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/admin/intelligence/collection/graph/overview?days=7&limit=800&include_prediction=true",
+      "ts": "2026-02-28T17:56:37.451855+00:00"
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "sshKeyPath": "C:/Users/11581/Desktop/cty_gz.pem",
+  "sshPort": 22,
+  "runLocalChecks": false,
+  "keepBackups": 10,
+  "stages": [
+    {
+      "name": "testing-local",
+      "enabled": true,
+      "local": true,
+      "localCommand": "python -m pytest"
+    },
+    {
+      "name": "staging-local",
+      "enabled": true,
+      "local": true,
+      "localCommand": "npm --prefix frontend run lint; npm --prefix frontend run build"
+    },
+    {
+      "name": "production",
+      "enabled": true,
+      "host": "8.134.89.99",
+      "user": "root",
+      "remoteDir": "/opt/sport-lottery-sweeper",
+      "postDeployCommand": "cd /opt/sport-lottery-sweeper && docker compose --env-file .env.release -f docker-compose.edge.yml up -d --build",
+      "healthCheckUrl": "https://sweeper365.cn/api/v1/health/live"
+    }
+  ]
+}

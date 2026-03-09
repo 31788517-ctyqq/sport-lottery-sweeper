@@ -1,0 +1,18 @@
+# 竞彩足球扫盘系统 - robots.txt
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /private/
+Disallow: /test/
+
+# Sitemap
+Sitemap: https://soccer-scanning-system.com/sitemap.xml
+
+# Crawl-delay
+Crawl-delay: 10
+
+# Disallow certain file types
+Disallow: /*.json$
+Disallow: /*.js$
+Disallow: /*.css$

@@ -1,0 +1,72 @@
+# Multi-stage Dockerfile for Backend Service
+# 体育彩票扫盘系统后端服务Docker镜像
+
+# Stage 1: Build stage
+FROM python:3.9-slim as builder
+
+WORKDIR /app
+
+# 设置环境变量
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+# 安装系统依赖
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    postgresql-dev \
+    libffi-dev \
+    libssl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# 复制requirements文件
+COPY backend/requirements.txt backend/requirements-dev.txt ./
+
+# 安装Python依赖到缓存目录
+RUN pip install --upgrade pip && \
+    pip install --prefix=/install -r requirements.txt && \
+    pip install --prefix=/install -r requirements-dev.txt
+
+# Stage 2: Runtime stage
+FROM python:3.9-slim as runtime
+
+WORKDIR /app
+
+# 安装运行时系统依赖
+RUN apt-get update && apt-get install -y \
+    curl \
+    ca-certificates \
+    postgresql-client \
+    && rm -rf /var/lib/apt/lists/* \
+    && groupadd -r appuser && useradd -r -g appuser appuser
+
+# 从builder阶段复制已安装的包
+COPY --from=builder /install /usr/local
+
+# 复制应用代码
+COPY --chown=appuser:appuser backend/ .
+
+# 创建必要的目录并设置权限
+RUN mkdir -p /app/logs /app/uploads /app/temp && \
+    chown -R appuser:appuser /app
+
+# 切换到非root用户
+USER appuser
+
+# 暴露端口
+EXPOSE 8000
+
+# 健康检查
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8000/health/live || exit 1
+
+# 环境变量
+ENV PYTHONPATH=/app \
+    ENVIRONMENT=production \
+    DEBUG=false \
+    LOG_LEVEL=INFO
+
+# 启动命令
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4", "--timeout-keep-alive", "5", "--access-log", "false"]

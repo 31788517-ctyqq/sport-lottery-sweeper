@@ -1,0 +1,65 @@
+C:\Users\11581\AppData\Local\Programs\Python\Python311\Lib\site-packages\pydantic\_internal\_fields.py:149: UserWarning: Field "model_used" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+INFO:backend.api.v1:lottery module imported successfully
+ERROR:backend.api.v1:matches module import failed: No module named 'backend.schemas.crawler_enhanced'
+ERROR:backend.api.v1:public_matches module import failed: No module named 'backend.schemas.crawler_enhanced'
+WARNING:root:match_adminÄ£¿éµ¼ÈëÊ§°Ü: No module named 'backend.schemas.crawler_enhanced'
+INFO:root:league_managementÂ·ÓÉÒÑ³É¹¦×¢²á
+INFO:backend.api.v1:admin module imported successfully
+INFO:backend.api.v1:SUCCESS auth æ¨¡å—å¯¼å…¥æˆåŠŸ
+INFO:backend.api.v1:  auth.router å¯¹è±¡: <fastapi.routing.APIRouter object at 0x000002308129CBD0>
+INFO:backend.api.v1:  auth.router è·\ue21c”±æ•? 3
+INFO:backend.api.v1:SUCCESS intelligence æ¨¡å—å¯¼å…¥æˆåŠŸ
+INFO:backend.api.v1:SUCCESS data_submission æ¨¡å—å¯¼å…¥æˆåŠŸ
+INFO:backend.api.v1:SUCCESS caipiao_data æ¨¡å—å¯¼å…¥æˆåŠŸ
+INFO:backend.api.v1:  caipiao_data.router å¯¹è±¡: <fastapi.routing.APIRouter object at 0x0000023081263690>
+INFO:backend.api.v1:  caipiao_data.router è·\ue21c”±æ•? 7
+INFO:backend.api.v1:SUCCESS draw_prediction æ¨¡å—å¯¼å…¥æˆåŠŸ
+INFO:backend.api.v1:SUCCESS hedging æ¨¡å—å¯¼å…¥æˆåŠŸ
+INFO:backend.api.v1:SUCCESS crawler æ¨¡å—å¯¼å…¥æˆåŠŸ
+INFO:backend.api.v1:SUCCESS crawler_alert æ¨¡å—å¯¼å…¥æˆåŠŸ
+INFO:backend.api.v1:SUCCESS crawler_monitor æ¨¡å—å¯¼å…¥æˆåŠŸ
+INFO:backend.api.v1:SUCCESS crawler_tasks_adapter æ¨¡å—å¯¼å…¥æˆåŠŸ
+INFO:backend.api.v1:SUCCESS data_center_adapter æ¨¡å—å¯¼å…¥æˆåŠŸ
+INFO:backend.api.v1:SUCCESS headers_adapter æ¨¡å—å¯¼å…¥æˆåŠŸ
+INFO:backend.api.v1:SUCCESS ip_pool_adapter æ¨¡å—å¯¼å…¥æˆåŠŸ
+C:\Users\11581\AppData\Local\Programs\Python\Python311\Lib\site-packages\pydantic\_internal\_fields.py:184: UserWarning: Field name "name" shadows an attribute in parent "Operation"; 
+  warnings.warn(
+C:\Users\11581\AppData\Local\Programs\Python\Python311\Lib\site-packages\pydantic\_internal\_fields.py:184: UserWarning: Field name "metadata" shadows an attribute in parent "Operation"; 
+  warnings.warn(
+C:\Users\11581\AppData\Local\Programs\Python\Python311\Lib\site-packages\pydantic\_internal\_fields.py:184: UserWarning: Field name "done" shadows an attribute in parent "Operation"; 
+  warnings.warn(
+C:\Users\11581\AppData\Local\Programs\Python\Python311\Lib\site-packages\pydantic\_internal\_fields.py:184: UserWarning: Field name "error" shadows an attribute in parent "Operation"; 
+  warnings.warn(
+INFO:backend.api.v1:SUCCESS llm æ¨¡å—å¯¼å…¥æˆåŠŸ
+INFO:backend.api.v1:  llm.router å¯¹è±¡: <fastapi.routing.APIRouter object at 0x00000230817ECD90>
+INFO:backend.api.v1:  llm.router è·\ue21c”±æ•? 1
+INFO:backend.api.v1:SUCCESS llm_providers æ¨¡å—å¯¼å…¥æˆåŠŸ
+INFO:backend.api.v1:  llm_providers.router å¯¹è±¡: <fastapi.routing.APIRouter object at 0x000002308B198F10>
+INFO:backend.api.v1:  llm_providers.router è·\ue21c”±æ•? 14
+INFO:backend.api.v1:SUCCESS log_analysis æ¨¡å—å¯¼å…¥æˆåŠŸ
+INFO:backend.api.v1:SUCCESS lottery_schedule æ¨¡å—å¯¼å…¥æˆåŠŸ
+INFO:backend.api.v1:SUCCESS lottery_simple æ¨¡å—å¯¼å…¥æˆåŠŸ
+INFO:backend.api.v1:SUCCESS lottery_test æ¨¡å—å¯¼å…¥æˆåŠŸ
+INFO:backend.api.v1:SUCCESS lottery_direct æ¨¡å—å¯¼å…¥æˆåŠŸ
+INFO:backend.api.v1:SUCCESS lottery_final æ¨¡å—å¯¼å…¥æˆåŠŸ
+INFO:backend.api.v1:SUCCESS data_source_100qiu æ¨¡å—å¯¼å…¥æˆåŠŸ
+INFO:backend.api.v1:  data_source_100qiu.router å¯¹è±¡: <fastapi.routing.APIRouter object at 0x000002308D58BF90>
+INFO:backend.api.v1:  data_source_100qiu.router è·\ue21c”±æ•? 10
+INFO:backend.api.v1:=== æ³¨å†Œç»Ÿä¸€Matches API ===
+ERROR:backend.api.v1:FAILED unified_matches æ¨¡å—å¯¼å…¥å¤±è´¥: cannot import name 'unified_matches' from partially initialized module 'backend.api.v1' (most likely due to a circular import) (C:\Users\11581\Downloads\sport-lottery-sweeper\backend\api\v1\__init__.py)
+Traceback (most recent call last):
+  File "C:\Users\11581\Downloads\sport-lottery-sweeper\backend\api\v1\__init__.py", line 207, in <module>
+    from . import unified_matches
+ImportError: cannot import name 'unified_matches' from partially initialized module 'backend.api.v1' (most likely due to a circular import) (C:\Users\11581\Downloads\sport-lottery-sweeper\backend\api\v1\__init__.py)
+INFO:backend.api.v1:API V1 ä¸»è·¯ç”±å™¨åˆå\ue750åŒ–å®Œæˆï¼Œè·\ue21c”±æ•? 97
+INFO:backend.api:API v1 Â·ÓÉÒÑ¼ÓÔØ
+INFO:backend.api:WebSocket Â·ÓÉÒÑ¼ÓÔØ
+INFO:backend.api:APIÂ·ÓÉÆ÷³õÊ¼»¯Íê³É£¬ÒÑÒÆ³ıËùÓĞ·ÏÆúµÄÏòºó¼æÈİÂ·ÓÉ
+INFO:__main__:API v1 routes registered
+INFO:backend.exceptions:Òì³£´¦ÀíÆ÷ÅäÖÃÍê³É
+INFO:backend.main:API v1 routes registered
+INFO:     Started server process [32980]
+INFO:     Waiting for application startup.

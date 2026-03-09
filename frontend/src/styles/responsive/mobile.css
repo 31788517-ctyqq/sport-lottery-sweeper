@@ -1,0 +1,74 @@
+/* styles/responsive/mobile.css */
+/* Styles specific to mobile devices (typically screens up to 768px) */
+
+@media (max-width: 768px) {
+
+  /* Layout adjustments */
+  .app-sidebar {
+    width: 100%;
+    transform: translateX(-100%); /* Hidden by default on mobile */
+    z-index: var(--z-index-popup-base); /* Appear over content when open */
+  }
+
+  .app-sidebar.open {
+    transform: translateX(0); /* Slide in when open */
+  }
+
+  .app-main-content {
+    margin-left: 0; /* No sidebar offset on mobile */
+    padding: var(--spacing-sm); /* Reduce padding */
+  }
+
+  /* Typography */
+  h1 { font-size: var(--font-size-xl); }
+  h2 { font-size: var(--font-size-lg); }
+  h3 { font-size: var(--font-size-base); }
+
+  /* Components */
+  .card__header,
+  .card__body,
+  .card__footer {
+    padding: var(--spacing-sm); /* Reduce card padding */
+  }
+
+  .table {
+    font-size: var(--font-size-sm); /* Smaller table text */
+  }
+
+  .table th,
+  .table td {
+    padding: var(--spacing-xs); /* Smaller table cell padding */
+  }
+
+  /* Utilities */
+  .container {
+    padding: 0 var(--spacing-xs); /* Reduce container padding */
+  }
+
+  .row {
+    margin: 0 calc(-1 * var(--spacing-xs)); /* Adjust row margins */
+  }
+
+  .col {
+    padding: 0 var(--spacing-xs); /* Adjust column padding */
+  }
+
+  /* Hide less critical elements on small screens */
+  .hidden-mobile {
+    display: none !important;
+  }
+
+  /* Full-width buttons */
+  .btn {
+    width: 100%;
+    margin-bottom: var(--spacing-xs);
+  }
+
+  /* Modals take full width */
+  .modal-content {
+    width: calc(100vw - 2 * var(--spacing-sm));
+    max-width: none;
+    height: auto;
+    max-height: 90vh;
+  }
+}

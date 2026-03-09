@@ -1,0 +1,34 @@
+{
+  "rules": [
+    {
+      "name": "High Error Rate",
+      "condition": "error_count > 10 in last 5 minutes",
+      "severity": "HIGH",
+      "notification_targets": [
+        "admin@example.com"
+      ],
+      "enabled": true
+    },
+    {
+      "name": "Critical Issues",
+      "condition": "critical_issue detected",
+      "severity": "CRITICAL",
+      "notification_targets": [
+        "admin@example.com",
+        "ops-team@example.com"
+      ],
+      "enabled": true
+    },
+    {
+      "name": "API Response Time",
+      "condition": "response_time > 5000ms",
+      "severity": "MEDIUM",
+      "notification_targets": [
+        "admin@example.com"
+      ],
+      "enabled": true
+    }
+  ],
+  "alert_history_days": 30,
+  "cleanup_after_days": 90
+}

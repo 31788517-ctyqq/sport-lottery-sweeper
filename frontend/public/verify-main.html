@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>主页面验证</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 900px;
+      margin: 30px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .section {
+      background: white;
+      padding: 20px;
+      margin: 15px 0;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .success { border-left: 4px solid #4CAF50; }
+    .error { border-left: 4px solid #f44336; }
+    .warning { border-left: 4px solid #ff9800; }
+    code {
+      background: #f0f0f0;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: monospace;
+    }
+    pre {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 15px;
+      border-radius: 5px;
+      overflow-x: auto;
+      max-height: 300px;
+    }
+    button {
+      background: #2196F3;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 5px;
+      font-size: 14px;
+    }
+    button:hover { background: #1976D2; }
+    .status { font-weight: bold; }
+    .status.success { color: #4CAF50; }
+    .status.error { color: #f44336; }
+  </style>
+</head>
+<body>
+  <h1>🔍 主页面验证工具</h1>
+
+  <div class="section">
+    <h2>步骤1: 检查主页面HTML结构</h2>
+    <button onclick="checkMainPage()">检查主页面</button>
+    <div id="main-page-check"></div>
+  </div>
+
+  <div class="section">
+    <h2>步骤2: 查看主页面源代码</h2>
+    <button onclick="viewMainPageSource()">查看源代码</button>
+    <pre id="main-page-source">点击上方按钮查看...</pre>
+  </div>
+
+  <div class="section">
+    <h2>步骤3: 在新标签页打开主页</h2>
+    <button onclick="window.open('/', '_blank')">打开主页 (/)</button>
+    <button onclick="window.open('/?_nocache=' + Date.now(), '_blank')">打开主页(绕过缓存)</button>
+  </div>
+
+  <div class="section">
+    <h2>步骤4: 检查关键文件是否存在</h2>
+    <button onclick="checkFiles()">检查文件</button>
+    <div id="file-check"></div>
+  </div>
+
+  <div class="section">
+    <h2>步骤5: 问题诊断</h2>
+    <div id="diagnosis"></div>
+  </div>
+
+  <script>
+    function checkMainPage() {
+      const output = document.getElementById('main-page-check');
+      output.innerHTML = '<p>检查中...</p>';
+
+      fetch('/?_nocache=' + Date.now())
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+          return response.text();
+        })
+        .then(html => {
+          const checks = {
+            hasAppDiv: html.includes('<div id="app"'),
+            hasMainJs: html.includes('/src/main.js'),
+            hasFontAwesome: html.includes('font-awesome'),
+            hasTitle: html.includes('竞彩足球扫盘系统'),
+            hasDocType: html.includes('<!DOCTYPE html>'),
+            hasBody: html.includes('<body>'),
+            appDivContent: html.match(/<div id="app"[^>]*>(.*?)<\/div>/s)?.[1] || ''
+          };
+
+          let htmlOutput = '';
+
+          htmlOutput += `<p><span class="status ${checks.hasDocType ? 'success' : 'error'}">${checks.hasDocType ? '✅' : '❌'}</span> DOCTYPE声明</p>`;
+          htmlOutput += `<p><span class="status ${checks.hasBody ? 'success' : 'error'}">${checks.hasBody ? '✅' : '❌'}</span> &lt;body&gt;标签</p>`;
+          htmlOutput += `<p><span class="status ${checks.hasAppDiv ? 'success' : 'error'}">${checks.hasAppDiv ? '✅' : '❌'}</span> #app div</p>`;
+          htmlOutput += `<p><span class="status ${checks.hasMainJs ? 'success' : 'error'}">${checks.hasMainJs ? '✅' : '❌'}</span> main.js引用</p>`;
+          htmlOutput += `<p><span class="status ${checks.hasFontAwesome ? 'success' : 'error'}">${checks.hasFontAwesome ? '✅' : '❌'}</span> FontAwesome</p>`;
+          htmlOutput += `<p><span class="status ${checks.hasTitle ? 'success' : 'error'}">${checks.hasTitle ? '✅' : '❌'}</span> 页面标题</p>`;
+          htmlOutput += `<p><strong>#app内容:</strong> ${checks.appDivContent ? '有内容' : '为空(正常,Vue会填充)'}</p>`;
+
+          output.innerHTML = htmlOutput;
+        })
+        .catch(error => {
+          output.innerHTML = `<p class="status error">❌ 错误: ${error.message}</p>`;
+        });
+    }
+
+    function viewMainPageSource() {
+      const output = document.getElementById('main-page-source');
+      output.textContent = '加载中...';
+
+      fetch('/?_nocache=' + Date.now())
+        .then(response => response.text())
+        .then(html => {
+          output.textContent = html;
+        })
+        .catch(error => {
+          output.textContent = '错误: ' + error.message;
+        });
+    }
+
+    function checkFiles() {
+      const output = document.getElementById('file-check');
+      const files = [
+        '/public/index.html',
+        '/src/main.js',
+        '/src/App.vue',
+        '/src/stores/app.js',
+        '/src/styles/main-content.css'
+      ];
+
+      const checks = files.map(file => {
+        return fetch(file, { method: 'HEAD' })
+          .then(response => ({
+            file: file,
+            status: response.status,
+            exists: response.ok
+          }))
+          .catch(error => ({
+            file: file,
+            status: 'ERROR',
+            exists: false,
+            error: error.message
+          }));
+      });
+
+      Promise.all(checks)
+        .then(results => {
+          let htmlOutput = '<h3>文件检查结果:</h3>';
+          results.forEach(result => {
+            const statusClass = result.exists ? 'success' : 'error';
+            const icon = result.exists ? '✅' : '❌';
+            htmlOutput += `<p><span class="status ${statusClass}">${icon}</span> <code>${result.file}</code> ${result.exists ? '(存在)' : '(不存在或无法访问)'}</p>`;
+          });
+          output.innerHTML = htmlOutput;
+        });
+    }
+
+    // 页面加载时自动诊断
+    window.onload = function() {
+      const diagnosis = document.getElementById('diagnosis');
+
+      fetch('/?_nocache=' + Date.now())
+        .then(response => response.text())
+        .then(html => {
+          const hasAppDiv = html.includes('<div id="app"');
+          const hasMainJs = html.includes('/src/main.js');
+
+          let issues = [];
+
+          if (!hasAppDiv) {
+            issues.push('❌ 主页HTML中没有 <code>&lt;div id="app"&gt;</code>');
+          } else {
+            issues.push('✅ 主页HTML结构正确');
+          }
+
+          if (!hasMainJs) {
+            issues.push('❌ 主页HTML中没有引用 <code>main.js</code>');
+          } else {
+            issues.push('✅ main.js引用正确');
+          }
+
+          if (hasAppDiv && hasMainJs) {
+            issues.push('');
+            issues.push('<strong>如果主页仍然空白:</strong>');
+            issues.push('1. 确认没有JavaScript错误(按F12查看)');
+            issues.push('2. 尝试硬刷新(Ctrl+F5)');
+            issues.push('3. 清除浏览器缓存');
+            issues.push('4. 尝试无痕模式');
+            issues.push('5. 点击上方"打开主页"按钮查看实际渲染结果');
+          }
+
+          diagnosis.innerHTML = '<ul>' + issues.map(i => `<li>${i}</li>`).join('') + '</ul>';
+        })
+        .catch(error => {
+          diagnosis.innerHTML = `<p class="status error">❌ 诊断失败: ${error.message}</p>`;
+        });
+
+      // 自动检查主页面
+      setTimeout(checkMainPage, 500);
+    };
+  </script>
+</body>
+</html>

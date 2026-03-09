@@ -1,0 +1,12 @@
+{
+  "common": {
+    "hello": "你好",
+    "welcome": "欢迎",
+    "logout": "退出登录"
+  },
+  "nav": {
+    "home": "首页",
+    "about": "关于",
+    "contact": "联系"
+  }
+}

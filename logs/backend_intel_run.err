@@ -1,0 +1,90 @@
+C:\Users\11581\AppData\Local\Programs\Python\Python311\Lib\site-packages\pydantic\_internal\_fields.py:149: UserWarning: Field "model_used" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+INFO:backend.api.v1:lottery module imported successfully
+ERROR:backend.api.v1:matches module import failed: No module named 'backend.schemas.crawler_enhanced'
+ERROR:backend.api.v1:public_matches module import failed: No module named 'backend.schemas.crawler_enhanced'
+WARNING:root:match_admin module not available: No module named 'backend.schemas.crawler_enhanced'
+INFO:backend.api.v1:admin module imported successfully
+INFO:backend.api.v1:SUCCESS auth æ¨¡å—å¯¼å…¥æˆåŠŸ
+INFO:backend.api.v1:  auth.router å¯¹è±¡: <fastapi.routing.APIRouter object at 0x00000189D767F890>
+INFO:backend.api.v1:  auth.router è·\ue21c”±æ•? 3
+INFO:backend.api.v1:SUCCESS intelligence æ¨¡å—å¯¼å…¥æˆåŠŸ
+INFO:backend.api.v1:SUCCESS data_submission æ¨¡å—å¯¼å…¥æˆåŠŸ
+INFO:backend.api.v1:SUCCESS caipiao_data æ¨¡å—å¯¼å…¥æˆåŠŸ
+INFO:backend.api.v1:  caipiao_data.router å¯¹è±¡: <fastapi.routing.APIRouter object at 0x00000189D7A800D0>
+INFO:backend.api.v1:  caipiao_data.router è·\ue21c”±æ•? 7
+INFO:backend.api.v1:SUCCESS draw_prediction æ¨¡å—å¯¼å…¥æˆåŠŸ
+INFO:backend.api.v1:SUCCESS hedging æ¨¡å—å¯¼å…¥æˆåŠŸ
+INFO:backend.api.v1:SUCCESS crawler æ¨¡å—å¯¼å…¥æˆåŠŸ
+INFO:backend.api.v1:SUCCESS crawler_alert æ¨¡å—å¯¼å…¥æˆåŠŸ
+INFO:backend.api.v1:SUCCESS crawler_monitor æ¨¡å—å¯¼å…¥æˆåŠŸ
+INFO:backend.api.v1:SUCCESS crawler_tasks_adapter æ¨¡å—å¯¼å…¥æˆåŠŸ
+INFO:backend.api.v1:SUCCESS data_center_adapter æ¨¡å—å¯¼å…¥æˆåŠŸ
+INFO:backend.api.v1:SUCCESS headers_adapter æ¨¡å—å¯¼å…¥æˆåŠŸ
+INFO:backend.api.v1:SUCCESS ip_pool_adapter æ¨¡å—å¯¼å…¥æˆåŠŸ
+INFO:backend.api.v1:SUCCESS llm æ¨¡å—å¯¼å…¥æˆåŠŸ
+INFO:backend.api.v1:  llm.router å¯¹è±¡: <fastapi.routing.APIRouter object at 0x00000189D7FBFC10>
+INFO:backend.api.v1:  llm.router è·\ue21c”±æ•? 1
+INFO:backend.api.v1:SUCCESS llm_providers æ¨¡å—å¯¼å…¥æˆåŠŸ
+INFO:backend.api.v1:  llm_providers.router å¯¹è±¡: <fastapi.routing.APIRouter object at 0x00000189E1D0E210>
+INFO:backend.api.v1:  llm_providers.router è·\ue21c”±æ•? 14
+INFO:backend.api.v1:SUCCESS log_analysis æ¨¡å—å¯¼å…¥æˆåŠŸ
+INFO:backend.api.v1:SUCCESS lottery_schedule æ¨¡å—å¯¼å…¥æˆåŠŸ
+INFO:backend.api.v1:SUCCESS lottery_simple æ¨¡å—å¯¼å…¥æˆåŠŸ
+INFO:backend.api.v1:SUCCESS lottery_test æ¨¡å—å¯¼å…¥æˆåŠŸ
+INFO:backend.api.v1:SUCCESS lottery_direct æ¨¡å—å¯¼å…¥æˆåŠŸ
+INFO:backend.api.v1:SUCCESS lottery_final æ¨¡å—å¯¼å…¥æˆåŠŸ
+INFO:backend.api.v1:SUCCESS data_source_100qiu æ¨¡å—å¯¼å…¥æˆåŠŸ
+INFO:backend.api.v1:  data_source_100qiu.router å¯¹è±¡: <fastapi.routing.APIRouter object at 0x00000189E2271390>
+INFO:backend.api.v1:  data_source_100qiu.router è·\ue21c”±æ•? 10
+INFO:backend.api.v1:=== æ³¨å†Œç»Ÿä¸€Matches API ===
+ERROR:backend.api.v1:FAILED unified_matches æ¨¡å—å¯¼å…¥å¤±è´¥: cannot import name 'unified_matches' from partially initialized module 'backend.api.v1' (most likely due to a circular import) (C:\Users\11581\Downloads\sport-lottery-sweeper\backend\api\v1\__init__.py)
+Traceback (most recent call last):
+  File "C:\Users\11581\Downloads\sport-lottery-sweeper\backend\api\v1\__init__.py", line 207, in <module>
+    from . import unified_matches
+ImportError: cannot import name 'unified_matches' from partially initialized module 'backend.api.v1' (most likely due to a circular import) (C:\Users\11581\Downloads\sport-lottery-sweeper\backend\api\v1\__init__.py)
+INFO:backend.api.v1:API V1 ä¸»è·¯ç”±å™¨åˆå\ue750åŒ–å®Œæˆï¼Œè·\ue21c”±æ•? 116
+INFO:backend.api:API v1 Â·ÓÉÒÑ¼ÓÔØ
+INFO:backend.api:WebSocket Â·ÓÉÒÑ¼ÓÔØ
+INFO:backend.api:APIÂ·ÓÉÆ÷³õÊ¼»¯Íê³É£¬ÒÑÒÆ³ıËùÓĞ·ÏÆúµÄÏòºó¼æÈİÂ·ÓÉ
+INFO:__main__:Êı¾İ¿âÁ¬½ÓURL: sqlite:///C:/Users/11581/Downloads/sport-lottery-sweeper/data/sport_lottery.db
+INFO:backend.exceptions:Òì³£´¦ÀíÆ÷ÅäÖÃÍê³É
+INFO:__main__:Application starting up...
+INFO:__main__:Registering API routes...
+INFO:__main__:API v1 routes registered successfully
+INFO:__main__:Crawler monitoring API routes registered (/api/v1/admin/crawler/monitor)
+INFO:__main__:Request header management API routes registered (/api/v1/admin/headers)
+INFO:__main__:IP pool management API routes registered (/api/v1/admin/ip-pools)
+INFO:__main__:Task management API routes registered (/api/v1/admin/tasks)
+INFO:__main__:User profile API routes registered (/api/v1/admin/user-profiles)
+INFO:__main__:Role management API routes registered (/api/v1/admin/roles)
+INFO:__main__:Permission management API routes registered (/api/v1/admin/permissions)
+INFO:__main__:Crawler task management API routes registered (/api/v1/admin/crawler/tasks)
+INFO:__main__:Task monitoring API routes registered (/api/v1/task-monitor)
+INFO:__main__:Log API routes registered (/api/v1/admin/system/logs)
+INFO:__main__:Crawler data source API routes registered (/api/v1/admin/crawler/sources)
+INFO:__main__:Crawler config API routes registered (/api/v1/admin/crawler/config)
+INFO:__main__:Crawler intelligence API routes registered (/api/v1/admin/crawler/intelligence)
+INFO:__main__:Admin user management API routes registered (/api/v1/admin/admin-users)
+INFO:__main__:Department management API routes registered (/api/v1/admin/departments)
+INFO:__main__:Regular user management API routes registered (/api/v1/admin/users)
+INFO:__main__:Frontend user management API routes registered (/api/v1/admin/frontend-users)
+INFO:__main__:Simple user API routes registered (/api/v1/admin/simple-users)
+INFO:__main__:Beidan filter API routes registered (/api/v1/beidan-filter)
+INFO:backend.services.multi_strategy_service:²ßÂÔ high_probability_winning ÒÑ×¢²á
+INFO:backend.services.multi_strategy_service:²ßÂÔ balanced_odds ÒÑ×¢²á
+INFO:backend.services.multi_strategy_service:²ßÂÔ recent_form ÒÑ×¢²á
+INFO:__main__:Multi strategy API routes registered (/api/v1/multi-strategy)
+INFO:backend.exceptions:Òì³£´¦ÀíÆ÷ÅäÖÃÍê³É
+INFO:__main__:Exception handlers registered
+INFO:__main__:Creating database tables...
+INFO:__main__:Database tables created successfully
+INFO:__main__:\U0001f680 Æô¶¯ÌåÓı²ÊÆ±É¨ÅÌÏµÍ³...
+INFO:__main__:\U0001f4cd ·şÎñµØÖ·: http://localhost:8000
+INFO:__main__:\U0001f4da APIÎÄµµ: http://localhost:8000/docs
+INFO:__main__:\U0001f4ca ½¡¿µ¼ì²é: http://localhost:8000/health/live
+INFO:     Started server process [26616]
+INFO:     Waiting for application startup.
+INFO:__main__:Application starting up...

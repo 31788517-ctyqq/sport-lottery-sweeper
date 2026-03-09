@@ -1,0 +1,79 @@
+{
+  "timestamp": "2026-01-29T01:10:26.411604",
+  "total_validations": 10,
+  "passed_validations": 5,
+  "failed_validations": 0,
+  "warning_validations": 0,
+  "error_validations": 0,
+  "pass_rate": 50.0,
+  "total_duration": 0.03672289848327637,
+  "status": "PASS",
+  "validations": [
+    {
+      "name": "测试环境验证",
+      "status": "pass",
+      "message": "测试环境配置验证 执行完成",
+      "duration": 0.008001327514648438
+    },
+    {
+      "name": "覆盖率阈值检查",
+      "status": "pass",
+      "message": "测试覆盖率阈值检查 执行完成",
+      "duration": 0.010025262832641602
+    },
+    {
+      "name": "CI/CD验证检查",
+      "status": "pass",
+      "message": "CI/CD验证检查 执行完成",
+      "duration": 0.003019094467163086
+    },
+    {
+      "name": "测试数据初始化",
+      "status": "pass",
+      "message": "测试数据初始化 执行完成",
+      "duration": 0.004980802536010742
+    },
+    {
+      "name": "测试报告生成",
+      "status": "pass",
+      "message": "统一测试报告生成 执行完成",
+      "duration": 0.007695913314819336
+    },
+    {
+      "name": "Vitest配置",
+      "status": "pass",
+      "message": "配置文件存在: frontend/vitest.config.js"
+    },
+    {
+      "name": "pytest配置",
+      "status": "pass",
+      "message": "配置文件存在: pyproject.toml"
+    },
+    {
+      "name": "CI/CD配置",
+      "status": "pass",
+      "message": "配置文件存在: .github/workflows/ci-cd-optimized.yml"
+    },
+    {
+      "name": "测试环境配置",
+      "status": "pass",
+      "message": "配置文件存在: frontend/.env.test.example"
+    },
+    {
+      "name": "后端环境配置",
+      "status": "pass",
+      "message": "配置文件存在: backend/.env.test.example"
+    }
+  ],
+  "summary": {
+    "test_environment": true,
+    "coverage_thresholds": true,
+    "ci_cd_checks": true,
+    "test_data": true,
+    "test_reports": true,
+    "critical_configs": true
+  },
+  "recommendations": [
+    "提高验证通过率"
+  ]
+}

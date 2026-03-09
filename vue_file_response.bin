@@ -1,0 +1,46 @@
+import { createHotContext as __vite__createHotContext } from "/@vite/client";import.meta.hot = __vite__createHotContext("/@fs/C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/views/admin/MobileBeidanFilter.vue");
+const _sfc_main = {
+  __name: 'MobileBeidanFilter',
+  setup(__props, { expose: __expose }) {
+  __expose();
+
+// 最简单的组件，没有任何依赖
+
+const __returned__ = {  }
+Object.defineProperty(__returned__, '__isScriptSetup', { enumerable: false, value: true })
+return __returned__
+}
+
+}
+import { createElementVNode as _createElementVNode, toDisplayString as _toDisplayString, openBlock as _openBlock, createElementBlock as _createElementBlock } from "/node_modules/.vite/deps/vue.js?v=b02e1482"
+
+const _hoisted_1 = { style: {"background":"red","color":"white","padding":"20px"} }
+
+function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
+  return (_openBlock(), _createElementBlock("div", _hoisted_1, [
+    _cache[0] || (_cache[0] = _createElementVNode("h1", null, "Mobile Beidan Filter - SIMPLIFIED TEST", -1 /* CACHED */)),
+    _cache[1] || (_cache[1] = _createElementVNode("p", null, "If you can see this, the component is working!", -1 /* CACHED */)),
+    _cache[2] || (_cache[2] = _createElementVNode("p", null, "Path: /m/beidan-filter", -1 /* CACHED */)),
+    _createElementVNode("p", null, "Time: " + _toDisplayString(new Date().toLocaleTimeString()), 1 /* TEXT */)
+  ]))
+}
+
+import "/@fs/C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/views/admin/MobileBeidanFilter.vue?t=1771238351435&vue&type=style&index=0&scoped=af46a25e&lang.css"
+
+_sfc_main.__hmrId = "af46a25e"
+typeof __VUE_HMR_RUNTIME__ !== 'undefined' && __VUE_HMR_RUNTIME__.createRecord(_sfc_main.__hmrId, _sfc_main)
+import.meta.hot.on('file-changed', ({ file }) => {
+  __VUE_HMR_RUNTIME__.CHANGED_FILE = file
+})
+import.meta.hot.accept(mod => {
+  if (!mod) return
+  const { default: updated, _rerender_only } = mod
+  if (_rerender_only) {
+    __VUE_HMR_RUNTIME__.rerender(updated.__hmrId, updated.render)
+  } else {
+    __VUE_HMR_RUNTIME__.reload(updated.__hmrId, updated)
+  }
+})
+import _export_sfc from "/@id/__x00__plugin-vue:export-helper"
+export default /*#__PURE__*/_export_sfc(_sfc_main, [['render',_sfc_render],['__scopeId',"data-v-af46a25e"],['__file',"C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/views/admin/MobileBeidanFilter.vue"]])
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6W10sInNvdXJjZXMiOlsiTW9iaWxlQmVpZGFuRmlsdGVyLnZ1ZSJdLCJzb3VyY2VzQ29udGVudCI6WyI8dGVtcGxhdGU+XG4gIDxkaXYgc3R5bGU9XCJiYWNrZ3JvdW5kOiByZWQ7IGNvbG9yOiB3aGl0ZTsgcGFkZGluZzogMjBweDtcIj5cbiAgICA8aDE+TW9iaWxlIEJlaWRhbiBGaWx0ZXIgLSBTSU1QTElGSUVEIFRFU1Q8L2gxPlxuICAgIDxwPklmIHlvdSBjYW4gc2VlIHRoaXMsIHRoZSBjb21wb25lbnQgaXMgd29ya2luZyE8L3A+XG4gICAgPHA+UGF0aDogL20vYmVpZGFuLWZpbHRlcjwvcD5cbiAgICA8cD5UaW1lOiB7eyBuZXcgRGF0ZSgpLnRvTG9jYWxlVGltZVN0cmluZygpIH19PC9wPlxuICA8L2Rpdj5cbjwvdGVtcGxhdGU+XG5cbjxzY3JpcHQgc2V0dXA+XG4vLyDmnIDnroDljZXnmoTnu4Tku7bvvIzmsqHmnInku7vkvZXkvp3otZZcbjwvc2NyaXB0PlxuXG48c3R5bGUgc2NvcGVkPlxuLyog5Z+65pys5qC35byPICovXG48L3N0eWxlPlxuIl0sIm1hcHBpbmdzIjoiOzs7Ozs7QUFVQSxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQzs7Ozs7Ozs7OztxQkFUUixLQUFxRCxFQUFyRCxxREFBcUQ7Ozt3QkFBMUQsb0JBS00sT0FMTixVQUtNOzhCQUpKLG9CQUErQyxZQUEzQyx3Q0FBc0M7OEJBQzFDLG9CQUFxRCxXQUFsRCxnREFBOEM7OEJBQ2pELG9CQUE2QixXQUExQix3QkFBc0I7SUFDekIsb0JBQWtELFdBQS9DLFFBQU0sd0JBQU8sSUFBSSxHQUFHLGtCQUFrQiIsImlnbm9yZUxpc3QiOltdfQ==

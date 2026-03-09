@@ -1,0 +1,630 @@
+{
+  "executedAt": "2026-02-28T18:01:27.801458+00:00",
+  "frontendBase": "http://localhost:3000",
+  "backendBase": "http://localhost:8000",
+  "loginUser": "admin",
+  "summary": {
+    "routesTotal": 47,
+    "routesNavigationFailed": 0,
+    "routesWithConsoleErrors": 4,
+    "routesWithPageErrors": 0,
+    "routesWithHttpErrors": 2,
+    "consoleErrorsTotal": 12,
+    "pageErrorsTotal": 0,
+    "httpErrorsTotal": 2,
+    "uniqueHttpErrorEndpoints": 2,
+    "durationSeconds": 131.84
+  },
+  "routeResults": [
+    {
+      "route": "/admin/dashboard",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/dashboard",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2718,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/users/list",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/users/list",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2665,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/users/roles",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/users/roles",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2668,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/users/departments",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/users/departments",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2663,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/users/profile",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/users/profile",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2676,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/users/profiles",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/users/profiles",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2661,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/users/logs",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/users/logs",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2660,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/beidan-filter",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/beidan-filter",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2665,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/beidan-betting-sim",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/beidan-betting-sim",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2689,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/data-source/config",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/data-source/config",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2683,
+      "consoleErrorsDelta": 2,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 1
+    },
+    {
+      "route": "/admin/data-source/task-console",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/data-source/task-console",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2701,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/data-source/monitor",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/data-source/monitor",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2679,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/data-source/data-center",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/data-source/data-center",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2674,
+      "consoleErrorsDelta": 3,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 1
+    },
+    {
+      "route": "/admin/data-source/ip-pool",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/data-source/ip-pool",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2692,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/data-source/headers",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/data-source/headers",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2667,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/data-source/task-monitor",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/data-source/task-monitor",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2689,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/match-data/schedule/jczq",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/match-data/schedule/jczq",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2680,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/match-data/schedule/bd",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/match-data/schedule/bd",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2664,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/draw-prediction/ai-draw",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/draw-prediction/ai-draw",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2695,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/draw-prediction/poisson-11",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/draw-prediction/poisson-11",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2666,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/draw-prediction/suggestion-center",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/draw-prediction/suggestion-center",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2664,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/draw-prediction/killswitch",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/draw-prediction/killswitch",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2680,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/draw-prediction/model-workbench",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/draw-prediction/model-workbench?tab=data",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2672,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/ai-services/local",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/ai-services/local",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2693,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/ai-services/remote",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/ai-services/remote",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2661,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/ai-services/costs",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/ai-services/costs",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2679,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/ai-services/agents",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/ai-services/agents",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2665,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/ai-services/models",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/ai-services/models",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2682,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/ai-services/conversation",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/ai-services/conversation",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2659,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/ai-services/config",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/ai-services/config",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2671,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/intelligent-decision/hedging",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/intelligent-decision/hedging",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2682,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/intelligent-decision/recommendations",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/intelligent-decision/recommendations",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2689,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/intelligent-decision/risk-control",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/intelligent-decision/risk-control",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2655,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/intelligence/screening",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/intelligence/screening",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2677,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/intelligence/collection",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/intelligence/collection",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2670,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/intelligence/model",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/intelligence/model",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2687,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/intelligence/weight",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/intelligence/weight",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2664,
+      "consoleErrorsDelta": 6,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/intelligence/graph",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/intelligence/graph",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2688,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/intelligence/sentiment",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/intelligence/sentiment",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2691,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/intelligence/multimodal",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/intelligence/multimodal",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2672,
+      "consoleErrorsDelta": 1,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/system/config",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/system/config",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2670,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/logs",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/logs",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2670,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/logs/system",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/logs/system",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2686,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/logs/user",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/logs/user",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2670,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/logs/security",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/logs/security",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2677,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/logs/api",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/logs/api",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2690,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    },
+    {
+      "route": "/admin/logs/ai",
+      "ok": true,
+      "finalUrl": "http://localhost:3000/admin/logs/ai",
+      "title": "体育彩票扫盘系统",
+      "maybeBlank": false,
+      "durationMs": 2657,
+      "consoleErrorsDelta": 0,
+      "pageErrorsDelta": 0,
+      "failedResponsesDelta": 0
+    }
+  ],
+  "consoleIssues": [
+    {
+      "route": "/admin/data-source/config",
+      "url": "http://localhost:3000/admin/data-source/config",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "ts": "2026-02-28T17:59:45.009249+00:00"
+    },
+    {
+      "route": "/admin/data-source/config",
+      "url": "http://localhost:3000/admin/data-source/config",
+      "text": "加载数据失败: Error: 加载失败\n    at loadData (http://localhost:3000/@fs/C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/views/admin/crawler/DataSourceManagement.vue:103:13)",
+      "ts": "2026-02-28T17:59:45.033479+00:00"
+    },
+    {
+      "route": "/admin/data-source/data-center",
+      "url": "http://localhost:3000/admin/data-source/data-center",
+      "text": "Failed to load resource: the server responded with a status of 422 (Unprocessable Entity)",
+      "ts": "2026-02-28T17:59:53.179936+00:00"
+    },
+    {
+      "route": "/admin/data-source/data-center",
+      "url": "http://localhost:3000/admin/data-source/data-center",
+      "text": "API响应错误: AxiosError: Request failed with status code 422\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=367fde09:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=367fde09:1616:7)",
+      "ts": "2026-02-28T17:59:53.179936+00:00"
+    },
+    {
+      "route": "/admin/data-source/data-center",
+      "url": "http://localhost:3000/admin/data-source/data-center",
+      "text": "Error loading table data: AxiosError: Request failed with status code 422\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=367fde09:1267:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=367fde09:1616:7)\n    at Axios.request (http://localhost:3000/node_modules/.vite/deps/axios.js?v=367fde09:2233:41)\n    at async loadTableData (http://localhost:3000/@fs/C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/views/admin/crawler/DataCenter.vue:140:17)",
+      "ts": "2026-02-28T17:59:53.182930+00:00"
+    },
+    {
+      "route": "/admin/intelligence/weight",
+      "url": "http://localhost:3000/admin/intelligence/weight",
+      "text": "Global error caught: TypeError: _ctx.getStatusColor is not a function\n    at http://localhost:3000/@fs/C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/views/admin/intelligence/WeightManagement.vue:963:46\n    at renderFnWithContext (http://localhost:3000/node_modules/.vite/deps/chunk-H2732BJL.js?v=d51e91f5:2846:13)\n    at renderSlot (http://localhost:3000/node_modules/.vite/deps/chunk-H2732BJL.js?v=d51e91f5:5386:53)\n    at Proxy.<anonymous> (http://localhost:3000/node_modules/.vite/deps/element-plus.js?v=e9f195a3:64656:19)\n    at renderComponentRoot (http://localhost:3000/node_modules/.vite/deps/chunk-H2732BJL.js?v=d51e91f5:6650:17)\n    at ReactiveEffect.componentUpdateFn [as fn] (http://localhost:3000/node_modules/.vite/deps/chunk-H2732BJL.js?v=d51e91f5:8205:46)\n    at ReactiveEffect.run (http://localhost:3000/node_modules/.vite/deps/chunk-H2732BJL.js?v=d51e91f5:505:19)\n    at setupRenderEffect (http://localhost:3000/node_modules/.vite/deps/chunk-H2732BJL.js?v=d51e91f5:8340:5)\n    at mountComponent (http://localhost:3000/node_modules/.vite/deps/chunk-H2732BJL.js?v=d51e91f5:8114:7)\n    at processComponent (http://localhost:3000/node_modules/.vite/deps/chunk-H2732BJL.js?v=d51e91f5:8066:9)",
+      "ts": "2026-02-28T18:00:57.907795+00:00"
+    },
+    {
+      "route": "/admin/intelligence/weight",
+      "url": "http://localhost:3000/admin/intelligence/weight",
+      "text": "Component instance: Proxy(Object)",
+      "ts": "2026-02-28T18:00:57.908796+00:00"
+    },
+    {
+      "route": "/admin/intelligence/weight",
+      "url": "http://localhost:3000/admin/intelligence/weight",
+      "text": "Error info: render function",
+      "ts": "2026-02-28T18:00:57.908796+00:00"
+    },
+    {
+      "route": "/admin/intelligence/weight",
+      "url": "http://localhost:3000/admin/intelligence/weight",
+      "text": "Global error caught: TypeError: _ctx.getStatusColor is not a function\n    at http://localhost:3000/@fs/C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/views/admin/intelligence/WeightManagement.vue:963:46\n    at renderFnWithContext (http://localhost:3000/node_modules/.vite/deps/chunk-H2732BJL.js?v=d51e91f5:2846:13)\n    at renderSlot (http://localhost:3000/node_modules/.vite/deps/chunk-H2732BJL.js?v=d51e91f5:5386:53)\n    at Proxy.<anonymous> (http://localhost:3000/node_modules/.vite/deps/element-plus.js?v=e9f195a3:64656:19)\n    at renderComponentRoot (http://localhost:3000/node_modules/.vite/deps/chunk-H2732BJL.js?v=d51e91f5:6650:17)\n    at ReactiveEffect.componentUpdateFn [as fn] (http://localhost:3000/node_modules/.vite/deps/chunk-H2732BJL.js?v=d51e91f5:8205:46)\n    at ReactiveEffect.run (http://localhost:3000/node_modules/.vite/deps/chunk-H2732BJL.js?v=d51e91f5:505:19)\n    at setupRenderEffect (http://localhost:3000/node_modules/.vite/deps/chunk-H2732BJL.js?v=d51e91f5:8340:5)\n    at mountComponent (http://localhost:3000/node_modules/.vite/deps/chunk-H2732BJL.js?v=d51e91f5:8114:7)\n    at processComponent (http://localhost:3000/node_modules/.vite/deps/chunk-H2732BJL.js?v=d51e91f5:8066:9)",
+      "ts": "2026-02-28T18:00:57.910823+00:00"
+    },
+    {
+      "route": "/admin/intelligence/weight",
+      "url": "http://localhost:3000/admin/intelligence/weight",
+      "text": "Component instance: Proxy(Object)",
+      "ts": "2026-02-28T18:00:57.910823+00:00"
+    },
+    {
+      "route": "/admin/intelligence/weight",
+      "url": "http://localhost:3000/admin/intelligence/weight",
+      "text": "Error info: render function",
+      "ts": "2026-02-28T18:00:57.910823+00:00"
+    },
+    {
+      "route": "/admin/intelligence/multimodal",
+      "url": "http://localhost:3000/admin/intelligence/multimodal",
+      "text": "Failed to load resource: net::ERR_CONNECTION_CLOSED",
+      "ts": "2026-02-28T18:01:08.116806+00:00"
+    }
+  ],
+  "pageIssues": [],
+  "failedResponses": [
+    {
+      "route": "/admin/data-source/config",
+      "page": "http://localhost:3000/admin/data-source/config",
+      "status": 401,
+      "method": "GET",
+      "url": "http://localhost:3000/api/admin/sources",
+      "ts": "2026-02-28T17:59:45.008248+00:00"
+    },
+    {
+      "route": "/admin/data-source/data-center",
+      "page": "http://localhost:3000/admin/data-source/data-center",
+      "status": 422,
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/admin/data?page=1&size=20",
+      "ts": "2026-02-28T17:59:53.179936+00:00"
+    }
+  ]
+}

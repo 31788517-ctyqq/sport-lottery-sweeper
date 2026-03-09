@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>检查渲染状态</title>
+    <style>
+        body { padding: 20px; font-family: monospace; background: #1a1a1a; color: #fff; }
+        .info { background: #2a2a2a; padding: 15px; margin: 10px 0; border-left: 4px solid #58a6ff; }
+        button { padding: 10px 20px; background: #58a6ff; color: white; border: none; border-radius: 4px; cursor: pointer; margin: 5px; }
+        button:hover { background: #4c9aff; }
+        pre { background: #000; padding: 10px; overflow: auto; }
+    </style>
+</head>
+<body>
+    <h1>🔍 前端渲染状态检查</h1>
+    
+    <button onclick="checkApp()">检查 #app 内容</button>
+    <button onclick="checkRouter()">检查路由状态</button>
+    <button onclick="openDevTools()">打开开发者工具说明</button>
+    
+    <div id="result"></div>
+
+    <script>
+        function checkApp() {
+            const result = document.getElementById('result');
+            
+            // 尝试获取 iframe 中的 app 元素
+            fetch('http://localhost:3000')
+                .then(r => r.text())
+                .then(html => {
+                    result.innerHTML = `
+                        <div class="info">
+                            <h3>✅ 前端服务正常响应</h3>
+                            <p>请在浏览器中打开 <a href="http://localhost:3000" target="_blank">http://localhost:3000</a></p>
+                            <p>然后在页面上：</p>
+                            <ol>
+                                <li>按 F12 打开开发者工具</li>
+                                <li>切换到 Console 标签</li>
+                                <li>输入以下命令并回车：</li>
+                            </ol>
+                            <pre>document.querySelector('#app').innerHTML</pre>
+                            <p>或者：</p>
+                            <pre>document.querySelector('#app').children</pre>
+                            <p><strong>将输出结果截图给我</strong></p>
+                        </div>
+                    `;
+                })
+                .catch(e => {
+                    result.innerHTML = `<div class="info">❌ 无法连接到前端服务: ${e.message}</div>`;
+                });
+        }
+
+        function checkRouter() {
+            window.open('http://localhost:3000/#/admin/login', '_blank');
+            document.getElementById('result').innerHTML = `
+                <div class="info">
+                    <h3>🔍 已打开管理登录页面</h3>
+                    <p>在新打开的页面中：</p>
+                    <ol>
+                        <li>按 F12 打开开发者工具</li>
+                        <li>在 Console 中输入：</li>
+                    </ol>
+                    <pre>window.$router || (window.__VUE_ROUTER__ && window.__VUE_ROUTER__) || 'Router not found'</pre>
+                    <pre>window.$route || 'Route not found'</pre>
+                    <p>查看路由是否正确初始化</p>
+                </div>
+            `;
+        }
+
+        function openDevTools() {
+            document.getElementById('result').innerHTML = `
+                <div class="info">
+                    <h3>📋 调试步骤</h3>
+                    <ol>
+                        <li>打开 <a href="http://localhost:3000/#/admin/login" target="_blank">http://localhost:3000/#/admin/login</a></li>
+                        <li>按 <code>F12</code> 打开开发者工具</li>
+                        <li>切换到 <strong>Elements</strong> 标签</li>
+                        <li>查找 <code>&lt;div id="app"&gt;</code> 元素</li>
+                        <li>展开它，查看里面有什么内容</li>
+                        <li>截图 Elements 标签的内容</li>
+                    </ol>
+                    <p>同时在 <strong>Console</strong> 标签查看是否有红色错误</p>
+                </div>
+            `;
+        }
+
+        // 自动执行检查
+        checkApp();
+    </script>
+</body>
+</html>

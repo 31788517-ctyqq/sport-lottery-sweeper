@@ -1,0 +1,98 @@
+# 开发依赖
+# 生产依赖的基础
+-r requirements.txt
+
+# 代码质量和格式化
+black==23.11.0
+isort==5.12.0
+flake8==6.1.0
+flake8-docstrings==1.7.0
+flake8-bugbear==23.11.29
+mypy==1.7.0
+pre-commit==3.5.0
+
+# 测试框架
+pytest==7.4.3
+pytest-asyncio==0.21.1
+pytest-cov==4.1.0
+pytest-mock==3.12.0
+pytest-xdist==3.5.0
+pytest-timeout==2.2.0
+hypothesis==6.89.0
+factory-boy==3.3.0
+Faker==20.1.0
+
+# 测试工具
+requests-mock==1.11.0
+freezegun==1.2.2
+respx==0.20.2
+
+# API测试
+pytest-testdox==3.1.0
+pytest-html==4.1.1
+pytest-randomly==3.15.0
+
+# 数据库测试
+pytest-postgresql==5.0.0
+pytest-redis==2.0.0
+
+# 文档生成
+mkdocs==1.5.3
+mkdocs-material==9.5.2
+mkdocstrings[python]==0.24.0
+mkdocs-autorefs==1.0.1
+mkdocs-include-markdown-plugin==6.0.3
+
+# API文档增强
+fastapi-cli==0.0.4
+python-json-logger==2.0.7
+
+# 开发服务器
+watchfiles==0.21.0
+httptools==0.6.0
+uvloop==0.19.0
+
+# 调试工具
+ipdb==0.13.13
+ipython==8.17.2
+jupyter==1.0.0
+debugpy==1.8.0
+
+# 性能分析
+pyinstrument==4.6.2
+memory-profiler==0.61.0
+line-profiler==4.0.3
+scalene==1.5.30
+
+# 安全扫描
+bandit==1.7.6
+safety==2.3.5
+trufflehog==3.63.4
+
+# 依赖分析
+pipdeptree==2.13.0
+pip-audit==2.6.1
+liccheck==0.9.0
+
+# Docker开发
+docker==6.1.3
+docker-compose==1.29.2
+
+# 数据库工具
+sqlalchemy-stubs==0.4
+pgcli==4.0.1
+
+# HTTP客户端
+httpie==3.2.2
+curlify==2.2.1
+
+# 环境管理
+pyenv-win==3.1.1
+virtualenv==20.24.6
+pipenv==2023.10.3
+poetry==1.7.0
+
+# 其他开发工具
+invoke==2.2.0
+makefun==1.15.2
+python-box==7.0.1

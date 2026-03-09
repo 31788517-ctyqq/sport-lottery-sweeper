@@ -1,0 +1,150 @@
+sport-lottery-sweeper/
+├── backend/                     # 主后端API服务 (FastAPI)
+│   ├── app/
+│   ├── Dockerfile
+│   └── docker-compose.base.yml
+│
+├── mobile-services/             # 🆕 移动微服务根目录
+│   ├── admin-mobile-service/    # 📱 管理端移动微服务
+│   │   ├── src/
+│   │   │   ├── controllers/    # 控制器层
+│   │   │   ├── models/         # 数据模型
+│   │   │   ├── routes/         # API路由
+│   │   │   ├── services/       # 业务逻辑层
+│   │   │   ├── middleware/     # 中间件
+│   │   │   ├── utils/          # 工具函数
+│   │   │   ├── config/         # 配置文件
+│   │   │   ├── tests/          # 测试文件
+│   │   │   ├── app.js          # 应用入口
+│   │   │   └── server.js       # 服务器入口
+│   │   ├── package.json
+│   │   ├── Dockerfile
+│   │   ├── docker-compose.yml  # 服务级编排
+│   │   ├── k8s/               # K8s部署文件
+│   │   │   ├── deployment.yaml
+│   │   │   ├── service.yaml
+│   │   │   └── ingress.yaml
+│   │   ├── monitoring/         # 监控配置
+│   │   │   ├── prometheus.yml
+│   │   │   └── grafana-dashboard.json
+│   │   └── scripts/            # 运维脚本
+│   │       ├── deploy.sh
+│   │       └── health-check.sh
+│   │
+│   └── user-mobile-service/     # 📱 用户端移动微服务
+│       ├── src/
+│       │   ├── controllers/
+│       │   ├── models/
+│       │   ├── routes/
+│       │   ├── services/
+│       │   ├── middleware/
+│       │   ├── utils/
+│       │   ├── config/
+│       │   ├── tests/
+│       │   ├── app.js
+│       │   └── server.js
+│       ├── package.json
+│       ├── Dockerfile
+│       ├── docker-compose.yml
+│       ├── k8s/
+│       │   ├── deployment.yaml
+│       │   ├── service.yaml
+│       │   └── ingress.yaml
+│       ├── monitoring/
+│       │   ├── prometheus.yml
+│       │   └── grafana-dashboard.json
+│       └── scripts/
+│           ├── deploy.sh
+│           └── health-check.sh
+│
+├── shared-lib/                  # 🔄 微服务共享库
+│   ├── api-gateway/            # API网关
+│   │   ├── src/
+│   │   │   ├── routes/         # 路由聚合
+│   │   │   ├── middleware/     # 网关中间件
+│   │   │   ├── rate-limiting/  # 限流配置
+│   │   │   └── load-balancer/  # 负载均衡
+│   │   ├── Dockerfile
+│   │   └── config/
+│   │
+│   ├── auth-common/            # 认证公共模块
+│   │   ├── src/
+│   │   │   ├── jwt-utils.js
+│   │   │   ├── password-utils.js
+│   │   │   └── auth-middleware.js
+│   │   ├── package.json
+│   │   └── index.js
+│   │
+│   ├── database/               # 数据库访问层
+│   │   ├── src/
+│   │   │   ├── connections/    # 数据库连接
+│   │   │   ├── models/         # 共享数据模型
+│   │   │   └── repositories/   # 数据仓库
+│   │   ├── Dockerfile
+│   │   └── migrations/         # 数据库迁移
+│   │
+│   ├── messaging/              # 消息队列
+│   │   ├── src/
+│   │   │   ├── rabbitmq/       # RabbitMQ配置
+│   │   │   ├── redis/          # Redis配置
+│   │   │   └── events/         # 事件定义
+│   │   └── Dockerfile
+│   │
+│   └── utils/                  # 通用工具库
+│       ├── src/
+│       │   ├── logger/         # 日志工具
+│       │   ├── validators/     # 验证器
+│       │   ├── formatters/     # 格式化工具
+│       │   └── constants/      # 常量定义
+│       └── package.json
+│
+├── api-gateway/                # 🌐 统一API网关
+│   ├── src/
+│   │   ├── routes/
+│   │   │   ├── admin/          # 管理端路由代理
+│   │   │   ├── user/           # 用户端路由代理
+│   │   │   └── health/         # 健康检查
+│   │   ├── middleware/
+│   │   │   ├── auth.js         # 认证中间件
+│   │   │   ├── cors.js         # CORS配置
+│   │   │   ├── logging.js      # 日志中间件
+│   │   │   └── rateLimit.js    # 限流中间件
+│   │   ├── config/
+│   │   └── app.js
+│   ├── Dockerfile
+│   └── nginx.conf
+│
+├── frontend/                   # Web管理后台 (可选保留)
+│   ├── src/
+│   └── Dockerfile
+│
+├── environments/               # 环境配置
+│   ├── development/
+│   │   ├── docker-compose.yml
+│   │   └── .env
+│   ├── staging/
+│   │   ├── docker-compose.yml
+│   │   └── .env
+│   └── production/
+│       ├── docker-compose.yml
+│       └── .env
+│
+├── docker-compose.yml          # 主编排文件
+├── docker-compose.override.yml # 开发环境
+├── docker-compose.prod.yml    # 生产环境
+├── k8s/                       # K8s集群配置
+│   ├── namespace.yaml
+│   ├── configmap.yaml
+│   └── secrets.yaml
+├── monitoring/                # 集中监控
+│   ├── prometheus/
+│   ├── grafana/
+│   └── alertmanager/
+├── scripts/                   # 全局脚本
+│   ├── deploy/
+│   │   ├── deploy-all.sh
+│   │   ├── deploy-mobile-services.sh
+│   │   └── rollback.sh
+│   ├── monitoring/
+│   └── backup/
+└── Makefile                   # 快捷命令

@@ -1,0 +1,32 @@
+"""
+管理员API路由
+"""
+from fastapi import APIRouter
+import logging
+
+logger = logging.getLogger('api.v1.admin')
+
+router = APIRouter()
+
+def register_sub_routers():
+    """
+    注册子路由
+    """
+    try:
+        # 后台管理用户管理
+        from .admin_user_management import router as admin_user_router
+        router.include_router(admin_user_router, prefix="/users", tags=["admin-users"])
+        logger.info("Admin - 后台用户管理路由已注册")
+    except Exception as e:
+        logger.error(f"Admin - 后台用户管理路由注册失败: {e}")
+    
+    try:
+        # 前台用户管理
+        from .frontend_user_management import router as frontend_user_router
+        router.include_router(frontend_user_router, prefix="/frontend-users", tags=["frontend-users"])
+        logger.info("Admin - 前台用户管理路由已注册")
+    except Exception as e:
+        logger.error(f"Admin - 前台用户管理路由注册失败: {e}")
+
+# 注册子路由
+register_sub_routers()

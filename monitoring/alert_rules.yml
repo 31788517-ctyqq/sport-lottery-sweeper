@@ -1,0 +1,172 @@
+# Prometheus Alert Rules for Sport Lottery Sweeper
+# 体育彩票系统Prometheus告警规则
+
+groups:
+  # 应用服务告警
+  - name: application.rules
+    rules:
+      # Backend API服务下线
+      - alert: BackendDown
+        expr: up{job="backend-api"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: backend
+        annotations:
+          summary: "Backend API服务不可用"
+          description: "Backend API服务已离线超过1分钟"
+
+      # Backend API响应时间过长
+      - alert: BackendHighResponseTime
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job="backend-api"}[5m])) > 2
+        for: 2m
+        labels:
+          severity: warning
+          service: backend
+        annotations:
+          summary: "Backend API响应时间过长"
+          description: "Backend API 95百分位响应时间超过2秒"
+
+      # Backend API错误率高
+      - alert: BackendHighErrorRate
+        expr: rate(http_requests_total{job="backend-api",status=~"5.."}[5m]) / rate(http_requests_total{job="backend-api"}[5m]) > 0.05
+        for: 2m
+        labels:
+          severity: critical
+          service: backend
+        annotations:
+          summary: "Backend API错误率过高"
+          description: "Backend API 5xx错误率超过5%"
+
+      # Frontend服务下线
+      - alert: FrontendDown
+        expr: up{job="frontend"} == 0
+        for: 2m
+        labels:
+          severity: warning
+          service: frontend
+        annotations:
+          summary: "Frontend服务不可用"
+          description: "Frontend服务已离线超过2分钟"
+
+  # 数据库告警
+  - name: database.rules
+    rules:
+      # PostgreSQL服务下线
+      - alert: PostgresDown
+        expr: up{job="postgres"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: database
+        annotations:
+          summary: "PostgreSQL数据库不可用"
+          description: "PostgreSQL数据库已离线超过1分钟"
+
+      # 数据库连接数过多
+      - alert: PostgresTooManyConnections
+        expr: pg_stat_activity_count > 80
+        for: 2m
+        labels:
+          severity: warning
+          service: database
+        annotations:
+          summary: "PostgreSQL连接数过多"
+          description: "PostgreSQL活跃连接数超过80个"
+
+      # 数据库慢查询
+      - alert: PostgresSlowQueries
+        expr: pg_slow_queries > 5
+        for: 5m
+        labels:
+          severity: warning
+          service: database
+        annotations:
+          summary: "PostgreSQL慢查询过多"
+          description: "PostgreSQL慢查询数量超过5个"
+
+  # Redis告警
+  - name: redis.rules
+    rules:
+      # Redis服务下线
+      - alert: RedisDown
+        expr: up{job="redis"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: cache
+        annotations:
+          summary: "Redis缓存不可用"
+          description: "Redis缓存服务已离线超过1分钟"
+
+      # Redis内存使用率过高
+      - alert: RedisHighMemoryUsage
+        expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.9
+        for: 5m
+        labels:
+          severity: warning
+          service: cache
+        annotations:
+          summary: "Redis内存使用率过高"
+          description: "Redis内存使用率超过90%"
+
+  # 系统资源告警
+  - name: system.rules
+    rules:
+      # CPU使用率过高
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: "CPU使用率过高"
+          description: "CPU使用率超过80%持续5分钟"
+
+      # 内存使用率过高
+      - alert: HighMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: "内存使用率过高"
+          description: "内存使用率超过85%持续5分钟"
+
+      # 磁盘空间不足
+      - alert: LowDiskSpace
+        expr: (1 - (node_filesystem_avail_bytes / node_filesystem_size_bytes)) * 100 > 90
+        for: 5m
+        labels:
+          severity: critical
+          service: system
+        annotations:
+          summary: "磁盘空间不足"
+          description: "磁盘使用率超过90%持续5分钟"
+
+  # 业务指标告警
+  - name: business.rules
+    rules:
+      # 爬虫任务失败率高
+      - alert: CrawlerHighFailureRate
+        expr: rate(crawler_tasks_failed_total[1h]) / rate(crawler_tasks_total[1h]) > 0.1
+        for: 10m
+        labels:
+          severity: warning
+          service: crawler
+        annotations:
+          summary: "爬虫任务失败率过高"
+          description: "爬虫任务失败率超过10%"
+
+      # 数据延迟过高
+      - alert: DataPipelineHighLatency
+        expr: data_pipeline_lag_seconds > 300
+        for: 5m
+        labels:
+          severity: warning
+          service: data-pipeline
+        annotations:
+          summary: "数据处理管道延迟过高"
+          description: "数据处理延迟超过5分钟"

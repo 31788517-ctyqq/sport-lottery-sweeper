@@ -1,0 +1,771 @@
+/* HomeView样式文件 */
+:root {
+  /* 移动端优化配色 */
+  --bg-body: #0d1117;
+  --bg-card: #161b22;
+  --bg-header: #1a1d24;
+  --border-color: #30363d;
+  --primary: #58a6ff;
+  --primary-hover: #79c0ff;
+  --success: #238636;
+  --danger: #f85149;
+  --warning: #f0883e;
+  --info: #8b949e;
+  --text-main: #f0f6fc;
+  --text-sub: #8b949e;
+  --text-light: #c9d1d9;
+
+  /* 情报类型标签颜色 */
+  --tag-sp: #f0883e;
+  --tag-injury: #f85149;
+  --tag-weather: #58a6ff;
+  --tag-referee: #a371f7;
+  --tag-motive: #f0883e;
+  --tag-schedule: #58a6ff;
+  --tag-tactics: #7ee787;
+  --tag-coach: #7ee787;
+  --tag-history: #8b949e;
+  --tag-other: #8b949e;
+  --tag-prediction: #58a6ff;
+  --tag-atmosphere: #f0883e;
+
+  /* 权重指示色 */
+  --weight-high: #f85149;
+  --weight-medium: #f0883e;
+  --weight-low: #8b949e;
+
+  /* 来源指示色 */
+  --source-official: #7ee787;
+  --source-media: #58a6ff;
+  --source-social: #a371f7;
+  --source-bookmaker: #f0883e;
+
+  /* 联赛颜色 */
+  --league-premier: #ff6b6b;
+  --league-laliga: #4ecdc4;
+  --league-seriea: #45b7d1;
+  --league-bundesliga: #96ceb4;
+  --league-ligue1: #feca57;
+  --league-champions: #ff9ff3;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.home-page {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  background-color: var(--bg-body);
+  color: var(--text-main);
+  line-height: 1.5;
+  font-size: 14px;
+  overflow-x: hidden;
+  padding-bottom: env(safe-area-inset-bottom, 20px);
+}
+
+/* 头部样式 */
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 56px;
+  background: rgba(13, 17, 23, 0.95);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border-color);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.icon-btn {
+  background: var(--bg-card);
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.icon-btn:hover {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+.icon-btn.spinning i {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.logo {
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo i {
+  color: var(--primary);
+}
+
+/* 统计卡片网格 */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  padding: 70px 16px 16px;
+}
+
+.stat-card {
+  background: var(--bg-card);
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+  border: 1px solid var(--border-color);
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 4px;
+}
+
+.stat-value.highlight {
+  color: var(--warning);
+}
+
+.stat-label {
+  font-size: 12px;
+  color: var(--text-sub);
+}
+
+/* 快速筛选 */
+.quick-filters {
+  display: flex;
+  gap: 8px;
+  padding: 0 16px 16px;
+  overflow-x: auto;
+}
+
+.filter-chip {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-sub);
+  padding: 8px 16px;
+  border-radius: 20px;
+  white-space: nowrap;
+  font-size: 13px;
+  transition: all 0.2s;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.filter-chip.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+/* 筛选面板 */
+.filter-panels {
+  padding: 16px;
+}
+
+.filter-section {
+  margin-bottom: 16px;
+}
+
+.filter-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.filter-btn {
+  background: var(--bg-card);
+  color: var(--text-sub);
+  border: 1px solid var(--border-color);
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.filter-btn.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+.filter-panel {
+  background: var(--bg-card);
+  border-radius: 12px;
+  padding: 16px;
+  border: 1px solid var(--border-color);
+}
+
+.filter-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 12px;
+}
+
+.filter-option {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 16px 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.filter-option:hover {
+  border-color: var(--primary);
+}
+
+.filter-option.selected {
+  background: rgba(88, 166, 255, 0.15);
+  border-color: var(--primary);
+}
+
+.btn-secondary {
+  background: var(--bg-card);
+  color: var(--text-sub);
+  border: 1px solid var(--border-color);
+  padding: 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.btn-secondary:hover {
+  background: rgba(88, 166, 255, 0.15);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+/* 比赛列表控制 */
+.match-controls {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  padding: 0 16px 16px;
+}
+
+.sort-btn {
+  background: var(--bg-card);
+  color: var(--text-sub);
+  border: 1px solid var(--border-color);
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.sort-btn.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+/* 比赛列表容器 */
+.match-list-container {
+  padding: 0 16px 80px;
+}
+
+.match-card {
+  background: var(--bg-card);
+  border-radius: 12px;
+  margin-bottom: 16px;
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+}
+
+.match-header {
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.match-league {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.match-time {
+  font-size: 13px;
+  color: var(--text-sub);
+}
+
+.match-status {
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.match-status.live {
+  background: rgba(35, 134, 54, 0.2);
+  color: #7ee787;
+}
+
+.match-status.finished {
+  background: rgba(139, 148, 158, 0.2);
+  color: var(--text-sub);
+}
+
+.match-status.upcoming {
+  background: rgba(88, 166, 255, 0.2);
+  color: var(--primary);
+}
+
+.match-teams {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+}
+
+.team {
+  flex: 1;
+  text-align: center;
+}
+
+.team-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-main);
+  margin-bottom: 4px;
+}
+
+.team-score {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.match-vs {
+  font-size: 14px;
+  color: var(--text-sub);
+  padding: 0 16px;
+  font-weight: 600;
+}
+
+.match-odds {
+  display: flex;
+  justify-content: space-around;
+  padding: 0 16px 16px;
+  border-top: 1px solid var(--border-color);
+}
+
+.odd {
+  font-size: 13px;
+  color: var(--text-sub);
+}
+
+/* 情报列表 */
+.match-intelligence {
+  padding: 16px;
+  border-top: 1px solid var(--border-color);
+}
+
+.match-intelligence h4 {
+  font-size: 14px;
+  color: var(--text-main);
+  margin-bottom: 12px;
+}
+
+.count {
+  color: var(--text-sub);
+  font-size: 12px;
+}
+
+.intelligence-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.intelligence-item {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  overflow: hidden;
+  transition: all 0.2s;
+}
+
+.intelligence-item:hover {
+  border-color: rgba(88, 166, 255, 0.5);
+}
+
+.intel-header {
+  padding: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.01);
+}
+
+.intel-header.active {
+  background: rgba(88, 166, 255, 0.05);
+}
+
+.intel-type {
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  color: white;
+}
+
+.intel-source {
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.intel-weight {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.intel-weight.weight-high {
+  color: var(--weight-high);
+}
+
+.intel-weight.weight-medium {
+  color: var(--weight-medium);
+}
+
+.intel-weight.weight-low {
+  color: var(--weight-low);
+}
+
+.intel-time {
+  font-size: 11px;
+  color: var(--text-sub);
+}
+
+.intel-content {
+  padding: 0 12px 12px;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+
+.intel-content.expanded {
+  max-height: 300px;
+  padding: 12px;
+}
+
+.intel-content h5 {
+  font-size: 14px;
+  color: var(--text-main);
+  margin-bottom: 8px;
+}
+
+.intel-content p {
+  font-size: 13px;
+  color: var(--text-sub);
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+
+.intel-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+}
+
+.impact {
+  color: var(--text-sub);
+  background: rgba(255, 255, 255, 0.05);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.new-tag {
+  color: var(--success);
+  background: rgba(35, 134, 54, 0.2);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+/* 模态框样式 */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s;
+}
+
+.modal.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.modal-content {
+  background: var(--bg-card);
+  border-radius: 16px;
+  width: 90%;
+  max-width: 400px;
+  max-height: 80vh;
+  overflow-y: auto;
+  transform: translateY(20px);
+  transition: transform 0.3s;
+}
+
+.modal.active .modal-content {
+  transform: translateY(0);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.modal-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.close-modal {
+  background: none;
+  border: none;
+  color: var(--text-sub);
+  font-size: 24px;
+  cursor: pointer;
+}
+
+/* 标签页样式 */
+.tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.tab {
+  flex: 1;
+  text-align: center;
+  padding: 16px;
+  cursor: pointer;
+  color: var(--text-sub);
+  border-bottom: 2px solid transparent;
+}
+
+.tab.active {
+  color: var(--primary);
+  border-bottom: 2px solid var(--primary);
+}
+
+.tab-content {
+  display: none;
+  padding: 16px;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-label {
+  display: block;
+  font-size: 14px;
+  color: var(--text-main);
+  margin-bottom: 6px;
+}
+
+.form-input {
+  width: 100%;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-main);
+  font-size: 14px;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.btn-primary {
+  width: 100%;
+  padding: 14px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-primary:hover {
+  background: var(--primary-hover);
+}
+
+/* 底部导航 */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-around;
+  background: var(--bg-header);
+  border-top: 1px solid var(--border-color);
+  padding: 10px 0;
+  z-index: 1000;
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-sub);
+  font-size: 12px;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.nav-item.active {
+  color: var(--primary);
+}
+
+.nav-item i {
+  font-size: 18px;
+  margin-bottom: 4px;
+}
+
+/* 加载动画 */
+.loading-spinner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-body);
+  z-index: 3000;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(88, 166, 255, 0.2);
+  border-top: 4px solid var(--primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* 过滤标签 */
+.filter-tag {
+  display: inline-block;
+  background: rgba(88, 166, 255, 0.15);
+  border: 1px solid rgba(88, 166, 255, 0.3);
+  color: var(--primary);
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: 8px;
+  margin-bottom: 8px;
+}
+
+.filter-tag i {
+  font-size: 10px;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.filter-tag i:hover {
+  opacity: 1;
+}
+
+.filter-summary {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 16px;
+  min-height: 50px;
+}
+
+.filter-summary .filter-tag:last-child {
+  margin-right: 0;
+}
+
+/* 响应式设计 */
+@media (min-width: 768px) {
+  .home-page {
+    max-width: 100%;
+    margin: 0 auto;
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}

@@ -1,0 +1,316 @@
+#!/usr/bin/env python3
+"""
+体育彩票扫盘系统 - 主应用入口
+真实数据库版本
+"""
+
+from fastapi import FastAPI, Depends, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+import os
+import sys
+from typing import Optional
+from datetime import datetime
+
+# 设置Python路径，确保backend作为包的根目录
+def setup_python_path():
+    """设置Python模块搜索路径"""
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    backend_dir = current_dir  # main.py在backend目录下
+    
+    # 确保backend_dir在sys.path的最前面
+    if backend_dir in sys.path:
+        sys.path.remove(backend_dir)
+    sys.path.insert(0, backend_dir)
+    
+    # 也添加父目录，以防需要引用上层模块
+    parent_dir = os.path.dirname(backend_dir)
+    if parent_dir not in sys.path:
+        sys.path.append(parent_dir)
+    
+    print(f"Python路径设置完成:")
+    print(f"  Backend目录: {backend_dir}")
+    print(f"  Python路径前5项: {sys.path[:5]}")
+
+setup_python_path()
+
+# 导入数据库工具
+from database_utils import (
+    authenticate_user, get_user_by_id, 
+    get_dashboard_stats, get_intelligence_screening_list
+)
+
+# 创建FastAPI应用
+app = FastAPI(
+    title="体育彩票扫盘系统",
+    description="Sports Lottery Sweeper API",
+    version="1.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc"
+)
+
+# 导入管理后台路由
+# 使用绝对导入避免相对导入错误
+try:
+    # 直接导入 admin_v1_router，避免重复的前缀叠加
+    from admin.api.v1 import router as admin_v1_router
+    # admin_v1_router 已经有 prefix="/admin/v1"，我们只需要添加 "/api" 前缀
+    app.include_router(admin_v1_router, prefix="/api")
+    print("Admin v1 routes loaded successfully")
+except ImportError as e:
+    print(f"Warning: Could not import admin v1 routes: {e}")
+    # 尝试备用导入路径
+    try:
+        from app.admin.api.v1 import router as admin_v1_router
+        app.include_router(admin_v1_router, prefix="/api")
+        print("Admin v1 routes loaded from app.admin path")
+    except ImportError as e2:
+        print(f"Warning: Could not import admin v1 routes from app.admin: {e2}")
+
+# CORS中间件配置
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# 基础路由
+@app.get("/")
+async def root():
+    return {"message": "体育彩票扫盘系统 API", "version": "1.0.0"}
+
+@app.get("/health/live")
+async def health_live():
+    return {"status": "healthy", "service": "sport-lottery-sweeper"}
+
+@app.get("/health/ready")
+async def health_ready():
+    # 检查数据库连接
+    try:
+        from database_utils import get_db_connection
+        conn = get_db_connection()
+        conn.close()
+        db_status = "connected"
+    except Exception as e:
+        db_status = f"error: {str(e)}"
+    
+    return {"status": "ready", "database": db_status, "cache": "connected"}
+
+@app.get("/api/v1/health")
+async def api_health():
+    return {"code": 200, "message": "API服务正常", "data": {"timestamp": datetime.now().isoformat()}}
+
+# ===== /api/v1 路由 =====
+from fastapi import Body
+import jwt
+from datetime import datetime, timedelta
+
+SECRET_KEY = "your-secret-key-change-in-production"
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 7200  # 2小时
+
+def create_access_token(data: dict):
+    """创建JWT访问令牌"""
+    to_encode = data.copy()
+    expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+@app.post("/api/v1/auth/register")
+async def register(
+    email: str = Body(...),
+    password: str = Body(...),
+    confirmPassword: str = Body(...),
+    captcha: Optional[str] = Body(None)
+):
+    """用户注册接口（暂未实现，返回演示数据）"""
+    if password != confirmPassword:
+        raise HTTPException(status_code=400, detail="密码不匹配")
+    
+    # TODO: 实现真实的用户注册逻辑
+    return {
+        "code": 200,
+        "message": "注册成功",
+        "data": {
+            "access_token": "demo-jwt-token",
+            "token_type": "bearer",
+            "user_info": {
+                "userId": 1,
+                "username": email.split('@')[0],
+                "email": email,
+                "avatar": None,
+                "roles": ["user"]
+            }
+        }
+    }
+
+@app.post("/api/v1/auth/login")
+async def login_v1(email: str = Body(...), password: str = Body(...)):
+    """用户登录接口 (/api/v1) - 真实数据库验证"""
+    user = authenticate_user(email, password)
+    if not user:
+        raise HTTPException(status_code=401, detail="用户名或密码错误")
+    
+    # 创建JWT令牌
+    access_token = create_access_token({
+        "user_id": user["id"],
+        "username": user["username"],
+        "email": user["email"],
+        "role": user["role"]
+    })
+    
+    return {
+        "code": 200,
+        "message": "登录成功",
+        "data": {
+            "access_token": access_token,
+            "refresh_token": f"refresh-{access_token}",
+            "token_type": "bearer",
+            "expires_in": ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+            "user_info": {
+                "userId": user["id"],
+                "username": user["username"],
+                "email": user["email"],
+                "firstName": user.get("first_name"),
+                "lastName": user.get("last_name"),
+                "nickname": user.get("nickname"),
+                "avatar": user.get("avatar_url"),
+                "roles": [user["role"]],
+                "status": user["status"],
+                "isVerified": user["is_verified"],
+                "userType": user["user_type"],
+                "timezone": user["timezone"],
+                "language": user["language"]
+            }
+        }
+    }
+
+@app.get("/api/v1/auth/me")
+async def get_current_user_v1():
+    """获取当前用户信息 (/api/v1) - 需要JWT验证"""
+    # TODO: 添加JWT验证中间件
+    # 暂时返回演示数据
+    return {
+        "code": 200,
+        "message": "success",
+        "data": {
+            "userId": 1,
+            "username": "admin",
+            "email": "admin@example.com",
+            "firstName": "系统",
+            "lastName": "管理员",
+            "nickname": "Admin",
+            "avatar": None,
+            "roles": ["admin"],
+            "status": "active",
+            "isVerified": True,
+            "userType": "admin",
+            "timezone": "UTC",
+            "language": "zh",
+            "lastLoginTime": "2026-01-22T18:54:22Z"
+        }
+    }
+
+# ===== 兼容前端旧路径 & 新增仪表板、情报模块接口 =====
+
+@app.get("/api/auth/login")
+async def login_compat_get():
+    """兼容前端错误的GET请求 - 返回提示信息"""
+    return {"code": 405, "message": "此接口仅支持POST方法", "detail": "请使用POST方法访问登录接口"}
+
+@app.post("/api/auth/login")
+async def login_compat(email: str = Body(...), password: str = Body(...)):
+    """兼容前端登录接口 - 真实数据库验证"""
+    user = authenticate_user(email, password)
+    if not user:
+        raise HTTPException(status_code=401, detail="用户名或密码错误")
+    
+    # 创建JWT令牌
+    access_token = create_access_token({
+        "user_id": user["id"],
+        "username": user["username"],
+        "email": user["email"],
+        "role": user["role"]
+    })
+    
+    return {
+        "code": 200,
+        "message": "登录成功",
+        "data": {
+            "access_token": access_token,
+            "refresh_token": f"refresh-{access_token}",
+            "token_type": "bearer",
+            "expires_in": ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+            "user_info": {
+                "userId": user["id"],
+                "username": user["username"],
+                "email": user["email"],
+                "firstName": user.get("first_name"),
+                "lastName": user.get("last_name"),
+                "nickname": user.get("nickname"),
+                "avatar": user.get("avatar_url"),
+                "roles": [user["role"]],
+                "status": user["status"],
+                "isVerified": user["is_verified"],
+                "userType": user["user_type"],
+                "timezone": user["timezone"],
+                "language": user["language"]
+            }
+        }
+    }
+
+@app.get("/api/auth/profile")
+async def get_profile_compat():
+    """兼容前端获取用户信息接口"""
+    # TODO: 从JWT中提取用户ID并查询数据库
+    return {
+        "code": 200,
+        "message": "success",
+        "data": {
+            "userId": 1,
+            "username": "admin",
+            "email": "admin@example.com",
+            "firstName": "系统",
+            "lastName": "管理员",
+            "nickname": "Admin",
+            "avatar": None,
+            "roles": ["admin"],
+            "status": "active",
+            "isVerified": True,
+            "userType": "admin",
+            "timezone": "UTC",
+            "language": "zh",
+            "lastLoginTime": "2026-01-22T18:54:22Z"
+        }
+    }
+
+@app.get("/api/dashboard/summary")
+async def dashboard_summary():
+    """仪表板统计数据 - 真实数据库查询"""
+    try:
+        stats = get_dashboard_stats()
+        return {
+            "code": 200,
+            "data": stats
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"获取仪表板数据失败: {str(e)}")
+
+@app.get("/api/intelligence/screening/list")
+async def screening_list():
+    """情报筛查列表 - 真实数据库查询"""
+    try:
+        result = get_intelligence_screening_list()
+        return {
+            "code": 200,
+            "data": result
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"获取情报筛查列表失败: {str(e)}")
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

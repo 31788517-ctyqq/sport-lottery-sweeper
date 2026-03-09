@@ -1,0 +1,109 @@
+
+> sport-lottery-frontend@1.0.0 dev
+> vite
+
+
+  [32m[1mVITE[22m v4.5.14[39m  [2mready in [0m[1m377[22m[2m[0m ms[22m
+
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m3000[22m/[39m
+
+PWA v1.2.0
+mode      generateSW
+precache  2 entries (0.12 KiB)
+files generated
+  dev-dist/sw.js
+  dev-dist/workbox-91016641.js
+[2m03:44:53[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/layout/Index.vue, /src/layout/Index.vue?vue&type=style&index=0&scoped=c95b10da&lang.css[22m
+[2m03:56:16[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/router/index.js[22m
+[2m03:58:43[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/router/index.js[22m
+[2m04:00:36[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/router/index.js[22m
+[2m04:04:19[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/router/index.js[22m
+[2m04:14:08[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/admin/Dashboard.vue, /src/views/admin/Dashboard.vue?vue&type=style&index=0&scoped=0de618a8&lang.css[22m
+[2m05:03:54[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/router/index.js[22m
+[2m05:05:33[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/router/index.js[22m
+[2m05:06:18[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/layout/Index.vue[22m
+[2m05:07:12[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/router/index.js[22m
+[2m05:15:35[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/admin/AIManagementView.vue, /src/views/admin/AIManagementView.vue?vue&type=style&index=0&scoped=94e57885&lang.css[22m
+[2m05:35:16[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/router/index.js[22m
+[2m05:35:52[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/layout/Index.vue[22m
+[2m05:51:40[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/router/index.js[22m
+[2m08:42:26[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/router/index.js[22m
+[2m08:43:29[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/layout/Index.vue[22m
+[2m10:27:07[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/layout/Index.vue[22m
+[2m10:27:56[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/router/index.js[22m
+[2m10:37:54[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/layout/Index.vue[22m
+[2m10:38:32[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/router/index.js[22m
+[2m10:41:51[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/admin/system/SystemConfig.vue, /src/views/admin/system/SystemConfig.vue?vue&type=style&index=0&scoped=4eb9503a&lang.css[22m
+[2m10:41:51[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/admin/system/SystemMonitoring.vue, /src/views/admin/system/SystemMonitoring.vue?vue&type=style&index=0&scoped=0aabeee2&lang.css[22m
+[2m10:41:51[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/admin/system/DataBackup.vue, /src/views/admin/system/DataBackup.vue?vue&type=style&index=0&scoped=aaf1e42c&lang.css[22m
+[2m10:41:51[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/admin/system/ApiManagement.vue, /src/views/admin/system/ApiManagement.vue?vue&type=style&index=0&scoped=4711d351&lang.css[22m
+[2m10:41:51[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/layout/Index.vue[22m
+[2m10:41:51[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/router/index.js[22m
+[2m10:41:51[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/admin/sp/ScheduleManagement.vue, /src/views/admin/sp/ScheduleManagement.vue?vue&type=style&index=0&scoped=25967c18&lang.css[22m
+[2m10:44:36[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/layout/Index.vue[22m
+[2m10:45:49[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/router/index.js[22m
+[2m10:50:37[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/router/index.js[22m
+[2m10:54:12[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/admin/sp/ScheduleManagement.vue, /src/views/admin/sp/ScheduleManagement.vue?vue&type=style&index=0&scoped=25967c18&lang.css[22m
+[2m11:06:10[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/layout/Index.vue[22m
+[2m11:06:51[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/router/index.js[22m
+[2m11:16:37[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/layout/Index.vue[22m
+[2m11:17:31[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/router/index.js[22m
+[2m11:18:51[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/admin/sp/ScheduleManagement.vue, /src/views/admin/sp/ScheduleManagement.vue?vue&type=style&index=0&scoped=25967c18&lang.css[22m
+[2m11:18:51[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/admin/sp/LeagueManagement.vue, /src/views/admin/sp/LeagueManagement.vue?vue&type=style&index=0&scoped=2bcf8ade&lang.css[22m
+[2m11:18:51[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/admin/draw-prediction/DataFeaturesManagement.vue, /src/views/admin/draw-prediction/DataFeaturesManagement.vue?vue&type=style&index=0&scoped=866327ee&lang.css[22m
+[2m11:18:51[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/admin/draw-prediction/TrainingEvaluation.vue, /src/views/admin/draw-prediction/TrainingEvaluation.vue?vue&type=style&index=0&scoped=10a00495&lang.css[22m
+[2m11:18:51[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/admin/draw-prediction/ModelDeployment.vue, /src/views/admin/draw-prediction/ModelDeployment.vue?vue&type=style&index=0&scoped=ce2038cb&lang.css[22m
+[2m11:18:51[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/admin/draw-prediction/PredictionMonitoring.vue, /src/views/admin/draw-prediction/PredictionMonitoring.vue?vue&type=style&index=0&scoped=233ab7af&lang.css[22m
+[2m11:18:51[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/layout/Index.vue[22m
+[2m11:18:51[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/router/index.js[22m
+[2m11:21:15[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/layout/Index.vue[22m
+[2m11:22:16[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/router/index.js[22m
+[2m11:25:27[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/layout/Index.vue[22m
+[2m11:27:48[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/router/index.js[22m
+[2m11:31:04[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/router/index.js[22m
+[2m11:36:40[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/layout/Index.vue[22m
+[2m11:45:10[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/router/index.js[22m
+[2m11:48:28[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/admin/sp/MatchManagement.vue, /src/views/admin/sp/MatchManagement.vue?vue&type=style&index=0&scoped=77dba5ff&lang.css[22m
+[2m11:50:16[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/router/index.js[22m
+[2m11:53:58[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/admin/sp/MatchManagement.vue[22m
+[2m11:56:02[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/admin/ai-services/CostMonitoring.vue, /src/views/admin/ai-services/CostMonitoring.vue?vue&type=style&index=0&scoped=33f21f48&lang.css[22m
+[2m11:57:59[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/router/index.js[22m
+[2m12:02:30[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/layout/Index.vue[22m
+[2m12:03:27[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/router/index.js[22m
+[2m12:08:58[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/layout/Index.vue[22m
+[2m12:09:36[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/router/index.js[22m
+[2m12:13:28[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/admin/sp/ScheduleManagement.vue, /src/views/admin/sp/ScheduleManagement.vue?vue&type=style&index=0&scoped=25967c18&lang.css[22m
+[2m12:14:05[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/admin/sp/LeagueManagement.vue, /src/views/admin/sp/LeagueManagement.vue?vue&type=style&index=0&scoped=2bcf8ade&lang.css[22m
+[2m12:24:54[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/admin/sp/MatchManagement.vue, /src/views/admin/sp/MatchManagement.vue?vue&type=style&index=0&scoped=77dba5ff&lang.css[22m
+[2m12:24:54[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/admin/ai-services/CostMonitoring.vue, /src/views/admin/ai-services/CostMonitoring.vue?vue&type=style&index=0&scoped=33f21f48&lang.css[22m
+[2m12:24:54[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/admin/sp/OddsManagement.vue, /src/views/admin/sp/OddsManagement.vue?vue&type=style&index=0&scoped=8e180903&lang.css[22m
+[2m12:24:54[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/admin/ai-services/ProviderManagement.vue, /src/views/admin/ai-services/ProviderManagement.vue?vue&type=style&index=0&scoped=00c97e91&lang.css[22m
+[2m12:24:54[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/layout/Index.vue[22m
+[2m12:24:55[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/router/index.js[22m
+[2m12:24:55[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/admin/sp/ScheduleManagement.vue, /src/views/admin/sp/ScheduleManagement.vue?vue&type=style&index=0&scoped=25967c18&lang.css[22m
+[2m12:24:55[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/admin/sp/LeagueManagement.vue, /src/views/admin/sp/LeagueManagement.vue?vue&type=style&index=0&scoped=2bcf8ade&lang.css[22m
+[2m12:24:57[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/admin/sp/ScheduleManagement.vue, /src/views/admin/sp/ScheduleManagement.vue?vue&type=style&index=0&scoped=25967c18&lang.css[22m
+[2m12:25:13[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/admin/sp/ScheduleManagement.vue, /src/views/admin/sp/ScheduleManagement.vue?vue&type=style&index=0&scoped=25967c18&lang.css[22m
+[2m12:28:39[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/layout/Index.vue[22m
+[2m12:48:39[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/layout/Index.vue[22m
+[2m12:51:12[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/layout/Index.vue[22m
+[2m12:53:08[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/router/index.js[22m
+[2m17:05:23[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/router/index.js[22m
+[2m17:06:03[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/router/index.js[22m
+[2m19:02:06[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/router/index.js[22m
+[2m19:02:58[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/layout/Index.vue[22m
+[2m19:13:04[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/admin/sp/OddsManagement.vue, /src/views/admin/sp/OddsManagement.vue?vue&type=style&index=0&scoped=8e180903&lang.css[22m
+[2m19:17:36[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/router/index.js[22m
+[2m19:19:09[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/admin/sp/OddsManagement.vue, /src/views/admin/sp/OddsManagement.vue?vue&type=style&index=0&scoped=8e180903&lang.css[22m
+[2m19:19:09[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/router/index.js[22m
+[2m19:24:53[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/router/index.js[22m
+[2m19:28:12[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/router/index.js[22m
+[2m19:31:03[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/router/index.js[22m
+[2m19:31:16[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/router/index.js[22m
+[2m19:31:50[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/router/index.js[22m
+[2m19:33:26[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/layout/Index.vue[22m
+[2m19:36:26[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/router/index.js[22m
+[2m19:39:03[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/router/index.js[22m
+[2m19:40:53[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/layout/Index.vue[22m
+[2m19:44:20[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/layout/Index.vue[22m
+[2m19:47:00[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/layout/Index.vue[22m

@@ -1,0 +1,71 @@
+INFO:backend.api.v1:[OK] lottery 模块导入成功
+INFO:backend.api.v1:[OK] matches 模块导入成功
+INFO:backend.api.v1:[OK] public_matches 模块导入成功
+INFO:root:match_admin路由已成功注册
+INFO:root:league_management路由已成功注册
+INFO:backend.api.v1:[OK] admin 模块导入成功
+INFO:backend.api.v1:[OK] auth 模块导入成功
+INFO:backend.api.v1:  auth.router 对象: <fastapi.routing.APIRouter object at 0x00000204A6DF0890>
+INFO:backend.api.v1:  auth.router 路由数: 3
+INFO:backend.api.v1:[OK] intelligence 模块导入成功
+INFO:backend.api.v1:[OK] data_submission 模块导入成功
+INFO:backend.api.v1:[OK] caipiao_data 模块导入成功
+INFO:backend.api.v1:  caipiao_data.router 对象: <fastapi.routing.APIRouter object at 0x00000204A6EEBB90>
+INFO:backend.api.v1:  caipiao_data.router 路由数: 7
+INFO:backend.api.v1:[OK] draw_prediction 模块导入成功
+INFO:backend.api.v1:[OK] hedging 模块导入成功
+INFO:backend.api.v1:[OK] crawler 模块导入成功
+INFO:backend.api.v1:[OK] crawler_alert 模块导入成功
+INFO:backend.api.v1:[OK] crawler_monitor 模块导入成功
+INFO:backend.api.v1:[OK] crawler_tasks_adapter 模块导入成功
+INFO:backend.api.v1:[OK] data_center_adapter 模块导入成功
+INFO:backend.api.v1:[OK] headers_adapter 模块导入成功
+INFO:backend.api.v1:[OK] ip_pool_adapter 模块导入成功
+INFO:backend.api.v1:[OK] llm 模块导入成功
+INFO:backend.api.v1:[OK] llm_providers 模块导入成功
+INFO:backend.api.v1:  llm_providers.router 对象: <fastapi.routing.APIRouter object at 0x00000204A9994250>
+INFO:backend.api.v1:  llm_providers.router 路由数: 14
+INFO:backend.api.v1:[OK] log_analysis 模块导入成功
+INFO:backend.api.v1:[OK] lottery_schedule 模块导入成功
+INFO:backend.api.v1:[OK] lottery_simple 模块导入成功
+INFO:backend.api.v1:[OK] lottery_test 模块导入成功
+INFO:backend.api.v1:[OK] lottery_direct 模块导入成功
+INFO:backend.api.v1:[OK] lottery_final 模块导入成功
+INFO:backend.api.v1:[OK] data_source_100qiu 模块导入成功
+INFO:backend.api.v1:  data_source_100qiu.router 对象: <fastapi.routing.APIRouter object at 0x00000204AAAE7E50>
+INFO:backend.api.v1:  data_source_100qiu.router 路由数: 10
+INFO:backend.api.v1:[OK] beidan_filter_api 模块导入并注册成功
+INFO:backend.api.v1:API V1 主路由器初始化完成，路由数: 33
+INFO:backend.api:API v1 路由已加载
+INFO:backend.api:WebSocket 路由已加载
+INFO:backend.api:API路由器初始化完成，已移除所有废弃的向后兼容路由
+INFO:__main__:API v1 routes registered successfully
+INFO:__main__:Data source management routes registered (/api/v1/admin/data-sources)
+INFO:__main__:Crawler monitoring API routes registered (/api/v1/admin/crawler/monitor)
+INFO:__main__:Request header management API routes registered (/api/v1/admin/headers)
+INFO:__main__:IP pool management API routes registered (/api/v1/admin/ip-pools)
+INFO:__main__:Task management API routes registered (/api/v1/admin/tasks)
+INFO:__main__:User profile API routes registered (/api/v1/admin/user-profiles)
+INFO:__main__:Role management API routes registered (/api/v1/admin/roles)
+INFO:__main__:Permission management API routes registered (/api/v1/admin/permissions)
+INFO:__main__:Crawler task management API routes registered (/api/v1/admin/crawler/tasks)
+INFO:__main__:Task monitoring API routes registered (/api/v1/task-monitor)
+INFO:__main__:Log API routes registered (/api/v1/admin/system/logs)
+INFO:__main__:Crawler data source API routes registered (/api/v1/admin/crawler/sources)
+INFO:__main__:Crawler config API routes registered (/api/v1/admin/crawler/config)
+INFO:__main__:Crawler intelligence API routes registered (/api/v1/admin/crawler/intelligence)
+INFO:__main__:Admin user management API routes registered (/api/v1/admin/admin-users)
+INFO:__main__:Department management API routes registered (/api/v1/admin/departments)
+INFO:__main__:Regular user management API routes registered (/api/v1/admin/users)
+INFO:__main__:Frontend user management API routes registered (/api/v1/admin/frontend-users)
+INFO:__main__:Simple user API routes registered (/api/v1/admin/simple-users)
+INFO:__main__:Beidan filter API routes registered (/api/v1/beidan-filter)
+INFO:backend.exceptions:异常处理器配置完成
+INFO:__main__:Exception handlers registered
+INFO:__main__:Creating database tables...
+INFO:__main__:Database tables created successfully
+INFO:__main__:Starting application server on 0.0.0.0:8000
+INFO:     Started server process [47804]
+INFO:     Waiting for application startup.
+INFO:__main__:Application starting up...
+ERROR:    [Errno 10048] error while attempting to bind on address ('0.0.0.0', 8000): 通常每个套接字地址(协议/网络地址/端口)只允许使用一次。

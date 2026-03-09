@@ -1,0 +1,115 @@
+# API扫描器配置
+# 自动化检测401/422/404/403/409问题
+# 创建时间: 2026-02-06
+
+scan:
+  # 后端目录路径（相对于项目根目录）
+  backend_dir: "backend"
+  
+  # 要扫描的API目录列表
+  api_dirs:
+    - "api/v1"
+    - "api/v2"
+  
+  # 报告输出目录
+  output_dir: "reports"
+  
+  # 报告格式：json, md, csv
+  report_format:
+    - "json"
+    - "md"
+    - "csv"
+  
+  # 是否生成测试用例
+  generate_tests: true
+  
+  # 测试用例输出目录
+  test_output_dir: "generated_tests"
+
+auth:
+  # 敏感接口模式（需要认证）
+  sensitive_patterns:
+    - r"/users?/.*"
+    - r"/profile.*"
+    - r"/admin.*"
+    - r"/data.*"
+    - r"/config.*"
+    - r"/settings.*"
+    - r"/payment.*"
+    - r"/wallet.*"
+    - r"/balance.*"
+    - r"/transaction.*"
+    - r"/crawler.*"
+    - r"/task.*"
+    - r"/logs.*"
+  
+  # 公共接口模式（无需认证）
+  public_patterns:
+    - r"/auth/login.*"
+    - r"/auth/register.*"
+    - r"/public/.*"
+    - r"/health.*"
+    - r"/docs.*"
+    - r"/openapi\.json"
+    - r"/api/v1/health.*"
+    - r"/api/v1/info.*"
+  
+  # 管理员接口模式（需要管理员权限）
+  admin_patterns:
+    - r"/admin/.*"
+    - r"/users/admin.*"
+    - r"/system/.*"
+    - r"/config/.*"
+    - r"/settings/.*"
+    - r"/crawler/admin.*"
+
+validation:
+  # 敏感参数名称（需要特殊验证）
+  sensitive_params:
+    - "password"
+    - "token"
+    - "secret"
+    - "key"
+    - "credit_card"
+    - "ssn"
+    - "phone"
+    - "email"
+    - "api_key"
+    - "auth_token"
+  
+  # 常见需要验证的参数
+  common_params_requiring_validation:
+    - "id"
+    - "user_id"
+    - "page"
+    - "size"
+    - "limit"
+    - "offset"
+    - "status"
+    - "type"
+    - "category"
+  
+  # 数据创建接口模式（需要严格验证）
+  data_creation_patterns:
+    - r"/create.*"
+    - r"/register.*"
+    - r"/add.*"
+    - r"/insert.*"
+    - r"/new.*"
+    - r"/save.*"
+    - r"/update.*"
+    - r"/edit.*"
+
+routes:
+  # 预期存在的路由模式（用于404检测）
+  expected_patterns:
+    - "/api/v1/health"
+    - "/api/v1/info"
+    - "/api/v1/users/profile"
+    - "/api/v1/admin/users"
+    - "/api/v1/auth/login"
+    - "/api/v1/auth/register"
+    - "/api/v1/crawler/crawler"
+    - "/api/v1/tasks"
+    - "/api/v1/logs"
+    - "/api/v1/data-sources"

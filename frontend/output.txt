@@ -1,0 +1,231 @@
+
+> sport-lottery-frontend@1.0.0 test:run
+> vitest run
+
+
+[7m[1m[36m RUN [39m[22m[27m [36mv0.34.6[39m [90mc:/Users/11581/Downloads/sport-lottery-sweeper/frontend[39m
+
+Cannot parse C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/components/LoginModal.test.js:
+Unexpected token (7:5)
+Cannot parse C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/components/HeaderComponent.test.js:
+Unexpected token (7:5)
+Cannot parse C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/components/MatchCard.test.js:
+Unexpected token (7:5)
+DEPRECATION WARNING [legacy-js-api]: The legacy JS API is deprecated and will be removed in Dart Sass 2.0.0.
+
+More info: https://sass-lang.com/d/legacy-js-api
+
+DEPRECATION WARNING [legacy-js-api]: The legacy JS API is deprecated and will be removed in Dart Sass 2.0.0.
+
+More info: https://sass-lang.com/d/legacy-js-api
+
+DEPRECATION WARNING [legacy-js-api]: The legacy JS API is deprecated and will be removed in Dart Sass 2.0.0.
+
+More info: https://sass-lang.com/d/legacy-js-api
+
+DEPRECATION WARNING [legacy-js-api]: The legacy JS API is deprecated and will be removed in Dart Sass 2.0.0.
+
+More info: https://sass-lang.com/d/legacy-js-api
+
+DEPRECATION WARNING [legacy-js-api]: The legacy JS API is deprecated and will be removed in Dart Sass 2.0.0.
+
+More info: https://sass-lang.com/d/legacy-js-api
+
+Cannot parse C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/components/BottomNav.test.js:
+Unexpected token (7:5)
+
+[31m⎯⎯⎯⎯⎯⎯[1m[7m Failed Suites 35 [27m[22m⎯⎯⎯⎯⎯⎯[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/tests/unit/api.test.js [2m[ src/tests/unit/api.test.js ][22m
+[31m[1mError[22m: No test suite found in file C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/api.test.js[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/35]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/tests/unit/log_management.test.js [2m[ src/tests/unit/log_management.test.js ][22m
+[31m[1mError[22m: No test suite found in file C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/log_management.test.js[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/35]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/tests/unit/simple.test.js [2m[ src/tests/unit/simple.test.js ][22m
+[31m[1mError[22m: No test suite found in file C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/simple.test.js[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/35]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/tests/unit/user_management.test.js [2m[ src/tests/unit/user_management.test.js ][22m
+[31m[1mError[22m: No test suite found in file C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/user_management.test.js[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/35]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/tests/unit/api/admin.test.js [2m[ src/tests/unit/api/admin.test.js ][22m
+[31m[1mError[22m: No test suite found in file C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/api/admin.test.js[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/35]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/tests/unit/api/auth.test.js [2m[ src/tests/unit/api/auth.test.js ][22m
+[31m[1mError[22m: No test suite found in file C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/api/auth.test.js[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/35]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/tests/unit/api/bets.test.js [2m[ src/tests/unit/api/bets.test.js ][22m
+[31m[1mError[22m: Failed to load url C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/api/modules/bets.js (resolved id: C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/api/modules/bets.js) in C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/api/bets.test.js. Does the file exist?[39m
+[90m [2m❯[22m loadAndTransform node_modules/vite/dist/node/chunks/dep-827b23df.js:[2m55077:21[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/35]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/tests/unit/api/matches.test.js [2m[ src/tests/unit/api/matches.test.js ][22m
+[31m[1mError[22m: No test suite found in file C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/api/matches.test.js[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/35]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/tests/unit/api/users.test.js [2m[ src/tests/unit/api/users.test.js ][22m
+[31m[1mReferenceError[22m: svi is not defined[39m
+[90m [2m❯[22m src/tests/unit/api/users.test.js:[2m6:1[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/35]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/tests/unit/components/BottomNav.test.js [2m[ src/tests/unit/components/BottomNav.test.js ][22m
+[31m[1mError[22m: Parse failure: Unexpected token (7:5)
+At file: c:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/components/BottomNav.test.js
+Contents of line 7: type MockRouterPush = (path: string) => void[39m
+[90m [2m❯[22m ssrTransformScript node_modules/vite/dist/node/chunks/dep-827b23df.js:[2m55481:15[22m[39m
+[90m [2m❯[22m ssrTransform node_modules/vite/dist/node/chunks/dep-827b23df.js:[2m55456:12[22m[39m
+[90m [2m❯[22m Object.ssrTransform node_modules/vite/dist/node/chunks/dep-827b23df.js:[2m65379:20[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/35]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/tests/unit/components/HeaderComponent.test.js [2m[ src/tests/unit/components/HeaderComponent.test.js ][22m
+[31m[1mError[22m: Parse failure: Unexpected token (7:5)
+At file: c:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/components/HeaderComponent.test.js
+Contents of line 7: type MockRouterPush = (path: string) => void[39m
+[90m [2m❯[22m ssrTransformScript node_modules/vite/dist/node/chunks/dep-827b23df.js:[2m55481:15[22m[39m
+[90m [2m❯[22m ssrTransform node_modules/vite/dist/node/chunks/dep-827b23df.js:[2m55456:12[22m[39m
+[90m [2m❯[22m Object.ssrTransform node_modules/vite/dist/node/chunks/dep-827b23df.js:[2m65379:20[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/35]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/tests/unit/components/LoginModal.test.js [2m[ src/tests/unit/components/LoginModal.test.js ][22m
+[31m[1mError[22m: Parse failure: Unexpected token (7:5)
+At file: c:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/components/LoginModal.test.js
+Contents of line 7: type Mock$t = (key: string) => string[39m
+[90m [2m❯[22m ssrTransformScript node_modules/vite/dist/node/chunks/dep-827b23df.js:[2m55481:15[22m[39m
+[90m [2m❯[22m ssrTransform node_modules/vite/dist/node/chunks/dep-827b23df.js:[2m55456:12[22m[39m
+[90m [2m❯[22m Object.ssrTransform node_modules/vite/dist/node/chunks/dep-827b23df.js:[2m65379:20[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/35]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/tests/unit/components/MainView.test.js [2m[ src/tests/unit/components/MainView.test.js ][22m
+[31m[1mError[22m: No test suite found in file C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/components/MainView.test.js[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/35]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/tests/unit/components/MatchCard.test.js [2m[ src/tests/unit/components/MatchCard.test.js ][22m
+[31m[1mError[22m: Parse failure: Unexpected token (7:5)
+At file: c:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/components/MatchCard.test.js
+Contents of line 7: type Mock$t = (key: string) => string[39m
+[90m [2m❯[22m ssrTransformScript node_modules/vite/dist/node/chunks/dep-827b23df.js:[2m55481:15[22m[39m
+[90m [2m❯[22m ssrTransform node_modules/vite/dist/node/chunks/dep-827b23df.js:[2m55456:12[22m[39m
+[90m [2m❯[22m Object.ssrTransform node_modules/vite/dist/node/chunks/dep-827b23df.js:[2m65379:20[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/35]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/tests/unit/composables/useAuth.test.js [2m[ src/tests/unit/composables/useAuth.test.js ][22m
+[31m[1mError[22m: No test suite found in file C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/composables/useAuth.test.js[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/35]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/tests/unit/composables/useBets.test.js [2m[ src/tests/unit/composables/useBets.test.js ][22m
+[31m[1m[7m FAIL [27m[22m[39m src/tests/unit/views/ProfileView.test.js [2m[ src/tests/unit/views/ProfileView.test.js ][22m
+[31m[1mError[22m: Failed to load url C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/composables/useBets.js (resolved id: C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/composables/useBets.js) in C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/composables/useBets.test.js. Does the file exist?[39m
+[90m [2m❯[22m loadAndTransform node_modules/vite/dist/node/chunks/dep-827b23df.js:[2m55077:21[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/35]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/tests/unit/composables/useFilters.test.js [2m[ src/tests/unit/composables/useFilters.test.js ][22m
+[31m[1mReferenceError[22m: watch is not defined[39m
+[90m [2m❯[22m src/composables/useFilters.js:[2m86:1[22m[39m
+[90m [2m❯[22m src/tests/unit/composables/useFilters.test.js:[2m2:31[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/35]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/tests/unit/composables/useMatches.test.js [2m[ src/tests/unit/composables/useMatches.test.js ][22m
+[31m[1mError[22m: Failed to load url C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/composables/useMatches.js (resolved id: C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/composables/useMatches.js) in C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/composables/useMatches.test.js. Does the file exist?[39m
+[90m [2m❯[22m loadAndTransform node_modules/vite/dist/node/chunks/dep-827b23df.js:[2m55077:21[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/35]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/tests/unit/composables/useNotifications.test.js [2m[ src/tests/unit/composables/useNotifications.test.js ][22m
+[31m[1mError[22m: No test suite found in file C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/composables/useNotifications.test.js[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/35]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/tests/unit/composables/usePermissions.test.js [2m[ src/tests/unit/composables/usePermissions.test.js ][22m
+[31m[1mReferenceError[22m: svi is not defined[39m
+[90m [2m❯[22m src/tests/unit/composables/usePermissions.test.js:[2m6:1[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/35]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/tests/unit/composables/useWebSocket.test.js [2m[ src/tests/unit/composables/useWebSocket.test.js ][22m
+[31m[1mError[22m: No test suite found in file C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/composables/useWebSocket.test.js[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/35]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/tests/unit/stores/user.test.js [2m[ src/tests/unit/stores/user.test.js ][22m
+[31m[1mError[22m: No test suite found in file C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/stores/user.test.js[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/35]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/tests/unit/store/admin.test.js [2m[ src/tests/unit/store/admin.test.js ][22m
+[31m[1mError[22m: No test suite found in file C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/store/admin.test.js[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/35]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/tests/unit/store/app.test.js [2m[ src/tests/unit/store/app.test.js ][22m
+[31m[1mError[22m: No test suite found in file C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/store/app.test.js[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/35]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/tests/unit/utils/minimal.test.js [2m[ src/tests/unit/utils/minimal.test.js ][22m
+[31m[1mError[22m: No test suite found in file C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/utils/minimal.test.js[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/35]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/tests/unit/utils/request.test.js [2m[ src/tests/unit/utils/request.test.js ][22m
+[31m[1mError[22m: No test suite found in file C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/utils/request.test.js[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/35]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/tests/unit/utils/style-regression.test.js [2m[ src/tests/unit/utils/style-regression.test.js ][22m
+[31m[1mError[22m: No test suite found in file C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/utils/style-regression.test.js[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[27/35]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/tests/unit/views/AdminDashboard.test.js [2m[ src/tests/unit/views/AdminDashboard.test.js ][22m
+[31m[1mError[22m: Failed to load url C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/composables/useAdmin.js (resolved id: C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/composables/useAdmin.js) in C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/views/AdminDashboard.test.js. Does the file exist?[39m
+[90m [2m❯[22m loadAndTransform node_modules/vite/dist/node/chunks/dep-827b23df.js:[2m55077:21[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[28/35]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/tests/unit/views/JczqSchedule.test.js [2m[ src/tests/unit/views/JczqSchedule.test.js ][22m
+[31m[1mReferenceError[22m: watch is not defined[39m
+[90m [2m❯[22m src/composables/useFilters.js:[2m86:1[22m[39m
+[90m [2m❯[22m src/tests/unit/views/JczqSchedule.test.js:[2m6:31[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[29/35]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/tests/unit/views/LoginView.test.js [2m[ src/tests/unit/views/LoginView.test.js ][22m
+[31m[1mError[22m: No test suite found in file C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/unit/views/LoginView.test.js[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[30/35]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/tests/unit/components/admin/UserList.test.js [2m[ src/tests/unit/components/admin/UserList.test.js ][22m
+[31m[1mReferenceError[22m: svi is not defined[39m
+[90m [2m❯[22m src/tests/unit/components/admin/UserList.test.js:[2m7:1[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[31/35]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/tests/integration/log_api.test.js [2m[ src/tests/integration/log_api.test.js ][22m
+[31m[1mError[22m: No test suite found in file C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/integration/log_api.test.js[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[32/35]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/tests/integration/user_api.test.js [2m[ src/tests/integration/user_api.test.js ][22m
+[31m[1mError[22m: [vitest] There was an error when mocking a module. If you are using "vi.mock" factory, make sure there are no top level variables inside, since this call is hoisted to top of the file. Read more: https://vitest.dev/api/vi.html#vi-mock[39m
+[90m [2m❯[22m src/utils/request.js:[2m1:31[22m[39m
+
+[31m[1mCaused by: ReferenceError[22m: Cannot access 'mockAxios' before initialization[39m
+[90m [2m❯[22m src/tests/integration/user_api.test.js:[2m3:12[22m[39m
+[90m [2m❯[22m src/utils/request.js:[2m1:31[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[33/35]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/tests/integration/user_management_api.test.js [2m[ src/tests/integration/user_management_api.test.js ][22m
+[31m[1mError[22m: No test suite found in file C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/src/tests/integration/user_management_api.test.js[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[34/35]⎯[22m[39m
+
+[2m Test Files [22m [1m[31m35 failed[39m[22m[90m (35)[39m
+[2m      Tests [22m [2mno tests[22m
+[2m   Start at [22m 11:35:19
+[2m   Duration [22m 21.33s[2m (transform 3.53s, setup 163.01s, collect 9.18s, tests 0ms, environment 77.46s, prepare 12.70s)[22m
+
+JUNIT report written to C:/Users/11581/Downloads/sport-lottery-sweeper/frontend/test-results/junit.xml

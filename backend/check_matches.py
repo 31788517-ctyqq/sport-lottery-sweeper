@@ -1,0 +1,1 @@
+ÿþfrom database import SessionLocal; from models.match import Match; db = SessionLocal(); print('Total matches: {}'.format(db.query(Match).count())); matches = db.query(Match).order_by(Match.id.desc()).limit(5).all(); for m in matches: print('ID: {}, match_identifier: {}, status: {}'.format(m.id, m.match_identifier, m.status)); db.close()

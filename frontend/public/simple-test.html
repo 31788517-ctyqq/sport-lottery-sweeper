@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>简化测试</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .test {
+      background: white;
+      padding: 20px;
+      margin: 10px 0;
+      border-radius: 5px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .success { border-left: 4px solid #4CAF50; }
+    .error { border-left: 4px solid #f44336; }
+    button {
+      background: #2196F3;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 5px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🧪 简化前端测试</h1>
+
+  <div class="test" id="test1">
+    <h3>测试1: 直接访问主页</h3>
+    <p>点击下方按钮在新标签页打开主页</p>
+    <button onclick="window.open('/', '_blank')">打开主页 (/)</button>
+  </div>
+
+  <div class="test" id="test2">
+    <h3>测试2: 检查Vue应用</h3>
+    <p id="vue-status">检查中...</p>
+  </div>
+
+  <div class="test">
+    <h3>测试3: 访问测试页面</h3>
+    <button onclick="window.open('/test-vue.html', '_blank')">打开Vue测试页面</button>
+  </div>
+
+  <div class="test">
+    <h3>测试4: 清除缓存并重试</h3>
+    <button onclick="clearAndReload()">清除缓存并刷新</button>
+  </div>
+
+  <div class="test">
+    <h3>常见问题</h3>
+    <ul>
+      <li><strong>主页空白?</strong> 检查浏览器控制台(F12)的错误</li>
+      <li><strong>样式错乱?</strong> 硬刷新(Ctrl+F5)</li>
+      <li><strong>一直加载?</strong> 检查网络标签,确认资源加载</li>
+    </ul>
+  </div>
+
+  <script>
+    function clearAndReload() {
+      if ('caches' in window) {
+        caches.keys().then(function(cacheNames) {
+          cacheNames.forEach(function(cacheName) {
+            caches.delete(cacheName);
+          });
+        });
+      }
+      location.reload(true);
+    }
+
+    // 检查主页的Vue应用
+    setTimeout(function() {
+      fetch('/')
+        .then(response => response.text())
+        .then(html => {
+          const hasApp = html.includes('<div id="app"');
+          const hasVueScript = html.includes('main.js');
+
+          if (hasApp && hasVueScript) {
+            document.getElementById('test2').className = 'test success';
+            document.getElementById('vue-status').innerHTML =
+              '✅ 主页HTML包含 #app 和 main.js 引用<br>' +
+              'App元素: ' + (hasApp ? '找到' : '未找到') + '<br>' +
+              'main.js: ' + (hasVueScript ? '引用' : '未引用');
+          } else {
+            document.getElementById('test2').className = 'test error';
+            document.getElementById('vue-status').innerHTML =
+              '❌ 主页HTML结构不正确<br>' +
+              'App元素: ' + (hasApp ? '找到' : '未找到') + '<br>' +
+              'main.js: ' + (hasVueScript ? '引用' : '未引用');
+          }
+        })
+        .catch(error => {
+          document.getElementById('test2').className = 'test error';
+          document.getElementById('vue-status').textContent =
+            '❌ 无法获取主页内容: ' + error.message;
+        });
+    }, 1000);
+  </script>
+</body>
+</html>

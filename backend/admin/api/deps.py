@@ -1,0 +1,1 @@
+from .v1.deps import get_current_admin
