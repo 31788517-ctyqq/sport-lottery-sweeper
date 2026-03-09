@@ -28,7 +28,7 @@ async def get_data_center_overview(
         total_matches = db.query(Match).count()
         total_odds = db.query(Odds).count()
         total_sp_records = db.query(SPRecord).count()
-        active_sources = db.query(DataSource).filter(DataSource.status == True).count()
+        active_sources = db.query(DataSource).filter(DataSource.status == 1).count()
         
         # 计算今天新增的数据
         today = datetime.utcnow().date()

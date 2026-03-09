@@ -28,7 +28,7 @@ async def get_system_health(
         
         # 获取爬虫任务统计
         total_sources = db.query(DataSource).count()
-        active_sources = db.query(DataSource).filter(DataSource.status == True).count()
+        active_sources = db.query(DataSource).filter(DataSource.status == 1).count()
         total_tasks = db.query(CrawlerTask).count()
         running_tasks = db.query(CrawlerTask).filter(CrawlerTask.status == 'RUNNING').count()
         

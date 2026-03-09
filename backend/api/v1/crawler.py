@@ -86,7 +86,7 @@ async def get_crawler_sources(
     query = db.query(DataSource)
     
     if status:
-        active = True if status.lower() == 'online' else False
+        active = 1 if status.lower() == 'online' else 0
         query = query.filter(DataSource.status == active)
     if search:
         query = query.filter(DataSource.name.contains(search))
@@ -165,8 +165,8 @@ async def get_source_stats(
         Dict: 包含总数、在线数、离线数等统计信息
     """
     total_count = db.query(DataSource).count()
-    online_count = db.query(DataSource).filter(DataSource.status == True).count()
-    offline_count = db.query(DataSource).filter(DataSource.status == False).count()
+    online_count = db.query(DataSource).filter(DataSource.status == 1).count()
+    offline_count = db.query(DataSource).filter(DataSource.status == 0).count()
     
     # 计算平均成功率（如果有相关字段的话）
     avg_success_rate = 0  # 根据实际业务需求计算

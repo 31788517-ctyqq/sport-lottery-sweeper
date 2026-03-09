@@ -1,8 +1,9 @@
 import json
+import logging
 from typing import Any, List, Optional
 from fastapi import APIRouter, Body, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
+from sqlalchemy import text
 
 from backend.database_async import get_async_db
 from backend.schemas.role import (
@@ -14,6 +15,29 @@ from backend.schemas.role import (
 from backend.crud.role import crud_role
 
 router = APIRouter(prefix="/roles", tags=["roles"])
+_roles_schema_checked = False
+logger = logging.getLogger(__name__)
+
+
+async def _ensure_roles_schema(db: AsyncSession) -> None:
+    """Best-effort compatibility patch for legacy roles table schema."""
+    global _roles_schema_checked
+    if _roles_schema_checked:
+        return
+
+    statements = [
+        "ALTER TABLE roles ADD COLUMN IF NOT EXISTS level INTEGER DEFAULT 1",
+        "ALTER TABLE roles ADD COLUMN IF NOT EXISTS is_system BOOLEAN DEFAULT FALSE",
+        "ALTER TABLE roles ADD COLUMN IF NOT EXISTS sort_order INTEGER DEFAULT 0",
+    ]
+    try:
+        for statement in statements:
+            await db.execute(text(statement))
+        await db.commit()
+        _roles_schema_checked = True
+    except Exception:
+        await db.rollback()
+        logger.warning("roles schema compatibility patch failed", exc_info=True)
 
 
 def _parse_permission_ids(raw_permissions: Any) -> List[int]:
@@ -45,8 +69,8 @@ def _serialize_role(role_obj) -> dict:
         "id": role_obj.id,
         "name": role_obj.name,
         "description": role_obj.description,
-        "level": role_obj.level,
-        "is_system": role_obj.is_system,
+        "level": getattr(role_obj, "level", 1),
+        "is_system": getattr(role_obj, "is_system", False),
         "status": role_obj.status,
         "permissions": _parse_permission_ids(role_obj.permissions),
         "created_at": role_obj.created_at,
@@ -65,6 +89,7 @@ async def get_roles(
     """
     获取角色列表
     """
+    await _ensure_roles_schema(db)
     roles, total = await crud_role.get_multi_with_filter(
         db, skip=skip, limit=limit, status=status, search=search
     )
@@ -84,6 +109,7 @@ async def get_role_options(
     """
     获取角色选项（扁平结构），用于下拉选择
     """
+    await _ensure_roles_schema(db)
     roles, _ = await crud_role.get_multi_with_filter(db)
     options = [{"id": r.id, "label": r.name, "value": r.id} for r in roles]
     return options
@@ -96,6 +122,7 @@ async def get_role_stats(
     """
     获取角色统计信息
     """
+    await _ensure_roles_schema(db)
     roles, total = await crud_role.get_multi_with_filter(db)
 
     stats = {
@@ -116,6 +143,7 @@ async def get_role(
     """
     获取单个角色信息
     """
+    await _ensure_roles_schema(db)
     role = await crud_role.get(db, role_id=id)
     if not role:
         raise HTTPException(status_code=404, detail="Role not found")
@@ -131,6 +159,7 @@ async def create_role(
     """
     创建角色
     """
+    await _ensure_roles_schema(db)
     existing_role = await crud_role.get_by_name(db, name=role_in.name)
     if existing_role:
         raise HTTPException(status_code=400, detail="Role name already exists")
@@ -149,6 +178,7 @@ async def update_role(
     """
     更新角色信息
     """
+    await _ensure_roles_schema(db)
     role = await crud_role.get(db, role_id=id)
     if not role:
         raise HTTPException(status_code=404, detail="Role not found")
@@ -171,6 +201,7 @@ async def delete_role(
     """
     删除角色
     """
+    await _ensure_roles_schema(db)
     role = await crud_role.get(db, role_id=id)
     if not role:
         raise HTTPException(status_code=404, detail="Role not found")
@@ -195,6 +226,7 @@ async def update_role_status(
     """
     更新角色状态
     """
+    await _ensure_roles_schema(db)
     final_status = status
     if final_status is None and isinstance(payload, dict):
         final_status = payload.get("status")
@@ -221,6 +253,7 @@ async def get_role_permissions(
     """
     获取角色的权限列表
     """
+    await _ensure_roles_schema(db)
     role = await crud_role.get(db, role_id=id)
     if not role:
         raise HTTPException(status_code=404, detail="Role not found")
@@ -240,6 +273,7 @@ async def assign_role_permissions(
     """
     为角色分配权限
     """
+    await _ensure_roles_schema(db)
     role = await crud_role.get(db, role_id=id)
     if not role:
         raise HTTPException(status_code=404, detail="Role not found")

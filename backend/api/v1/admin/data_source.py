@@ -30,8 +30,10 @@ from backend.utils.null_safety import (
     coalesce
 )
 from backend.core.exceptions import NullValueError, EmptyResultError
+from backend.api.v1.admin.odds_compat import router as odds_compat_router
 
 router = APIRouter()
+router.include_router(odds_compat_router, prefix="/odds", tags=["admin-odds"])
 
 
 def _safe_json_loads(value, default=None):

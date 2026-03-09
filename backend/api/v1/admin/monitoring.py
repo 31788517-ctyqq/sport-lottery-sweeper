@@ -32,7 +32,7 @@ async def get_system_stats(
         
         # 获取爬虫任务统计
         total_sources = db.query(DataSource).count()
-        active_sources = db.query(DataSource).filter(DataSource.status == True).count()
+        active_sources = db.query(DataSource).filter(DataSource.status == 1).count()
         
         # 获取最近24小时的指标数据（模拟）
         now = datetime.utcnow()
