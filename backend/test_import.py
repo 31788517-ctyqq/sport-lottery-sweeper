@@ -1,67 +1,34 @@
 #!/usr/bin/env python3
 """
-测试模型导入和映射器配置
+Legacy import check script.
+
+This file is kept for manual diagnostics and must not fail during pytest
+collection.
 """
-import os
-import sys
 
-__test__ = False
-
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-if project_root not in sys.path:
-    sys.path.insert(0, project_root)
+from __future__ import annotations
 
 from sqlalchemy.orm import class_mapper
 
-try:
+__test__ = False
+
+
+def run_import_check() -> int:
     from backend.models.user import User
-    print("✓ User imported successfully")
-except Exception as e:
-    print(f"✗ User import failed: {e}")
-    sys.exit(1)
+    from backend.models.predictions import Prediction, UserPrediction
 
-try:
-    from backend.models.predictions import UserPrediction
-    print("✓ UserPrediction imported successfully")
-except Exception as e:
-    print(f"✗ UserPrediction import failed: {e}")
-    sys.exit(1)
+    print("OK: User imported")
+    print("OK: UserPrediction imported")
+    print("OK: Prediction imported")
 
-try:
-    from backend.models.predictions import Prediction
-    print("✓ Prediction imported successfully")
-except Exception as e:
-    print(f"✗ Prediction import failed: {e}")
-    sys.exit(1)
+    print(f"OK: User mapper configured: {class_mapper(User)}")
+    print(f"OK: UserPrediction mapper configured: {class_mapper(UserPrediction)}")
+    print(f"OK: Prediction mapper configured: {class_mapper(Prediction)}")
 
-# 检查映射器配置
-try:
-    user_mapper = class_mapper(User)
-    print(f"✓ User mapper configured: {user_mapper}")
-except Exception as e:
-    print(f"✗ User mapper configuration failed: {e}")
+    print(f"User.user_predictions exists: {hasattr(User, 'user_predictions')}")
+    print(f"UserPrediction.user exists: {hasattr(UserPrediction, 'user')}")
+    return 0
 
-try:
-    user_prediction_mapper = class_mapper(UserPrediction)
-    print(f"✓ UserPrediction mapper configured: {user_prediction_mapper}")
-except Exception as e:
-    print(f"✗ UserPrediction mapper configuration failed: {e}")
 
-try:
-    prediction_mapper = class_mapper(Prediction)
-    print(f"✓ Prediction mapper configured: {prediction_mapper}")
-except Exception as e:
-    print(f"✗ Prediction mapper configuration failed: {e}")
-
-# 检查关系
-if hasattr(User, 'user_predictions'):
-    print(f"✓ User.user_predictions relationship exists: {User.user_predictions}")
-else:
-    print("✗ User.user_predictions relationship missing")
-
-if hasattr(UserPrediction, 'user'):
-    print(f"✓ UserPrediction.user relationship exists: {UserPrediction.user}")
-else:
-    print("✗ UserPrediction.user relationship missing")
-
-print("\nTest completed")
+if __name__ == "__main__":
+    raise SystemExit(run_import_check())

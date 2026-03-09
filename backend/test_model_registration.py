@@ -1,78 +1,54 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
-娴嬭瘯妯″瀷娉ㄥ唽鍜屾槧灏勫櫒閰嶇疆
+Legacy model registration check script.
+
+This file is intended for manual execution and should not break pytest
+collection.
 """
-import sys
-sys.path.insert(0, '.')
+
+from __future__ import annotations
 
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, class_mapper
+from sqlalchemy.orm import class_mapper, sessionmaker
+
 from models.base import Base
+from models.predictions import Prediction, UserPrediction
 from models.user import User
-from models.predictions import UserPrediction, Prediction
 
-print("=== 娴嬭瘯妯″瀷娉ㄥ唽 ===")
+__test__ = False
 
-# 鍒涘缓鍐呭瓨鏁版嵁搴撳紩鎿?engine = create_engine('sqlite:///:memory:')
 
-# 鍒涘缓鎵€鏈夎〃
-try:
+def run_model_registration_check() -> int:
+    engine = create_engine("sqlite:///:memory:")
     Base.metadata.create_all(engine)
-    print("SUCCESS 鏁版嵁搴撹〃鍒涘缓鎴愬姛")
-except Exception as e:
-    print(f"FAILED 鏁版嵁搴撹〃鍒涘缓澶辫触: {e}")
-    sys.exit(1)
+    print("OK: created tables")
 
-# 娴嬭瘯鏄犲皠鍣ㄩ厤缃?models_to_test = [User, UserPrediction, Prediction]
-for model in models_to_test:
-    try:
-        mapper = class_mapper(model)
-        print(f"SUCCESS {model.__name__} 鏄犲皠鍣ㄩ厤缃垚鍔?)
-    except Exception as e:
-        print(f"FAILED {model.__name__} 鏄犲皠鍣ㄩ厤缃け璐? {e}")
+    for model in (User, UserPrediction, Prediction):
+        print(f"OK: mapper configured for {model.__name__}: {class_mapper(model)}")
 
-# 娴嬭瘯鍏崇郴
-print("\n=== 娴嬭瘯鍏崇郴 ===")
-if hasattr(User, 'user_predictions'):
-    rel = User.user_predictions
-    print(f"SUCCESS User.user_predictions 鍏崇郴瀛樺湪: {rel}")
-else:
-    print("FAILED User.user_predictions 鍏崇郴缂哄け")
-
-if hasattr(UserPrediction, 'user'):
-    rel = UserPrediction.user
-    print(f"SUCCESS UserPrediction.user 鍏崇郴瀛樺湪: {rel}")
-else:
-    print("FAILED UserPrediction.user 鍏崇郴缂哄け")
-
-if hasattr(Prediction, 'user_predictions'):
-    rel = Prediction.user_predictions
-    print(f"SUCCESS Prediction.user_predictions 鍏崇郴瀛樺湪: {rel}")
-else:
-    print("FAILED Prediction.user_predictions 鍏崇郴缂哄け")
-
-# 鍒涘缓涓€涓細璇濆苟娴嬭瘯鍩烘湰鎿嶄綔
-Session = sessionmaker(bind=engine)
-session = Session()
-
-try:
-    # 鍒涘缓涓€涓祴璇曠敤鎴?    test_user = User(
-        username='testuser',
-        email='test@example.com',
-        hashed_password='fakehash',
-        status='active'
+    print(f"User.user_predictions exists: {hasattr(User, 'user_predictions')}")
+    print(f"UserPrediction.user exists: {hasattr(UserPrediction, 'user')}")
+    print(
+        "Prediction.user_predictions exists: "
+        f"{hasattr(Prediction, 'user_predictions')}"
     )
-    session.add(test_user)
-    session.commit()
-    print(f"SUCCESS 鐢ㄦ埛鍒涘缓鎴愬姛: id={test_user.id}")
-    
-    # 娓呯悊
-    session.query(User).delete()
-    session.commit()
-    print("SUCCESS 娓呯悊鎴愬姛")
-    
-except Exception as e:
-    print(f"FAILED 鏁版嵁搴撴搷浣滃け璐? {e}")
-    session.rollback()
 
-print("\n=== 娴嬭瘯瀹屾垚 ===")
+    session = sessionmaker(bind=engine)()
+    try:
+        test_user = User(
+            username="testuser",
+            email="test@example.com",
+            hashed_password="fakehash",
+            status="active",
+        )
+        session.add(test_user)
+        session.commit()
+        print(f"OK: user created id={test_user.id}")
+    finally:
+        session.close()
+
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(run_model_registration_check())

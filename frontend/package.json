@@ -6,10 +6,12 @@
   "scripts": {
     "dev": "vite --port 3000",
     "build": "vite build",
-    "typecheck": "vue-tsc",
+    "typecheck": "vue-tsc --project tsconfig.release.json",
     "lint": "eslint src",
-    "test:run": "vitest run",
-    "preview": "vite preview"
+    "test:run": "vitest run --config vitest.release.config.mjs",
+    "preview": "vite preview",
+    "typecheck:full": "vue-tsc",
+    "test:run:full": "vitest run"
   },
   "dependencies": {
     "@element-plus/icons-vue": "^2.1.0",

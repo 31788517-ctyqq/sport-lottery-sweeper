@@ -120,3 +120,6 @@ class Prediction(BaseFullModel):
     def __repr__(self) -> str:
         return f"<Prediction(id={self.id}, match_id={self.match_id}, type={self.prediction_type}, confidence={self.confidence_level})>"
 # 注意：UserPrediction模型已移至user_models.py文件中，以解决循环导入问题
+# Backward compatibility: legacy code imports UserPrediction from this module.
+from .user_models import UserPrediction  # noqa: E402,F401
+

@@ -244,3 +244,51 @@ async def demo():
 
 if __name__ == "__main__":
     asyncio.run(demo())
+
+
+# ---------------------------------------------------------------------------
+# Backward compatibility helpers for legacy tests/modules.
+# ---------------------------------------------------------------------------
+
+
+class MemoryCache(HybridCache):
+    """In-memory cache facade kept for backward compatibility."""
+
+    def __init__(self, max_memory_items: int = 1000):
+        super().__init__(redis_url=None, max_memory_items=max_memory_items)
+
+    async def get_stats(self) -> dict:
+        active_keys = []
+        now = datetime.now()
+        for key, (_, expires_at) in list(self.memory_cache.items()):
+            if expires_at is not None and expires_at <= now:
+                del self.memory_cache[key]
+                continue
+            active_keys.append(key)
+        return {"total_keys": len(active_keys), "keys": active_keys}
+
+
+def generate_cache_key(prefix: str, *parts: object) -> str:
+    suffix = ":".join(str(part) for part in parts if part is not None)
+    return f"{prefix}:{suffix}" if suffix else prefix
+
+
+CACHE_KEYS = {
+    "RECENT_MATCHES": lambda days: generate_cache_key("matches:recent", days),
+}
+
+
+class CacheConfig:
+    """Legacy config shape used by older tests."""
+
+    DEFAULT_TTL = 300
+
+
+_cache_singleton: HybridCache | None = None
+
+
+def get_cache() -> HybridCache:
+    global _cache_singleton
+    if _cache_singleton is None:
+        _cache_singleton = HybridCache()
+    return _cache_singleton

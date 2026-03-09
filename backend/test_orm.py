@@ -1,46 +1,43 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+"""
+Legacy ORM quick check script.
+"""
 
-import sys
-import os
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from __future__ import annotations
 
-from database import SessionLocal, engine
+from datetime import datetime
+
+from database import SessionLocal
 from models.matches import FootballMatch
 
-def test_orm():
+__test__ = False
+
+
+def run_orm_check() -> int:
     db = SessionLocal()
     try:
-        # 查询所有记录
         matches = db.query(FootballMatch).all()
-        print(f"ORM query - Total records: {len(matches)}")
-        
-        # 尝试插入新记录
-        from datetime import datetime
+        print(f"ORM query - total records: {len(matches)}")
+
         new_match = FootballMatch(
-            match_id="test_002",
-            home_team="ORM测试主队",
-            away_team="ORM测试客队",
+            match_id="test_orm_002",
+            home_team="ORM Home",
+            away_team="ORM Away",
             match_time=datetime(2026, 2, 7, 21, 0, 0),
-            league="ORM测试联赛",
-            status="pending"
+            league="ORM League",
+            status="pending",
         )
         db.add(new_match)
         db.commit()
         print("ORM insert successful")
-        
-        # 再次查询
-        matches = db.query(FootballMatch).all()
-        print(f"ORM query after insert - Total records: {len(matches)}")
-        
-        for match in matches:
-            print(f"  {match.match_id}: {match.home_team} vs {match.away_team}")
-            
-    except Exception as e:
-        print(f"ORM Error: {e}")
+    except Exception as exc:  # pragma: no cover - diagnostic script
         db.rollback()
+        print(f"ORM error: {exc}")
+        return 1
     finally:
         db.close()
+    return 0
+
 
 if __name__ == "__main__":
-    test_orm()
+    raise SystemExit(run_orm_check())

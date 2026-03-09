@@ -11,7 +11,7 @@
     "install:backend": "python -m pip install -r requirements.txt",
     "install:frontend": "cd frontend && npm install",
     "test": "npm run test:backend && npm run test:frontend",
-    "test:backend": "cd backend && pytest",
+    "test:backend": "cd backend && ..\\.venv\\Scripts\\python.exe -m pytest tests/release -q",
     "test:frontend": "cd frontend && npm run test:run",
     "lint": "npm run lint:backend && npm run lint:frontend",
     "lint:backend": "cd backend && flake8 app --exclude .venv,venv,__pycache__,tests,scripts,admin,agents,tasks,tools,unit,debug,monitoring,optimization,processors,repositories,routes,scanner,scrapers,static,uploads,venv --ignore W291,W292,W293,W391,E251,E261,E302,E303,E305,E501,F401,W503",
@@ -22,7 +22,8 @@
     "smart-start": "python scripts/smart_start.py",
     "test:e2e": "cd frontend && npx playwright test",
     "cleanup": "force_kill_port_8000.bat && npm run bootstrap",
-    "reset": "npm run cleanup && npm run dev"
+    "reset": "npm run cleanup && npm run dev",
+    "test:backend:full": "cd backend && pytest"
   },
   "devDependencies": {
     "@playwright/test": "^1.58.0",

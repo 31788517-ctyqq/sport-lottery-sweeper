@@ -526,6 +526,30 @@ async def get_current_active_admin_user(
     return current_user
 
 
+async def get_current_admin_user(current_user=Security(get_current_user)):
+    """
+    Backward-compatible admin dependency used by legacy tests and routes.
+
+    For AdminUser models this delegates to get_current_active_admin_user.
+    For normal user-like objects, it enforces active+admin role semantics.
+    """
+    # AdminUser flow
+    if hasattr(current_user, "role") and hasattr(current_user, "status"):
+        return await get_current_active_admin_user(current_user)
+
+    # Generic user flow
+    role = getattr(current_user, "role", None)
+    is_active = getattr(current_user, "is_active", True)
+    if not is_active:
+        raise AuthenticationError("用户账户已被禁用")
+
+    role_value = getattr(role, "value", role)
+    if role_value not in {"admin", "super_admin", "ADMIN"}:
+        raise AuthorizationError("需要管理员权限")
+
+    return current_user
+
+
 def authenticate_user(username: str, password: str):
     """
     用户认证函数（简化版）

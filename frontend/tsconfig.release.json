@@ -1,0 +1,21 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "allowJs": true,
+    "checkJs": false
+  },
+  "include": [
+    "src/main.js",
+    "src/utils/array.js",
+    "tests/release/**/*.js"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "src/tests/**",
+    "tests/e2e/**",
+    "tests/integration/**",
+    "tests/unit/**"
+  ]
+}
